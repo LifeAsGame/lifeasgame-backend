@@ -1,0 +1,48 @@
+name: Develop Branch CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Set up JDK 21 (Temurin) + Gradle cache
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Write application.yml & application-test.yml from secrets
+        run: |
+          mkdir -p src/main/resources src/test/resources
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+          echo "${{ secrets.APPLICATION_TEST_YML }}" > src/test/resources/application-test.yml
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+#      - name: Build & Test (with JaCoCo)
+#        run: ./gradlew clean test jacocoTestReport build
+#
+#      - name: Upload test reports
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: junit-and-jacoco-reports
+#          path: |
+#            **/build/reports/tests/test
+#            **/build/reports/jacoco/test
