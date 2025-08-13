@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+
+language: ko-KR
+tone_instructions: |
+  Respond in concise, technical Korean. 
+  Prioritize correctness, security, performance, and readability. 
+  Provide concrete suggestions with minimal patches or code diffs when useful.
+reviews:
+  profile: chill
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  commit_status: true
+  fail_commit_status: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches: ["main", "develop"]
+    ignore_title_keywords: ["WIP", "DRAFT"]
+
+  # Include/Exclude paths (optimize noise vs. signal)
+  path_filters:
+    # include
+    - "src/**/*.java"
+    - "src/**/*.kt"
+    - "src/**/*.xml"
+    - "src/**/*.yml"
+    - "build.gradle*"
+    - "settings.gradle*"
+    - "gradle/**"
+    - "Dockerfile"
+    - "docker/**"
+    - ".github/workflows/**"
+    - "infra/**"
+    - "deploy/**"
+    # exclude (artifacts, heavy assets)
+    - "!**/build/**"
+    - "!**/target/**"
+    - "!**/.gradle/**"
+    - "!**/.idea/**"
+    - "!**/.vscode/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/*.min.js"
+    - "!**/*.pdf"
+    - "!**/*.csv"
+
+  # Per-path review guidance (instructions in English; output in Korean)
+  path_instructions:
+    - path: "src/main/java/**"
+      instructions: |
+        Respond in Korean. Review for Spring Boot 3.5 / Java 21 / JPA (Hibernate 6).
+        - DDD: presentation → application → domain → infra one-way dependency; no leakage.
+        - JPA: avoid N+1; lazy vs eager carefully; no @ManyToMany; no equals/hashCode on LAZY fields.
+        - Transactions: write services are @Transactional; reads are readOnly; no long transactions.
+        - Performance: avoid unnecessary streams/boxing; prefer immutable DTOs for projections.
+        - Exceptions/Logging: no sensitive data in logs; map infra exceptions to domain errors.
+    - path: "src/test/java/**"
+      instructions: |
+        Respond in Korean. Check test quality.
+        - Slice tests (@DataJpaTest/@WebMvcTest) vs integration; isolated and deterministic.
+        - Given-When-Then naming; edge/error cases included.
+        - Testcontainers for DB/Redis; no reliance on local state.
+    - path: "build.gradle*"
+      instructions: |
+        Respond in Korean. Verify Gradle setup.
+        - Java 21 / Spring Boot 3.5.x alignment; dependency convergence / version catalog.
+        - Test coverage or static analysis plugins considered.
+    - path: "Dockerfile"
+      instructions: |
+        Respond in Korean. Enforce container best practices.
+        - Slim base image, non-root, layer/cache optimization, JVM memory flags.
+    - path: ".github/workflows/**"
+      instructions: |
+        Respond in Korean. Check CI security/stability.
+        - Least privilege, pinned action versions, secret handling, robust cache keys.
+
+  finishing_touches:
+    docstrings: { enabled: true }
+    unit_tests: { enabled: true }
+
+  tools:
+    pmd:         { enabled: true,  config_file: "" }
+    gitleaks:    { enabled: true }
+    hadolint:    { enabled: true }
+    actionlint:  { enabled: true }
+    markdownlint: { enabled: true }
+    yamllint:    { enabled: true }
+    github-checks: { enabled: true, timeout_ms: 90000 }
+
+    # Enable later if you have rules ready
+    semgrep:     { enabled: false }
+
+    # Non-Java linters off to reduce noise
+    detekt:        { enabled: false }
+    eslint:        { enabled: false }
+    flake8:        { enabled: false }
+    rubocop:       { enabled: false }
+    swiftlint:     { enabled: false }
+    golangci-lint: { enabled: false }
+    phpmd:         { enabled: false }
+    phpstan:       { enabled: false }
+    cppcheck:      { enabled: false }
+    brakeman:      { enabled: false }
