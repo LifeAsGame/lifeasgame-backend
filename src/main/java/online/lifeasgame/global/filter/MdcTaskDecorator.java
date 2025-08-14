@@ -1,23 +1,30 @@
 package online.lifeasgame.global.filter;
 
 import java.util.Map;
-import lombok.NonNull;
 import org.slf4j.MDC;
 import org.springframework.core.task.TaskDecorator;
+import org.springframework.lang.NonNull;
 
 public class MdcTaskDecorator implements TaskDecorator {
     @NonNull
     @Override
     public Runnable decorate(@NonNull Runnable runnable) {
-        Map<String, String> contextMap = MDC.getCopyOfContextMap();
+        final Map<String, String> contextMap = MDC.getCopyOfContextMap();
         return () -> {
-            if (contextMap != null) {
-                MDC.setContextMap(contextMap);
-            }
+            Map<String, String> previous = MDC.getCopyOfContextMap();
             try {
+                if (contextMap != null) {
+                    MDC.setContextMap(contextMap);
+                } else {
+                    MDC.clear();
+                }
                 runnable.run();
             } finally {
-                MDC.clear();
+                if (previous != null) {
+                    MDC.setContextMap(previous);
+                } else {
+                    MDC.clear();
+                }
             }
         };
     }
