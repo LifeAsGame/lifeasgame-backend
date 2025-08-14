@@ -13,7 +13,7 @@ public final class MDCKeys {
     public static final String USER_ENTRY_POINT = "userEntryPoint";
     public static final String ELAPSED_TIME = "elapsedTime";
 
-    public static Set<String> IGNORE_PATH = Set.of(
+    public static final Set<String> IGNORE_PATH = Set.of(
             "/actuator/prometheus",
             "/actuator/health"
     );
