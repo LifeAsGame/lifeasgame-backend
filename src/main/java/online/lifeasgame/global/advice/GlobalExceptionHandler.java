@@ -1,8 +1,10 @@
 package online.lifeasgame.global.advice;
 
 import lombok.extern.slf4j.Slf4j;
+import online.lifeasgame.global.constant.MDCKeys;
 import online.lifeasgame.shared.error.BaseException;
 import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,14 +31,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleEtc(Exception ex, WebRequest req) {
-        var pd = ProblemDetail.forStatus(500);
+        var pd = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 
         pd.setTitle("GEN-000");
         pd.setDetail("Internal server error");
         pd.setProperty("path", ((ServletWebRequest)req).getRequest().getRequestURI());
-        pd.setProperty("traceId", MDC.get("traceId"));
+        pd.setProperty(MDCKeys.TRACE_ID, MDC.get("traceId"));
 
         log.error("Unhandled error", ex);
-        return ResponseEntity.status(500).body(pd);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(pd);
     }
 }
