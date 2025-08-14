@@ -17,20 +17,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class TraceIdFilter extends OncePerRequestFilter {
 
-    private static final String MOCK_USER_ID = "12345";
-    private static final String MOCK_USER_ENTRY_POINT = "WEB";
+    private static final String ANONYMOUS = "-";
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, @NonNull FilterChain chain)
             throws ServletException, IOException {
 
         String incoming = req.getHeader(MDCKeys.TRACE_ID_HEADER);
-        String traceId = (incoming != null && !incoming.isBlank()) ? incoming : IdGenerator.newTraceId();
+        String traceId = isValidTraceId(incoming) ? incoming : IdGenerator.newTraceId();
 
         MDC.put(MDCKeys.TRACE_ID, traceId);
         MDC.put(MDCKeys.PATH, req.getRequestURI());
-        MDC.put(MDCKeys.USER_ID, MOCK_USER_ID);
-        MDC.put(MDCKeys.USER_ENTRY_POINT, MOCK_USER_ENTRY_POINT);
+        MDC.put(MDCKeys.USER_ID, ANONYMOUS);
+        MDC.put(MDCKeys.USER_ENTRY_POINT, ANONYMOUS);
 /*
         if (internalAuth != null) {
             Long userId = internalAuth.findUserId();
@@ -60,5 +59,17 @@ public class TraceIdFilter extends OncePerRequestFilter {
 
             MDC.clear();
         }
+    }
+
+    private boolean isValidTraceId(String v) {
+        if (v == null) return false;
+        if (v.length() > 64) return false;
+        for (int i = 0; i < v.length(); i++) {
+            char c = v.charAt(i);
+            if (!(c == '-' || c == '_' || Character.isLetterOrDigit(c))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
