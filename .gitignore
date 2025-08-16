@@ -42,5 +42,10 @@ out/
 ### application yml ###
 application-test.yml
 src/test/resources/application-test.yml
+
 application.yml
+application-local.yml
+application-prod.yml
 src/main/resources/application.yml
+src/main/resources/application-local.yml
+src/main/resources/application-prod.yml
