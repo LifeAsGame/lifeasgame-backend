@@ -1,7 +1,5 @@
 package online.lifeasgame.global.constant;
 
-import java.util.Set;
-
 public final class MDCKeys {
     private MDCKeys() {}
 
@@ -12,9 +10,4 @@ public final class MDCKeys {
     public static final String USER_ID = "userId";
     public static final String USER_ENTRY_POINT = "userEntryPoint";
     public static final String ELAPSED_TIME = "elapsedTime";
-
-    public static final Set<String> IGNORE_PATH = Set.of(
-            "/actuator/prometheus",
-            "/actuator/health"
-    );
 }
