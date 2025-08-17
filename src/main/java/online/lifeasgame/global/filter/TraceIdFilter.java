@@ -20,6 +20,12 @@ public class TraceIdFilter extends OncePerRequestFilter {
     private static final String ANONYMOUS = "-";
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String p = request.getServletPath();
+        return p.startsWith("/actuator/health") || p.startsWith("/actuator/prometheus");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, @NonNull FilterChain chain)
             throws ServletException, IOException {
 
@@ -52,9 +58,12 @@ public class TraceIdFilter extends OncePerRequestFilter {
             long elapsedMs = (System.nanoTime() - startNs) / 1_000_000;
             MDC.put(MDCKeys.ELAPSED_TIME, String.valueOf(elapsedMs));
 
-            if (!MDCKeys.IGNORE_PATH.contains(req.getRequestURI())) {
-                if (thrown == null) log.info("Request success status={}", res.getStatus());
-                else log.error("Request failed status={}", res.getStatus(), thrown);
+            int status = res.getStatus();
+            if (thrown == null) {
+                log.info("Request success status={}", status);
+            } else {
+                int effective = (status >= 400) ? status : 500;
+                log.error("Request failed status={}", effective, thrown);
             }
 
             MDC.clear();
