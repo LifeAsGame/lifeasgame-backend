@@ -1,4 +1,4 @@
-package online.lifeasgame.global.util;
+package online.lifeasgame.shared.support;
 
 import java.util.UUID;
 
