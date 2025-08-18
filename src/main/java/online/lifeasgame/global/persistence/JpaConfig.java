@@ -1,4 +1,4 @@
-package online.lifeasgame.global.config;
+package online.lifeasgame.global.persistence;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
