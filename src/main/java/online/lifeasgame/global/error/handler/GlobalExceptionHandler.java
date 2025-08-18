@@ -1,7 +1,7 @@
-package online.lifeasgame.global.advice;
+package online.lifeasgame.global.error.handler;
 
 import lombok.extern.slf4j.Slf4j;
-import online.lifeasgame.global.constant.MDCKeys;
+import online.lifeasgame.global.tracing.MDCKeys;
 import online.lifeasgame.shared.error.BaseException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;

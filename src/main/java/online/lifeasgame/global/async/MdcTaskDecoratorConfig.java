@@ -1,6 +1,5 @@
-package online.lifeasgame.global.config;
+package online.lifeasgame.global.async;
 
-import online.lifeasgame.global.filter.MdcTaskDecorator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskDecorator;

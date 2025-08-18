@@ -1,4 +1,4 @@
-package online.lifeasgame.global.filter;
+package online.lifeasgame.global.tracing;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,8 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import online.lifeasgame.global.constant.MDCKeys;
-import online.lifeasgame.global.util.IdGenerator;
+import online.lifeasgame.shared.support.IdGenerator;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
