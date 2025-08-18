@@ -1,4 +1,4 @@
-package online.lifeasgame.global.config;
+package online.lifeasgame.global.async;
 
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import org.springframework.context.annotation.Bean;
