@@ -1,4 +1,4 @@
-package online.lifeasgame.global.api;
+package online.lifeasgame.global.error.api;
 
 public final class ErrorKeys {
     private ErrorKeys(){}

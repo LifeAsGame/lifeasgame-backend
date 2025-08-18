@@ -1,4 +1,4 @@
-package online.lifeasgame.global.api.model;
+package online.lifeasgame.global.error.api.model;
 
 public record FieldErrorItem(String field, String msg, String rejected) {}
 

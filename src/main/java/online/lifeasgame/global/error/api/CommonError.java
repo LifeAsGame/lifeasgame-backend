@@ -1,4 +1,4 @@
-package online.lifeasgame.global.api;
+package online.lifeasgame.global.error.api;
 
 import online.lifeasgame.shared.error.ErrorCode;
 import org.springframework.http.HttpStatus;
