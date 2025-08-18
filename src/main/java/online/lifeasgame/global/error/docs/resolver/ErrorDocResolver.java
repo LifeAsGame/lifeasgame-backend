@@ -26,7 +26,7 @@ public class ErrorDocResolver {
     }
 
     public String forwardTarget(String code) {
-        return "/static/errors/" + code + ".html";
+        return "/errors/" + code + ".html";
     }
 
     public String fallbackForward() {
