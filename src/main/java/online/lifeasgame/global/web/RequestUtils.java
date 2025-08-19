@@ -1,4 +1,4 @@
-package online.lifeasgame.global.util;
+package online.lifeasgame.global.web;
 
 import jakarta.servlet.RequestDispatcher;
 import org.springframework.web.context.request.ServletWebRequest;

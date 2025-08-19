@@ -3,7 +3,7 @@ package online.lifeasgame.global.error.docs.linker;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.global.error.docs.config.AppErrorDocsProperties;
-import online.lifeasgame.global.util.RequestUtils;
+import online.lifeasgame.global.web.RequestUtils;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.WebRequest;
