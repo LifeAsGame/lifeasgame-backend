@@ -32,13 +32,13 @@ public class User extends AbstractTime {
     private String passwordHash;
 
     @Embedded
-    private NickName nickname;
+    private Nickname nickname;
 
     @Enumerated(EnumType.STRING)
     @Column(length=20, nullable=false)
     private UserStatus status = UserStatus.ACTIVE;
 
-    private User(Long id, Email email, String passwordHash, NickName nickname, UserStatus status) {
+    private User(Long id, Email email, String passwordHash, Nickname nickname, UserStatus status) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -47,6 +47,6 @@ public class User extends AbstractTime {
     }
 
     public static User register(String email, String passwordHash, String nickname) {
-        return new User(null, Email.of(email), passwordHash, NickName.of(nickname), UserStatus.ACTIVE);
+        return new User(null, Email.of(email), passwordHash, Nickname.of(nickname), UserStatus.ACTIVE);
     }
 }
