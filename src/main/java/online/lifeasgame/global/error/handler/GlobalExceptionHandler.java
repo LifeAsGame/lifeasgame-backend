@@ -110,7 +110,10 @@ public class GlobalExceptionHandler {
         var err = duplicate ? CommonError.DATA_DUPLICATE : CommonError.DATA_INTEGRITY;
         var pd = pdf.base(err.status(), err.message(), "Data integrity violation", err.code(), req);
 
-        if (msg != null) pd.setProperty(ErrorKeys.REASON, msg);
+        if (msg != null && props.exposeDbReason()) {
+            pd.setProperty(ErrorKeys.REASON, msg);
+        }
+
 
         log.warn("db-integrity duplicate={} path={}", duplicate, pd.getProperties().get(ErrorKeys.PATH));
 
