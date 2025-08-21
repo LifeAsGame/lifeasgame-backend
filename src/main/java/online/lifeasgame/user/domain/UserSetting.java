@@ -2,17 +2,15 @@ package online.lifeasgame.user.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.shared.annotation.AggregateRoot;
 import online.lifeasgame.shared.entity.AbstractTime;
 
 @Entity
+@AggregateRoot
 @Table(name = "user_settings")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSetting extends AbstractTime {
@@ -21,15 +19,8 @@ public class UserSetting extends AbstractTime {
     @Column(name="user_id")
     private Long userId;
 
-    @MapsId
-    @OneToOne(fetch= FetchType.LAZY)
-    @JoinColumn(name="user_id")
-    private User user;
-
-    @Column(length=10)
-    private String language = "ko";
-
-    private Integer volume = 50;
+    @Column(name = "volume")
+    private Volume volume;
 
     @Column(name="ui_layout", columnDefinition="json")
     private String uiLayoutJson;
@@ -37,11 +28,12 @@ public class UserSetting extends AbstractTime {
     @Column(name="flags", columnDefinition="json")
     private String flagsJson;
 
-    public UserSetting(Long userId) {
+    private UserSetting(Long userId, Volume volume) {
         this.userId = userId;
+        this.volume = volume;
     }
 
     public static UserSetting of(Long userId){
-        return new UserSetting(userId);
+        return new UserSetting(userId, Volume.of(50));
     }
 }

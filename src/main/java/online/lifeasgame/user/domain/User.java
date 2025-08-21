@@ -28,17 +28,17 @@ public class User extends AbstractTime {
     @Embedded
     private Email email;
 
-    @Column(name="password_hash", length=200, nullable=false)
-    private String passwordHash;
+    @Embedded
+    private HashedPassword passwordHash;
 
     @Embedded
     private Nickname nickname;
 
     @Enumerated(EnumType.STRING)
     @Column(length=20, nullable=false)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status;
 
-    private User(Long id, Email email, String passwordHash, Nickname nickname, UserStatus status) {
+    private User(Long id, Email email, HashedPassword passwordHash, Nickname nickname, UserStatus status) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -46,7 +46,7 @@ public class User extends AbstractTime {
         this.status = status;
     }
 
-    public static User register(String email, String passwordHash, String nickname) {
-        return new User(null, Email.of(email), passwordHash, Nickname.of(nickname), UserStatus.ACTIVE);
+    public static User register(Email email, HashedPassword passwordHash, Nickname nickname) {
+        return new User(null, email, passwordHash, nickname, UserStatus.ACTIVE);
     }
 }
