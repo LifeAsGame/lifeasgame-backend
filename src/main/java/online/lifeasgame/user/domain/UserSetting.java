@@ -1,6 +1,7 @@
 package online.lifeasgame.user.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -19,7 +20,7 @@ public class UserSetting extends AbstractTime {
     @Column(name="user_id")
     private Long userId;
 
-    @Column(name = "volume")
+    @Embedded
     private Volume volume;
 
     @Column(name="ui_layout", columnDefinition="json")

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.shared.guard.Guard;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -15,10 +16,12 @@ public class Volume {
     @Column(name = "volume", nullable = false)
     private int volume;
 
-    private Volume(int volume) { this.volume = volume; }
+    private Volume(int volume) {
+        Guard.inRange(volume, MIN, MAX, "volume");
+        this.volume = volume;
+    }
 
     public static Volume of(int raw) {
-        if (raw < MIN || raw > MAX) throw new IllegalArgumentException("volume 0~100");
         return new Volume(raw);
     }
 }

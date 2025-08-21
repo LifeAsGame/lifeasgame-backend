@@ -10,15 +10,15 @@ import online.lifeasgame.shared.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HashedPassword {
     @Column(name="password_hash", length=100, nullable=false)
-    private String value;
+    private String passwordHash;
 
-    private HashedPassword(String value) {
-        this.value = value;
+    private HashedPassword(String passwordHash) {
+        Guard.notNull(passwordHash, "hashedPassword");
+        Guard.check(passwordHash.length() >= 50 && passwordHash.length() <= 100, "invalid hash length");
+        this.passwordHash = passwordHash;
     }
 
-    public static HashedPassword of(String hash) {
-        Guard.notNull(hash, "hashedPassword");
-        if (hash.length() < 50) throw new IllegalArgumentException("invalid hash");
-        return new HashedPassword(hash);
+    public static HashedPassword of(String passwordHash) {
+        return new HashedPassword(passwordHash);
     }
 }
