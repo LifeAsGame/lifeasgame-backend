@@ -21,6 +21,12 @@ public final class Guard {
         return s;
     }
 
+    public static String minLength(String s, int min, String name) {
+        notNull(s, name);
+        if (s.length() < min) throw new IllegalArgumentException(name + " length must be " + min + " <=" );
+        return s;
+    }
+
     public static int inRange(int value, int min, int max, String name) {
         if (value < min || value > max)
             throw new IllegalArgumentException(name + " must be between " + min + " and " + max);
@@ -29,6 +35,8 @@ public final class Guard {
 
     public static <E> E oneOf(E value, Set<E> allowed, String name) {
         notNull(value, name);
+        notNull(allowed, name + " allowed set");
+        if (allowed.isEmpty()) throw new IllegalArgumentException(name + " allowed set must not be empty");
         if (!allowed.contains(value)) throw new IllegalArgumentException(name + " must be one of " + allowed);
         return value;
     }
