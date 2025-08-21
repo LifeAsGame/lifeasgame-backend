@@ -29,6 +29,7 @@ public final class Guard {
     }
 
     public static int inRange(int value, int min, int max, String name) {
+        if (min > max) throw new IllegalArgumentException("min must be <= max");
         if (value < min || value > max)
             throw new IllegalArgumentException(name + " must be between " + min + " and " + max);
         return value;
