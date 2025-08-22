@@ -12,17 +12,18 @@ import online.lifeasgame.shared.entity.AbstractTime;
 @Entity
 @Table(name="titles")
 public class Title extends AbstractTime {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length=60, unique=true)
+    @Column(length = 60, unique = true)
     private String code;
 
-    @Column(length=60, nullable=false)
+    @Column(length = 60, nullable = false)
     private String name;
 
     @Lob
-    @Column(name="desc_md")
+    @Column(name = "desc_md")
     private String descMd;
 }
