@@ -18,7 +18,7 @@ public class EquipmentSlot extends AbstractTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 40, unique = true)
+    @Column(length = 40, nullable = false, unique = true)
     private String code; // WEAPON/HEAD/...
 
     @Column(length = 40, nullable = false)
