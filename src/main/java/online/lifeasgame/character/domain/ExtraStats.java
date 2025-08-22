@@ -49,6 +49,8 @@ public final class ExtraStats {
     }
 
     public ExtraStats apply(ExtraStatsDelta delta) {
+        Guard.notNull(delta, "extraStatsDelta");
+
         Map<String, Integer> m = new HashMap<>(this.values);
 
         int sum = this.values.values().stream().mapToInt(i -> i).sum();
