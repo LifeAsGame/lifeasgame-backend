@@ -24,7 +24,7 @@ public final class Guard {
     public static String minLength(String s, int min, String name) {
         notNull(s, name);
         if (min < 0) throw new IllegalArgumentException("min must be >= 0");
-        if (s.length() < min) throw new IllegalArgumentException(name + " length must be " + min + " <=" );
+        if (s.length() < min) throw new IllegalArgumentException(name + " length must be " + ">= " + min );
         return s;
     }
 
