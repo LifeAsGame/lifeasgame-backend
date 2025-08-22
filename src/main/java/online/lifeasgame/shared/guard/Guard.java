@@ -24,8 +24,24 @@ public final class Guard {
     public static String minLength(String s, int min, String name) {
         notNull(s, name);
         if (min < 0) throw new IllegalArgumentException("min must be >= 0");
-        if (s.length() < min) throw new IllegalArgumentException(name + " length must be " + min + " <=" );
+        if (s.length() < min) throw new IllegalArgumentException(name + " length must be " + ">= " + min );
         return s;
+    }
+
+    public static int maxValue(int value, int max, String name) {
+        if (value > max) throw new IllegalArgumentException(name + " must be <= " + max);
+        return value;
+    }
+
+
+    public static int minValue(int value, int min, String name) {
+        if (value < min) throw new IllegalArgumentException(name + " must be >= " + min);
+        return value;
+    }
+
+    public static long minValue(long value, long min, String name) {
+        if (value < min) throw new IllegalArgumentException(name + " must be >= " + min);
+        return value;
     }
 
     public static int inRange(int value, int min, int max, String name) {

@@ -1,0 +1,26 @@
+package online.lifeasgame.character.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import online.lifeasgame.shared.annotation.AggregateRoot;
+import online.lifeasgame.shared.entity.AbstractTime;
+
+@Entity
+@AggregateRoot
+@Table(name="equipment_slots")
+public class EquipmentSlot extends AbstractTime {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(length = 40, nullable = false, unique = true)
+    private String code; // WEAPON/HEAD/...
+
+    @Column(length = 40, nullable = false)
+    private String name;
+}
