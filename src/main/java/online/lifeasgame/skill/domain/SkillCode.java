@@ -14,9 +14,7 @@ public class SkillCode {
     private String value;
 
     private SkillCode(String raw){
-        var v = raw == null ? "" : raw.trim().toUpperCase();
-        Guard.check(v.isEmpty() || v.length() > 60, "invalid skill code");
-        this.value = v;
+        this.value = Guard.maxLength(Guard.notBlank(raw, "code"), 60, "code").trim().toUpperCase();
     }
 
     public static SkillCode of(String raw) {
