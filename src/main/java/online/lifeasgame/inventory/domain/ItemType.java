@@ -16,7 +16,7 @@ public class ItemType {
     private ItemType(String raw) {
         String v = raw == null ? "" : raw.trim().toUpperCase();
         Guard.notBlank(v, "item type");
-        Guard.minLength(v, 40, "item type");
+        Guard.maxLength(v, 40, "item type");
         this.value = v;
     }
 
