@@ -71,6 +71,11 @@ public class QuestAcceptance extends AbstractTime {
     private Long version;
 
     private QuestAcceptance(Long questId, Long playerId, TimePeriod period) {
+        Guard.notNull(questId, "questId");
+        Guard.minValue(questId, 1L, "questId");
+        Guard.notNull(playerId, "playerId");
+        Guard.minValue(playerId, 1L, "playerId");
+        Guard.notNull(period, "period");
         this.questId = questId;
         this.playerId = playerId;
         this.period = period;
@@ -83,6 +88,7 @@ public class QuestAcceptance extends AbstractTime {
 
     public void addProgress(int delta, Quest quest){
         Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
+        Guard.notNull(quest, "quest");
         Guard.minValue(delta, 0, "delta");
         this.progressValue += delta;
         if (quest.target().reachedBy(this.progressValue)) {
@@ -92,6 +98,7 @@ public class QuestAcceptance extends AbstractTime {
 
     public void setProgress(int value, Quest quest){
         Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
+        Guard.notNull(quest, "quest");
         Guard.minValue(value, 0, "progress value");
         this.progressValue = value;
         if (quest.target().reachedBy(this.progressValue)) {
