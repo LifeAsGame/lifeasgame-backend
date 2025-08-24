@@ -10,7 +10,7 @@ import online.lifeasgame.shared.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SkillCode {
 
-    @Column(name = "code", length = 60, unique = true)
+    @Column(name = "code", length = 60, nullable = false, unique = true)
     private String value;
 
     private SkillCode(String raw){
