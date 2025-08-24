@@ -7,7 +7,7 @@ import jakarta.persistence.Converter;
 import java.util.Map;
 
 @Converter
-class InstanceAttrsConverter implements AttributeConverter<InstanceAttrs, String> {
+public class InstanceAttrsConverter implements AttributeConverter<InstanceAttrs, String> {
 
     private static final ObjectMapper M = new ObjectMapper();
     private static final TypeReference<Map<String, Object>> T = new TypeReference<>() {};
