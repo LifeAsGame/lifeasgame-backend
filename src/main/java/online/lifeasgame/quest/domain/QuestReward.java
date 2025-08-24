@@ -1,6 +1,5 @@
 package online.lifeasgame.quest.domain;
 
-import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
@@ -16,7 +15,7 @@ public class QuestReward {
     private int exp;
 
     @Convert(converter = RewardStatsConverter.class)
-    @AttributeOverride(name = "stats", column = @Column(name = "reward_stats", columnDefinition = "json"))
+    @Column(name = "reward_stats", columnDefinition = "json", nullable = false)
     private RewardStats stats;
 
     private QuestReward(int exp, RewardStats stats) {
