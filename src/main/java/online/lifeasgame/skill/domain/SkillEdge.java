@@ -38,7 +38,9 @@ public class SkillEdge extends AbstractTime {
     @PrePersist
     @PreUpdate
     void validate(){
-        Guard.check(!fromSkillId.equals(toSkillId), "edge from != to");
+        Guard.notNull(fromSkillId, "fromSkillId");
+        Guard.notNull(toSkillId, "toSkillId");
+        Guard.check(!fromSkillId.equals(toSkillId), "edge endpoints must differ");
         Guard.minValue(reqLevel, 1, "reqLevel");
     }
 }
