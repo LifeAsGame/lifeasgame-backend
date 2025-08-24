@@ -11,36 +11,29 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import online.lifeasgame.shared.annotation.AggregateRoot;
 
 @AggregateRoot
 @Entity
-@Table(
-        name = "item_instances",
-        indexes = {
-                @Index(name = "idx_owner", columnList = "owner_player_id"),
-                @Index(name = "idx_item", columnList = "item_id")
-        }
-)
+@Table(name = "item_instances")
 public class ItemInstance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "item_id", nullable = false)
-    private Long itemId;         // Item
+    private Long itemId;
 
     @Column(name = "owner_player_id", nullable = false)
     private Long ownerPlayerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(length=20, nullable=false)
+    @Column(length = 20, nullable = false)
     private ItemLocation location = ItemLocation.INVENTORY;
 
-    @Column(name="slot_index")
+    @Column(name = "slot_index")
     private Integer slotIndex;
 
     @Embedded
