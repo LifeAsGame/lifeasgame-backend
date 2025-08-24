@@ -56,6 +56,7 @@ public class TimePeriod {
     }
 
     public boolean contains(LocalDate d){
+        Guard.notNull(d, "date");
         return (d.equals(start) || d.isAfter(start)) && (d.equals(end) || d.isBefore(end));
     }
 
