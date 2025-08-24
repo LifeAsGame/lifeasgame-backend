@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.shared.annotation.AggregateRoot;
@@ -24,6 +25,9 @@ public class PlayerInventory extends AbstractTime {
 
     @Column(name = "weight_limit")
     private Integer weightLimit;
+
+    @Version
+    private Long version;
 
     private PlayerInventory(Long playerId) {
         this.playerId = playerId;
