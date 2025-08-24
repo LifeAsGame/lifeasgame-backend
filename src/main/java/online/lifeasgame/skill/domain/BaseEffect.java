@@ -10,4 +10,8 @@ public record BaseEffect(Map<String, Integer> stats) {
     public static BaseEffect of(Map<String,Integer> m){
         return new BaseEffect(m);
     }
+
+    public static BaseEffect empty() {
+        return new BaseEffect(Map.of());
+    }
 }

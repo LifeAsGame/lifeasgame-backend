@@ -10,24 +10,28 @@ import java.util.Map;
 public class BaseEffectConverter implements AttributeConverter<BaseEffect, String> {
 
     private static final ObjectMapper M = new ObjectMapper();
+    private static final TypeReference<Map<String, Integer>> MAP_TYPE = new TypeReference<>() {};
 
     @Override
     public String convertToDatabaseColumn(BaseEffect attr) {
         try {
-            return M.writeValueAsString(attr == null ? BaseEffect.of(Map.of()) : attr);
+            if (attr == null) {
+                return null;
+            }
+            return M.writeValueAsString(attr.stats());
         } catch (Exception e) {
-            throw new IllegalArgumentException("baseEffect to json", e);
+            throw new IllegalArgumentException("serialize baseEffect", e);
         }
     }
 
     @Override
     public BaseEffect convertToEntityAttribute(String db) {
         if (db == null || db.isBlank()) {
-            return BaseEffect.of(Map.of());
+            return BaseEffect.empty();
         }
         try {
-            var map = M.readValue(db, new TypeReference<Map<String, Integer>>() {});
-            return BaseEffect.of(map);
+            Map<String, Integer> m = M.readValue(db, MAP_TYPE);
+            return BaseEffect.of(m);
         } catch (Exception e) {
             throw new IllegalArgumentException("json to baseEffect", e);
         }
