@@ -23,7 +23,7 @@ public class PairKey {
     public static PairKey of(Long a, Long b) {
         Guard.notNull(a, "pair key");
         Guard.notNull(b, "pair key");
-        Guard.check(a.equals(b), "pair key should be the same");
+        Guard.check(!a.equals(b), "pair key must be different");
         return (a < b) ? new PairKey(a, b) : new PairKey(b, a);
     }
 
