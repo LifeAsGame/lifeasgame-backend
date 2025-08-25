@@ -21,6 +21,7 @@ import online.lifeasgame.shared.guard.Guard;
 @Table(name = "chat_messages",
         indexes = {
                 @Index(name = "idx_message_channel_seq", columnList = "channel_id, id"),
+                @Index(name = "idx_message_channel_time", columnList = "channel_id, created_at, id"),
                 @Index(name = "idx_message_sender", columnList = "sender_id")
         }
 )
