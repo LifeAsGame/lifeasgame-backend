@@ -99,8 +99,11 @@ public class Listing extends AbstractTime {
 
     public ReservationToken reserve(Long buyerId, String holdId, Instant now, int ttlSeconds) {
         Guard.checkState(status == ListingStatus.OPEN, "listing not open");
+        Guard.notNull(buyerId, "buyerId");
         Guard.checkState(!sellerPlayerId.equals(buyerId), "seller cannot reserve own listing");
         Guard.notBlank(holdId, "holdId");
+        Guard.notNull(now, "now");
+        Guard.minValue(ttlSeconds, 1, "ttlSeconds");
 
         this.status = ListingStatus.RESERVED;
         this.reservedBy = Guard.notNull(buyerId, "buyerId");
