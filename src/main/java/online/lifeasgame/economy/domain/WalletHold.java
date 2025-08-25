@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.shared.guard.Guard;
 
 @Entity
 @Table(name = "wallet_holds", indexes = {
@@ -42,6 +43,7 @@ public class WalletHold extends AbstractTime {
     private String holdId;
 
     @Getter
+    @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
     private Currency currency;
 
@@ -59,15 +61,22 @@ public class WalletHold extends AbstractTime {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    public WalletHold(Wallet wallet, String holdId, Currency currency, Long amount, String reason,
+                      Instant expiresAt) {
+        this.wallet = wallet;
+        this.holdId = holdId;
+        this.currency = currency;
+        this.amount = amount;
+        this.reason = reason;
+        this.expiresAt = expiresAt;
+    }
+
     static WalletHold open(Wallet wallet, Currency currency, long amount, String reason, Instant now, int ttlSeconds) {
-        WalletHold h = new WalletHold();
-        h.wallet = wallet;
-        h.currency = currency;
-        h.amount = amount;
-        h.reason = reason;
-        h.holdId = UUID.randomUUID().toString();
-        h.expiresAt = now.plusSeconds(ttlSeconds);
-        return h;
+        Guard.minValue(amount, 1, "amount");
+        Guard.notNull(now, "now");
+        Guard.minValue(ttlSeconds, 1, "ttlSeconds");
+        return new WalletHold(wallet, UUID.randomUUID().toString(), currency, amount, reason,
+                now.plusSeconds(ttlSeconds));
     }
 
     void commit() {
