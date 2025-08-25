@@ -5,6 +5,7 @@ import jakarta.persistence.Embeddable;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.shared.guard.Guard;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -14,7 +15,7 @@ public class ReservationToken {
     private String value;
 
     private ReservationToken(String v){
-        this.value = v;
+        this.value = Guard.maxLength(Guard.notBlank(v, "reservationToken"), 36, "reservationToken");
     }
 
     public static ReservationToken newToken() {
