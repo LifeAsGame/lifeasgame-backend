@@ -103,7 +103,8 @@ public class MediaEntry extends AbstractTime {
     public void finish(Instant when) {
         Guard.checkState(status == MediaStatus.IN_PROGRESS, "finish only from IN_PROGRESS");
         Instant end = when == null ? Instant.now() : when;
-        Guard.checkState(startedAt == null || !end.isBefore(startedAt), "finishedAt before startedAt");
+        Guard.check(startedAt != null && !end.isBefore(startedAt),
+                "cannot finish before start or without startedAt");
         this.status = MediaStatus.DONE;
         this.finishedAt = end;
     }

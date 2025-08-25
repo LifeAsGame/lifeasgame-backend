@@ -70,7 +70,9 @@ public class CollectionItem extends AbstractTime {
     private CollectionItem(Long playerId, CollectionCategory category, String name, Instant acquiredAt) {
         this.playerId = Guard.notNull(playerId, "playerId");
         this.category = Guard.notNull(category, "category");
-        this.name = Guard.notBlank(name, "name");
+        Guard.notBlank(name, "name");
+        Guard.inRange(name.length(), 1, 120, "name");
+        this.name = name;
         this.acquiredAt = Guard.notNull(acquiredAt, "acquiredAt");
     }
 
@@ -79,9 +81,9 @@ public class CollectionItem extends AbstractTime {
     }
 
     public void describe(String description, String source, String imageUrl) {
-        this.description = description;
-        this.source = source;
-        this.imageUrl = imageUrl;
+        this.description = (description == null) ? null : Guard.maxLength(description.strip(), 200, "description");
+        this.source = (source == null) ? null : Guard.maxLength(source.strip(), 80, "source");
+        this.imageUrl = (imageUrl == null) ? null : Guard.maxLength(imageUrl.strip(), 300, "imageUrl");
     }
 
     public void addTag(String t) { this.tags.add(Tag.of(t)); }

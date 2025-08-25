@@ -39,7 +39,7 @@ public class WorkoutSession extends AbstractTime {
     private Long id;
 
     @Column(name = "player_id", nullable = false)
-    private Long playerId; // 외부(Player) → 간접
+    private Long playerId;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
@@ -83,16 +83,24 @@ public class WorkoutSession extends AbstractTime {
     }
 
     public void end(Instant when) {
+        Guard.checkState(this.endedAt == null, "already ended");
         Instant end = when == null ? Instant.now() : when;
         Guard.checkState(!end.isBefore(startedAt), "endedAt before startedAt");
         this.endedAt = end;
-        if (this.durationMin == null) {
-            long minutes = Math.max(0, (end.toEpochMilli() - startedAt.toEpochMilli()) / 60000);
-            this.durationMin = (int) Math.min(Integer.MAX_VALUE, minutes);
-        }
+        long minutes = Math.max(0, (end.toEpochMilli() - startedAt.toEpochMilli()) / 60000);
+        this.durationMin = (int) Math.min(Integer.MAX_VALUE, minutes);
     }
 
     public void metrics(Double distanceKm, Integer calories, Integer rpe) {
+        if (distanceKm != null) {
+            Guard.check(distanceKm >= 0.0, "distanceKm must be >= 0");
+        }
+        if (calories != null) {
+            Guard.minValue(calories, 0, "calories");
+        }
+        if (rpe != null) {
+            Guard.inRange(rpe, 0, 10, "rpe 0~10");
+        }
         this.distanceKm = distanceKm;
         this.calories = calories;
         this.rpe = rpe;
