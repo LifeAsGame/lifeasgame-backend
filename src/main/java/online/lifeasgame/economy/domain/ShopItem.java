@@ -56,7 +56,9 @@ public class ShopItem extends AbstractTime {
     }
 
     public void changePrice(Money newPrice) {
-        this.price = Guard.notNull(newPrice, "price");
+        Guard.notNull(newPrice, "new price");
+        Guard.check(newPrice.currency() == this.price.currency(), "currency cannot change");
+        this.price = newPrice;
     }
 
     public void enable() {
