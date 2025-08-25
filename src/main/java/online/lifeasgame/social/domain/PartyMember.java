@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.shared.guard.Guard;
 
 @Getter
 @Entity
@@ -47,7 +48,10 @@ public class PartyMember extends AbstractTime {
     @Version
     private Long version;
 
-    public PartyMember(Party party, Long playerId, PartyRole role) {
+    private PartyMember(Party party, Long playerId, PartyRole role) {
+        Guard.notNull(party, "party");
+        Guard.notNull(playerId, "playerId");
+        Guard.minValue(playerId, 1, "playerId");
         this.party = party;
         this.playerId = playerId;
         this.role = role == null ? PartyRole.MEMBER : role;
