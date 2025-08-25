@@ -3,6 +3,7 @@ package online.lifeasgame.economy.domain;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,10 +35,20 @@ public class Wallet extends AbstractTime {
     @Version
     private Long version;
 
-    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "wallet",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<WalletBalance> balances = new ArrayList<>();
 
-    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "wallet",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<WalletHold> holds = new ArrayList<>();
 
     public static Wallet open(Long ownerId) {
@@ -90,6 +101,7 @@ public class Wallet extends AbstractTime {
     }
 
     private WalletBalance balance(Currency currency){
+        Guard.notNull(currency, "currency");
         Optional<WalletBalance> o = balances.stream()
                 .filter(b -> b.getCurrency() == currency)
                 .findFirst();
