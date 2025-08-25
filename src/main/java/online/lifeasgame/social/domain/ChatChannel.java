@@ -44,6 +44,7 @@ public class ChatChannel extends AbstractTime {
     @Column(name = "context_id")
     private Long contextId;
 
+    @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "low", column = @Column(name = "dm_low_id")),
             @AttributeOverride(name = "high", column = @Column(name = "dm_high_id"))
@@ -76,7 +77,7 @@ public class ChatChannel extends AbstractTime {
     }
 
     public static ChatChannel whisper(Long a, Long b) {
-        return new ChatChannel(ChatChannelType.WHISPER, ChannelName.of(null), null, PairKey.of(a, b));
+        return new ChatChannel(ChatChannelType.WHISPER, null, null, PairKey.of(a, b));
     }
 
     public static ChatChannel systemRoom(String name) {
