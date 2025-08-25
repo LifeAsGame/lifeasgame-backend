@@ -1,5 +1,7 @@
 package online.lifeasgame.social.domain;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -16,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.shared.annotation.AggregateRoot;
 import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.shared.guard.Guard;
 
 @Entity
 @AggregateRoot
@@ -32,13 +35,17 @@ public class Friendship extends AbstractTime {
     private Long id;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "low", column = @Column(name = "low_id", nullable = false)),
+            @AttributeOverride(name = "high", column = @Column(name = "high_id", nullable = false))
+    })
     private PairKey pair;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private FriendshipStatus status;
 
-    @Column(name = "requested_by", nullable = false)
+    @Column(name = "requested_by")
     private Long requestedBy;
 
     @Column(name = "blocked_by")
@@ -62,32 +69,23 @@ public class Friendship extends AbstractTime {
     }
 
     public void accept(Long byUser) {
-        if (!involves(byUser)) {
-            throw new IllegalStateException("not a participant");
-        }
-        if (status != FriendshipStatus.PENDING) {
-            throw new IllegalStateException("not pending");
-        }
-        if (requestedBy.equals(byUser)) {
-            throw new IllegalStateException("requester cannot accept");
-        }
+        Guard.check(involves(byUser), "not a participant");
+        Guard.checkState(status == FriendshipStatus.PENDING, "not pending");
+        Guard.check(!requestedBy.equals(byUser), "request cannot accept");
         status = FriendshipStatus.ACCEPTED;
-        requestedBy = null; // requester no longer relevant
+        requestedBy = null;
     }
 
     public void block(Long byUser) {
-        if (!involves(byUser)) {
-            throw new IllegalStateException();
-        }
+        Guard.check(involves(byUser), "not a participant");
         status = FriendshipStatus.BLOCKED;
         blockedBy = byUser;
     }
 
     public void unblock(Long byUser) {
-        if (status != FriendshipStatus.BLOCKED || !byUser.equals(blockedBy)) {
-            throw new IllegalStateException();
-        }
-        status = FriendshipStatus.ACCEPTED;
+        Guard.check(status == FriendshipStatus.PENDING, "not pending");
+        Guard.check(byUser.equals(blockedBy), "block cannot unblock");
+        status = (requestedBy != null) ? FriendshipStatus.PENDING : FriendshipStatus.ACCEPTED;
         blockedBy = null;
     }
 }
