@@ -1,7 +1,7 @@
 package online.lifeasgame.character.domain;
 
 import java.util.Map;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.guard.Guard;
 
 public record ExtraStatsDelta(Map<String, Integer> values) {
     public ExtraStatsDelta {

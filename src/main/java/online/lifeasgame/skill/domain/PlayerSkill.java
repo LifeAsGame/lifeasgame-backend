@@ -8,7 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
-import online.lifeasgame.shared.annotation.AggregateRoot;
+import online.lifeasgame.core.annotation.AggregateRoot;
 
 @Entity
 @AggregateRoot

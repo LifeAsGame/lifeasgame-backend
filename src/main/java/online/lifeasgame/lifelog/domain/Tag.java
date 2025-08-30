@@ -6,7 +6,7 @@ import java.util.Locale;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

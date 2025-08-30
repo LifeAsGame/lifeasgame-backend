@@ -13,7 +13,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import online.lifeasgame.shared.annotation.AggregateRoot;
+import online.lifeasgame.core.annotation.AggregateRoot;
 
 @Entity
 @AggregateRoot

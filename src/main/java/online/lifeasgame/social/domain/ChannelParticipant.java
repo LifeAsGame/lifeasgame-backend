@@ -16,7 +16,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Entity
 @Table(
