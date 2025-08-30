@@ -1,6 +1,6 @@
 package online.lifeasgame.user.application.model;
 
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.guard.Guard;
 
 public record RawPassword(String value) {
     public RawPassword {

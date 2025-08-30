@@ -8,7 +8,7 @@ import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

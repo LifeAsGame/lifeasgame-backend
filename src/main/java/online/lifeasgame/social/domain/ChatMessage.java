@@ -14,8 +14,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.entity.AbstractTime;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.core.guard.Guard;
 
 @Entity
 @Table(name = "chat_messages",

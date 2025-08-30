@@ -1,7 +1,7 @@
 package online.lifeasgame.character.domain;
 
 import java.util.List;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.guard.Guard;
 
 public class StatusEffects {
 

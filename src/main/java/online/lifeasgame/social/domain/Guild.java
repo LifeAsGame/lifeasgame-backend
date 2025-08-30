@@ -12,9 +12,9 @@ import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.annotation.AggregateRoot;
-import online.lifeasgame.shared.entity.AbstractTime;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.core.guard.Guard;
 
 @Getter
 @Entity

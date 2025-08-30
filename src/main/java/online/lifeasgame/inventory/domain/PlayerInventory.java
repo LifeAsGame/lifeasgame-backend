@@ -7,8 +7,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.annotation.AggregateRoot;
-import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Entity
 @AggregateRoot

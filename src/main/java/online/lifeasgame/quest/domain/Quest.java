@@ -11,8 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import online.lifeasgame.shared.annotation.AggregateRoot;
-import online.lifeasgame.shared.entity.AbstractTime;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Entity
 @AggregateRoot

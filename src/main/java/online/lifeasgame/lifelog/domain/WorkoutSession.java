@@ -19,9 +19,9 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.shared.annotation.AggregateRoot;
-import online.lifeasgame.shared.entity.AbstractTime;
-import online.lifeasgame.shared.guard.Guard;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.core.guard.Guard;
 
 @Entity
 @AggregateRoot

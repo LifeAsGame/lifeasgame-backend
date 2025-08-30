@@ -13,7 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import online.lifeasgame.shared.annotation.AggregateRoot;
+import online.lifeasgame.core.annotation.AggregateRoot;
 
 @AggregateRoot
 @Entity
