@@ -11,6 +11,7 @@ import online.lifeasgame.platform.web.error.handler.ViolationMapper;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import online.lifeasgame.core.error.BaseException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,7 +32,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ProblemDetail> handleBase(BaseException ex, WebRequest req) {
         var ec = ex.getErrorCode();
-        var pd = pdf.base(ec.status(), ec.message(), ex.getMessage(), ec.code(), req);
+        var status = HttpStatus.valueOf(ec.status());
+        var pd = pdf.base(status, ec.message(), ex.getMessage(), ec.code(), req);
 
         log.error("domain error code={} path={}", ec.code(), pd.getProperties().get(ErrorKeys.PATH), ex);
 
@@ -41,7 +43,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
     public ResponseEntity<ProblemDetail> handleBadInput(Exception ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
-        var pd = pdf.base(err.status(), err.message(), readable(ex, err.message()), err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), readable(ex, err.message()), err.code(), req);
 
         log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), ex.getMessage());
 
@@ -51,7 +54,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex, WebRequest req) {
         var err = CommonError.REQ_VALIDATION;
-        var pd  = pdf.base(err.status(), err.message(), "Request body contains invalid fields", err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd  = pdf.base(status, err.message(), "Request body contains invalid fields", err.code(), req);
         var errors = FieldErrorMapper.from(ex.getBindingResult(), props.maskFields());
         pd.setProperty(ErrorKeys.ERRORS, errors);
 
@@ -63,7 +67,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraint(ConstraintViolationException ex, WebRequest req) {
         var err = CommonError.REQ_VALIDATION;
-        var pd  = pdf.base(err.status(), err.message(), "Constraint violation", err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd  = pdf.base(status, err.message(), "Constraint violation", err.code(), req);
         var violations = ViolationMapper.from(ex, props.maskProps());
         pd.setProperty(ErrorKeys.ERRORS, violations);
 
@@ -75,7 +80,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     public ResponseEntity<ProblemDetail> handleIllegal(RuntimeException ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
-        var pd = pdf.base(err.status(), err.message(), readable(ex, err.message()), err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), readable(ex, err.message()), err.code(), req);
 
         log.warn("400 illegal-arg path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), ex.getMessage());
 
@@ -84,8 +90,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ProblemDetail> handleNoResource(NoResourceFoundException ex, WebRequest req) {
-        var err = CommonError.  NOT_FOUND;
-        var pd = pdf.base(err.status(), err.message(), "Resource not found: " + ex.getResourcePath(), err.code(), req);
+        var err = CommonError.NOT_FOUND;
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), "Resource not found: " + ex.getResourcePath(), err.code(), req);
 
         log.warn("404 not-found path={}", pd.getProperties().get(ErrorKeys.PATH));
 
@@ -108,7 +115,8 @@ public class GlobalExceptionHandler {
         }
 
         var err = duplicate ? CommonError.DATA_DUPLICATE : CommonError.DATA_INTEGRITY;
-        var pd = pdf.base(err.status(), err.message(), "Data integrity violation", err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), "Data integrity violation", err.code(), req);
 
         if (msg != null && props.exposeDbReason()) {
             pd.setProperty(ErrorKeys.REASON, msg);
@@ -123,7 +131,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleEtc(Exception ex, WebRequest req) {
         var err = CommonError.GEN_000;
-        var pd = pdf.base(err.status(), err.message(), err.message(), err.code(), req);
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), err.message(), err.code(), req);
 
         log.error("500 unhandled path={}", pd.getProperties().get(ErrorKeys.PATH), ex);
 
