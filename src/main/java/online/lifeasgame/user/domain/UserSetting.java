@@ -6,10 +6,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
+@Getter
 @Entity
 @AggregateRoot
 @Table(name = "user_settings")
@@ -17,16 +19,16 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 public class UserSetting extends AbstractTime {
 
     @Id
-    @Column(name="user_id")
+    @Column(name = "user_id")
     private Long userId;
 
     @Embedded
     private Volume volume;
 
-    @Column(name="ui_layout", columnDefinition="json")
+    @Column(name = "ui_layout", columnDefinition = "json")
     private String uiLayoutJson;
 
-    @Column(name="flags", columnDefinition="json")
+    @Column(name = "flags", columnDefinition = "json")
     private String flagsJson;
 
     private UserSetting(Long userId, Volume volume) {
@@ -34,7 +36,7 @@ public class UserSetting extends AbstractTime {
         this.volume = volume;
     }
 
-    public static UserSetting of(Long userId){
+    public static UserSetting ensureDefault(Long userId) {
         return new UserSetting(userId, Volume.of(50));
     }
 }
