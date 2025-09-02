@@ -3,7 +3,7 @@ package online.lifeasgame.core.response.code;
 public enum CommonSuccess implements SuccessCode {
     OK(200, "COMMON-200", "성공입니다."),
     CREATED(201, "COMMON-201", "생성에 성공했습니다."),
-    DELETED(200, "COMMON-202", "삭제에 성공했습니다.");
+    DELETED(204, "COMMON-204", "삭제에 성공했습니다.");
 
     private final int status;
     private final String code;
