@@ -33,7 +33,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleBase(BaseException ex, WebRequest req) {
         var ec = ex.getErrorCode();
         var status = HttpStatus.valueOf(ec.status());
-        var pd = pdf.base(status, ec.message(), ex.getMessage(), ec.code(), req);
+        var detail = ex.detail() != null ? ex.detail() : ec.message();
+        var pd = pdf.base(status, ec.message(), detail, ec.code(), req);
 
         log.error("domain error code={} path={}", ec.code(), pd.getProperties().get(ErrorKeys.PATH), ex);
 
