@@ -3,6 +3,7 @@ package online.lifeasgame.platform.web.error;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import online.lifeasgame.core.error.Sensitivity;
 import online.lifeasgame.core.error.api.CommonError;
 import online.lifeasgame.core.error.ErrorKeys;
 import online.lifeasgame.platform.web.error.handler.FieldErrorMapper;
@@ -63,9 +64,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleBadInput(Exception ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
         var status = HttpStatus.valueOf(err.status());
-        var pd = pdf.base(status, err.message(), readable(ex, err.message()), err.code(), req);
+        String detail = buildResponseDetail(ex, err.message(), Sensitivity.PII);
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
 
-        log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), ex.getMessage());
+        String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
+        log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
         return ResponseEntity.status(err.status()).body(pd);
     }
@@ -100,9 +103,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleIllegal(RuntimeException ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
         var status = HttpStatus.valueOf(err.status());
-        var pd = pdf.base(status, err.message(), readable(ex, err.message()), err.code(), req);
+        String detail = buildResponseDetail(ex, err.message(), Sensitivity.PII);
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
 
-        log.warn("400 illegal-arg path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), ex.getMessage());
+        String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
+        log.warn("400 illegal-arg path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
         return ResponseEntity.status(err.status()).body(pd);
     }
@@ -160,5 +165,25 @@ public class GlobalExceptionHandler {
 
     private String readable(Exception ex, String fallback) {
         return ex.getMessage()!=null ? ex.getMessage() : fallback;
+    }
+
+    private String buildResponseDetail(Exception ex, String fallback, Sensitivity sen) {
+        if (!props.includeDetailInResponse()) {
+            return null;
+        }
+        String raw = readable(ex, fallback);
+        return scrubber.scrub(raw, sen);
+    }
+
+    private String buildLogMessage(String raw, Sensitivity sen) {
+        if (raw == null) {
+            return null;
+        }
+
+        if (!props.maskDetailAlwaysInLogs()) {
+            return raw;
+        }
+
+        return scrubber.scrub(raw, sen);
     }
 }
