@@ -44,20 +44,22 @@ public class GlobalExceptionHandler {
 
         var pd = pdf.base(status, ec.message(), responseDetail, ec.code(), req);
 
-        String logDetail = ex.detail();
-        if (props.maskDetailAlwaysInLogs()) {
-            logDetail = scrubber.scrub(logDetail, ec.sensitivity());
-        }
+        String logDetail = buildLogMessage(ex.detail(), ec.sensitivity());
 
         if (status.is4xxClientError()) {
             log.warn("domain-4xx code={} status={} path={} detail={}",
                     ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail);
         } else {
-            log.error("domain-5xx code={} status={} path={} detail={}",
-                    ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail, ex);
+            if (mustMask(ec.sensitivity())) {
+                log.error("domain-5xx code={} status={} path={} detail={}",
+                        ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail);
+            } else {
+                log.error("domain-5xx code={} status={} path={} detail={}",
+                        ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail, ex);
+            }
         }
 
-        return ResponseEntity.status(ec.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
@@ -70,7 +72,7 @@ public class GlobalExceptionHandler {
         String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
         log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -83,7 +85,7 @@ public class GlobalExceptionHandler {
 
         log.warn("400 validation size={} path={}", errors.size(), pd.getProperties().get(ErrorKeys.PATH));
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -96,7 +98,7 @@ public class GlobalExceptionHandler {
 
         log.warn("400 constraint size={} path={}", violations.size(), pd.getProperties().get(ErrorKeys.PATH));
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
@@ -109,18 +111,19 @@ public class GlobalExceptionHandler {
         String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
         log.warn("400 illegal-arg path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ProblemDetail> handleNoResource(NoResourceFoundException ex, WebRequest req) {
         var err = CommonError.NOT_FOUND;
         var status = HttpStatus.valueOf(err.status());
-        var pd = pdf.base(status, err.message(), "Resource not found: " + ex.getResourcePath(), err.code(), req);
+        String detail = props.includeDetailInResponse() ? "Resource not found: " + ex.getResourcePath() : null;
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
 
         log.warn("404 not-found path={}", pd.getProperties().get(ErrorKeys.PATH));
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -133,7 +136,11 @@ public class GlobalExceptionHandler {
         if (cause instanceof org.hibernate.exception.ConstraintViolationException hce) {
             String sqlState = hce.getSQLState();
             int vendorCode  = hce.getErrorCode();
-            duplicate = "23000".equals(sqlState) || vendorCode == 1062;
+            boolean sqlDup = false;
+            if (sqlState != null) {
+                sqlDup = "23505".equals(sqlState) || "23000".equals(sqlState);
+            }
+            duplicate = sqlDup || vendorCode == 1062;
         } else if (msg != null && msg.toLowerCase().contains("duplicate")) {
             duplicate = true;
         }
@@ -146,10 +153,9 @@ public class GlobalExceptionHandler {
             pd.setProperty(ErrorKeys.REASON, msg);
         }
 
-
         log.warn("db-integrity duplicate={} path={}", duplicate, pd.getProperties().get(ErrorKeys.PATH));
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(Exception.class)
@@ -160,11 +166,11 @@ public class GlobalExceptionHandler {
 
         log.error("500 unhandled path={}", pd.getProperties().get(ErrorKeys.PATH), ex);
 
-        return ResponseEntity.status(err.status()).body(pd);
+        return ResponseEntity.status(status).body(pd);
     }
 
     private String readable(Exception ex, String fallback) {
-        return ex.getMessage()!=null ? ex.getMessage() : fallback;
+        return ex.getMessage() != null ? ex.getMessage() : fallback;
     }
 
     private String buildResponseDetail(Exception ex, String fallback, Sensitivity sen) {
@@ -172,7 +178,8 @@ public class GlobalExceptionHandler {
             return null;
         }
         String raw = readable(ex, fallback);
-        return scrubber.scrub(raw, sen);
+        String scrubbed = scrubber.scrub(raw, sen);
+        return scrubbed != null ? scrubbed : fallback;
     }
 
     private String buildLogMessage(String raw, Sensitivity sen) {
@@ -180,10 +187,16 @@ public class GlobalExceptionHandler {
             return null;
         }
 
-        if (!props.maskDetailAlwaysInLogs()) {
+        if (!mustMask(sen)) {
             return raw;
         }
 
         return scrubber.scrub(raw, sen);
+    }
+
+    private boolean mustMask(Sensitivity s) {
+        return props.maskDetailAlwaysInLogs()
+                || s == Sensitivity.SECRET
+                || s == Sensitivity.PCI;
     }
 }
