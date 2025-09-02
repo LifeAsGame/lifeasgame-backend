@@ -1,5 +1,6 @@
 package online.lifeasgame.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -7,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
-@Getter
+@Getter(onMethod_ = @JsonIgnore)
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HashedPassword {
@@ -17,6 +18,7 @@ public class HashedPassword {
 
     private HashedPassword(String value) {
         Guard.notBlank(value, "hashedPassword");
+        Guard.check(value.length() >= 20, "hashedPassword too short");
         this.value = value;
     }
 
