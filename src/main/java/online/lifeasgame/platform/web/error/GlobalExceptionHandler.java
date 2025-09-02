@@ -28,15 +28,33 @@ public class GlobalExceptionHandler {
 
     private final ProblemDetailFactory pdf;
     private final AppErrorProperties props;
+    private final PiiScrubber scrubber;
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ProblemDetail> handleBase(BaseException ex, WebRequest req) {
         var ec = ex.getErrorCode();
         var status = HttpStatus.valueOf(ec.status());
-        var detail = ex.detail() != null ? ex.detail() : ec.message();
-        var pd = pdf.base(status, ec.message(), detail, ec.code(), req);
+        String responseDetail = null;
 
-        log.error("domain error code={} path={}", ec.code(), pd.getProperties().get(ErrorKeys.PATH), ex);
+        if (props.includeDetailInResponse()) {
+            responseDetail = scrubber.scrub(ex.detail(), ec.sensitivity());
+            if (responseDetail == null) responseDetail = ec.message();
+        }
+
+        var pd = pdf.base(status, ec.message(), responseDetail, ec.code(), req);
+
+        String logDetail = ex.detail();
+        if (props.maskDetailAlwaysInLogs()) {
+            logDetail = scrubber.scrub(logDetail, ec.sensitivity());
+        }
+
+        if (status.is4xxClientError()) {
+            log.warn("domain-4xx code={} status={} path={} detail={}",
+                    ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail);
+        } else {
+            log.error("domain-5xx code={} status={} path={} detail={}",
+                    ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail, ex);
+        }
 
         return ResponseEntity.status(ec.status()).body(pd);
     }
