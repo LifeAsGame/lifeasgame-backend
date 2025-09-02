@@ -14,7 +14,7 @@ import online.lifeasgame.core.guard.Guard;
 public class Email {
 
     @Column(name = "email", nullable = false, length = 254)
-    public String value;
+    private String value;
 
     private Email(String raw) {
         String value = Guard.notBlank(raw, "email").toLowerCase(Locale.ROOT);
