@@ -8,7 +8,7 @@ public class UserRequest {
     public record Register(
             @Email @NotBlank String email,
             @NotBlank @Size(min = 8, max = 72) String password,
-            @NotBlank String nickname
+            @NotBlank @Size(min = 2, max = 20) String nickname
     ) {
     }
 }
