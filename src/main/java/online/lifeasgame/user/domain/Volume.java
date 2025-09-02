@@ -14,14 +14,14 @@ public class Volume {
     public static final int MAX = 100;
 
     @Column(name = "volume", nullable = false)
-    private int volume;
+    private int value;
 
-    private Volume(int volume) {
-        Guard.inRange(volume, MIN, MAX, "volume");
-        this.volume = volume;
+    private Volume(int value) {
+        Guard.inRange(value, MIN, MAX, "volume");
+        this.value = value;
     }
 
-    public static Volume of(int raw) {
-        return new Volume(raw);
+    public static Volume of(int value) {
+        return new Volume(value);
     }
 }
