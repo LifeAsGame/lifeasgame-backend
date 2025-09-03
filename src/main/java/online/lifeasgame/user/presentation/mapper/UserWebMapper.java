@@ -14,4 +14,8 @@ public final class UserWebMapper {
     public static UserResponse.Created toCreated(UserResult.Created userResult) {
         return UserResponse.Created.of(userResult.id());
     }
+
+    public static UserResponse.UserInfo toUserInfo(UserResult.UserInfo userInfo) {
+        return UserResponse.UserInfo.of(userInfo.email(), userInfo.nickname());
+    }
 }

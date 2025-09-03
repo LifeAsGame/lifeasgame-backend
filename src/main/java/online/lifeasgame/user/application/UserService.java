@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserWriter userWriter;
+    private final UserReader userReader;
     private final PasswordHasher passwordHasher;
 
     @Transactional
@@ -26,5 +27,9 @@ public class UserService {
                     Nickname.of(register.nickname())
                 )
         );
+    }
+
+    public UserResult.UserInfo getUserInfo(Long userId) {
+        return UserResult.UserInfo.from(userReader.findById(userId));
     }
 }
