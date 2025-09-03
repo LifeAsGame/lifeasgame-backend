@@ -6,4 +6,10 @@ public class UserResponse {
             return new Created(id);
         }
     }
+
+    public record UserInfo(String email, String name) {
+        public static UserInfo of(String email, String name) {
+            return new UserInfo(email, name);
+        }
+    }
 }
