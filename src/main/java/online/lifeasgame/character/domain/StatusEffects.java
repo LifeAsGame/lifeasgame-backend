@@ -1,9 +1,11 @@
 package online.lifeasgame.character.domain;
 
 import java.util.List;
+import lombok.EqualsAndHashCode;
 import online.lifeasgame.core.guard.Guard;
 
-public class StatusEffects {
+@EqualsAndHashCode
+public final class StatusEffects {
 
     private final List<String> effects;
 

@@ -3,10 +3,12 @@ package online.lifeasgame.character.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Experience {
 
@@ -29,15 +31,5 @@ public class Experience {
     public Experience plus(long delta) {
         Guard.minValue(delta, 0, "delta");
         return new Experience(value + delta);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return (o instanceof Experience e) && e.value == value;
-    }
-
-    @Override
-    public int hashCode() {
-        return Long.hashCode(value);
     }
 }
