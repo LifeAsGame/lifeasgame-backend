@@ -2,7 +2,7 @@ package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Player;
-import online.lifeasgame.character.domain.PlayerRegistered;
+import online.lifeasgame.character.domain.event.PlayerRegistered;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
 import online.lifeasgame.core.error.DomainException;
@@ -27,7 +27,7 @@ public class PlayerWriter {
         Player savedPlayer = playerRepository.save(player);
 
         domainEventPublisher.publish(
-                PlayerRegistered.of()
+                PlayerRegistered.of(savedPlayer.getId())
         );
 
         return savedPlayer.getId();

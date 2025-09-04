@@ -3,9 +3,9 @@ package online.lifeasgame.character.infra;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class PlayerRepositoryAdapter implements PlayerRepository {
 

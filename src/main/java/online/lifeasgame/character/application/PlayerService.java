@@ -21,7 +21,7 @@ public class PlayerService {
         Player player = Player.linkStart(
                 userId,
                 Name.of(register.name()),
-                GenderType.valueOf(register.gender())
+                GenderType.parse(register.gender())
         );
 
         return PlayerResult.Created.of(
