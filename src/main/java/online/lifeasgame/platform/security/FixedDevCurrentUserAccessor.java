@@ -13,6 +13,6 @@ public class FixedDevCurrentUserAccessor implements CurrentUserAccessor {
 
     @Override
     public Optional<Long> currentUserId() {
-        return Optional.of(1L);
+        return Optional.of(6L);
     }
 }

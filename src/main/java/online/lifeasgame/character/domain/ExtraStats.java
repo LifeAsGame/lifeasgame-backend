@@ -18,13 +18,15 @@ public final class ExtraStats {
     private static final int MAX_PER_STAT = 100;
     private static final int MAX_TOTAL = 500;
 
-    private final Map<String,Integer> values;
+    private final Map<String, Integer> values;
 
     private ExtraStats(Map<String, Integer> normalized) {
         this.values = Collections.unmodifiableMap(normalized);
     }
 
-    public static ExtraStats empty(){ return new ExtraStats(Map.of()); }
+    public static ExtraStats empty() {
+        return new ExtraStats(Map.of());
+    }
 
     public static ExtraStats of(Map<String, Integer> raw) {
         Guard.notNull(raw, "extraStats");
