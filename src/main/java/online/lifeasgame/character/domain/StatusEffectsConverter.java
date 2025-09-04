@@ -12,7 +12,8 @@ public class StatusEffectsConverter implements AttributeConverter<StatusEffects,
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final TypeReference<List<String>> TYPE = new TypeReference<>() {};
 
-    @Override public String convertToDatabaseColumn(StatusEffects attribute) {
+    @Override
+    public String convertToDatabaseColumn(StatusEffects attribute) {
         try {
             if (attribute == null) {
                 return null;
@@ -22,7 +23,8 @@ public class StatusEffectsConverter implements AttributeConverter<StatusEffects,
             throw new IllegalArgumentException(e);
         }
     }
-    @Override public StatusEffects convertToEntityAttribute(String dbData) {
+    @Override
+    public StatusEffects convertToEntityAttribute(String dbData) {
         try {
             if (dbData == null || dbData.isBlank()) {
                 return StatusEffects.empty();

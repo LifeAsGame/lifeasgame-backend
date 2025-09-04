@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,10 +11,13 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
+@Getter
 @Entity
 @AggregateRoot
 @Table(name = "player",
@@ -37,7 +38,7 @@ public class Player extends AbstractTime {
     private Name name;
 
     @Column(length=20)
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GenderTypeConverter.class)
     private GenderType gender;
 
     @Column(length=30)
@@ -47,19 +48,19 @@ public class Player extends AbstractTime {
     private Long guildId;
 
     @Embedded
-    private Level level = Level.of(1);
+    private Level level;
 
     @Embedded
-    private Experience exp = Experience.of(0);
+    private Experience exp;
 
     @Embedded
-    private Health health = Health.full(100);
+    private Health health;
 
     @Embedded
-    private Mana mana = Mana.full(50);
+    private Mana mana;
 
     @Embedded
-    private CoreStats stats = CoreStats.defaults();
+    private CoreStats stats;
 
     @Convert(converter = ExtraStatsConverter.class)
     @Column(name = "extra_stats", columnDefinition = "json")
@@ -75,14 +76,20 @@ public class Player extends AbstractTime {
     @Version
     private Long version;
 
-
-    private Player(Long id, Long userId, Name name) {
-        this.id = id;
-        this.userId = userId;
-        this.name = name;
+    private Player(Long userId, Name name, GenderType gender) {
+        this.userId = Guard.notNull(userId, "userId");
+        this.name = Guard.notNull(name, "name");
+        this.gender = Guard.notNull(gender, "gender");
+        this.level  = Level.of(1);
+        this.exp    = Experience.of(0);
+        this.health = Health.full(100);
+        this.mana   = Mana.full(50);
+        this.stats  = CoreStats.defaults();
+        this.extraStats   = ExtraStats.empty();
+        this.statusEffects = StatusEffects.empty();
     }
 
-    public static Player create(Long userId, String nameRaw){
-        return new Player(null, userId, Name.of(nameRaw));
+    public static Player linkStart(Long userId, Name name, GenderType gender) {
+        return new Player(userId, name, gender);
     }
 }

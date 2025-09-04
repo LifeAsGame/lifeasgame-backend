@@ -3,10 +3,12 @@ package online.lifeasgame.character.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Level {
 
@@ -28,15 +30,5 @@ public class Level {
 
     public Level next() {
         return new Level(value + 1);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return (o instanceof Level l) && l.value == value;
-    }
-
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(value);
     }
 }
