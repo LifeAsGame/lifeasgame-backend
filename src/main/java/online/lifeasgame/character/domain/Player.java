@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Getter
@@ -39,7 +38,7 @@ public class Player extends AbstractTime {
     private Name name;
 
     @Column(length=20)
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GenderTypeConverter.class)
     private GenderType gender;
 
     @Column(length=30)
@@ -78,9 +77,9 @@ public class Player extends AbstractTime {
     private Long version;
 
     private Player(Long userId, Name name, GenderType gender) {
-        this.userId = userId;
-        this.name = name;
-        this.gender = gender;
+        this.userId = Guard.notNull(userId, "userId");
+        this.name = Guard.notNull(name, "name");
+        this.gender = Guard.notNull(gender, "gender");
         this.level  = Level.of(1);
         this.exp    = Experience.of(0);
         this.health = Health.full(100);
