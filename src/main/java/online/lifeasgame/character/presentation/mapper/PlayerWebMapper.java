@@ -13,4 +13,26 @@ public class PlayerWebMapper {
     public static PlayerResponse.Created toCreated(PlayerResult.Created playerResult) {
         return new PlayerResponse.Created(playerResult.id());
     }
+
+    public static PlayerResponse.PlayerInfo toPlayerInfo(PlayerResult.PlayerInfo playerInfo) {
+        return PlayerResponse.PlayerInfo.of(
+                playerInfo.name(),
+                playerInfo.gender(),
+                playerInfo.job(),
+                playerInfo.level(),
+                playerInfo.exp(),
+                playerInfo.currentHealth(),
+                playerInfo.healthCapacity(),
+                playerInfo.currentMana(),
+                playerInfo.manaCapacity(),
+                playerInfo.str(),
+                playerInfo.agi(),
+                playerInfo.dex(),
+                playerInfo.intel(),
+                playerInfo.vit(),
+                playerInfo.luc(),
+                playerInfo.extraStats(),
+                playerInfo.effects()
+        );
+    }
 }

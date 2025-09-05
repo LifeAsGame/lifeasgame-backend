@@ -14,4 +14,7 @@ public interface PlayerApiSpecV1 {
 
     @Operation(summary = "Player 생성", description = "신규 Player를 생성합니다")
     ResponseEntity<ApiResponse<PlayerResponse.Created>> linkStart(@Valid @RequestBody PlayerRequest.Register register);
+
+    @Operation(summary = "Player 정보 조회", description = "Player 정보를 조회합니다.")
+    ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo();
 }

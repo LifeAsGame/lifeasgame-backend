@@ -3,8 +3,9 @@ package online.lifeasgame.character.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum PlayerError implements ErrorCode {
-    INVALID_GENDER("PLAYER-INVALID-GENDER", "Invalid gender", 400),
-    PLAYER_ALREADY_EXISTS("PLY-409-ALREADY_EXISTS", "Player already exists", 409);
+    INVALID_GENDER("PLR-400-INVALID-GENDER", "Invalid gender", 400),
+    PLAYER_ALREADY_EXISTS("PLR-409-ALREADY_EXISTS", "Player already exists", 409),
+    PLAYER_NOT_FOUND("PLR-404-NOT_FOUND", "Player not found" , 404 );
 
     private final String code;
     private final String message;

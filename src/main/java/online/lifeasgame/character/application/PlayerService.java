@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerService {
 
     private final PlayerWriter playerWriter;
+    private final PlayerReader playerReader;
 
     @Transactional
     public PlayerResult.Created linkStart(Long userId, Register register) {
@@ -26,6 +27,12 @@ public class PlayerService {
 
         return PlayerResult.Created.of(
                 playerWriter.register(player)
+        );
+    }
+
+    public PlayerResult.PlayerInfo getPlayerInfo(Long playerId) {
+        return PlayerResult.PlayerInfo.from(
+                playerReader.getPlayerInfo(playerId)
         );
     }
 }
