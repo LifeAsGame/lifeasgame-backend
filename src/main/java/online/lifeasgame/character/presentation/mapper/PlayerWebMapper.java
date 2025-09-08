@@ -6,6 +6,10 @@ import online.lifeasgame.character.presentation.request.PlayerRequest;
 import online.lifeasgame.character.presentation.response.PlayerResponse;
 
 public class PlayerWebMapper {
+
+    private PlayerWebMapper() {
+    }
+
     public static PlayerCommand.Register toCommand(PlayerRequest.Register register) {
         return PlayerCommand.Register.of(register.name(), register.gender());
     }

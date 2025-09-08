@@ -39,7 +39,9 @@ public class GlobalExceptionHandler {
 
         if (props.includeDetailInResponse()) {
             responseDetail = scrubber.scrub(ex.detail(), ec.sensitivity());
-            if (responseDetail == null) responseDetail = ec.message();
+            if (responseDetail == null) {
+                responseDetail = ec.message();
+            }
         }
 
         var pd = pdf.base(status, ec.message(), responseDetail, ec.code(), req);

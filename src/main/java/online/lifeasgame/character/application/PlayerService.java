@@ -32,7 +32,7 @@ public class PlayerService {
 
     public PlayerResult.PlayerInfo getPlayerInfo(Long playerId) {
         return PlayerResult.PlayerInfo.from(
-                playerReader.getPlayerInfo(playerId)
+                playerReader.getPlayer(playerId)
         );
     }
 }
