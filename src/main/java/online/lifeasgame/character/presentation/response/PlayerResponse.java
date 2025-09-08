@@ -66,4 +66,12 @@ public class PlayerResponse {
             return new CurrentHp(currentHp);
         }
     }
+
+    public record HpCapacity(
+            int hpCapacity
+    ) {
+        public static HpCapacity of(int hpCapacity) {
+            return new HpCapacity(hpCapacity);
+        }
+    }
 }

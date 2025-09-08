@@ -53,4 +53,25 @@ public class PlayerWriter {
 
         return player;
     }
+
+    public Player changeHpCapacity(Long playerId, int hpCapacity) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+
+        if (hpCapacity == 0) {
+            return player;
+        }
+
+        if (hpCapacity > 0) {
+            player.increaseMaxHp(hpCapacity);
+        } else {
+            try {
+                player.decreaseMaxHp(Math.negateExact(hpCapacity));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_HP);
+            }
+        }
+
+        return player;
+    }
 }

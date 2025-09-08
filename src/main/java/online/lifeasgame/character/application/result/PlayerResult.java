@@ -55,9 +55,16 @@ public class PlayerResult {
     public record CurrentHp(
             int value
     ) {
-
         public static CurrentHp from(Player player) {
             return new CurrentHp(player.getHealth().current());
+        }
+    }
+
+    public record HpCapacity(
+            int cap
+    ) {
+        public static HpCapacity from(Player player) {
+            return new HpCapacity(player.getHealth().cap());
         }
     }
 }

@@ -20,4 +20,9 @@ public class PlayerRequest {
             @NotNull Integer hp
     ){
     }
+
+    public record ChangeHpCapacity(
+            @NotNull Integer hpCapacity
+    ) {
+    }
 }

@@ -138,6 +138,14 @@ public class Player extends AbstractTime {
         this.health = this.health.damage(hp);
     }
 
+    public void increaseMaxHp(int hpCapacity) {
+        this.health = this.health.increaseCap(hpCapacity);
+    }
+
+    public void decreaseMaxHp(int hpCapacity) {
+        this.health = this.health.decreaseCap(hpCapacity);
+    }
+
     public record GainResult(
             long requestedExp,
             long appliedExp,

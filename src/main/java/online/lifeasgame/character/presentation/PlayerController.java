@@ -16,6 +16,7 @@ import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,6 +59,18 @@ public class PlayerController implements PlayerApiSpecV1 {
         PlayerResult.CurrentHp currentHp = playerService.changeHp(PlayerWebMapper.toCommand(changeHp));
         return ApiResponses.ok(
                 PlayerWebMapper.toCurrentHp(currentHp)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/health/capacity")
+    public ResponseEntity<ApiResponse<PlayerResponse.HpCapacity>> updateHpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeHpCapacity changeHpCapacity
+    ) {
+        PlayerResult.HpCapacity hpCapacity = playerService.changeHpCapacity(PlayerWebMapper.toCommand(playerId, changeHpCapacity));
+        return ApiResponses.ok(
+                PlayerWebMapper.toHpCapacity(hpCapacity)
         );
     }
 }

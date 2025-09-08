@@ -71,4 +71,33 @@ public class Health {
     private static int clamp(int cur, int cap) {
         return Math.max(0, Math.min(cur, cap));
     }
+
+    public Health increaseCap(int amount) {
+        Guard.minValue(amount, 0, "increase cap");
+        if (amount == 0) {
+            return this;
+        }
+
+        long sum = (long) cap + (long) amount;
+        int next = (int) sum;
+        if (next == cap) {
+            return this;
+        }
+
+        return new Health(current, next);
+    }
+
+    public Health decreaseCap(int hpCapacity) {
+        Guard.minValue(hpCapacity, 0, "decrease cap");
+        if (hpCapacity == 0) {
+            return this;
+        }
+
+        int next = cap - hpCapacity;
+        if (next < 0) {
+            next = 0;
+        }
+
+        return new Health(current, next);
+    }
 }
