@@ -17,4 +17,9 @@ public interface PlayerApiSpecV1 {
 
     @Operation(summary = "Player 정보 조회", description = "Player 정보를 조회합니다.")
     ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo();
+
+    @Operation(summary = "Player HP 상태 변경", description = "Player HP를 변경합니다")
+    ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> playerHpInfo(
+            @Valid @RequestBody PlayerRequest.ChangeHp changeHp
+    );
 }

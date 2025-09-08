@@ -14,6 +14,10 @@ public class PlayerWebMapper {
         return PlayerCommand.Register.of(register.name(), register.gender());
     }
 
+    public static PlayerCommand.ChangeHp toCommand(PlayerRequest.ChangeHp changeHp) {
+        return PlayerCommand.ChangeHp.of(changeHp.playerId(), changeHp.hp());
+    }
+
     public static PlayerResponse.Created toCreated(PlayerResult.Created playerResult) {
         return new PlayerResponse.Created(playerResult.id());
     }
@@ -37,6 +41,12 @@ public class PlayerWebMapper {
                 playerInfo.luc(),
                 playerInfo.extraStats(),
                 playerInfo.effects()
+        );
+    }
+
+    public static PlayerResponse.CurrentHp toCurrentHp(PlayerResult.CurrentHp currentHp) {
+        return PlayerResponse.CurrentHp.of(
+                currentHp.value()
         );
     }
 }

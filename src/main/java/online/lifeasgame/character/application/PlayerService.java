@@ -1,6 +1,7 @@
 package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.command.PlayerCommand;
 import online.lifeasgame.character.application.command.PlayerCommand.Register;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.domain.GenderType;
@@ -33,6 +34,13 @@ public class PlayerService {
     public PlayerResult.PlayerInfo getPlayerInfo(Long playerId) {
         return PlayerResult.PlayerInfo.from(
                 playerReader.getPlayer(playerId)
+        );
+    }
+
+    @Transactional
+    public PlayerResult.CurrentHp changeHp(PlayerCommand.ChangeHp command) {
+        return PlayerResult.CurrentHp.from(
+                playerWriter.changeHp(command.playerId(), command.hp())
         );
     }
 }

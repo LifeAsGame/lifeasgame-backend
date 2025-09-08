@@ -13,12 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(propagation = Propagation.MANDATORY)
 public class PlayerWriter {
 
     private final PlayerRepository playerRepository;
     private final DomainEventPublisher domainEventPublisher;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     public Long register(Player player) {
         if (playerRepository.existsByUserId(player.getUserId())) {
             throw new DomainException(PlayerError.PLAYER_ALREADY_EXISTS);
@@ -31,5 +31,26 @@ public class PlayerWriter {
         );
 
         return savedPlayer.getId();
+    }
+
+    public Player changeHp(Long playerId, int hp) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+
+        if (hp == 0) {
+            return player;
+        }
+
+        if (hp >= 0) {
+            player.heal(hp);
+        } else {
+            try {
+                player.damage(Math.negateExact(hp));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_HP);
+            }
+        }
+
+        return player;
     }
 }

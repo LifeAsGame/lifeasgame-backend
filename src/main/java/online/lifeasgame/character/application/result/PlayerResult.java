@@ -51,4 +51,13 @@ public class PlayerResult {
             );
         }
     }
+
+    public record CurrentHp(
+            int value
+    ) {
+
+        public static CurrentHp from(Player player) {
+            return new CurrentHp(player.getHealth().current());
+        }
+    }
 }
