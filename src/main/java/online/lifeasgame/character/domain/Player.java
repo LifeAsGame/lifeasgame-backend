@@ -115,7 +115,7 @@ public class Player extends AbstractTime {
 
         int afterLv = leveling.levelFor(this.exp.value());
         if (afterLv != beforeLv) {
-            this.level.generate(afterLv);
+            this.level.with(afterLv);
             // addEvent(new PlayerLeveledUp(this.id, afterLv-beforeLv));
         }
 
