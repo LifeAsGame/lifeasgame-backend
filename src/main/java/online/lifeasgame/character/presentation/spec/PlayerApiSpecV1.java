@@ -19,7 +19,7 @@ public interface PlayerApiSpecV1 {
     ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo();
 
     @Operation(summary = "Player HP 상태 변경", description = "Player HP를 변경합니다")
-    ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> playerHpInfo(
+    ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> updateCurrentHp(
             @Valid @RequestBody PlayerRequest.ChangeHp changeHp
     );
 }

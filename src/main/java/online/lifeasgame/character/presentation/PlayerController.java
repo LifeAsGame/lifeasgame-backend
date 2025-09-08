@@ -52,7 +52,7 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/health/current")
-    public ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> playerHpInfo(
+    public ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> updateCurrentHp(
             @Valid @RequestBody PlayerRequest.ChangeHp changeHp
     ){
         PlayerResult.CurrentHp currentHp = playerService.changeHp(PlayerWebMapper.toCommand(changeHp));
