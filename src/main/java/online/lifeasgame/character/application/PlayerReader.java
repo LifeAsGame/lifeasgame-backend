@@ -13,7 +13,7 @@ public class PlayerReader {
 
     private final PlayerRepository playerRepository;
 
-    public Player getPlayerInfo(Long playerId) {
+    public Player getPlayer(Long playerId) {
         return playerRepository.findById(playerId).orElseThrow(
                 () -> new DomainException(PlayerError.PLAYER_NOT_FOUND)
         );
