@@ -1,10 +1,11 @@
-package online.lifeasgame.character.domain;
+package online.lifeasgame.character.domain.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import java.util.Map;
+import online.lifeasgame.character.domain.ExtraStats;
 
 @Converter
 public class ExtraStatsConverter implements AttributeConverter<ExtraStats, String> {

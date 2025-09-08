@@ -1,7 +1,8 @@
-package online.lifeasgame.character.domain;
+package online.lifeasgame.character.domain.converter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import online.lifeasgame.character.domain.GenderType;
 
 @Converter
 public class GenderTypeConverter implements AttributeConverter<GenderType, String> {
