@@ -1,5 +1,6 @@
 package online.lifeasgame.character.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.AdminPlayerService;
 import online.lifeasgame.character.application.result.AdminPlayerResult.ExpGranted;
@@ -11,6 +12,7 @@ import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,7 +25,9 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PostMapping("/exp/grant")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.ExpGranted>> grantExp(AdminPlayerRequest.GrantExp request) {
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.ExpGranted>> grantExp(
+            @Valid @RequestBody AdminPlayerRequest.GrantExp request
+    ) {
         ExpGranted expGranted = adminPlayerService.grantExp(request.playerId(), request.exp());
         return ApiResponses.ok(
                 AdminPlayerWebMapper.toExpGranted(expGranted)
