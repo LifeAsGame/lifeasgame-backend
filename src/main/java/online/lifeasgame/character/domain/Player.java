@@ -99,6 +99,7 @@ public class Player extends AbstractTime {
 
     public GainResult gainExp(long delta, LevelingPolicy leveling) {
         Guard.minValue(delta, 1, "exp delta");
+        Guard.notNull(leveling, "leveling");
 
         long beforeTotal = this.exp.value();
         int beforeLv = this.level.value();
