@@ -23,6 +23,9 @@ public record LevelingPolicyParameters(
 
     public record Bracket(int from, int to, double mul, long add) {
         public Bracket {
+            if (!Double.isFinite(mul)) {
+                throw new ConfigException(LevelingError.INVALID_BRACKETS, "mul must be finite");
+            }
             Guard.minValue(mul, 0.0d, "mul");
             Guard.minValue(add, 0L, "add");
         }
