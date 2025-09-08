@@ -44,6 +44,11 @@ public final class Guard {
         return value;
     }
 
+    public static double minValue(double value, double min, String name) {
+        if (value < min) throw new IllegalArgumentException(name + " must be >= " + min);
+        return value;
+    }
+
     public static int inRange(int value, int min, int max, String name) {
         if (min > max) throw new IllegalArgumentException("min must be <= max");
         if (value < min || value > max)

@@ -4,7 +4,8 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum LevelingError implements ErrorCode {
 
-    LEVEL_CURVE_OVERFLOW("LVL-500-OVERFLOW", "Level curve overflow during bootstrap", 500);
+    LEVEL_CURVE_OVERFLOW("LVL-500-OVERFLOW", "Level curve overflow during bootstrap", 500),
+    INVALID_BRACKETS("LVL-400-INVALID-BRACKETS", "Invalid brackets", 400),;
 
     private final String code;
     private final String message;
