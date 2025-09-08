@@ -28,7 +28,7 @@ public class Level {
         return value;
     }
 
-    public Level next() {
-        return new Level(value + 1);
+    public void generate(int v) {
+        this.value = Math.max(1, v);
     }
 }
