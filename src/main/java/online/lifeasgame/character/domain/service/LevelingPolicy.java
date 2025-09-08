@@ -22,7 +22,7 @@ public interface LevelingPolicy {
         long start = totalXpAtLevelStart(lv);
         long into = (lv >= maxLevel()) ? 0 : Math.max(0, totalXp - start);
         long toNext = (lv >= maxLevel()) ? 0 : Math.max(0, cap - into);
-        double ratio = (lv >= maxLevel() || cap == 0) ? 1.0 : (double) into / (double) cap;
+        double ratio = (lv >= maxLevel() || cap == 0) ? 1.0 : Math.min(1.0, ((double) into / (double) cap));
         return new Progress(lv, totalXp, into, toNext, cap, ratio);
     }
 
