@@ -13,6 +13,10 @@ import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.character.domain.converter.ExtraStatsConverter;
+import online.lifeasgame.character.domain.converter.GenderTypeConverter;
+import online.lifeasgame.character.domain.converter.StatusEffectsConverter;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
@@ -92,4 +96,49 @@ public class Player extends AbstractTime {
     public static Player linkStart(Long userId, Name name, GenderType gender) {
         return new Player(userId, name, gender);
     }
+
+    public GainResult gainExp(long delta, LevelingPolicy leveling) {
+        Guard.minValue(delta, 1, "exp delta");
+
+        long beforeTotal = this.exp.value();
+        int beforeLv = this.level.value();
+
+        long maxBoundary = leveling.totalXpAtLevelStart(leveling.maxLevel()) + leveling.requiredExpFor(leveling.maxLevel());
+        long availableCapacity = Math.max(0, maxBoundary - beforeTotal);
+
+        long applied = Math.min(delta, availableCapacity);
+        long leftover = delta - applied;
+
+        if (applied > 0) {
+            this.exp = this.exp.plus(applied);
+        }
+
+        int afterLv = leveling.levelFor(this.exp.value());
+        if (afterLv != beforeLv) {
+            this.level.generate(afterLv);
+            // addEvent(new PlayerLeveledUp(this.id, afterLv-beforeLv));
+        }
+
+        var p = leveling.progressOf(this.exp.value(), afterLv);
+
+        return new GainResult(
+                delta, applied, leftover,
+                beforeLv, afterLv,
+                this.exp.value(),
+                p.expIntoLevel(), p.expToNext(), p.capForLevel(), p.progressRatio()
+        );
+    }
+
+    public record GainResult(
+            long requestedExp,
+            long appliedExp,
+            long leftoverExp,
+            int beforeLevel,
+            int afterLevel,
+            long totalExp,
+            long expIntoLevel,
+            long expToNext,
+            long capForLevel,
+            double progressRatio
+    ) {}
 }
