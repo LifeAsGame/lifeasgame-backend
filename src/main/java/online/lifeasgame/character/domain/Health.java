@@ -79,7 +79,7 @@ public class Health {
         }
 
         long sum = (long) cap + (long) amount;
-        int next = (int) sum;
+        int next = sum > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sum;
         if (next == cap) {
             return this;
         }
