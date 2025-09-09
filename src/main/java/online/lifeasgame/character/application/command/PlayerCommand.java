@@ -8,4 +8,22 @@ public class PlayerCommand {
             return new Register(name, gender);
         }
     }
+
+    public record ChangeHp(
+            Long playerId,
+            int hp
+    ) {
+        public static ChangeHp of(Long playerId, int hp) {
+            return new ChangeHp(playerId, hp);
+        }
+    }
+
+    public record ChangeHpCapacity(
+            Long playerId,
+            int hpCapacity
+    ) {
+        public static ChangeHpCapacity of(Long playerId, int hpCapacity) {
+            return new ChangeHpCapacity(playerId, hpCapacity);
+        }
+    }
 }

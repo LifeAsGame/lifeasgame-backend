@@ -58,4 +58,20 @@ public class PlayerResponse {
             );
         }
     }
+
+    public record CurrentHp(
+            int currentHp
+    ) {
+        public static CurrentHp of(int currentHp) {
+            return new CurrentHp(currentHp);
+        }
+    }
+
+    public record HpCapacity(
+            int hpCapacity
+    ) {
+        public static HpCapacity of(int hpCapacity) {
+            return new HpCapacity(hpCapacity);
+        }
+    }
 }

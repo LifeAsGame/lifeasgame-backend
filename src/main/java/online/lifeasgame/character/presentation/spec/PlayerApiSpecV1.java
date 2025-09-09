@@ -7,6 +7,8 @@ import online.lifeasgame.character.presentation.request.PlayerRequest;
 import online.lifeasgame.character.presentation.response.PlayerResponse;
 import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Player API V1")
@@ -17,4 +19,16 @@ public interface PlayerApiSpecV1 {
 
     @Operation(summary = "Player 정보 조회", description = "Player 정보를 조회합니다.")
     ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo();
+
+    @Operation(summary = "Player HP 상태 변경", description = "Player HP를 변경합니다")
+    ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> updateCurrentHp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeHp changeHp
+    );
+
+    @PatchMapping("/{playerId}/health/capacity")
+    ResponseEntity<ApiResponse<PlayerResponse.HpCapacity>> updateHpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeHpCapacity changeHpCapacity
+    );
 }
