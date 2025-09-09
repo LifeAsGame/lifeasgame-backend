@@ -52,7 +52,7 @@ public class Mana {
             next = 0;
         }
 
-        return new Mana(current, next);
+        return new Mana(next, cap);
     }
 
     public Mana recover(int amount) {
@@ -67,7 +67,7 @@ public class Mana {
             return this;
         }
 
-        return new Mana(current, next);
+        return new Mana(next, cap);
     }
 
     public Mana increaseCap(int amount) {
