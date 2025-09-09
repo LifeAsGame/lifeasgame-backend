@@ -110,7 +110,7 @@ public class PlayerWriter {
             try {
                 player.decreaseMaxMp(Math.negateExact(mpCapacity));
             } catch (ArithmeticException e) {
-                throw new DomainException(PlayerError.INVALID_HP_CAPACITY);
+                throw new DomainException(PlayerError.INVALID_MP_CAPACITY);
             }
         }
 

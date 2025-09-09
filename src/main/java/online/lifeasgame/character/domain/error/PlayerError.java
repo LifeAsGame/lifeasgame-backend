@@ -8,6 +8,7 @@ public enum PlayerError implements ErrorCode {
     PLAYER_NOT_FOUND("PLR-404-NOT_FOUND", "Player not found" , 404 ),
     INVALID_HP_CAPACITY("PLR-400-INVALID-HP-CAP", "Invalid hp capacity" , 400 ),
     INVALID_HP("PLR-400-INVALID-HP", "Invalid hp", 400),
+    INVALID_MP_CAPACITY("PLR-400-INVALID-MP-CAP", "Invalid mp capacity" , 400 ),
     INVALID_MP("PLR-400-INVALID-MP", "Invalid mp", 400);
 
     private final String code;
