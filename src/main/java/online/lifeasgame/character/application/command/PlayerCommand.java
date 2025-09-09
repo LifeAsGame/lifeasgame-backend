@@ -26,4 +26,14 @@ public class PlayerCommand {
             return new ChangeHpCapacity(playerId, hpCapacity);
         }
     }
+
+    public record ChangeMp(
+            Long playerId,
+            int mp
+    ) {
+        public static ChangeMp of(Long playerId, int mp) {
+            return new ChangeMp(playerId, mp);
+        }
+    }
+
 }

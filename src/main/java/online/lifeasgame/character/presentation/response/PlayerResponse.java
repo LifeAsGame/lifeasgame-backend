@@ -74,4 +74,12 @@ public class PlayerResponse {
             return new HpCapacity(hpCapacity);
         }
     }
+
+    public record CurrentMp(
+            int currentMp
+    ) {
+        public static CurrentMp of(int currentMp) {
+            return new CurrentMp(currentMp);
+        }
+    }
 }

@@ -43,12 +43,31 @@ public class Mana {
 
     public Mana spend(int amount) {
         Guard.minValue(amount, 0, "spend amount");
-        return new Mana(Math.max(0, current - amount), cap);
+        if (amount == 0 || current == 0) {
+            return this;
+        }
+
+        int next = current - amount;
+        if (next < 0) {
+            next = 0;
+        }
+
+        return new Mana(current, next);
     }
 
     public Mana recover(int amount) {
-        Guard.minValue(amount, 0, "recover amount");
-        return new Mana(Math.min(cap, current + amount), cap);
+        Guard.minValue(amount, 0, "recover mp amount");
+        if (amount == 0 || current == cap) {
+            return this;
+        }
+
+        long sum = (long) current + (long) amount;
+        int next = (int) Math.min(cap, sum);
+        if (next == current) {
+            return this;
+        }
+
+        return new Mana(current, next);
     }
 
     public int current() { return current; }

@@ -67,4 +67,12 @@ public class PlayerResult {
             return new HpCapacity(player.getHealth().cap());
         }
     }
+
+    public record CurrentMp(
+            int value
+    ) {
+        public static CurrentMp from(Player player) {
+            return new CurrentMp(player.getMana().current());
+        }
+    }
 }
