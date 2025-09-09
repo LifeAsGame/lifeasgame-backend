@@ -58,4 +58,11 @@ public class PlayerService {
                 playerWriter.changeMp(command.playerId(), command.mp())
         );
     }
+
+    @Transactional
+    public PlayerResult.MpCapacity changeMpCapacity(PlayerCommand.ChangeMpCapacity command) {
+        return PlayerResult.MpCapacity.from(
+                playerWriter.changeMpCapacity(command.playerId(), command.mpCapacity())
+        );
+    }
 }

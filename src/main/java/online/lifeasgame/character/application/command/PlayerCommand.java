@@ -36,4 +36,12 @@ public class PlayerCommand {
         }
     }
 
+    public record ChangeMpCapacity(
+            Long playerId,
+            int mpCapacity
+    ) {
+        public static ChangeMpCapacity of(Long playerId, int mpCapacity) {
+            return new ChangeMpCapacity(playerId, mpCapacity);
+        }
+    }
 }

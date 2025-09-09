@@ -82,4 +82,12 @@ public class PlayerResponse {
             return new CurrentMp(currentMp);
         }
     }
+
+    public record MpCapacity(
+            int mpCapacity
+    ) {
+        public static MpCapacity of(int mpCapacity) {
+            return new MpCapacity(mpCapacity);
+        }
+    }
 }

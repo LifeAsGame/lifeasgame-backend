@@ -29,4 +29,9 @@ public class PlayerRequest {
             @NotNull Integer mp
     ){
     }
+
+    public record ChangeMpCapacity(
+            @NotNull Integer mpCapacity
+    ) {
+    }
 }

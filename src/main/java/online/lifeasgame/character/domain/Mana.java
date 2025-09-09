@@ -70,6 +70,35 @@ public class Mana {
         return new Mana(current, next);
     }
 
+    public Mana increaseCap(int amount) {
+        Guard.minValue(amount, 0, "increase cap");
+        if (amount == 0) {
+            return this;
+        }
+
+        long sum = (long) cap + (long) amount;
+        int next = sum > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sum;
+        if (next == cap) {
+            return this;
+        }
+
+        return new Mana(current, next);
+    }
+
+    public Mana decreaseCap(int amount) {
+        Guard.minValue(amount, 0, "decrease cap");
+        if (amount == 0) {
+            return this;
+        }
+
+        int next = cap - amount;
+        if (next < 0) {
+            next = 0;
+        }
+
+        return new Mana(current, next);
+    }
+
     public int current() { return current; }
     public int cap() { return cap; }
 

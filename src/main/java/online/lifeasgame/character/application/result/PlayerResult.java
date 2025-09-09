@@ -75,4 +75,12 @@ public class PlayerResult {
             return new CurrentMp(player.getMana().current());
         }
     }
+
+    public record MpCapacity(
+            int cap
+    ) {
+        public static MpCapacity from(Player player) {
+            return new MpCapacity(player.getMana().cap());
+        }
+    }
 }

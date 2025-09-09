@@ -37,4 +37,10 @@ public interface PlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody PlayerRequest.ChangeMp changeMp
     );
+
+    @PatchMapping("/{playerId}/mana/capacity")
+    ResponseEntity<ApiResponse<PlayerResponse.MpCapacity>> updateMpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeMpCapacity changeMpCapacity
+    );
 }
