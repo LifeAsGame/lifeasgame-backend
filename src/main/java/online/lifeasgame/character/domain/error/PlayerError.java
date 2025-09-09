@@ -7,7 +7,7 @@ public enum PlayerError implements ErrorCode {
     PLAYER_ALREADY_EXISTS("PLR-409-ALREADY_EXISTS", "Player already exists", 409),
     PLAYER_NOT_FOUND("PLR-404-NOT_FOUND", "Player not found" , 404 ),
     INVALID_HP_CAPACITY("PLR-400-INVALID-HP-CAP", "Invalid hp capacity" , 400 ),
-    INVALID_HP("PLR-400-INVALID-HP", "Invalid hp" , 400 ),;
+    INVALID_HP("PLR-400-INVALID-HP", "Invalid hp", 400);
 
     private final String code;
     private final String message;
