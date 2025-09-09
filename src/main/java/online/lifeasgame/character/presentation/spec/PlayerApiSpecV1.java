@@ -22,6 +22,7 @@ public interface PlayerApiSpecV1 {
 
     @Operation(summary = "Player HP 상태 변경", description = "Player HP를 변경합니다")
     ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> updateCurrentHp(
+            @PathVariable Long playerId,
             @Valid @RequestBody PlayerRequest.ChangeHp changeHp
     );
 

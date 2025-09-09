@@ -16,7 +16,6 @@ public class PlayerRequest {
     }
 
     public record ChangeHp (
-            @NotNull Long playerId,
             @NotNull Integer hp
     ){
     }

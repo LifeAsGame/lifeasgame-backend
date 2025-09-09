@@ -14,8 +14,8 @@ public class PlayerWebMapper {
         return PlayerCommand.Register.of(register.name(), register.gender());
     }
 
-    public static PlayerCommand.ChangeHp toCommand(PlayerRequest.ChangeHp changeHp) {
-        return PlayerCommand.ChangeHp.of(changeHp.playerId(), changeHp.hp());
+    public static PlayerCommand.ChangeHp toCommand(Long playerId, PlayerRequest.ChangeHp changeHp) {
+        return PlayerCommand.ChangeHp.of(playerId, changeHp.hp());
     }
 
     public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, PlayerRequest.ChangeHpCapacity changeHpCapacity) {
