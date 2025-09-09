@@ -68,7 +68,7 @@ public class PlayerWriter {
             try {
                 player.decreaseMaxHp(Math.negateExact(hpCapacity));
             } catch (ArithmeticException e) {
-                throw new DomainException(PlayerError.INVALID_HP);
+                throw new DomainException(PlayerError.INVALID_HP_CAPACITY);
             }
         }
 
