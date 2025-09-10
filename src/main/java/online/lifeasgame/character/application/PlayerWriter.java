@@ -1,10 +1,13 @@
 package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.domain.CoreStatDelta;
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.Player.GainResult;
 import online.lifeasgame.character.domain.event.PlayerRegistered;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import org.springframework.stereotype.Component;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerWriter {
 
     private final PlayerRepository playerRepository;
+    private final LevelingPolicy levelingPolicy;
     private final DomainEventPublisher domainEventPublisher;
 
     public Long register(Player player) {
@@ -114,6 +118,20 @@ public class PlayerWriter {
             }
         }
 
+        return player;
+    }
+
+    public GainResult grantExp(Long playerId, long exp) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        return player.gainExp(exp, levelingPolicy);
+    }
+
+    public Player grantCoreStats(Long playerId, CoreStatDelta coreStatDelta) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+
+        player.gainCoreStats(coreStatDelta);
         return player;
     }
 }

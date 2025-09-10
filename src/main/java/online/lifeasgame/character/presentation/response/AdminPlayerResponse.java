@@ -43,4 +43,12 @@ public class AdminPlayerResponse {
             );
         }
     }
+
+    public record CoreStatsGranted(
+            Long playerId, int str, int agi, int dex, int intel, int vit, int luc
+    ) {
+        public static CoreStatsGranted of(Long playerId, int str, int agi, int dex, int intel, int vit, int luc) {
+            return new CoreStatsGranted(playerId, str, agi, dex, intel, vit, luc);
+        }
+    }
 }

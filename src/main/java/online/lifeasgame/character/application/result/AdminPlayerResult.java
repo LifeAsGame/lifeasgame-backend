@@ -1,5 +1,6 @@
 package online.lifeasgame.character.application.result;
 
+import online.lifeasgame.character.domain.CoreStats;
 import online.lifeasgame.character.domain.Player.GainResult;
 
 public class AdminPlayerResult {
@@ -32,6 +33,28 @@ public class AdminPlayerResult {
                     gainResult.expToNext(),
                     gainResult.capForLevel(),
                     gainResult.progressRatio()
+            );
+        }
+    }
+
+    public record CoreStatsGranted(
+            Long playerId,
+            int str,
+            int agi,
+            int dex,
+            int intel,
+            int vit,
+            int luc
+    ) {
+        public static CoreStatsGranted of(Long playerId, CoreStats coreStats) {
+            return new CoreStatsGranted(
+                    playerId,
+                    coreStats.str(),
+                    coreStats.agi(),
+                    coreStats.dex(),
+                    coreStats.intel(),
+                    coreStats.vit(),
+                    coreStats.luc()
             );
         }
     }

@@ -1,33 +1,46 @@
 package online.lifeasgame.character.application;
 
+import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.command.AdminPlayerCommand;
 import online.lifeasgame.character.application.result.AdminPlayerResult;
-import online.lifeasgame.character.domain.service.LevelingPolicy;
-import online.lifeasgame.character.domain.repository.LevelCurveParametersLoader;
+import online.lifeasgame.character.domain.CoreStatDelta;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.Player.GainResult;
-import online.lifeasgame.character.domain.service.PrecomputedLevelingPolicy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AdminPlayerService {
 
-    private final PlayerReader playerReader;
-    private final LevelingPolicy levelingPolicy;
-
-    public AdminPlayerService(PlayerReader playerReader, LevelCurveParametersLoader loader) {
-        this.playerReader = playerReader;
-        this.levelingPolicy = new PrecomputedLevelingPolicy(loader.load());
-    }
+    private final PlayerWriter playerWriter;
 
     @Transactional
     public AdminPlayerResult.ExpGranted grantExp(Long playerId, long exp) {
-        Player player = playerReader.getPlayer(playerId);
-        GainResult gainResult = player.gainExp(exp, levelingPolicy);
+        GainResult gainResult = playerWriter.grantExp(playerId, exp);
         return AdminPlayerResult.ExpGranted.of(
-                player.getId(),
+                playerId,
                 gainResult
+        );
+    }
+
+    @Transactional
+    public AdminPlayerResult.CoreStatsGranted grantCoreStats(AdminPlayerCommand.GrantCoreStats command) {
+        Player player = playerWriter.grantCoreStats(
+                command.playerId(),
+                CoreStatDelta.of(
+                        command.str(),
+                        command.agi(),
+                        command.dex(),
+                        command.intel(),
+                        command.vit(),
+                        command.luc()
+                )
+        );
+        return AdminPlayerResult.CoreStatsGranted.of(
+                player.getId(),
+                player.getStats()
         );
     }
 }
