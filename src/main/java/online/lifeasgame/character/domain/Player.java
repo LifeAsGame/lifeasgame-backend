@@ -97,8 +97,8 @@ public class Player extends AbstractTime {
         return new Player(userId, name, gender);
     }
 
-    public GainResult gainExp(long delta, LevelingPolicy leveling) {
-        Guard.minValue(delta, 1, "exp delta");
+    public GainResult gainExp(long amount, LevelingPolicy leveling) {
+        Guard.minValue(amount, 1, "exp delta");
         Guard.notNull(leveling, "leveling");
 
         long beforeTotal = this.exp.value();
@@ -107,8 +107,8 @@ public class Player extends AbstractTime {
         long maxBoundary = leveling.totalXpAtLevelStart(leveling.maxLevel()) + leveling.requiredExpFor(leveling.maxLevel());
         long availableCapacity = Math.max(0, maxBoundary - beforeTotal);
 
-        long applied = Math.min(delta, availableCapacity);
-        long leftover = delta - applied;
+        long applied = Math.min(amount, availableCapacity);
+        long leftover = amount - applied;
 
         if (applied > 0) {
             this.exp = this.exp.plus(applied);
@@ -123,7 +123,7 @@ public class Player extends AbstractTime {
         var p = leveling.progressOf(this.exp.value(), afterLv);
 
         return new GainResult(
-                delta, applied, leftover,
+                amount, applied, leftover,
                 beforeLv, afterLv,
                 this.exp.value(),
                 p.expIntoLevel(), p.expToNext(), p.capForLevel(), p.progressRatio()
