@@ -28,8 +28,8 @@ public class UserController implements UserApiSpecV1 {
     private final UserFacade userFacade;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse.Created>> register(@Valid @RequestBody UserRequest.Register register) {
-        UserResult.Created userResult = userService.register(UserWebMapper.toCommand(register));
+    public ResponseEntity<ApiResponse<UserResponse.Created>> register(@Valid @RequestBody UserRequest.Register request) {
+        UserResult.Created userResult = userService.register(UserWebMapper.toCommand(request));
         return ApiResponses.created(
                 URI.create("/api/v1/users/" + userResult.id()),
                 UserWebMapper.toCreated(userResult)

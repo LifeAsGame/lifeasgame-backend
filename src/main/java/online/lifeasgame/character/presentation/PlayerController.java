@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.PlayerFacade;
 import online.lifeasgame.character.application.PlayerService;
 import online.lifeasgame.character.application.result.PlayerResult;
-import online.lifeasgame.character.application.result.PlayerResult.PlayerInfo;
 import online.lifeasgame.character.presentation.mapper.PlayerWebMapper;
 import online.lifeasgame.character.presentation.request.PlayerRequest;
 import online.lifeasgame.character.presentation.response.PlayerResponse;
@@ -33,9 +32,9 @@ public class PlayerController implements PlayerApiSpecV1 {
     @Override
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<PlayerResponse.Created>> linkStart(
-            @Valid @RequestBody PlayerRequest.Register register
+            @Valid @RequestBody PlayerRequest.Register request
     ) {
-        PlayerResult.Created playerResult = playerFacade.linkStart(PlayerWebMapper.toCommand(register));
+        PlayerResult.Created playerResult = playerFacade.linkStart(PlayerWebMapper.toCommand(request));
         return ApiResponses.created(
                 URI.create("/api/v1/players/" + playerResult.id()),
                 PlayerWebMapper.toCreated(playerResult)
@@ -45,7 +44,7 @@ public class PlayerController implements PlayerApiSpecV1 {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo() {
-        PlayerInfo playerInfo = playerFacade.getPlayerInfo();
+        PlayerResult.PlayerInfo playerInfo = playerFacade.getPlayerInfo();
         return ApiResponses.ok(
                 PlayerWebMapper.toPlayerInfo(playerInfo)
         );
@@ -55,9 +54,9 @@ public class PlayerController implements PlayerApiSpecV1 {
     @PatchMapping("/{playerId}/health/current")
     public ResponseEntity<ApiResponse<PlayerResponse.CurrentHp>> updateCurrentHp(
             @PathVariable Long playerId,
-            @Valid @RequestBody PlayerRequest.ChangeHp changeHp
+            @Valid @RequestBody PlayerRequest.ChangeHp request
     ){
-        PlayerResult.CurrentHp currentHp = playerService.changeHp(PlayerWebMapper.toCommand(playerId, changeHp));
+        PlayerResult.CurrentHp currentHp = playerService.changeHp(PlayerWebMapper.toCommand(playerId, request));
         return ApiResponses.ok(
                 PlayerWebMapper.toCurrentHp(currentHp)
         );
@@ -67,9 +66,9 @@ public class PlayerController implements PlayerApiSpecV1 {
     @PatchMapping("/{playerId}/health/capacity")
     public ResponseEntity<ApiResponse<PlayerResponse.HpCapacity>> updateHpCapacity(
             @PathVariable Long playerId,
-            @Valid @RequestBody PlayerRequest.ChangeHpCapacity changeHpCapacity
+            @Valid @RequestBody PlayerRequest.ChangeHpCapacity request
     ) {
-        PlayerResult.HpCapacity hpCapacity = playerService.changeHpCapacity(PlayerWebMapper.toCommand(playerId, changeHpCapacity));
+        PlayerResult.HpCapacity hpCapacity = playerService.changeHpCapacity(PlayerWebMapper.toCommand(playerId, request));
         return ApiResponses.ok(
                 PlayerWebMapper.toHpCapacity(hpCapacity)
         );
@@ -79,9 +78,9 @@ public class PlayerController implements PlayerApiSpecV1 {
     @PatchMapping("/{playerId}/mana/current")
     public ResponseEntity<ApiResponse<PlayerResponse.CurrentMp>> updateCurrentMp(
             @PathVariable Long playerId,
-            @Valid @RequestBody PlayerRequest.ChangeMp changeMp
+            @Valid @RequestBody PlayerRequest.ChangeMp request
     ){
-        PlayerResult.CurrentMp currentMp = playerService.changeMp(PlayerWebMapper.toCommand(playerId, changeMp));
+        PlayerResult.CurrentMp currentMp = playerService.changeMp(PlayerWebMapper.toCommand(playerId, request));
         return ApiResponses.ok(
                 PlayerWebMapper.toCurrentMp(currentMp)
         );
@@ -91,9 +90,9 @@ public class PlayerController implements PlayerApiSpecV1 {
     @PatchMapping("/{playerId}/mana/capacity")
     public ResponseEntity<ApiResponse<PlayerResponse.MpCapacity>> updateMpCapacity(
             @PathVariable Long playerId,
-            @Valid @RequestBody PlayerRequest.ChangeMpCapacity changeMpCapacity
+            @Valid @RequestBody PlayerRequest.ChangeMpCapacity request
     ) {
-        PlayerResult.MpCapacity mpCapacity = playerService.changeMpCapacity(PlayerWebMapper.toCommand(playerId, changeMpCapacity));
+        PlayerResult.MpCapacity mpCapacity = playerService.changeMpCapacity(PlayerWebMapper.toCommand(playerId, request));
         return ApiResponses.ok(
                 PlayerWebMapper.toMpCapacity(mpCapacity)
         );

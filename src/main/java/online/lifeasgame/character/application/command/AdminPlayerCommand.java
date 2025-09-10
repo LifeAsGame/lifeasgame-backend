@@ -5,15 +5,14 @@ public class AdminPlayerCommand {
     private AdminPlayerCommand() {
     }
 
-
     public record GrantCoreStats(
             Long playerId,
-            int str,
-            int agi,
-            int dex,
-            int intel,
-            int vit,
-            int luc
+            int strDelta,
+            int agiDelta,
+            int dexDelta,
+            int intelDelta,
+            int vitDelta,
+            int lucDelta
     ) {
     }
 }

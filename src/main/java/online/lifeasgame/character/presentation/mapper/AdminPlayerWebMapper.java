@@ -10,18 +10,18 @@ public class AdminPlayerWebMapper {
     private AdminPlayerWebMapper() {
     }
 
-    public static AdminPlayerResponse.ExpGranted toExpGranted(AdminPlayerResult.ExpGranted expGranted) {
+    public static AdminPlayerResponse.ExpGranted toExpGranted(AdminPlayerResult.ExpGranted result) {
         return AdminPlayerResponse.ExpGranted.of(
-                expGranted.playerId(),
-                expGranted.requestedExp(),
-                expGranted.appliedExp(),
-                expGranted.leftoverExp(),
-                expGranted.level(),
-                expGranted.totalExp(),
-                expGranted.expIntoLevel(),
-                expGranted.expToNext(),
-                expGranted.capForLevel(),
-                expGranted.progressRatio()
+                result.playerId(),
+                result.requestedExp(),
+                result.appliedExp(),
+                result.leftoverExp(),
+                result.level(),
+                result.totalExp(),
+                result.expIntoLevel(),
+                result.expToNext(),
+                result.capForLevel(),
+                result.progressRatio()
         );
     }
 
@@ -37,15 +37,15 @@ public class AdminPlayerWebMapper {
         );
     }
 
-    public static AdminPlayerResponse.CoreStatsGranted toCoreStatsGranted(AdminPlayerResult.CoreStatsGranted coreStatsGranted) {
+    public static AdminPlayerResponse.CoreStatsGranted toCoreStatsGranted(AdminPlayerResult.CoreStatsGranted result) {
         return AdminPlayerResponse.CoreStatsGranted.of(
-                coreStatsGranted.playerId(),
-                coreStatsGranted.str(),
-                coreStatsGranted.agi(),
-                coreStatsGranted.dex(),
-                coreStatsGranted.intel(),
-                coreStatsGranted.vit(),
-                coreStatsGranted.luc()
+                result.playerId(),
+                result.str(),
+                result.agi(),
+                result.dex(),
+                result.intel(),
+                result.vit(),
+                result.luc()
         );
     }
 }

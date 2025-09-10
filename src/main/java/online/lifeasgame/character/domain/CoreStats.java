@@ -35,11 +35,11 @@ public class CoreStats {
 
     private CoreStats(int str, int agi, int dex, int intel, int vit, int luc) {
         Guard.minValue(str, 1, "str");
-        Guard.minValue(agi, 1, "agi");
-        Guard.minValue(dex, 1, "dex");
-        Guard.minValue(intel, 1, "intel");
-        Guard.minValue(vit, 1, "vit");
-        Guard.minValue(luc, 1, "luc");
+        Guard.minValue(agi, 1, "agiDelta");
+        Guard.minValue(dex, 1, "dexDelta");
+        Guard.minValue(intel, 1, "intelDelta");
+        Guard.minValue(vit, 1, "vitDelta");
+        Guard.minValue(luc, 1, "lucDelta");
         this.str = str;
         this.agi = agi;
         this.dex = dex;

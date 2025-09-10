@@ -19,7 +19,7 @@ public class Mana {
     private int cap;
 
     private Mana(int current, int cap) {
-        Guard.minValue(cap, 1, "mp cap");
+        Guard.minValue(cap, 1, "mpDelta cap");
         this.cap = cap;
         this.current = clamp(current, cap);
     }
@@ -56,7 +56,7 @@ public class Mana {
     }
 
     public Mana recover(int amount) {
-        Guard.minValue(amount, 0, "recover mp amount");
+        Guard.minValue(amount, 0, "recover mpDelta amount");
         if (amount == 0 || current == cap) {
             return this;
         }

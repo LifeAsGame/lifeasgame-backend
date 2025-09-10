@@ -30,12 +30,12 @@ public class AdminPlayerService {
         Player player = playerWriter.grantCoreStats(
                 command.playerId(),
                 CoreStatDelta.of(
-                        command.str(),
-                        command.agi(),
-                        command.dex(),
-                        command.intel(),
-                        command.vit(),
-                        command.luc()
+                        command.strDelta(),
+                        command.agiDelta(),
+                        command.dexDelta(),
+                        command.intelDelta(),
+                        command.vitDelta(),
+                        command.lucDelta()
                 )
         );
         return AdminPlayerResult.CoreStatsGranted.of(

@@ -16,10 +16,10 @@ public interface AdminPlayerApiSpecV1 {
     @Operation(summary = "Player Exp 지급", description = "사용자에게 exp를 지급합니다.")
     ResponseEntity<ApiResponse<AdminPlayerResponse.ExpGranted>> grantExp(
             @PathVariable Long playerId,
-            @Valid @RequestBody AdminPlayerRequest.GrantExp grantExp
+            @Valid @RequestBody AdminPlayerRequest.GrantExp request
     );
 
-    @Operation(summary = "Player core-stats 지급", description = "사용자에게 core-stats를 지급합니다")
+    @Operation(summary = "Player core-stats 지급", description = "사용자의 core-stats를 증가, 감소 시킵니다.")
     ResponseEntity<ApiResponse<AdminPlayerResponse.CoreStatsGranted>> grantCoreStats(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantCoreStats request

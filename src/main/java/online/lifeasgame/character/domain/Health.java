@@ -19,7 +19,7 @@ public class Health {
     private int cap;
 
     private Health(int current, int cap) {
-        Guard.minValue(cap, 1, "hp cap");
+        Guard.minValue(cap, 1, "hpDelta cap");
         this.cap = cap;
         this.current = clamp(current, cap);
     }

@@ -2,8 +2,6 @@ package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerCommand;
-import online.lifeasgame.character.application.command.PlayerCommand.ChangeHpCapacity;
-import online.lifeasgame.character.application.command.PlayerCommand.Register;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.domain.GenderType;
 import online.lifeasgame.character.domain.Name;
@@ -20,7 +18,7 @@ public class PlayerService {
     private final PlayerReader playerReader;
 
     @Transactional
-    public PlayerResult.Created linkStart(Long userId, Register register) {
+    public PlayerResult.Created linkStart(Long userId, PlayerCommand.Register register) {
         Player player = Player.linkStart(
                 userId,
                 Name.of(register.name()),
@@ -41,28 +39,28 @@ public class PlayerService {
     @Transactional
     public PlayerResult.CurrentHp changeHp(PlayerCommand.ChangeHp command) {
         return PlayerResult.CurrentHp.from(
-                playerWriter.changeHp(command.playerId(), command.hp())
+                playerWriter.changeHp(command.playerId(), command.hpDelta())
         );
     }
 
     @Transactional
-    public PlayerResult.HpCapacity changeHpCapacity(ChangeHpCapacity command) {
+    public PlayerResult.HpCapacity changeHpCapacity(PlayerCommand.ChangeHpCapacity command) {
         return PlayerResult.HpCapacity.from(
-                playerWriter.changeHpCapacity(command.playerId(), command.hpCapacity())
+                playerWriter.changeHpCapacity(command.playerId(), command.hpCapacityDelta())
         );
     }
 
     @Transactional
     public PlayerResult.CurrentMp changeMp(PlayerCommand.ChangeMp command) {
         return PlayerResult.CurrentMp.from(
-                playerWriter.changeMp(command.playerId(), command.mp())
+                playerWriter.changeMp(command.playerId(), command.mpDelta())
         );
     }
 
     @Transactional
     public PlayerResult.MpCapacity changeMpCapacity(PlayerCommand.ChangeMpCapacity command) {
         return PlayerResult.MpCapacity.from(
-                playerWriter.changeMpCapacity(command.playerId(), command.mpCapacity())
+                playerWriter.changeMpCapacity(command.playerId(), command.mpCapacityDelta())
         );
     }
 }

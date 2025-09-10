@@ -11,37 +11,37 @@ public class PlayerCommand {
 
     public record ChangeHp(
             Long playerId,
-            int hp
+            int hpDelta
     ) {
-        public static ChangeHp of(Long playerId, int hp) {
-            return new ChangeHp(playerId, hp);
+        public static ChangeHp of(Long playerId, int hpDelta) {
+            return new ChangeHp(playerId, hpDelta);
         }
     }
 
     public record ChangeHpCapacity(
             Long playerId,
-            int hpCapacity
+            int hpCapacityDelta
     ) {
-        public static ChangeHpCapacity of(Long playerId, int hpCapacity) {
-            return new ChangeHpCapacity(playerId, hpCapacity);
+        public static ChangeHpCapacity of(Long playerId, int hpCapacityDelta) {
+            return new ChangeHpCapacity(playerId, hpCapacityDelta);
         }
     }
 
     public record ChangeMp(
             Long playerId,
-            int mp
+            int mpDelta
     ) {
-        public static ChangeMp of(Long playerId, int mp) {
-            return new ChangeMp(playerId, mp);
+        public static ChangeMp of(Long playerId, int mpDelta) {
+            return new ChangeMp(playerId, mpDelta);
         }
     }
 
     public record ChangeMpCapacity(
             Long playerId,
-            int mpCapacity
+            int mpCapacityDelta
     ) {
-        public static ChangeMpCapacity of(Long playerId, int mpCapacity) {
-            return new ChangeMpCapacity(playerId, mpCapacity);
+        public static ChangeMpCapacity of(Long playerId, int mpCapacityDelta) {
+            return new ChangeMpCapacity(playerId, mpCapacityDelta);
         }
     }
 }

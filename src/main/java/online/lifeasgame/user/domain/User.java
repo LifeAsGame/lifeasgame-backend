@@ -47,8 +47,7 @@ public class User extends AbstractTime {
     @Transient
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
-    private User(Long id, Email email, HashedPassword passwordHash, Nickname nickname, UserStatus status) {
-        this.id = id;
+    private User(Email email, HashedPassword passwordHash, Nickname nickname, UserStatus status) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.nickname = nickname;
@@ -56,7 +55,7 @@ public class User extends AbstractTime {
     }
 
     public static User register(Email email, HashedPassword passwordHash, Nickname nickname) {
-        return new User(null, email, passwordHash, nickname, UserStatus.ACTIVE);
+        return new User(email, passwordHash, nickname, UserStatus.ACTIVE);
     }
 
     public List<DomainEvent> pullEvents() {
