@@ -10,74 +10,74 @@ public class PlayerWebMapper {
     private PlayerWebMapper() {
     }
 
-    public static PlayerCommand.Register toCommand(PlayerRequest.Register register) {
-        return PlayerCommand.Register.of(register.name(), register.gender());
+    public static PlayerCommand.Register toCommand(PlayerRequest.Register request) {
+        return PlayerCommand.Register.of(request.name(), request.gender());
     }
 
-    public static PlayerCommand.ChangeHp toCommand(Long playerId, PlayerRequest.ChangeHp changeHp) {
-        return PlayerCommand.ChangeHp.of(playerId, changeHp.hpDelta());
+    public static PlayerCommand.ChangeHp toCommand(Long playerId, PlayerRequest.ChangeHp request) {
+        return PlayerCommand.ChangeHp.of(playerId, request.hpDelta());
     }
 
-    public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, PlayerRequest.ChangeHpCapacity changeHpCapacity) {
-        return PlayerCommand.ChangeHpCapacity.of(playerId, changeHpCapacity.hpCapacityDelta());
+    public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, PlayerRequest.ChangeHpCapacity request) {
+        return PlayerCommand.ChangeHpCapacity.of(playerId, request.hpCapacityDelta());
     }
 
-    public static PlayerCommand.ChangeMp toCommand(Long playerId, PlayerRequest.ChangeMp changeMp) {
-        return PlayerCommand.ChangeMp.of(playerId, changeMp.mpDelta());
+    public static PlayerCommand.ChangeMp toCommand(Long playerId, PlayerRequest.ChangeMp request) {
+        return PlayerCommand.ChangeMp.of(playerId, request.mpDelta());
     }
 
-    public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, PlayerRequest.ChangeMpCapacity changeMpCapacity) {
-        return PlayerCommand.ChangeMpCapacity.of(playerId, changeMpCapacity.mpCapacityDelta());
+    public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, PlayerRequest.ChangeMpCapacity request) {
+        return PlayerCommand.ChangeMpCapacity.of(playerId, request.mpCapacityDelta());
     }
 
 
-    public static PlayerResponse.Created toCreated(PlayerResult.Created playerResult) {
-        return new PlayerResponse.Created(playerResult.id());
+    public static PlayerResponse.Created toCreated(PlayerResult.Created result) {
+        return new PlayerResponse.Created(result.id());
     }
 
-    public static PlayerResponse.PlayerInfo toPlayerInfo(PlayerResult.PlayerInfo playerInfo) {
+    public static PlayerResponse.PlayerInfo toPlayerInfo(PlayerResult.PlayerInfo result) {
         return PlayerResponse.PlayerInfo.of(
-                playerInfo.name(),
-                playerInfo.gender(),
-                playerInfo.job(),
-                playerInfo.level(),
-                playerInfo.exp(),
-                playerInfo.currentHealth(),
-                playerInfo.healthCapacity(),
-                playerInfo.currentMana(),
-                playerInfo.manaCapacity(),
-                playerInfo.str(),
-                playerInfo.agi(),
-                playerInfo.dex(),
-                playerInfo.intel(),
-                playerInfo.vit(),
-                playerInfo.luc(),
-                playerInfo.extraStats(),
-                playerInfo.effects()
+                result.name(),
+                result.gender(),
+                result.job(),
+                result.level(),
+                result.exp(),
+                result.currentHealth(),
+                result.healthCapacity(),
+                result.currentMana(),
+                result.manaCapacity(),
+                result.str(),
+                result.agi(),
+                result.dex(),
+                result.intel(),
+                result.vit(),
+                result.luc(),
+                result.extraStats(),
+                result.effects()
         );
     }
 
-    public static PlayerResponse.CurrentHp toCurrentHp(PlayerResult.CurrentHp currentHp) {
+    public static PlayerResponse.CurrentHp toCurrentHp(PlayerResult.CurrentHp result) {
         return PlayerResponse.CurrentHp.of(
-                currentHp.value()
+                result.value()
         );
     }
 
-    public static PlayerResponse.HpCapacity toHpCapacity(PlayerResult.HpCapacity hpCapacity) {
+    public static PlayerResponse.HpCapacity toHpCapacity(PlayerResult.HpCapacity result) {
         return PlayerResponse.HpCapacity.of(
-                hpCapacity.cap()
+                result.cap()
         );
     }
 
-    public static PlayerResponse.CurrentMp toCurrentMp(PlayerResult.CurrentMp currentMp) {
+    public static PlayerResponse.CurrentMp toCurrentMp(PlayerResult.CurrentMp result) {
         return PlayerResponse.CurrentMp.of(
-                currentMp.value()
+                result.value()
         );
     }
 
-    public static PlayerResponse.MpCapacity toMpCapacity(PlayerResult.MpCapacity mpCapacity) {
+    public static PlayerResponse.MpCapacity toMpCapacity(PlayerResult.MpCapacity result) {
         return PlayerResponse.MpCapacity.of(
-                mpCapacity.cap()
+                result.cap()
         );
     }
 }

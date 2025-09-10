@@ -162,7 +162,7 @@ public class Player extends AbstractTime {
         this.mana = this.mana.decreaseCap(amount);
     }
 
-    public void gainCoreStats(CoreStatDelta coreStatDelta) {
+    public void grantCoreStats(CoreStatDelta coreStatDelta) {
         this.stats = this.stats.grant(coreStatDelta);
     }
 

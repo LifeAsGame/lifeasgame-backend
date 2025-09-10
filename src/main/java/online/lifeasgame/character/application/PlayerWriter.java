@@ -114,7 +114,7 @@ public class PlayerWriter {
     public Player grantCoreStats(Long playerId, CoreStatDelta delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
-        player.gainCoreStats(delta);
+        player.grantCoreStats(delta);
         return player;
     }
 }

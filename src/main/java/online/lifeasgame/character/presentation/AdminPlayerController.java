@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.AdminPlayerService;
 import online.lifeasgame.character.application.result.AdminPlayerResult;
-import online.lifeasgame.character.application.result.AdminPlayerResult.ExpGranted;
 import online.lifeasgame.character.presentation.mapper.AdminPlayerWebMapper;
 import online.lifeasgame.character.presentation.request.AdminPlayerRequest;
 import online.lifeasgame.character.presentation.response.AdminPlayerResponse;
@@ -31,7 +30,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantExp request
     ) {
-        ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.expDelta());
+        AdminPlayerResult.ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.expDelta());
         return ApiResponses.ok(
                 AdminPlayerWebMapper.toExpGranted(expGranted)
         );

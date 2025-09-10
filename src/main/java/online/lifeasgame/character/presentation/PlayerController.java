@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.PlayerFacade;
 import online.lifeasgame.character.application.PlayerService;
 import online.lifeasgame.character.application.result.PlayerResult;
-import online.lifeasgame.character.application.result.PlayerResult.PlayerInfo;
 import online.lifeasgame.character.presentation.mapper.PlayerWebMapper;
 import online.lifeasgame.character.presentation.request.PlayerRequest;
 import online.lifeasgame.character.presentation.response.PlayerResponse;
@@ -45,7 +44,7 @@ public class PlayerController implements PlayerApiSpecV1 {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo() {
-        PlayerInfo playerInfo = playerFacade.getPlayerInfo();
+        PlayerResult.PlayerInfo playerInfo = playerFacade.getPlayerInfo();
         return ApiResponses.ok(
                 PlayerWebMapper.toPlayerInfo(playerInfo)
         );
