@@ -31,7 +31,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantExp request
     ) {
-        ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.exp());
+        ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.expDelta());
         return ApiResponses.ok(
                 AdminPlayerWebMapper.toExpGranted(expGranted)
         );

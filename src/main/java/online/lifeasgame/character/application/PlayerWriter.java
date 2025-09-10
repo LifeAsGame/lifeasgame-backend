@@ -37,19 +37,15 @@ public class PlayerWriter {
         return savedPlayer.getId();
     }
 
-    public Player changeHp(Long playerId, int hp) {
+    public Player changeHp(Long playerId, int delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
 
-        if (hp == 0) {
-            return player;
-        }
-
-        if (hp >= 0) {
-            player.heal(hp);
+        if (delta >= 0) {
+            player.heal(delta);
         } else {
             try {
-                player.damage(Math.negateExact(hp));
+                player.damage(Math.negateExact(delta));
             } catch (ArithmeticException e) {
                 throw new DomainException(PlayerError.INVALID_HP);
             }
@@ -58,19 +54,15 @@ public class PlayerWriter {
         return player;
     }
 
-    public Player changeHpCapacity(Long playerId, int hpCapacity) {
+    public Player changeHpCapacity(Long playerId, int delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
 
-        if (hpCapacity == 0) {
-            return player;
-        }
-
-        if (hpCapacity > 0) {
-            player.increaseMaxHp(hpCapacity);
+        if (delta >= 0) {
+            player.increaseMaxHp(delta);
         } else {
             try {
-                player.decreaseMaxHp(Math.negateExact(hpCapacity));
+                player.decreaseMaxHp(Math.negateExact(delta));
             } catch (ArithmeticException e) {
                 throw new DomainException(PlayerError.INVALID_HP_CAPACITY);
             }
@@ -79,19 +71,15 @@ public class PlayerWriter {
         return player;
     }
 
-    public Player changeMp(Long playerId, int mp) {
+    public Player changeMp(Long playerId, int delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
 
-        if (mp == 0) {
-            return player;
-        }
-
-        if (mp >= 0) {
-            player.restoreMana(mp);
+        if (delta >= 0) {
+            player.restoreMana(delta);
         } else {
             try {
-                player.spendMana(Math.negateExact(mp));
+                player.spendMana(Math.negateExact(delta));
             } catch (ArithmeticException e) {
                 throw new DomainException(PlayerError.INVALID_MP);
             }
@@ -100,19 +88,15 @@ public class PlayerWriter {
         return player;
     }
 
-    public Player changeMpCapacity(Long playerId, int mpCapacity) {
+    public Player changeMpCapacity(Long playerId, int delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
 
-        if (mpCapacity == 0) {
-            return player;
-        }
-
-        if (mpCapacity > 0) {
-            player.increaseMaxMp(mpCapacity);
+        if (delta >= 0) {
+            player.increaseMaxMp(delta);
         } else {
             try {
-                player.decreaseMaxMp(Math.negateExact(mpCapacity));
+                player.decreaseMaxMp(Math.negateExact(delta));
             } catch (ArithmeticException e) {
                 throw new DomainException(PlayerError.INVALID_MP_CAPACITY);
             }
@@ -121,17 +105,16 @@ public class PlayerWriter {
         return player;
     }
 
-    public GainResult grantExp(Long playerId, long exp) {
+    public GainResult grantExp(Long playerId, long delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
-        return player.gainExp(exp, levelingPolicy);
+        return player.gainExp(delta, levelingPolicy);
     }
 
-    public Player grantCoreStats(Long playerId, CoreStatDelta coreStatDelta) {
+    public Player grantCoreStats(Long playerId, CoreStatDelta delta) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
-
-        player.gainCoreStats(coreStatDelta);
+        player.gainCoreStats(delta);
         return player;
     }
 }

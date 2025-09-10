@@ -15,19 +15,19 @@ public class PlayerWebMapper {
     }
 
     public static PlayerCommand.ChangeHp toCommand(Long playerId, PlayerRequest.ChangeHp changeHp) {
-        return PlayerCommand.ChangeHp.of(playerId, changeHp.hp());
+        return PlayerCommand.ChangeHp.of(playerId, changeHp.hpDelta());
     }
 
     public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, PlayerRequest.ChangeHpCapacity changeHpCapacity) {
-        return PlayerCommand.ChangeHpCapacity.of(playerId, changeHpCapacity.hpCapacity());
+        return PlayerCommand.ChangeHpCapacity.of(playerId, changeHpCapacity.hpCapacityDelta());
     }
 
     public static PlayerCommand.ChangeMp toCommand(Long playerId, PlayerRequest.ChangeMp changeMp) {
-        return PlayerCommand.ChangeMp.of(playerId, changeMp.mp());
+        return PlayerCommand.ChangeMp.of(playerId, changeMp.mpDelta());
     }
 
     public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, PlayerRequest.ChangeMpCapacity changeMpCapacity) {
-        return PlayerCommand.ChangeMpCapacity.of(playerId, changeMpCapacity.mpCapacity());
+        return PlayerCommand.ChangeMpCapacity.of(playerId, changeMpCapacity.mpCapacityDelta());
     }
 
 

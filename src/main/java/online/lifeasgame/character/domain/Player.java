@@ -130,36 +130,36 @@ public class Player extends AbstractTime {
         );
     }
 
-    public void heal(int hp) {
-        this.health = this.health.heal(hp);
+    public void heal(int amount) {
+        this.health = this.health.heal(amount);
     }
 
-    public void damage(int hp) {
-        this.health = this.health.damage(hp);
+    public void damage(int amount) {
+        this.health = this.health.damage(amount);
     }
 
-    public void increaseMaxHp(int hpCapacity) {
-        this.health = this.health.increaseCap(hpCapacity);
+    public void increaseMaxHp(int amount) {
+        this.health = this.health.increaseCap(amount);
     }
 
-    public void decreaseMaxHp(int hpCapacity) {
-        this.health = this.health.decreaseCap(hpCapacity);
+    public void decreaseMaxHp(int amount) {
+        this.health = this.health.decreaseCap(amount);
     }
 
-    public void restoreMana(int mp) {
-        this.mana = this.mana.recover(mp);
+    public void restoreMana(int amount) {
+        this.mana = this.mana.recover(amount);
     }
 
-    public void spendMana(int mp) {
-        this.mana = this.mana.spend(mp);
+    public void spendMana(int amount) {
+        this.mana = this.mana.spend(amount);
     }
 
-    public void increaseMaxMp(int mpCapacity) {
-        this.mana = this.mana.increaseCap(mpCapacity);
+    public void increaseMaxMp(int amount) {
+        this.mana = this.mana.increaseCap(amount);
     }
 
-    public void decreaseMaxMp(int mpCapacity) {
-        this.mana = this.mana.decreaseCap(mpCapacity);
+    public void decreaseMaxMp(int amount) {
+        this.mana = this.mana.decreaseCap(amount);
     }
 
     public void gainCoreStats(CoreStatDelta coreStatDelta) {

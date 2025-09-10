@@ -16,22 +16,22 @@ public class PlayerRequest {
     }
 
     public record ChangeHp (
-            @NotNull Integer hp
+            @NotNull Integer hpDelta
     ){
     }
 
     public record ChangeHpCapacity(
-            @NotNull Integer hpCapacity
+            @NotNull Integer hpCapacityDelta
     ) {
     }
 
     public record ChangeMp (
-            @NotNull Integer mp
+            @NotNull Integer mpDelta
     ){
     }
 
     public record ChangeMpCapacity(
-            @NotNull Integer mpCapacity
+            @NotNull Integer mpCapacityDelta
     ) {
     }
 }
