@@ -12,23 +12,26 @@ import online.lifeasgame.core.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CoreStats {
 
+    public static final int MIN = 1;
+    public static final int MAX = 9999;
+
     @Column(name = "str_stat", nullable = false)
-    private int str = 1;
+    private int str;
 
     @Column(name = "agi_stat", nullable = false)
-    private int agi = 1;
+    private int agi;
 
     @Column(name = "dex_stat", nullable = false)
-    private int dex = 1;
+    private int dex;
 
     @Column(name = "int_stat", nullable = false)
-    private int intel = 1;
+    private int intel;
 
     @Column(name = "vit_stat", nullable = false)
-    private int vit = 1;
+    private int vit;
 
     @Column(name = "luc_stat", nullable = false)
-    private int luc = 1;
+    private int luc;
 
     private CoreStats(int str, int agi, int dex, int intel, int vit, int luc) {
         Guard.minValue(str, 1, "str");
@@ -64,4 +67,29 @@ public class CoreStats {
     public int vit(){ return vit; }
 
     public int luc(){ return luc; }
+
+    public CoreStats grant(CoreStatDelta d) {
+        if (d == null || d.isZero()) {
+            return this;
+        }
+
+        return new CoreStats(
+                addClamp(this.str, d.str()),
+                addClamp(this.agi, d.agi()),
+                addClamp(this.dex, d.dex()),
+                addClamp(this.intel, d.intel()),
+                addClamp(this.vit, d.vit()),
+                addClamp(this.luc, d.luc())
+        );
+    }
+
+    private static int addClamp(int base, int delta) {
+        long sum = (long) base + (long) delta;
+        if (sum >= MAX) {
+            return MAX;
+        } else if (sum <= MIN) {
+            return MIN;
+        }
+        return (int) sum;
+    }
 }
