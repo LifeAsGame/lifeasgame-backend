@@ -22,6 +22,15 @@ public class PlayerWebMapper {
         return PlayerCommand.ChangeHpCapacity.of(playerId, changeHpCapacity.hpCapacity());
     }
 
+    public static PlayerCommand.ChangeMp toCommand(Long playerId, PlayerRequest.ChangeMp changeMp) {
+        return PlayerCommand.ChangeMp.of(playerId, changeMp.mp());
+    }
+
+    public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, PlayerRequest.ChangeMpCapacity changeMpCapacity) {
+        return PlayerCommand.ChangeMpCapacity.of(playerId, changeMpCapacity.mpCapacity());
+    }
+
+
     public static PlayerResponse.Created toCreated(PlayerResult.Created playerResult) {
         return new PlayerResponse.Created(playerResult.id());
     }
@@ -57,6 +66,18 @@ public class PlayerWebMapper {
     public static PlayerResponse.HpCapacity toHpCapacity(PlayerResult.HpCapacity hpCapacity) {
         return PlayerResponse.HpCapacity.of(
                 hpCapacity.cap()
+        );
+    }
+
+    public static PlayerResponse.CurrentMp toCurrentMp(PlayerResult.CurrentMp currentMp) {
+        return PlayerResponse.CurrentMp.of(
+                currentMp.value()
+        );
+    }
+
+    public static PlayerResponse.MpCapacity toMpCapacity(PlayerResult.MpCapacity mpCapacity) {
+        return PlayerResponse.MpCapacity.of(
+                mpCapacity.cap()
         );
     }
 }

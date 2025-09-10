@@ -146,6 +146,22 @@ public class Player extends AbstractTime {
         this.health = this.health.decreaseCap(hpCapacity);
     }
 
+    public void restoreMana(int mp) {
+        this.mana = this.mana.recover(mp);
+    }
+
+    public void spendMana(int mp) {
+        this.mana = this.mana.spend(mp);
+    }
+
+    public void increaseMaxMp(int mpCapacity) {
+        this.mana = this.mana.increaseCap(mpCapacity);
+    }
+
+    public void decreaseMaxMp(int mpCapacity) {
+        this.mana = this.mana.decreaseCap(mpCapacity);
+    }
+
     public record GainResult(
             long requestedExp,
             long appliedExp,

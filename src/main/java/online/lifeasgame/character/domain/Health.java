@@ -87,13 +87,13 @@ public class Health {
         return new Health(current, next);
     }
 
-    public Health decreaseCap(int hpCapacity) {
-        Guard.minValue(hpCapacity, 0, "decrease cap");
-        if (hpCapacity == 0) {
+    public Health decreaseCap(int amount) {
+        Guard.minValue(amount, 0, "decrease cap");
+        if (amount == 0) {
             return this;
         }
 
-        int next = cap - hpCapacity;
+        int next = cap - amount;
         if (next < 0) {
             next = 0;
         }

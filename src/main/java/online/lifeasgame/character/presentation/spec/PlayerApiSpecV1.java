@@ -31,4 +31,16 @@ public interface PlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody PlayerRequest.ChangeHpCapacity changeHpCapacity
     );
+
+    @Operation(summary = "Player MP 상태 변경", description = "Player MP를 변경합니다")
+    ResponseEntity<ApiResponse<PlayerResponse.CurrentMp>> updateCurrentMp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeMp changeMp
+    );
+
+    @PatchMapping("/{playerId}/mana/capacity")
+    ResponseEntity<ApiResponse<PlayerResponse.MpCapacity>> updateMpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeMpCapacity changeMpCapacity
+    );
 }

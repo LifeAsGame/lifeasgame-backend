@@ -74,4 +74,46 @@ public class PlayerWriter {
 
         return player;
     }
+
+    public Player changeMp(Long playerId, int mp) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+
+        if (mp == 0) {
+            return player;
+        }
+
+        if (mp >= 0) {
+            player.restoreMana(mp);
+        } else {
+            try {
+                player.spendMana(Math.negateExact(mp));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_MP);
+            }
+        }
+
+        return player;
+    }
+
+    public Player changeMpCapacity(Long playerId, int mpCapacity) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+
+        if (mpCapacity == 0) {
+            return player;
+        }
+
+        if (mpCapacity > 0) {
+            player.increaseMaxMp(mpCapacity);
+        } else {
+            try {
+                player.decreaseMaxMp(Math.negateExact(mpCapacity));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_MP_CAPACITY);
+            }
+        }
+
+        return player;
+    }
 }

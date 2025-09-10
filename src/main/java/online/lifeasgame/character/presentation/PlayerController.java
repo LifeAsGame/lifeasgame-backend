@@ -74,4 +74,28 @@ public class PlayerController implements PlayerApiSpecV1 {
                 PlayerWebMapper.toHpCapacity(hpCapacity)
         );
     }
+
+    @Override
+    @PatchMapping("/{playerId}/mana/current")
+    public ResponseEntity<ApiResponse<PlayerResponse.CurrentMp>> updateCurrentMp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeMp changeMp
+    ){
+        PlayerResult.CurrentMp currentMp = playerService.changeMp(PlayerWebMapper.toCommand(playerId, changeMp));
+        return ApiResponses.ok(
+                PlayerWebMapper.toCurrentMp(currentMp)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/mana/capacity")
+    public ResponseEntity<ApiResponse<PlayerResponse.MpCapacity>> updateMpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody PlayerRequest.ChangeMpCapacity changeMpCapacity
+    ) {
+        PlayerResult.MpCapacity mpCapacity = playerService.changeMpCapacity(PlayerWebMapper.toCommand(playerId, changeMpCapacity));
+        return ApiResponses.ok(
+                PlayerWebMapper.toMpCapacity(mpCapacity)
+        );
+    }
 }
