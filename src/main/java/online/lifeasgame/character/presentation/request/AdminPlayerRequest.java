@@ -16,6 +16,26 @@ public class AdminPlayerRequest {
     ) {
     }
 
+    public record ChangeHp (
+            @NotNull Integer hpDelta
+    ){
+    }
+
+    public record ChangeHpCapacity(
+            @NotNull Integer hpCapacityDelta
+    ) {
+    }
+
+    public record ChangeMp (
+            @NotNull Integer mpDelta
+    ){
+    }
+
+    public record ChangeMpCapacity(
+            @NotNull Integer mpCapacityDelta
+    ) {
+    }
+
     public record GrantCoreStats(
             Integer strDelta,
             Integer agiDelta,

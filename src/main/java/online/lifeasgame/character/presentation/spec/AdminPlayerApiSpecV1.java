@@ -19,6 +19,30 @@ public interface AdminPlayerApiSpecV1 {
             @Valid @RequestBody AdminPlayerRequest.GrantExp request
     );
 
+    @Operation(summary = "Player HP 상태 변경", description = "Player HP를 증가, 감소 시킵니다.")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> updateCurrentHp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeHp request
+    );
+
+    @Operation(summary = "Player 최대 HP 변경", description = "Player 초대 HP를 증가, 감소 시킵니다")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> updateHpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
+    );
+
+    @Operation(summary = "Player MP 상태 변경", description = "Player MP를 증가, 감소 시킵니다")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> updateCurrentMp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeMp request
+    );
+
+    @Operation(summary = "Player 최대 MP 변경", description = "Player 최대 MP를 증가, 감소 시킵니다")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> updateMpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
+    );
+
     @Operation(summary = "Player core-stats 지급", description = "사용자의 core-stats를 증가, 감소 시킵니다.")
     ResponseEntity<ApiResponse<AdminPlayerResponse.CoreStatsGranted>> grantCoreStats(
             @PathVariable Long playerId,
