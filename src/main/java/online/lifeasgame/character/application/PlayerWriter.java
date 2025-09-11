@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.CoreStatDelta;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.Player.GainResult;
+import online.lifeasgame.character.domain.StatusEffects;
 import online.lifeasgame.character.domain.event.PlayerRegistered;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
@@ -38,8 +39,7 @@ public class PlayerWriter {
     }
 
     public Player changeHp(Long playerId, int delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
 
         if (delta >= 0) {
             player.heal(delta);
@@ -55,8 +55,7 @@ public class PlayerWriter {
     }
 
     public Player changeHpCapacity(Long playerId, int delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
 
         if (delta >= 0) {
             player.increaseMaxHp(delta);
@@ -72,8 +71,7 @@ public class PlayerWriter {
     }
 
     public Player changeMp(Long playerId, int delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
 
         if (delta >= 0) {
             player.restoreMana(delta);
@@ -89,8 +87,7 @@ public class PlayerWriter {
     }
 
     public Player changeMpCapacity(Long playerId, int delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
 
         if (delta >= 0) {
             player.increaseMaxMp(delta);
@@ -106,15 +103,24 @@ public class PlayerWriter {
     }
 
     public GainResult grantExp(Long playerId, long delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
         return player.gainExp(delta, levelingPolicy);
     }
 
     public Player grantCoreStats(Long playerId, CoreStatDelta delta) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+        Player player = getPlayer(playerId);
         player.grantCoreStats(delta);
         return player;
+    }
+
+    public Player applyStatusEffects(Long playerId, StatusEffects statusEffects) {
+        Player player = getPlayer(playerId);
+        player.applyStatusEffects(statusEffects);
+        return player;
+    }
+
+    private Player getPlayer(Long playerId) {
+        return playerRepository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
     }
 }

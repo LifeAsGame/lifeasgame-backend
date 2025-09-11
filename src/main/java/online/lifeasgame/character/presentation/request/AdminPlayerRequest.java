@@ -1,7 +1,10 @@
 package online.lifeasgame.character.presentation.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.List;
 
 public class AdminPlayerRequest {
 
@@ -27,5 +30,10 @@ public class AdminPlayerRequest {
         public int nInt() { return intelDelta == null ? 0 : intelDelta; }
         public int nVit() { return vitDelta == null ? 0 : vitDelta; }
         public int nLuc() { return lucDelta == null ? 0 : lucDelta; }
+    }
+
+    public record GrantStatusEffects(
+            @NotEmpty List<@NotBlank String> codes
+    ) {
     }
 }

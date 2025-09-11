@@ -1,7 +1,9 @@
 package online.lifeasgame.character.application.result;
 
+import java.util.List;
 import online.lifeasgame.character.domain.CoreStats;
 import online.lifeasgame.character.domain.Player.GainResult;
+import online.lifeasgame.character.domain.StatusEffects;
 
 public class AdminPlayerResult {
 
@@ -56,6 +58,23 @@ public class AdminPlayerResult {
                     coreStats.vit(),
                     coreStats.luc()
             );
+        }
+    }
+
+    public record StatusEffectsGranted(
+            Long playerId,
+            List<Item> effects
+    ) {
+        public static StatusEffectsGranted from(Long playerId, StatusEffects statusEffects) {
+            return new StatusEffectsGranted(
+                    playerId,
+                    statusEffects.asList().stream()
+                            .map(code -> new Item(code.name(), code.category().name()))
+                            .toList()
+            );
+        }
+
+        public record Item(String code, String category) {
         }
     }
 }

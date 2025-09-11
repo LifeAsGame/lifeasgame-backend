@@ -24,4 +24,10 @@ public interface AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantCoreStats request
     );
+
+    @Operation(summary = "Player Status Effects 설정", description = "사용자의 상태 이상을 처리합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.StatusEffectsGranted>> grantStatusEffects(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.GrantStatusEffects request
+    );
 }

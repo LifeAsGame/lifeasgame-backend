@@ -1,5 +1,7 @@
 package online.lifeasgame.character.presentation.response;
 
+import java.util.List;
+
 public class AdminPlayerResponse {
 
     private AdminPlayerResponse() {
@@ -49,6 +51,18 @@ public class AdminPlayerResponse {
     ) {
         public static CoreStatsGranted of(Long playerId, int str, int agi, int dex, int intel, int vit, int luc) {
             return new CoreStatsGranted(playerId, str, agi, dex, intel, vit, luc);
+        }
+    }
+
+    public record StatusEffectsGranted(
+            Long playerId,
+            List<Item> effects
+    ) {
+        public static StatusEffectsGranted of(Long playerId, List<Item> effects) {
+            return new StatusEffectsGranted(playerId, effects);
+        }
+
+        public record Item(String code, String category) {
         }
     }
 }
