@@ -26,7 +26,7 @@ public class PlayerResponse {
             int manaCapacity,
             int str, int agi, int dex, int intel, int vit, int luc,
             Map<String, Integer> extraStats,
-            List<String> effects
+            List<StatusEffects> effects
     ) {
         public static PlayerInfo of(
                 String name,
@@ -40,7 +40,7 @@ public class PlayerResponse {
                 int manaCapacity,
                 int str, int agi, int dex, int intel, int vit, int luc,
                 Map<String, Integer> stringIntegerMap,
-                List<String> effects
+                List<StatusEffects> effects
         ) {
             return new PlayerInfo(
                     name,
@@ -56,6 +56,12 @@ public class PlayerResponse {
                     stringIntegerMap,
                     effects
             );
+        }
+
+        public record StatusEffects(String code, String effect) {
+            public static StatusEffects of(String code, String effect) {
+                return new StatusEffects(code, effect);
+            }
         }
     }
 

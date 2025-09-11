@@ -48,4 +48,16 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
                 AdminPlayerWebMapper.toCoreStatsGranted(coreStatsGranted)
         );
     }
+
+    @Override
+    @PostMapping("/{playerId}/status-effects/grant")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.StatusEffectsGranted>> grantStatusEffects(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.GrantStatusEffects request
+    ) {
+        AdminPlayerResult.StatusEffectsGranted statusEffectsGranted = adminPlayerService.grantStatusEffects(AdminPlayerWebMapper.toCommand(playerId, request));
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toStatusEffectsGranted(statusEffectsGranted)
+        );
+    }
 }

@@ -6,6 +6,8 @@ import online.lifeasgame.character.application.result.AdminPlayerResult;
 import online.lifeasgame.character.domain.CoreStatDelta;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.Player.GainResult;
+import online.lifeasgame.character.domain.StatusEffectCode;
+import online.lifeasgame.character.domain.StatusEffects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,22 @@ public class AdminPlayerService {
         return AdminPlayerResult.CoreStatsGranted.of(
                 player.getId(),
                 player.getStats()
+        );
+    }
+
+    @Transactional
+    public AdminPlayerResult.StatusEffectsGranted grantStatusEffects(AdminPlayerCommand.GrantStatusEffects command) {
+        Player player = playerWriter.applyStatusEffects(
+                command.playerId(),
+                StatusEffects.of(
+                        command.codes().stream()
+                                .map(StatusEffectCode::parse)
+                                .toList()
+                )
+        );
+        return AdminPlayerResult.StatusEffectsGranted.from(
+                player.getId(),
+                player.getStatusEffects()
         );
     }
 }

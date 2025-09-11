@@ -53,7 +53,9 @@ public class PlayerWebMapper {
                 result.vit(),
                 result.luc(),
                 result.extraStats(),
-                result.effects()
+                result.effects().stream()
+                        .map((effect) -> PlayerResponse.PlayerInfo.StatusEffects.of(effect.name(), effect.category().name()))
+                        .toList()
         );
     }
 

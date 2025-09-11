@@ -37,6 +37,14 @@ public class AdminPlayerWebMapper {
         );
     }
 
+    public static AdminPlayerCommand.GrantStatusEffects toCommand(Long playerId,
+                                                                  AdminPlayerRequest.GrantStatusEffects request) {
+        return AdminPlayerCommand.GrantStatusEffects.of(
+                playerId,
+                request.codes()
+        );
+    }
+
     public static AdminPlayerResponse.CoreStatsGranted toCoreStatsGranted(AdminPlayerResult.CoreStatsGranted result) {
         return AdminPlayerResponse.CoreStatsGranted.of(
                 result.playerId(),
@@ -46,6 +54,17 @@ public class AdminPlayerWebMapper {
                 result.intel(),
                 result.vit(),
                 result.luc()
+        );
+    }
+
+    public static AdminPlayerResponse.StatusEffectsGranted toStatusEffectsGranted(
+            AdminPlayerResult.StatusEffectsGranted result
+    ) {
+        return AdminPlayerResponse.StatusEffectsGranted.of(
+                result.playerId(),
+                result.effects().stream()
+                        .map(i -> new AdminPlayerResponse.StatusEffectsGranted.Item(i.code(), i.category()))
+                        .toList()
         );
     }
 }

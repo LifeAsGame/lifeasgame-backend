@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.character.domain.converter.ExtraStatsConverter;
 import online.lifeasgame.character.domain.converter.GenderTypeConverter;
-import online.lifeasgame.character.domain.converter.StatusEffectsConverter;
+import online.lifeasgame.character.domain.converter.StatusEffectsEnumConverter;
 import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
@@ -70,8 +70,7 @@ public class Player extends AbstractTime {
     @Column(name = "extra_stats", columnDefinition = "json")
     private ExtraStats extraStats;       // 부가 스탯(사교력/노력 등)
 
-    @Convert(converter = StatusEffectsConverter.class)
-    @Column(name = "status_effects", columnDefinition = "json")
+    @Convert(converter = StatusEffectsEnumConverter.class)
     private StatusEffects statusEffects;    // 중독/혼란 등
 
     @Column(name="title_id")
@@ -164,6 +163,10 @@ public class Player extends AbstractTime {
 
     public void grantCoreStats(CoreStatDelta coreStatDelta) {
         this.stats = this.stats.grant(coreStatDelta);
+    }
+
+    public void applyStatusEffects(StatusEffects statusEffects) {
+        this.statusEffects = this.statusEffects.merged(statusEffects);
     }
 
     public record GainResult(

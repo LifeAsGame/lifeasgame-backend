@@ -3,6 +3,7 @@ package online.lifeasgame.character.application.result;
 import java.util.List;
 import java.util.Map;
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.StatusEffectCode;
 
 public class PlayerResult {
 
@@ -27,7 +28,7 @@ public class PlayerResult {
             int manaCapacity,
             int str, int agi, int dex, int intel, int vit, int luc,
             Map<String, Integer> extraStats,
-            List<String> effects
+            List<StatusEffectCode> effects
     ) {
         public static PlayerInfo from(Player player) {
             return new PlayerInfo(
