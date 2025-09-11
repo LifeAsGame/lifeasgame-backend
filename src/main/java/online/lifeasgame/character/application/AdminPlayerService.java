@@ -28,6 +28,34 @@ public class AdminPlayerService {
     }
 
     @Transactional
+    public AdminPlayerResult.CurrentHp changeHp(AdminPlayerCommand.ChangeHp command) {
+        return AdminPlayerResult.CurrentHp.from(
+                playerWriter.changeHp(command.playerId(), command.hpDelta())
+        );
+    }
+
+    @Transactional
+    public AdminPlayerResult.HpCapacity changeHpCapacity(AdminPlayerCommand.ChangeHpCapacity command) {
+        return AdminPlayerResult.HpCapacity.from(
+                playerWriter.changeHpCapacity(command.playerId(), command.hpCapacityDelta())
+        );
+    }
+
+    @Transactional
+    public AdminPlayerResult.CurrentMp changeMp(AdminPlayerCommand.ChangeMp command) {
+        return AdminPlayerResult.CurrentMp.from(
+                playerWriter.changeMp(command.playerId(), command.mpDelta())
+        );
+    }
+
+    @Transactional
+    public AdminPlayerResult.MpCapacity changeMpCapacity(AdminPlayerCommand.ChangeMpCapacity command) {
+        return AdminPlayerResult.MpCapacity.from(
+                playerWriter.changeMpCapacity(command.playerId(), command.mpCapacityDelta())
+        );
+    }
+
+    @Transactional
     public AdminPlayerResult.CoreStatsGranted grantCoreStats(AdminPlayerCommand.GrantCoreStats command) {
         Player player = playerWriter.grantCoreStats(
                 command.playerId(),

@@ -14,23 +14,6 @@ public class PlayerWebMapper {
         return PlayerCommand.Register.of(request.name(), request.gender());
     }
 
-    public static PlayerCommand.ChangeHp toCommand(Long playerId, PlayerRequest.ChangeHp request) {
-        return PlayerCommand.ChangeHp.of(playerId, request.hpDelta());
-    }
-
-    public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, PlayerRequest.ChangeHpCapacity request) {
-        return PlayerCommand.ChangeHpCapacity.of(playerId, request.hpCapacityDelta());
-    }
-
-    public static PlayerCommand.ChangeMp toCommand(Long playerId, PlayerRequest.ChangeMp request) {
-        return PlayerCommand.ChangeMp.of(playerId, request.mpDelta());
-    }
-
-    public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, PlayerRequest.ChangeMpCapacity request) {
-        return PlayerCommand.ChangeMpCapacity.of(playerId, request.mpCapacityDelta());
-    }
-
-
     public static PlayerResponse.Created toCreated(PlayerResult.Created result) {
         return new PlayerResponse.Created(result.id());
     }
@@ -56,30 +39,6 @@ public class PlayerWebMapper {
                 result.effects().stream()
                         .map((effect) -> PlayerResponse.PlayerInfo.StatusEffects.of(effect.name(), effect.category().name()))
                         .toList()
-        );
-    }
-
-    public static PlayerResponse.CurrentHp toCurrentHp(PlayerResult.CurrentHp result) {
-        return PlayerResponse.CurrentHp.of(
-                result.value()
-        );
-    }
-
-    public static PlayerResponse.HpCapacity toHpCapacity(PlayerResult.HpCapacity result) {
-        return PlayerResponse.HpCapacity.of(
-                result.cap()
-        );
-    }
-
-    public static PlayerResponse.CurrentMp toCurrentMp(PlayerResult.CurrentMp result) {
-        return PlayerResponse.CurrentMp.of(
-                result.value()
-        );
-    }
-
-    public static PlayerResponse.MpCapacity toMpCapacity(PlayerResult.MpCapacity result) {
-        return PlayerResponse.MpCapacity.of(
-                result.cap()
         );
     }
 }

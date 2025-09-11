@@ -46,6 +46,38 @@ public class AdminPlayerResponse {
         }
     }
 
+    public record CurrentHp(
+            int currentHp
+    ) {
+        public static CurrentHp of(int currentHp) {
+            return new CurrentHp(currentHp);
+        }
+    }
+
+    public record HpCapacity(
+            int hpCapacity
+    ) {
+        public static HpCapacity of(int hpCapacity) {
+            return new HpCapacity(hpCapacity);
+        }
+    }
+
+    public record CurrentMp(
+            int currentMp
+    ) {
+        public static CurrentMp of(int currentMp) {
+            return new CurrentMp(currentMp);
+        }
+    }
+
+    public record MpCapacity(
+            int mpCapacity
+    ) {
+        public static MpCapacity of(int mpCapacity) {
+            return new MpCapacity(mpCapacity);
+        }
+    }
+
     public record CoreStatsGranted(
             Long playerId, int str, int agi, int dex, int intel, int vit, int luc
     ) {

@@ -11,6 +11,7 @@ import online.lifeasgame.character.presentation.spec.AdminPlayerApiSpecV1;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,54 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
         AdminPlayerResult.ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.expDelta());
         return ApiResponses.ok(
                 AdminPlayerWebMapper.toExpGranted(expGranted)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/health/current")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> updateCurrentHp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeHp request
+    ){
+        AdminPlayerResult.CurrentHp currentHp = adminPlayerService.changeHp(AdminPlayerWebMapper.toCommand(playerId, request));
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toCurrentHp(currentHp)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/health/capacity")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> updateHpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
+    ) {
+        AdminPlayerResult.HpCapacity hpCapacity = adminPlayerService.changeHpCapacity(AdminPlayerWebMapper.toCommand(playerId, request));
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toHpCapacity(hpCapacity)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/mana/current")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> updateCurrentMp(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeMp request
+    ){
+        AdminPlayerResult.CurrentMp currentMp = adminPlayerService.changeMp(AdminPlayerWebMapper.toCommand(playerId, request));
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toCurrentMp(currentMp)
+        );
+    }
+
+    @Override
+    @PatchMapping("/{playerId}/mana/capacity")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> updateMpCapacity(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
+    ) {
+        AdminPlayerResult.MpCapacity mpCapacity = adminPlayerService.changeMpCapacity(AdminPlayerWebMapper.toCommand(playerId, request));
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toMpCapacity(mpCapacity)
         );
     }
 

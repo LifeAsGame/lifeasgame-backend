@@ -25,6 +25,22 @@ public class AdminPlayerWebMapper {
         );
     }
 
+    public static AdminPlayerCommand.ChangeHp toCommand(Long playerId, AdminPlayerRequest.ChangeHp request) {
+        return AdminPlayerCommand.ChangeHp.of(playerId, request.hpDelta());
+    }
+
+    public static AdminPlayerCommand.ChangeHpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeHpCapacity request) {
+        return AdminPlayerCommand.ChangeHpCapacity.of(playerId, request.hpCapacityDelta());
+    }
+
+    public static AdminPlayerCommand.ChangeMp toCommand(Long playerId, AdminPlayerRequest.ChangeMp request) {
+        return AdminPlayerCommand.ChangeMp.of(playerId, request.mpDelta());
+    }
+
+    public static AdminPlayerCommand.ChangeMpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeMpCapacity request) {
+        return AdminPlayerCommand.ChangeMpCapacity.of(playerId, request.mpCapacityDelta());
+    }
+
     public static AdminPlayerCommand.GrantCoreStats toCommand(Long playerId, AdminPlayerRequest.GrantCoreStats request) {
         return new AdminPlayerCommand.GrantCoreStats(
                 playerId,
@@ -42,6 +58,30 @@ public class AdminPlayerWebMapper {
         return AdminPlayerCommand.GrantStatusEffects.of(
                 playerId,
                 request.codes()
+        );
+    }
+
+    public static AdminPlayerResponse.CurrentHp toCurrentHp(AdminPlayerResult.CurrentHp result) {
+        return AdminPlayerResponse.CurrentHp.of(
+                result.value()
+        );
+    }
+
+    public static AdminPlayerResponse.HpCapacity toHpCapacity(AdminPlayerResult.HpCapacity result) {
+        return AdminPlayerResponse.HpCapacity.of(
+                result.cap()
+        );
+    }
+
+    public static AdminPlayerResponse.CurrentMp toCurrentMp(AdminPlayerResult.CurrentMp result) {
+        return AdminPlayerResponse.CurrentMp.of(
+                result.value()
+        );
+    }
+
+    public static AdminPlayerResponse.MpCapacity toMpCapacity(AdminPlayerResult.MpCapacity result) {
+        return AdminPlayerResponse.MpCapacity.of(
+                result.cap()
         );
     }
 

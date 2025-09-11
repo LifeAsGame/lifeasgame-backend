@@ -35,32 +35,4 @@ public class PlayerService {
                 playerReader.getPlayer(playerId)
         );
     }
-
-    @Transactional
-    public PlayerResult.CurrentHp changeHp(PlayerCommand.ChangeHp command) {
-        return PlayerResult.CurrentHp.from(
-                playerWriter.changeHp(command.playerId(), command.hpDelta())
-        );
-    }
-
-    @Transactional
-    public PlayerResult.HpCapacity changeHpCapacity(PlayerCommand.ChangeHpCapacity command) {
-        return PlayerResult.HpCapacity.from(
-                playerWriter.changeHpCapacity(command.playerId(), command.hpCapacityDelta())
-        );
-    }
-
-    @Transactional
-    public PlayerResult.CurrentMp changeMp(PlayerCommand.ChangeMp command) {
-        return PlayerResult.CurrentMp.from(
-                playerWriter.changeMp(command.playerId(), command.mpDelta())
-        );
-    }
-
-    @Transactional
-    public PlayerResult.MpCapacity changeMpCapacity(PlayerCommand.ChangeMpCapacity command) {
-        return PlayerResult.MpCapacity.from(
-                playerWriter.changeMpCapacity(command.playerId(), command.mpCapacityDelta())
-        );
-    }
 }

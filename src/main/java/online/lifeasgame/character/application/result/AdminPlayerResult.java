@@ -2,6 +2,7 @@ package online.lifeasgame.character.application.result;
 
 import java.util.List;
 import online.lifeasgame.character.domain.CoreStats;
+import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.Player.GainResult;
 import online.lifeasgame.character.domain.StatusEffects;
 
@@ -36,6 +37,39 @@ public class AdminPlayerResult {
                     gainResult.capForLevel(),
                     gainResult.progressRatio()
             );
+        }
+    }
+
+
+    public record CurrentHp(
+            int value
+    ) {
+        public static CurrentHp from(Player player) {
+            return new CurrentHp(player.getHealth().current());
+        }
+    }
+
+    public record HpCapacity(
+            int cap
+    ) {
+        public static HpCapacity from(Player player) {
+            return new HpCapacity(player.getHealth().cap());
+        }
+    }
+
+    public record CurrentMp(
+            int value
+    ) {
+        public static CurrentMp from(Player player) {
+            return new CurrentMp(player.getMana().current());
+        }
+    }
+
+    public record MpCapacity(
+            int cap
+    ) {
+        public static MpCapacity from(Player player) {
+            return new MpCapacity(player.getMana().cap());
         }
     }
 
