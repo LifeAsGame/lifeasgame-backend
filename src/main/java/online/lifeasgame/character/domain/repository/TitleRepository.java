@@ -8,4 +8,6 @@ public interface TitleRepository {
     List<Title> findByCategoryIn(List<TitleCategory> categories);
 
     List<Title> findAll();
+
+    Title save(Title title);
 }

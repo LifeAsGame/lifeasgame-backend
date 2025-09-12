@@ -22,4 +22,9 @@ public class TitleRepositoryAdapter implements TitleRepository {
     public List<Title> findAll() {
         return jpaRepository.findAll();
     }
+
+    @Override
+    public Title save(Title title) {
+        return jpaRepository.save(title);
+    }
 }
