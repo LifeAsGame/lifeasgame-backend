@@ -16,12 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(propagation = Propagation.MANDATORY)
 public class UserWriter {
 
     private final UserRepository userRepository;
     private final DomainEventPublisher domainEventPublisher;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     public Long register(Email email, HashedPassword hashedPassword, Nickname nickname) {
         if (userRepository.existsByEmail(email)) {
             throw new DomainException(UserError.EMAIL_DUPLICATE, email.getValue());

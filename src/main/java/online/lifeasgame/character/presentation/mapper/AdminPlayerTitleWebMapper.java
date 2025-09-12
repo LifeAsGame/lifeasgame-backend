@@ -1,0 +1,23 @@
+package online.lifeasgame.character.presentation.mapper;
+
+import online.lifeasgame.character.application.result.AdminPlayerTitleResult;
+import online.lifeasgame.character.presentation.response.AdminPlayerTitleResponse;
+
+public class AdminPlayerTitleWebMapper {
+
+    private AdminPlayerTitleWebMapper() {
+    }
+
+    public static AdminPlayerTitleResponse.GrantedTitle toGrantedTitle(
+            AdminPlayerTitleResult.GrantedTitle result
+    ) {
+        return AdminPlayerTitleResponse.GrantedTitle.of(
+                result.playerId(),
+                result.titleId(),
+                result.code(),
+                result.name(),
+                result.category(),
+                result.acquiredAt()
+        );
+    }
+}
