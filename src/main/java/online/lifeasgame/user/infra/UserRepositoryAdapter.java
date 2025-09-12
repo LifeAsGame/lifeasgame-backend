@@ -2,7 +2,6 @@ package online.lifeasgame.user.infra;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.user.domain.Email;
 import online.lifeasgame.user.domain.User;
 import online.lifeasgame.user.domain.repository.UserRepository;
 import org.springframework.stereotype.Repository;
@@ -21,10 +20,5 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findById(Long userId) {
         return jpaUserRepository.findById(userId);
-    }
-
-    @Override
-    public boolean existsByEmail(Email email) {
-        return jpaUserRepository.existsByEmail_Value(email.getValue());
     }
 }

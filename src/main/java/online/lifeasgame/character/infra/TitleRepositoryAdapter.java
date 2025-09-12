@@ -1,6 +1,7 @@
 package online.lifeasgame.character.infra;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Title;
 import online.lifeasgame.character.domain.TitleCategory;
@@ -26,5 +27,10 @@ public class TitleRepositoryAdapter implements TitleRepository {
     @Override
     public Title save(Title title) {
         return jpaRepository.save(title);
+    }
+
+    @Override
+    public Optional<Title> findById(Long id) {
+        return jpaRepository.findById(id);
     }
 }
