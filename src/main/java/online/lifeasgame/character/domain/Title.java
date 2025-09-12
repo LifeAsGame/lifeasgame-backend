@@ -30,11 +30,23 @@ public class Title extends AbstractTime {
     @Column(length = 60, nullable = false)
     private String name;
 
-    @Lob
-    @Column(name = "desc_md")
-    private String descMd;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private TitleCategory category;
+
+    @Lob
+    @Column(name = "desc_md")
+    private String descMd;
+
+    public Title(String code, String name, TitleCategory category, String descMd) {
+        this.code = code;
+        this.name = name;
+        this.category = category;
+        this.descMd = descMd;
+    }
+
+    public static Title of(String code, String name, TitleCategory titleCategory, String descMd) {
+        return new Title(code, name, titleCategory, descMd);
+    }
 }
