@@ -4,7 +4,7 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum TitleError implements ErrorCode {
     INVALID_TITLE_CATEGORY("TIT-400-INVALID-TITLE-CATEGORY", "Invalid title category", 400),
-    TITLE_NOT_FOUND("TIT-400-NOT_FOUND", "Title not found" , 404)
+    TITLE_NOT_FOUND("TIT-400-NOT_FOUND", "Title not found", 404)
     ;
 
     private final String code;

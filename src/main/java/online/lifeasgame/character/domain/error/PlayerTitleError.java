@@ -5,7 +5,6 @@ import online.lifeasgame.core.error.ErrorCode;
 public enum PlayerTitleError implements ErrorCode {
 
     PLAYER_TITLE_NOT_FOUND("PLT-404-NOT_FOUND", "Player title not found", 404),
-    PLAYER_TITLE_ALREADY_EXISTS("PLT-404-ALREADY_EXISTS", "Player title already exists" , 409),
     ;
 
     private final String code;
