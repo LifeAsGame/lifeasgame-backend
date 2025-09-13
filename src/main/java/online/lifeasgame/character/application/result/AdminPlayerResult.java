@@ -111,4 +111,10 @@ public class AdminPlayerResult {
         public record Item(String code, String category) {
         }
     }
+
+    public record UpdatedTitle(Long titleId) {
+        public static UpdatedTitle of(Long titleId) {
+            return new UpdatedTitle(titleId);
+        }
+    }
 }

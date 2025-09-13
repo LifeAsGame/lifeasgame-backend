@@ -10,12 +10,12 @@ import online.lifeasgame.core.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestTitle {
 
-    @Column(name = "title", length = 120, nullable = false)
+    @Column(name = "titleId", length = 120, nullable = false)
     private String value;
 
     private QuestTitle(String raw) {
-        String v = Guard.notBlank(raw, "title").trim();
-        Guard.inRange(v.length(), 2, 120, "title");
+        String v = Guard.notBlank(raw, "titleId").trim();
+        Guard.inRange(v.length(), 2, 120, "titleId");
         this.value = v;
     }
 

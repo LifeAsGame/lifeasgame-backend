@@ -90,4 +90,11 @@ public class AdminPlayerService {
                 player.getStatusEffects()
         );
     }
+
+    @Transactional
+    public AdminPlayerResult.UpdatedTitle changeRepresentativeTitle(Long playerId, Long titleId) {
+        return AdminPlayerResult.UpdatedTitle.of(
+                playerWriter.changeRepresentativeTitle(playerId, titleId)
+        );
+    }
 }

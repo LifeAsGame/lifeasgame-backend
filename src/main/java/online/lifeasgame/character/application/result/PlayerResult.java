@@ -53,9 +53,9 @@ public class PlayerResult {
         }
     }
 
-    public record UpdatedTitle(Long title) {
-        public static UpdatedTitle of(Long title) {
-            return new UpdatedTitle(title);
+    public record UpdatedTitle(Long titleId) {
+        public static UpdatedTitle of(Long titleId) {
+            return new UpdatedTitle(titleId);
         }
     }
 }

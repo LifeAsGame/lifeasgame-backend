@@ -44,7 +44,7 @@ public class PlayerWebMapper {
 
     public static PlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
         return PlayerResponse.UpdatedTitle.of(
-                updatedTitle.title()
+                updatedTitle.titleId()
         );
     }
 }

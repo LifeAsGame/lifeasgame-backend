@@ -109,4 +109,17 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
                 AdminPlayerWebMapper.toStatusEffectsGranted(statusEffectsGranted)
         );
     }
+
+    @Override
+    @PatchMapping("/{playerId}/titles/{titleId}")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.UpdatedTitle>> updateTitle(
+            @PathVariable Long playerId,
+            @PathVariable Long titleId
+    ) {
+        AdminPlayerResult.UpdatedTitle updatedTitle = adminPlayerService.changeRepresentativeTitle(playerId, titleId);
+
+        return ApiResponses.ok(
+                AdminPlayerWebMapper.toUpdatedTitle(updatedTitle)
+        );
+    }
 }
