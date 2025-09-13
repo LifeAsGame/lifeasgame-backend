@@ -3,14 +3,13 @@ package online.lifeasgame.character.presentation.mapper;
 import java.util.List;
 import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.character.presentation.response.TitleResponse;
-import online.lifeasgame.character.presentation.response.TitleResponse.TitleInfos;
 
 public class TitleWebMapper {
 
     private TitleWebMapper() {}
 
     public static TitleResponse.TitleInfos toTitleList(List<TitleResult.TitleInfo> titleInfos) {
-        return TitleInfos.of(
+        return TitleResponse.TitleInfos.of(
                 titleInfos.stream()
                         .map(
                                 titleInfo ->

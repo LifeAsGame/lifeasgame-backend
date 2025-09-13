@@ -15,8 +15,8 @@ public class TitleService {
 
     private final TitleReader titleReader;
 
-    public List<TitleResult.TitleInfo> getTitleList(List<String> categories) {
-        List<Title> titles = titleReader.getTitleList(TitleCategory.parse(categories));
+    public List<TitleResult.TitleInfo> getTitles(List<String> categories) {
+        List<Title> titles = titleReader.getTitles(TitleCategory.parse(categories));
         return TitleResult.TitleInfo.fromList(titles);
     }
 }
