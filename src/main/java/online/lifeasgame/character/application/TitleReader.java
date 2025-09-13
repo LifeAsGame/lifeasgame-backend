@@ -18,7 +18,7 @@ public class TitleReader {
 
     private final TitleRepository repository;
 
-    public List<Title> getTitleList(List<TitleCategory> categories) {
+    public List<Title> getTitles(List<TitleCategory> categories) {
         if (categories == null || categories.isEmpty()) {
             return repository.findAll();
         }

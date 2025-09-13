@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.TitleService;
 import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.character.presentation.mapper.TitleWebMapper;
-import online.lifeasgame.character.presentation.response.TitleResponse.TitleInfos;
+import online.lifeasgame.character.presentation.response.TitleResponse;
 import online.lifeasgame.character.presentation.spec.TitleApiSpecV1;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -24,10 +24,10 @@ public class TitleController implements TitleApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<TitleInfos>> titleInfos(
+    public ResponseEntity<ApiResponse<TitleResponse.TitleInfos>> titleInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<TitleResult.TitleInfo> titleList = titleService.getTitleList(categories);
+        List<TitleResult.TitleInfo> titleList = titleService.getTitles(categories);
         return ApiResponses.ok(
                 TitleWebMapper.toTitleList(titleList)
         );

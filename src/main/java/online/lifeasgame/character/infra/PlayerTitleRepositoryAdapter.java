@@ -1,13 +1,16 @@
 package online.lifeasgame.character.infra;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.query.PlayerTitleQuery;
+import online.lifeasgame.character.application.view.PlayerTitleView;
 import online.lifeasgame.character.domain.PlayerTitle;
 import online.lifeasgame.character.domain.repository.PlayerTitleRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository {
+public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository, PlayerTitleQuery {
 
     private final JpaPlayerTitleRepository jpaRepository;
 
@@ -16,7 +19,7 @@ public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository {
     }
 
     @Override
-    public boolean existsByPlayerIdAndTitleId(Long playerId, Long titleId) {
-        return jpaRepository.existsByPlayerIdAndTitleId(playerId, titleId);
+    public List<PlayerTitleView> findPlayerTitleInfos(Long playerId) {
+        return jpaRepository.findPlayerTitleViews(playerId);
     }
 }
