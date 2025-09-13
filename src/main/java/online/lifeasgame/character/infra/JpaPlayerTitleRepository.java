@@ -5,6 +5,7 @@ import online.lifeasgame.character.application.view.PlayerTitleView;
 import online.lifeasgame.character.domain.PlayerTitle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Long> {
 
@@ -21,5 +22,5 @@ public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Lon
             WHERE pt.playerId = :playerId
             ORDER BY pt.acquiredAt DESC
     """)
-    List<PlayerTitleView> findPlayerTitleViews(Long playerId);
+    List<PlayerTitleView> findPlayerTitleViews(@Param("playerId") Long playerId);
 }
