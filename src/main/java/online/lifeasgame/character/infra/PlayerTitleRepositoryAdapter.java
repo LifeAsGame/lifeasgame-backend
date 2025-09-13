@@ -19,6 +19,11 @@ public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository, Play
     }
 
     @Override
+    public boolean existsByPlayerIdAndTitleId(Long playerId, Long titleId) {
+        return jpaRepository.existsByPlayerIdAndTitleId(playerId, titleId);
+    }
+
+    @Override
     public List<PlayerTitleView> findPlayerTitleInfos(Long playerId) {
         return jpaRepository.findPlayerTitleViews(playerId);
     }

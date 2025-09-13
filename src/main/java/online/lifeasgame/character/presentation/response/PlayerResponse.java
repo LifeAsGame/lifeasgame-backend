@@ -64,4 +64,10 @@ public class PlayerResponse {
             }
         }
     }
+
+    public record UpdatedTitle(Long titleId) {
+        public static UpdatedTitle of(Long titleId) {
+            return new UpdatedTitle(titleId);
+        }
+    }
 }

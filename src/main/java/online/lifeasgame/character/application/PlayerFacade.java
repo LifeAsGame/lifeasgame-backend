@@ -24,4 +24,9 @@ public class PlayerFacade {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return playerService.getPlayerInfo(playerId);
     }
+
+    public PlayerResult.UpdatedTitle changeRepresentativeTitle(Long titleId) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return playerService.changeRepresentativeTitle(playerId, titleId);
+    }
 }

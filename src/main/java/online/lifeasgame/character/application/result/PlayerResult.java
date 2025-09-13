@@ -52,4 +52,10 @@ public class PlayerResult {
             );
         }
     }
+
+    public record UpdatedTitle(Long title) {
+        public static UpdatedTitle of(Long title) {
+            return new UpdatedTitle(title);
+        }
+    }
 }
