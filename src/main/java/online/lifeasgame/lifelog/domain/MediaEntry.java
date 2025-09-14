@@ -87,7 +87,7 @@ public class MediaEntry extends AbstractTime {
     private MediaEntry(Long playerId, MediaKind kind, String title) {
         this.playerId = Guard.notNull(playerId, "playerId");
         this.kind = Guard.notNull(kind, "kind");
-        this.title = Guard.notBlank(title, "titleId");
+        this.title = Guard.notBlank(title, "title");
     }
 
     public static MediaEntry plan(Long playerId, MediaKind kind, String title) {

@@ -14,8 +14,8 @@ public class QuestTitle {
     private String value;
 
     private QuestTitle(String raw) {
-        String v = Guard.notBlank(raw, "titleId").trim();
-        Guard.inRange(v.length(), 2, 120, "titleId");
+        String v = Guard.notBlank(raw, "title").trim();
+        Guard.inRange(v.length(), 2, 120, "title");
         this.value = v;
     }
 
