@@ -27,9 +27,9 @@ public class TitleController implements TitleApiSpecV1 {
     public ResponseEntity<ApiResponse<TitleResponse.TitleInfos>> titleInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<TitleResult.TitleInfo> titleList = titleService.getTitles(categories);
+        List<TitleResult.TitleInfo> titleInfos = titleService.getTitles(categories);
         return ApiResponses.ok(
-                TitleWebMapper.toTitleList(titleList)
+                TitleWebMapper.toTitleInfos(titleInfos)
         );
     }
 }
