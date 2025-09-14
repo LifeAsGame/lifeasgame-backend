@@ -8,7 +8,7 @@ public class AchievementResponse {
     }
 
     public record AchievementInfos(
-            List<AchievementResponse.AchievementInfo> titleInfos
+            List<AchievementResponse.AchievementInfo> achievementInfos
     ) {
         public static AchievementResponse.AchievementInfos of(List<AchievementResponse.AchievementInfo> achievementInfos) {
             return new AchievementResponse.AchievementInfos(achievementInfos);
