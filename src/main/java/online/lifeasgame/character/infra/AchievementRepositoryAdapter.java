@@ -2,6 +2,7 @@ package online.lifeasgame.character.infra;
 
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
@@ -27,5 +28,10 @@ public class AchievementRepositoryAdapter implements AchievementRepository {
     @Override
     public List<Achievement> findByCategoryIn(List<AchievementCategory> achievementCategories) {
         return jpaRepository.findByCategoryIn(achievementCategories);
+    }
+
+    @Override
+    public Optional<Achievement> findById(Long id) {
+        return jpaRepository.findById(id);
     }
 }

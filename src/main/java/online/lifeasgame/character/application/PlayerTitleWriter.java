@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 public class PlayerTitleWriter {
 
-    private final PlayerTitleRepository playerTitleRepository;
+    private final PlayerTitleRepository repository;
 
     public PlayerTitle grantTitle(PlayerTitle playerTitle) {
-        return playerTitleRepository.save(playerTitle);
+        return repository.save(playerTitle);
     }
 }
