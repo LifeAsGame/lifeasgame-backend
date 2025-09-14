@@ -21,4 +21,8 @@ public class PlayerReader {
                 () -> new DomainException(PlayerError.PLAYER_NOT_FOUND)
         );
     }
+
+    public boolean exists(Long playerId) {
+        return playerRepository.existsById(playerId);
+    }
 }
