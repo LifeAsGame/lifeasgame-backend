@@ -107,4 +107,10 @@ public class AdminPlayerWebMapper {
                         .toList()
         );
     }
+
+    public static AdminPlayerResponse.UpdatedTitle toUpdatedTitle(AdminPlayerResult.UpdatedTitle updatedTitle) {
+        return AdminPlayerResponse.UpdatedTitle.of(
+                updatedTitle.titleId()
+        );
+    }
 }

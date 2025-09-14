@@ -160,6 +160,34 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ProblemDetail> handleMethodNotAllowed(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex,
+            WebRequest req
+    ) {
+        var status = HttpStatus.METHOD_NOT_ALLOWED;
+
+        String detail = props.includeDetailInResponse() ? "지원하지 않는 HTTP 메서드입니다." : null;
+        var pd = pdf.base(
+                status,
+                "Method Not Allowed",
+                detail,
+                "METHOD_NOT_ALLOWED",
+                req
+        );
+
+        var headers = new org.springframework.http.HttpHeaders();
+        var supported = ex.getSupportedHttpMethods();
+        if (supported != null && !supported.isEmpty()) {
+            headers.setAllow(supported);
+        }
+
+        var path = pd.getProperties().get(online.lifeasgame.core.error.ErrorKeys.PATH);
+        log.info("405 method-not-allowed method={} path={}", ex.getMethod(), path);
+
+        return new ResponseEntity<>(pd, headers, status);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleEtc(Exception ex, WebRequest req) {
         var err = CommonError.GEN_000;

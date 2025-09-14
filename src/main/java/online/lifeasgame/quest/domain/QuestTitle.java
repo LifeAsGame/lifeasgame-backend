@@ -10,7 +10,7 @@ import online.lifeasgame.core.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestTitle {
 
-    @Column(name = "title", length = 120, nullable = false)
+    @Column(name = "titleId", length = 120, nullable = false)
     private String value;
 
     private QuestTitle(String raw) {

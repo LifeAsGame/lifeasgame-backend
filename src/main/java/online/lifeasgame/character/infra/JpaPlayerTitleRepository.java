@@ -23,4 +23,6 @@ public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Lon
             ORDER BY pt.acquiredAt DESC
     """)
     List<PlayerTitleView> findPlayerTitleViews(@Param("playerId") Long playerId);
+
+    boolean existsByPlayerIdAndTitleId(Long playerId, Long titleId);
 }

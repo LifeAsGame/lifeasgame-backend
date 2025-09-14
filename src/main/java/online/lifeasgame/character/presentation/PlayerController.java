@@ -13,6 +13,8 @@ import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +45,18 @@ public class PlayerController implements PlayerApiSpecV1 {
         PlayerResult.PlayerInfo playerInfo = playerFacade.getPlayerInfo();
         return ApiResponses.ok(
                 PlayerWebMapper.toPlayerInfo(playerInfo)
+        );
+    }
+
+    @Override
+    @PatchMapping("/titles/{titleId}")
+    public ResponseEntity<ApiResponse<PlayerResponse.UpdatedTitle>> updateTitle(
+            @PathVariable Long titleId
+    ) {
+        PlayerResult.UpdatedTitle updatedTitle = playerFacade.changeRepresentativeTitle(titleId);
+
+        return ApiResponses.ok(
+                PlayerWebMapper.toUpdatedTitle(updatedTitle)
         );
     }
 }

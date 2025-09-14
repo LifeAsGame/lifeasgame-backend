@@ -169,6 +169,10 @@ public class Player extends AbstractTime {
         this.statusEffects = this.statusEffects.merged(statusEffects);
     }
 
+    public void changeRepresentativeTitle(Long titleId) {
+        this.titleId = titleId;
+    }
+
     public record GainResult(
             long requestedExp,
             long appliedExp,

@@ -10,7 +10,7 @@ public enum PlayerError implements ErrorCode {
     INVALID_HP("PLR-400-INVALID-HP", "Invalid hpDelta", 400),
     INVALID_MP_CAPACITY("PLR-400-INVALID-MP-CAP", "Invalid mpDelta capacity", 400),
     INVALID_MP("PLR-400-INVALID-MP", "Invalid mpDelta", 400),
-    ;
+    INVALID_TITLE("PLR-400-INVALID-TITLE", "Invalid title", 400),;
 
     private final String code;
     private final String message;

@@ -123,4 +123,10 @@ public class PlayerWriter {
         return playerRepository.findById(playerId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
     }
+
+    public Long changeRepresentativeTitle(Long playerId, Long titleId) {
+        Player player = getPlayer(playerId);
+        player.changeRepresentativeTitle(titleId);
+        return player.getTitleId();
+    }
 }
