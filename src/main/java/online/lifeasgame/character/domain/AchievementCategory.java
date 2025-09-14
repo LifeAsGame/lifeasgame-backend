@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-import online.lifeasgame.character.domain.error.TitleError;
+import online.lifeasgame.character.domain.error.AchievementError;
 import online.lifeasgame.core.error.DomainException;
 
 public enum AchievementCategory{
@@ -22,21 +22,21 @@ public enum AchievementCategory{
 
     public static AchievementCategory parse(String raw) {
         if (raw == null) {
-            throw new DomainException(TitleError.INVALID_TITLE_CATEGORY, "Title category is null");
+            throw new DomainException(AchievementError.INVALID_ACHIEVEMENT_CATEGORY, "Achievement category is null");
         }
 
         String norm = normalize(raw);
 
         if (norm.isEmpty()) {
-            throw new DomainException(TitleError.INVALID_TITLE_CATEGORY, "Title category is blank");
+            throw new DomainException(AchievementError.INVALID_ACHIEVEMENT_CATEGORY, "Achievement category is blank");
         }
 
         try {
             return AchievementCategory.valueOf(norm);
         } catch (IllegalArgumentException e) {
             throw new DomainException(
-                    TitleError.INVALID_TITLE_CATEGORY,
-                    "Invalid title category: " + raw + " (allowed: " + allowedList() + ")"
+                    AchievementError.INVALID_ACHIEVEMENT_CATEGORY,
+                    "Invalid Achievement category: " + raw + " (allowed: " + allowedList() + ")"
             );
         }
     }
@@ -69,8 +69,8 @@ public enum AchievementCategory{
 
         if (!invalid.isEmpty()) {
             throw new DomainException(
-                    TitleError.INVALID_TITLE_CATEGORY,
-                    "Invalid title categories: " + invalid + " (allowed: " + allowedList() + ")"
+                    AchievementError.INVALID_ACHIEVEMENT_CATEGORY,
+                    "Invalid Achievement categories: " + invalid + " (allowed: " + allowedList() + ")"
             );
         }
 
