@@ -30,7 +30,6 @@ public class Title extends AbstractTime {
     @Column(length = 60, nullable = false)
     private String name;
 
-
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private TitleCategory category;
