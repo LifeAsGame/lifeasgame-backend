@@ -8,6 +8,8 @@ import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.Player.GainResult;
 import online.lifeasgame.character.domain.StatusEffectCode;
 import online.lifeasgame.character.domain.StatusEffects;
+import online.lifeasgame.character.domain.error.PlayerError;
+import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminPlayerService {
 
     private final PlayerWriter playerWriter;
+    private final PlayerTitleReader playerTitleReader;
 
     @Transactional
     public AdminPlayerResult.ExpGranted grantExp(Long playerId, long exp) {
@@ -93,6 +96,10 @@ public class AdminPlayerService {
 
     @Transactional
     public AdminPlayerResult.UpdatedTitle changeRepresentativeTitle(Long playerId, Long titleId) {
+        if (!playerTitleReader.hasTitle(playerId, titleId)) {
+            throw new DomainException(PlayerError.INVALID_TITLE);
+        }
+
         return AdminPlayerResult.UpdatedTitle.of(
                 playerWriter.changeRepresentativeTitle(playerId, titleId)
         );
