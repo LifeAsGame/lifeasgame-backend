@@ -2,16 +2,16 @@ package online.lifeasgame.character.domain.error;
 
 import online.lifeasgame.core.error.ErrorCode;
 
-public enum TitleError implements ErrorCode {
-    INVALID_TITLE_CATEGORY("TIT-400-INVALID-TITLE-CATEGORY", "Invalid title category", 400),
-    TITLE_NOT_FOUND("TIT-404-NOT_FOUND", "Title not found", 404)
+public enum AchievementError implements ErrorCode {
+    INVALID_ACHIEVEMENT_CATEGORY("ACH-400-INVALID-ACHIEVEMENT-CATEGORY", "Invalid Achievement category", 400),
+    ACHIEVEMENT_NOT_FOUND("ACH-404-NOT_FOUND", "Achievement not found", 404)
     ;
 
     private final String code;
     private final String message;
     private final int status;
 
-    TitleError(String code, String message, int status) {
+    AchievementError(String code, String message, int status) {
         this.code = code;
         this.message = message;
         this.status = status;
