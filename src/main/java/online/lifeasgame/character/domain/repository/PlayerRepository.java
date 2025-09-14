@@ -9,4 +9,6 @@ public interface PlayerRepository {
     boolean existsByUserId(Long userId);
 
     Optional<Player> findById(Long playerId);
+
+    boolean existsById(Long playerId);
 }
