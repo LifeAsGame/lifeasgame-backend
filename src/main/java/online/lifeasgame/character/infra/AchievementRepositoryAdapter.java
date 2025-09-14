@@ -1,8 +1,10 @@
 package online.lifeasgame.character.infra;
 
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Achievement;
+import online.lifeasgame.character.domain.AchievementCategory;
 import online.lifeasgame.character.domain.repository.AchievementRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,5 +17,15 @@ public class AchievementRepositoryAdapter implements AchievementRepository {
     @Override
     public Achievement save(Achievement achievement) {
         return jpaRepository.save(achievement);
+    }
+
+    @Override
+    public List<Achievement> findAll() {
+        return jpaRepository.findAll();
+    }
+
+    @Override
+    public List<Achievement> findByCategoryIn(List<AchievementCategory> achievementCategories) {
+        return jpaRepository.findByCategoryIn(achievementCategories);
     }
 }

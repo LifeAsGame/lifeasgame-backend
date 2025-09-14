@@ -8,7 +8,7 @@ public class TitleWebMapper {
 
     private TitleWebMapper() {}
 
-    public static TitleResponse.TitleInfos toTitleList(List<TitleResult.TitleInfo> titleInfos) {
+    public static TitleResponse.TitleInfos toTitleInfos(List<TitleResult.TitleInfo> titleInfos) {
         return TitleResponse.TitleInfos.of(
                 titleInfos.stream()
                         .map(
