@@ -1,6 +1,7 @@
 package online.lifeasgame.character.presentation;
 
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.AdminAchievementService;
 import online.lifeasgame.character.application.result.AdminAchievementResult;
@@ -29,7 +30,8 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
             @Valid @RequestBody AdminAchievementRequest.CreateAchievement request
     ) {
         AdminAchievementResult.AchievementInfo achievementInfo = adminAchievementService.create(AdminAchievementWebMapper.toCommand(request));
-        return ApiResponses.ok(
+        return ApiResponses.created(
+                URI.create("/admin/v1/achievements/" + achievementInfo.code()),
                 AdminAchievementWebMapper.toAchievementInfo(achievementInfo)
         );
     }

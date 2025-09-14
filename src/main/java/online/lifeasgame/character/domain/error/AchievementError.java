@@ -4,7 +4,7 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum AchievementError implements ErrorCode {
     INVALID_ACHIEVEMENT_CATEGORY("ACH-400-INVALID-ACHIEVEMENT-CATEGORY", "Invalid Achievement category", 400),
-    ACHIEVEMENT_NOT_FOUND("ACH-400-NOT_FOUND", "Achievement not found", 404)
+    ACHIEVEMENT_NOT_FOUND("ACH-404-NOT_FOUND", "Achievement not found", 404)
     ;
 
     private final String code;
