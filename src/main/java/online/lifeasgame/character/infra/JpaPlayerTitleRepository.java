@@ -14,9 +14,9 @@ public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Lon
             SELECT t.id AS titleId,
                    t.code AS code,
                    t.name AS name,
-                   t.category  AS category,
-                   t.descMd          AS descMd,
-                   pt.acquiredAt     AS acquiredAt
+                   t.category AS category,
+                   t.descMd  AS descMd,
+                   pt.acquiredAt  AS acquiredAt
             FROM PlayerTitle pt
             JOIN Title t ON t.id = pt.titleId
             WHERE pt.playerId = :playerId
