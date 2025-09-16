@@ -73,7 +73,7 @@ public class Player extends AbstractTime {
     @Convert(converter = StatusEffectsEnumConverter.class)
     private StatusEffects statusEffects;    // 중독/혼란 등
 
-    @Column(name="title_id")
+    @Column(name = "title_id")
     private Long titleId;
 
     @Version
