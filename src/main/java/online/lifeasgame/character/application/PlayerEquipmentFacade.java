@@ -1,5 +1,6 @@
 package online.lifeasgame.character.application;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
@@ -21,5 +22,10 @@ public class PlayerEquipmentFacade {
     public void unEquip(Long slotId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         playerEquipmentService.unEquip(playerId, slotId);
+    }
+
+    public List<PlayerEquipmentResult.PlayerEquipmentInfo> getPlayerEquipmentInfos() {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return playerEquipmentService.getPlayerEquipmentInfos(playerId);
     }
 }

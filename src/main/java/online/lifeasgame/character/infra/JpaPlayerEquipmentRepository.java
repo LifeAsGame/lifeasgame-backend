@@ -2,6 +2,7 @@ package online.lifeasgame.character.infra;
 
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
+import java.util.List;
 import java.util.Optional;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +21,6 @@ public interface JpaPlayerEquipmentRepository extends JpaRepository<PlayerEquipm
     Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId);
 
     boolean existsByItemInstanceId(Long itemInstanceId);
+
+    List<PlayerEquipment> findByPlayerId(Long playerId);
 }

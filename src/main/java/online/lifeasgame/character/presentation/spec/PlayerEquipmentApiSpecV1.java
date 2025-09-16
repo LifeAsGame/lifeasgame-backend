@@ -16,6 +16,9 @@ public interface PlayerEquipmentApiSpecV1 {
             @RequestBody PlayerEquipmentRequest.EquipEquipment request
     );
 
+    @Operation(summary = "Player 장비 현황 조회", description = "파츠별 장비를 조회합니다")
+    ResponseEntity<ApiResponse<PlayerEquipmentResponse.PlayerEquipmentInfos>> playerEquipmentInfos();
+
     @Operation(summary = "Player 장비 해제", description = "장비를 해제합니다")
     ResponseEntity<ApiResponse<Long>> unEquip(
             @PathVariable Long slotId
