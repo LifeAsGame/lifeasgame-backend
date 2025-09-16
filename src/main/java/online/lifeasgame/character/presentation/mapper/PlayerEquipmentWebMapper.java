@@ -1,5 +1,6 @@
 package online.lifeasgame.character.presentation.mapper;
 
+import java.util.List;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.presentation.request.PlayerEquipmentRequest;
@@ -20,5 +21,19 @@ public class PlayerEquipmentWebMapper {
             PlayerEquipmentResult.EquippedEquipment equippedEquipment
     ) {
         return PlayerEquipmentResponse.EquippedEquipment.of(equippedEquipment);
+    }
+
+    public static PlayerEquipmentResponse.PlayerEquipmentInfos toPlayerEquipmentInfos(List<PlayerEquipmentResult.PlayerEquipmentInfo> playerEquipmentInfos) {
+        return PlayerEquipmentResponse.PlayerEquipmentInfos.of(
+                playerEquipmentInfos.stream()
+                        .map(
+                                playerEquipmentInfo ->
+                                        PlayerEquipmentResponse.PlayerEquipmentInfo.of(
+                                                playerEquipmentInfo.slotId(),
+                                                playerEquipmentInfo.itemInstanceId()
+                                        )
+                        )
+                        .toList()
+        );
     }
 }

@@ -1,8 +1,10 @@
 package online.lifeasgame.character.application;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand.EquipEquipment;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
+import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
 import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
@@ -31,5 +33,12 @@ public class PlayerEquipmentService {
     @Transactional
     public void unEquip(Long playerId, Long slotId) {
         playerEquipmentWriter.unEquip(playerId, slotId);
+    }
+
+    public List<PlayerEquipmentResult.PlayerEquipmentInfo> getPlayerEquipmentInfos(Long playerId) {
+        List<PlayerEquipment> playerEquipmentInfos = playerEquipmentReader.getPlayerEquipmentInfos(playerId);
+        return playerEquipmentInfos.stream()
+                .map(PlayerEquipmentResult.PlayerEquipmentInfo::from)
+                .toList();
     }
 }

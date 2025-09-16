@@ -15,4 +15,16 @@ public class PlayerEquipmentResult {
             );
         }
     }
+
+    public record PlayerEquipmentInfo(
+            Long slotId,
+            Long itemInstanceId
+    ) {
+        public static PlayerEquipmentResult.PlayerEquipmentInfo from(PlayerEquipment playerEquipment) {
+            return new PlayerEquipmentResult.PlayerEquipmentInfo(
+                    playerEquipment.getSlotId(),
+                    playerEquipment.getItemInstanceId()
+            );
+        }
+    }
 }

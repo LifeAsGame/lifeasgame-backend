@@ -1,5 +1,6 @@
 package online.lifeasgame.character.infra;
 
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.PlayerEquipment;
@@ -25,5 +26,10 @@ public class PlayerEquipmentRepositoryAdapter implements PlayerEquipmentReposito
     @Override
     public boolean existsByItemInstanceId(Long itemInstanceId) {
         return jpaRepository.existsByItemInstanceId(itemInstanceId);
+    }
+
+    @Override
+    public List<PlayerEquipment> findByPlayerId(Long playerId) {
+        return jpaRepository.findByPlayerId(playerId);
     }
 }

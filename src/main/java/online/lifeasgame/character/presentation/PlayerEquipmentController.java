@@ -1,8 +1,10 @@
 package online.lifeasgame.character.presentation;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.PlayerEquipmentFacade;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
+import online.lifeasgame.character.application.result.PlayerEquipmentResult.PlayerEquipmentInfo;
 import online.lifeasgame.character.presentation.mapper.PlayerEquipmentWebMapper;
 import online.lifeasgame.character.presentation.request.PlayerEquipmentRequest;
 import online.lifeasgame.character.presentation.response.PlayerEquipmentResponse;
@@ -11,6 +13,7 @@ import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +39,15 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
 
         return ApiResponses.ok(
                 PlayerEquipmentWebMapper.toEquippedEquipment(equippedEquipment)
+        );
+    }
+
+    @Override
+    @GetMapping("/equipment")
+    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.PlayerEquipmentInfos>> playerEquipmentInfos() {
+        List<PlayerEquipmentInfo> playerEquipmentInfos = playerEquipmentFacade.getPlayerEquipmentInfos();
+        return ApiResponses.ok(
+                PlayerEquipmentWebMapper.toPlayerEquipmentInfos(playerEquipmentInfos)
         );
     }
 
