@@ -18,6 +18,11 @@ public class PlayerEquipmentRepositoryAdapter implements PlayerEquipmentReposito
     }
 
     @Override
+    public Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId) {
+        return jpaRepository.findByPlayerIdAndSlotIdForUpdate(playerId, slotId);
+    }
+
+    @Override
     public boolean existsByItemInstanceId(Long itemInstanceId) {
         return jpaRepository.existsByItemInstanceId(itemInstanceId);
     }

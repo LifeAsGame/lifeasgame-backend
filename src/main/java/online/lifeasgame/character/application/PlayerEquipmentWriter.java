@@ -21,19 +21,24 @@ public class PlayerEquipmentWriter {
             throw new DomainException(PlayerEquipmentError.INVALID_ITEM_INSTANCE_ID);
         }
 
-        PlayerEquipment playerEquipment = getPlayerEquipment(playerId, slotId);
+        PlayerEquipment playerEquipment = getPlayerEquipmentForUpdate(playerId, slotId);
         playerEquipment.equip(itemInstanceId);
         return playerEquipment;
     }
 
     public PlayerEquipment unEquip(Long playerId, Long slotId) {
-        PlayerEquipment playerEquipment = getPlayerEquipment(playerId, slotId);
+        PlayerEquipment playerEquipment = getPlayerEquipmentForUpdate(playerId, slotId);
         playerEquipment.unEquip();
         return playerEquipment;
     }
 
     private PlayerEquipment getPlayerEquipment(Long playerId, Long slotId) {
         return playerEquipmentRepository.findByPlayerIdAndSlotId(playerId, slotId)
+                .orElseThrow(() -> new DomainException(PlayerEquipmentError.PLAYER_EQUIPMENT_NOT_FOUND));
+    }
+
+    private PlayerEquipment getPlayerEquipmentForUpdate(Long playerId, Long slotId) {
+        return playerEquipmentRepository.findByPlayerIdAndSlotIdForUpdate(playerId, slotId)
                 .orElseThrow(() -> new DomainException(PlayerEquipmentError.PLAYER_EQUIPMENT_NOT_FOUND));
     }
 }
