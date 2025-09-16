@@ -11,6 +11,7 @@ import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Entity
@@ -26,7 +27,7 @@ public class PlayerEquipment extends AbstractTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "playerId", nullable = false)
+    @Column(name = "player_id", nullable = false)
     private Long playerId;
 
     @Column(name = "slot_id", nullable = false)
@@ -38,14 +39,14 @@ public class PlayerEquipment extends AbstractTime {
     @Column(name = "equipped_at", nullable = false)
     private Instant equippedAt;
 
-    private PlayerEquipment(Long playerId, Long slotId, Long itemInstanceId, Instant equippedAt) {
-        this.playerId = playerId;
-        this.slotId = slotId;
-        this.itemInstanceId = itemInstanceId;
-        this.equippedAt = equippedAt == null ? Instant.now() : equippedAt;
+    private PlayerEquipment(Long playerId, Long slotId, Long itemInstanceId) {
+        this.playerId = Guard.notNull(playerId, "playerId");
+        this.slotId = Guard.notNull(slotId, "slotId");
+        this.itemInstanceId = Guard.notNull(itemInstanceId, "itemInstanceId");
+        this.equippedAt = Instant.now();
     }
 
     public static PlayerEquipment equip(Long playerId, Long slotId, Long itemInstanceId) {
-        return new PlayerEquipment(playerId, slotId, itemInstanceId, Instant.now());
+        return new PlayerEquipment(playerId, slotId, itemInstanceId);
     }
 }

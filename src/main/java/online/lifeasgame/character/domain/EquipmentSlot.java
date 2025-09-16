@@ -36,7 +36,7 @@ public class EquipmentSlot extends AbstractTime {
     private EquipmentSlotCategory category;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(length = 20, nullable = false)
     private EquipmentSlotRole role;
 
     private EquipmentSlot(String code, String name, EquipmentSlotCategory category, EquipmentSlotRole role) {
