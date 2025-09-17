@@ -1,5 +1,9 @@
 package online.lifeasgame.platform.web.error;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +17,14 @@ import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import online.lifeasgame.core.error.BaseException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -64,7 +71,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
-    @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ProblemDetail> handleBadInput(Exception ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
         var status = HttpStatus.valueOf(err.status());
@@ -75,6 +82,70 @@ public class GlobalExceptionHandler {
         log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
         return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, WebRequest req
+    ) {
+        var err = CommonError.REQ_BAD_INPUT;
+        var status = HttpStatus.valueOf(err.status());
+
+        String contentType = (req instanceof ServletWebRequest swr)
+                ? swr.getRequest().getContentType()
+                : null;
+
+        Throwable cause = ex.getMostSpecificCause();
+        String detail = null;
+
+        if (props.includeDetailInResponse()) {
+            if (isMissingBody(ex)) {
+                detail = "Request body is required.";
+            } else if (isJsonRequest(contentType) || cause instanceof JsonProcessingException) {
+                detail = classifyJsonDetail(cause);
+            } else {
+                detail = "Malformed request body.";
+            }
+        }
+
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+
+        String causeType = cause.getClass().getSimpleName();
+        log.warn("400 bad-input (not-readable) path={} type={} contentType={} msg={}",
+                pd.getProperties().get(ErrorKeys.PATH),
+                causeType,
+                contentType != null ? contentType : "n/a",
+                buildLogMessage(ex.getMessage(), Sensitivity.SECRET));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    private String classifyJsonDetail(Throwable cause) {
+        return switch (cause) {
+            case InvalidFormatException ignored -> "Invalid JSON value.";
+            case UnrecognizedPropertyException ignored -> "Unknown JSON property.";
+            case MismatchedInputException ignored -> "JSON structure/type mismatch.";
+            case null, default -> "Malformed JSON payload.";
+        };
+    }
+
+    private boolean isMissingBody(HttpMessageNotReadableException ex) {
+        String msg = ex.getMessage();
+        return msg != null && msg.contains("Required request body is missing");
+    }
+
+    private boolean isJsonRequest(String contentType) {
+        if (contentType == null) return false;
+        try {
+            var mt = MediaType.parseMediaType(contentType);
+            if (MediaType.APPLICATION_JSON.includes(mt)) {
+                return true;
+            }
+            mt.getSubtype();
+            return mt.getSubtype().endsWith("+json");
+        } catch (Exception ignore) {
+            return false;
+        }
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -160,9 +231,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
-    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleMethodNotAllowed(
-            org.springframework.web.HttpRequestMethodNotSupportedException ex,
+            HttpRequestMethodNotSupportedException ex,
             WebRequest req
     ) {
         var status = HttpStatus.METHOD_NOT_ALLOWED;
