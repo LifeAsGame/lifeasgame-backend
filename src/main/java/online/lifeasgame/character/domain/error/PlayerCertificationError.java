@@ -5,6 +5,7 @@ import online.lifeasgame.core.error.ErrorCode;
 public enum PlayerCertificationError implements ErrorCode {
 
     EXPIRES_BEFORE_ACQUIRED("PCF-422-EXPIRES-BEFORE-ACQUIRED", "Expires date must be on/after acquired date", 422),
+    PLAYER_CERTIFICATION_NOT_FOUND("PCD-404-PLAYER_CERTIFICATION-NOT_FOUND", "Player certification not found", 404),
     ;
 
     private final String code;

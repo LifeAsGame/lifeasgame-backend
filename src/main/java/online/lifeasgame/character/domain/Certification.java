@@ -42,4 +42,10 @@ public class Certification extends AbstractTime {
     public static Certification of(String name, String issuer, CertificationCategory category) {
         return new Certification(name, issuer, category);
     }
+
+    public void change(String name, String issuer, CertificationCategory category) {
+        this.name = name;
+        this.issuer = issuer;
+        this.category = category;
+    }
 }

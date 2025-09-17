@@ -1,7 +1,9 @@
 package online.lifeasgame.character.presentation.mapper;
 
 import java.util.List;
+import online.lifeasgame.character.application.command.PlayerCertificationCommand;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
+import online.lifeasgame.character.presentation.request.PlayerCertificationRequest;
 import online.lifeasgame.character.presentation.response.PlayerCertificationResponse;
 
 public class PlayerCertificationWebMapper {
@@ -26,5 +28,25 @@ public class PlayerCertificationWebMapper {
                         .toList()
         );
     }
-}
 
+    public static PlayerCertificationCommand.ChangePlayerCertification toCommand(
+            Long certificationId,
+            PlayerCertificationRequest.ChangePlayerCertification request
+    ) {
+        return PlayerCertificationCommand.ChangePlayerCertification.of(
+                certificationId,
+                request.acquiredDate(),
+                request.expiresDate()
+        );
+    }
+
+    public static PlayerCertificationResponse.ChangedPlayerCertification toChangedPlayerCertification(
+            PlayerCertificationResult.ChangedPlayerCertification result
+    ) {
+        return PlayerCertificationResponse.ChangedPlayerCertification.of(
+                result.certificationId(),
+                result.acquiredDate(),
+                result.expiresDate()
+        );
+    }
+}

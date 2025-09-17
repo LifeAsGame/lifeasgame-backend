@@ -1,6 +1,7 @@
 package online.lifeasgame.character.infra;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.query.PlayerCertificationQuery;
 import online.lifeasgame.character.application.view.PlayerCertificationView;
@@ -17,6 +18,11 @@ public class PlayerCertificationRepositoryAdapter implements PlayerCertification
     @Override
     public PlayerCertification save(PlayerCertification playerCertification) {
         return jpaRepository.save(playerCertification);
+    }
+
+    @Override
+    public Optional<PlayerCertification> findByPlayerIdAndCertificationId(Long playerId, Long certificationId) {
+        return jpaRepository.findByPlayerIdAndCertificationId(playerId, certificationId);
     }
 
     @Override

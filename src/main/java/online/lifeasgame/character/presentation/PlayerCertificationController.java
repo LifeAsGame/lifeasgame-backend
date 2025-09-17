@@ -1,16 +1,21 @@
 package online.lifeasgame.character.presentation;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.PlayerCertificationFacade;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 import online.lifeasgame.character.presentation.mapper.PlayerCertificationWebMapper;
+import online.lifeasgame.character.presentation.request.PlayerCertificationRequest;
 import online.lifeasgame.character.presentation.response.PlayerCertificationResponse;
 import online.lifeasgame.character.presentation.spec.PlayerCertificationApiSpecV1;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +33,18 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
         return ApiResponses.ok(
                 PlayerCertificationWebMapper.toPlayerCertificationInfos(playerCertificationInfos)
+        );
+    }
+
+    @Override
+    @PatchMapping("/certifications/{certificationId}")
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.ChangedPlayerCertification>> updatePlayerCertification(
+            @PathVariable Long certificationId,
+            @Valid @RequestBody PlayerCertificationRequest.ChangePlayerCertification request
+    ) {
+        PlayerCertificationResult.ChangedPlayerCertification changedPlayerCertification = playerCertificationFacade.changePlayerCertification(PlayerCertificationWebMapper.toCommand(certificationId, request));
+        return ApiResponses.ok(
+                PlayerCertificationWebMapper.toChangedPlayerCertification(changedPlayerCertification)
         );
     }
 }

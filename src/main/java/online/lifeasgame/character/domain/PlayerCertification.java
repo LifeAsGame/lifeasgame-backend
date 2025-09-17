@@ -68,4 +68,16 @@ public class PlayerCertification extends AbstractTime {
         }
         return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
     }
+
+    public static PlayerCertification of(Long playerId, Long aLong, LocalDate acquiredDate, LocalDate expiresDate) {
+        return new PlayerCertification(playerId, aLong, acquiredDate, expiresDate);
+    }
+
+    public void changeDate(LocalDate acquiredDate, LocalDate expiresDate) {
+        if (expiresDate != null && expiresDate.isBefore(acquiredDate)) {
+            throw new DomainException(PlayerCertificationError.EXPIRES_BEFORE_ACQUIRED);
+        }
+        this.acquiredDate = acquiredDate;
+        this.expiresDate = expiresDate;
+    }
 }

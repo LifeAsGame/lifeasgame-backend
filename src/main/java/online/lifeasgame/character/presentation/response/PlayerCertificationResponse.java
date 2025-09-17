@@ -44,4 +44,22 @@ public class PlayerCertificationResponse {
             );
         }
     }
+
+    public record ChangedPlayerCertification(
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        public static ChangedPlayerCertification of(
+                Long certificationId,
+                LocalDate acquiredDate,
+                LocalDate expiresDate
+        ) {
+            return new ChangedPlayerCertification(
+                    certificationId,
+                    acquiredDate,
+                    expiresDate
+            );
+        }
+    }
 }

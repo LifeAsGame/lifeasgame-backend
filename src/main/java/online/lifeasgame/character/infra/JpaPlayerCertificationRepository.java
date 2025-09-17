@@ -1,6 +1,7 @@
 package online.lifeasgame.character.infra;
 
 import java.util.List;
+import java.util.Optional;
 import online.lifeasgame.character.application.view.PlayerCertificationView;
 import online.lifeasgame.character.domain.PlayerCertification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,4 +24,6 @@ public interface JpaPlayerCertificationRepository extends JpaRepository<PlayerCe
                 ORDER BY pc.acquiredDate DESC
         """)
     List<PlayerCertificationView> findPlayerCertificationViews(Long playerId);
+
+    Optional<PlayerCertification> findByPlayerIdAndCertificationId(Long playerId, Long certificationId);
 }
