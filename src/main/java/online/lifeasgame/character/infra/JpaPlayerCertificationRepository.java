@@ -26,4 +26,8 @@ public interface JpaPlayerCertificationRepository extends JpaRepository<PlayerCe
     List<PlayerCertificationView> findPlayerCertificationViews(Long playerId);
 
     Optional<PlayerCertification> findByPlayerIdAndCertificationId(Long playerId, Long certificationId);
+
+    void deleteByPlayerIdAndCertificationId(Long playerId, Long certificationId);
+
+    boolean existsByPlayerIdAndCertificationId(Long playerId, Long certificationId);
 }

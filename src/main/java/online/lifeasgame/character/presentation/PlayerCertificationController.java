@@ -13,6 +13,7 @@ import online.lifeasgame.character.presentation.spec.PlayerCertificationApiSpecV
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,5 +64,12 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
         return ApiResponses.ok(
                 PlayerCertificationWebMapper.toChangedPlayerCertification(changedPlayerCertification)
         );
+    }
+
+    @Override
+    @DeleteMapping("/certifications/{certificationId}")
+    public ResponseEntity<ApiResponse<Long>> deletePlayerCertification(@PathVariable Long certificationId) {
+        playerCertificationFacade.deletePlayerCertification(certificationId);
+        return ApiResponses.deleted(certificationId);
     }
 }

@@ -29,6 +29,10 @@ public class PlayerCertificationFacade {
         return playerCertificationService.createPlayerCertification(getPlayerId(), command);
     }
 
+    public void deletePlayerCertification(Long certificationId) {
+        playerCertificationService.deletePlayerCertification(getPlayerId(), certificationId);
+    }
+
     private Long getPlayerId() {
         return currentPlayerAccessor.currentPlayerIdOrThrow();
     }

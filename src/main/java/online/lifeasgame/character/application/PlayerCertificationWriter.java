@@ -38,4 +38,13 @@ public class PlayerCertificationWriter {
     public PlayerCertification createPlayerCertification(PlayerCertification playerCertification) {
         return repository.save(playerCertification);
     }
+
+
+    public void deletePlayerCertification(Long playerId, Long certificationId) {
+        if (!repository.existsByPlayerIdAndCertificationId(playerId, certificationId)) {
+            throw new DomainException(PlayerCertificationError.PLAYER_CERTIFICATION_NOT_FOUND);
+        }
+
+        repository.deleteByPlayerIdAndCertificationId(playerId, certificationId);
+    }
 }

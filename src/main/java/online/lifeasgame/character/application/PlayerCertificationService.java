@@ -55,4 +55,9 @@ public class PlayerCertificationService {
 
         return PlayerCertificationResult.CreatedPlayerCertification.from(playerCertification);
     }
+
+    @Transactional
+    public void deletePlayerCertification(Long playerId, Long certificationId) {
+        playerCertificationWriter.deletePlayerCertification(playerId, certificationId);
+    }
 }

@@ -26,6 +26,16 @@ public class PlayerCertificationRepositoryAdapter implements PlayerCertification
     }
 
     @Override
+    public void deleteByPlayerIdAndCertificationId(Long playerId, Long certificationId) {
+        jpaRepository.deleteByPlayerIdAndCertificationId(playerId, certificationId);
+    }
+
+    @Override
+    public boolean existsByPlayerIdAndCertificationId(Long playerId, Long certificationId) {
+        return jpaRepository.existsByPlayerIdAndCertificationId(playerId, certificationId);
+    }
+
+    @Override
     public List<PlayerCertificationView> findPlayerCertificationInfos(Long playerId) {
         return jpaRepository.findPlayerCertificationViews(playerId);
     }

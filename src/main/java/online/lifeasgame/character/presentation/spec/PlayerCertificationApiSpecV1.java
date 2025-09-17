@@ -25,4 +25,7 @@ public interface PlayerCertificationApiSpecV1 {
             @PathVariable Long certificationId,
             @Valid @RequestBody PlayerCertificationRequest.ChangePlayerCertification request
     );
+
+    @Operation(summary = "Player 자격증 삭제", description = "사용자의 자격증을 제거합니다")
+    ResponseEntity<ApiResponse<Long>> deletePlayerCertification(@PathVariable Long certificationId);
 }
