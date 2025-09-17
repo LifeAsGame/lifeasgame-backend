@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.time.LocalDate;
 import lombok.AccessLevel;
@@ -24,7 +25,12 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "player_certifications",
-        indexes = @Index(name = "idx_cert_player", columnList = "player_id")
+        indexes = @Index(name = "idx_cert_player", columnList = "player_id"),
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_player_cert",
+                columnNames = {"player_id", "certification_id"}
+        )
+
 )
 public class PlayerCertification extends AbstractTime {
 

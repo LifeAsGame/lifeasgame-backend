@@ -34,4 +34,8 @@ public class PlayerCertificationWriter {
 
         return playerCertification;
     }
+
+    public PlayerCertification createPlayerCertification(PlayerCertification playerCertification) {
+        return repository.save(playerCertification);
+    }
 }

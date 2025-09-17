@@ -38,4 +38,21 @@ public class PlayerCertificationService {
 
         return PlayerCertificationResult.ChangedPlayerCertification.from(playerCertification);
     }
+
+    @Transactional
+    public PlayerCertificationResult.CreatedPlayerCertification createPlayerCertification(
+            Long playerId,
+            PlayerCertificationCommand.CreatePlayerCertification command
+    ) {
+        PlayerCertification playerCertification = playerCertificationWriter.createPlayerCertification(
+                PlayerCertification.create(
+                        playerId,
+                        command.certificationId(),
+                        command.acquiredDate(),
+                        command.expiresDate()
+                )
+        );
+
+        return PlayerCertificationResult.CreatedPlayerCertification.from(playerCertification);
+    }
 }

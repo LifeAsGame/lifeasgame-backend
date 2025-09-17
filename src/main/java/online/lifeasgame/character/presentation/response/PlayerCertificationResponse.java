@@ -62,4 +62,22 @@ public class PlayerCertificationResponse {
             );
         }
     }
+
+    public record CreatedPlayerCertification(
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        public static CreatedPlayerCertification of(
+                Long certificationId,
+                LocalDate acquiredDate,
+                LocalDate expiresDate
+        ) {
+            return new CreatedPlayerCertification(
+                    certificationId,
+                    acquiredDate,
+                    expiresDate
+            );
+        }
+    }
 }

@@ -45,4 +45,18 @@ public class PlayerCertificationResult {
             );
         }
     }
+
+    public record CreatedPlayerCertification(
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        public static CreatedPlayerCertification from(PlayerCertification playerCertification) {
+            return new CreatedPlayerCertification(
+                    playerCertification.getCertificationId(),
+                    playerCertification.getAcquiredDate(),
+                    playerCertification.getExpiresDate()
+            );
+        }
+    }
 }

@@ -18,4 +18,19 @@ public class PlayerCertificationRequest {
             return new ChangePlayerCertification(acquiredDate, expiresDate);
         }
     }
+
+    public record CreatePlayerCertification(
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        public static CreatePlayerCertification of(
+                LocalDate acquiredDate,
+                LocalDate expiresDate
+        ) {
+            return new CreatePlayerCertification(
+                    acquiredDate,
+                    expiresDate
+            );
+        }
+    }
 }

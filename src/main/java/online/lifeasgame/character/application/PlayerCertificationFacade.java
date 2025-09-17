@@ -16,10 +16,20 @@ public class PlayerCertificationFacade {
 
 
     public List<PlayerCertificationResult.PlayerCertificationInfo> getPlayerCertificationInfos() {
-        return playerCertificationService.getPlayerCertificationInfos(currentPlayerAccessor.currentPlayerIdOrThrow());
+        return playerCertificationService.getPlayerCertificationInfos(getPlayerId());
     }
 
     public PlayerCertificationResult.ChangedPlayerCertification changePlayerCertification(PlayerCertificationCommand.ChangePlayerCertification command) {
-        return playerCertificationService.changePlayerCertification(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+        return playerCertificationService.changePlayerCertification(getPlayerId(), command);
+    }
+
+    public PlayerCertificationResult.CreatedPlayerCertification createPlayerCertification(
+            PlayerCertificationCommand.CreatePlayerCertification command
+    ) {
+        return playerCertificationService.createPlayerCertification(getPlayerId(), command);
+    }
+
+    private Long getPlayerId() {
+        return currentPlayerAccessor.currentPlayerIdOrThrow();
     }
 }
