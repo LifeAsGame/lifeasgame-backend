@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
@@ -64,7 +65,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
-    @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ProblemDetail> handleBadInput(Exception ex, WebRequest req) {
         var err = CommonError.REQ_BAD_INPUT;
         var status = HttpStatus.valueOf(err.status());
@@ -74,6 +75,32 @@ public class GlobalExceptionHandler {
         String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
         log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
 
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, WebRequest req
+    ) {
+        var err = CommonError.REQ_BAD_INPUT;
+        var status = HttpStatus.valueOf(err.status());
+
+        String detail = null;
+        if (props.includeDetailInResponse()) {
+            String msg = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+            if (msg != null && msg.contains("Required request body is missing")) {
+                detail = "Request body is required.";
+            } else if (msg != null && msg.toLowerCase().contains("json")) {
+                detail = "Malformed JSON payload.";
+            } else {
+                detail = "Malformed request.";
+            }
+        }
+
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+        log.warn("400 bad-input (not-readable) path={} msg={}",
+                pd.getProperties().get(ErrorKeys.PATH),
+                buildLogMessage(ex.getMessage(), Sensitivity.PII));
         return ResponseEntity.status(status).body(pd);
     }
 
@@ -160,9 +187,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
-    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleMethodNotAllowed(
-            org.springframework.web.HttpRequestMethodNotSupportedException ex,
+            HttpRequestMethodNotSupportedException ex,
             WebRequest req
     ) {
         var status = HttpStatus.METHOD_NOT_ALLOWED;
