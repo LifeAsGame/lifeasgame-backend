@@ -21,7 +21,8 @@ public class PlayerCertificationService {
     private final PlayerCertificationReader playerCertificationReader;
 
     public List<PlayerCertificationResult.PlayerCertificationInfo> getPlayerCertificationInfos(Long playerId) {
-        List<PlayerCertificationView> playerCertificationViews = playerCertificationReader.getPlayerCertificationInfos(playerId);
+        List<PlayerCertificationView> playerCertificationViews = playerCertificationReader.getPlayerCertificationInfos(
+                playerId);
         return playerCertificationViews.stream()
                 .map(PlayerCertificationResult.PlayerCertificationInfo::from)
                 .toList();

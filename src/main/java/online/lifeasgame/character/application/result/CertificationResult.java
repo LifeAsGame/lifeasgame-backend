@@ -9,12 +9,14 @@ public class CertificationResult {
     }
 
     public record CertificationInfo(
+            Long certificationId,
             String name,
             String issuer,
             String category
     ) {
         public static CertificationInfo from(Certification certification) {
             return new CertificationInfo(
+                    certification.getId(),
                     certification.getName(),
                     certification.getIssuer(),
                     certification.getCategory().name()

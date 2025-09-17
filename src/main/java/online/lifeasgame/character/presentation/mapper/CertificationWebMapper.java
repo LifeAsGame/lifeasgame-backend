@@ -14,6 +14,7 @@ public class CertificationWebMapper {
                         .map(
                                 certificationInfo ->
                                         CertificationResponse.CertificationInfo.of(
+                                                certificationInfo.certificationId(),
                                                 certificationInfo.name(),
                                                 certificationInfo.issuer(),
                                                 certificationInfo.category()

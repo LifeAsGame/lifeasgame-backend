@@ -49,7 +49,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
                 PlayerCertificationWebMapper.toCommand(certificationId, request)
         );
         return ApiResponses.created(
-                URI.create("/api/v1/certifications/"),
+                URI.create("/api/v1/certifications"),
                 PlayerCertificationWebMapper.toCreatedPlayerCertification(certificationInfo)
         );
     }

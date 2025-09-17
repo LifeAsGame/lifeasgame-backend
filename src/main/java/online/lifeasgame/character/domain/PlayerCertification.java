@@ -53,13 +53,12 @@ public class PlayerCertification extends AbstractTime {
     @Column(name = "granted_at", nullable = false)
     private Instant grantedAt;
 
-    public PlayerCertification(Long playerId, Long certificationId) {
-        this.playerId = playerId;
-        this.certificationId = certificationId;
-    }
-
-    private PlayerCertification(Long playerId, Long certificationId,
-                                LocalDate acquiredDate, LocalDate expiresDate) {
+    private PlayerCertification(
+            Long playerId,
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
         this.playerId = Guard.notNull(playerId, "playerId");
         this.certificationId = Guard.notNull(certificationId, "certificationId");
         this.acquiredDate = acquiredDate;
@@ -67,20 +66,24 @@ public class PlayerCertification extends AbstractTime {
         this.grantedAt = Instant.now();
     }
 
-    public static PlayerCertification create(Long playerId, Long certificationId,
-                                             LocalDate acquiredDate, LocalDate expiresDate) {
-        if (expiresDate != null && expiresDate.isBefore(acquiredDate)) {
+    public static PlayerCertification create(
+            Long playerId,
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        if (acquiredDate != null && expiresDate != null && expiresDate.isBefore(acquiredDate)) {
             throw new DomainException(PlayerCertificationError.EXPIRES_BEFORE_ACQUIRED);
         }
         return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
     }
 
-    public static PlayerCertification of(Long playerId, Long aLong, LocalDate acquiredDate, LocalDate expiresDate) {
-        return new PlayerCertification(playerId, aLong, acquiredDate, expiresDate);
+    public static PlayerCertification of(Long playerId, Long certificationId, LocalDate acquiredDate, LocalDate expiresDate) {
+        return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
     }
 
     public void changeDate(LocalDate acquiredDate, LocalDate expiresDate) {
-        if (expiresDate != null && expiresDate.isBefore(acquiredDate)) {
+        if (expiresDate.isBefore(acquiredDate)) {
             throw new DomainException(PlayerCertificationError.EXPIRES_BEFORE_ACQUIRED);
         }
         this.acquiredDate = acquiredDate;

@@ -16,12 +16,13 @@ public class CertificationResponse {
     }
 
     public record CertificationInfo(
+            Long certificationId,
             String name,
             String issuer,
             String category
     ) {
-        public static CertificationResponse.CertificationInfo of(String name, String issuer, String category) {
-            return new CertificationResponse.CertificationInfo(name, issuer, category);
+        public static CertificationResponse.CertificationInfo of(Long certificationId, String name, String issuer, String category) {
+            return new CertificationResponse.CertificationInfo(certificationId, name, issuer, category);
         }
     }
 }
