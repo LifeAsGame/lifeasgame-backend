@@ -1,0 +1,17 @@
+package online.lifeasgame.character.application.view;
+
+import java.time.LocalDate;
+import online.lifeasgame.character.domain.HobbyCategory;
+import online.lifeasgame.character.domain.PlayerHobbyStatus;
+
+public interface PlayerHobbyView {
+    Long getHobbyId();
+    String getName();
+    HobbyCategory getCategory();
+    String getCustomName();
+    String getDetail();
+    int getProficiency();
+    PlayerHobbyStatus getStatus();
+    LocalDate getStartedOn();
+    long getXp();
+}
