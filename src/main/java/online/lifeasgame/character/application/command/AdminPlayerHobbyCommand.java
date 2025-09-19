@@ -14,8 +14,7 @@ public class AdminPlayerHobbyCommand {
             String detail,
             Integer proficiency,
             String status,      // raw enum
-            LocalDate startedOn,
-            Long xp
+            LocalDate startedOn
     ) {
         public static GrantHobby of(
                 Long playerId,
@@ -24,8 +23,7 @@ public class AdminPlayerHobbyCommand {
                 String detail,
                 Integer proficiency,
                 String status,      // raw enum
-                LocalDate startedOn,
-                Long xp
+                LocalDate startedOn
         ) {
             return new GrantHobby(
                     playerId,
@@ -34,8 +32,7 @@ public class AdminPlayerHobbyCommand {
                     detail,
                     proficiency,
                     status,
-                    startedOn,
-                    xp
+                    startedOn
             );
         }
     }

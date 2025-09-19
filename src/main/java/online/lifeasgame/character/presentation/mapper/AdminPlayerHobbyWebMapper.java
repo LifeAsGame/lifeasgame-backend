@@ -38,8 +38,7 @@ public class AdminPlayerHobbyWebMapper {
                 request.detail(),
                 request.proficiency(),
                 request.status(),
-                request.startedOn(),
-                request.xp()
+                request.startedOn()
         );
     }
 }

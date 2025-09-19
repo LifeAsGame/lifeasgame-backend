@@ -12,18 +12,16 @@ public class AdminPlayerHobbyRequest {
             String detail,
             Integer proficiency,
             String status,
-            LocalDate startedOn,
-            Long xp
+            LocalDate startedOn
     ) {
         public static GrantHobby of(
                 String customName,
                 String detail,
                 Integer proficiency,
                 String status,
-                LocalDate startedOn,
-                Long xp
+                LocalDate startedOn
         ) {
-            return new GrantHobby(customName, detail, proficiency, status, startedOn, xp);
+            return new GrantHobby(customName, detail, proficiency, status, startedOn);
         }
     }
 }

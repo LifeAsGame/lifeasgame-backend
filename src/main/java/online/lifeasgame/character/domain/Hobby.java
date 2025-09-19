@@ -25,7 +25,7 @@ public class Hobby extends AbstractTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "customName", nullable = false)
+    @Column(name = "name", nullable = false)
     String name;
 
     @Enumerated(EnumType.STRING)

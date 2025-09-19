@@ -72,6 +72,7 @@ public class PlayerHobby {
         this.proficiency = proficiency;
         this.status = status;
         this.startedOn = startedOn;
+        this.xp = 0;
     }
 
     public static PlayerHobby create(
@@ -82,6 +83,7 @@ public class PlayerHobby {
             int proficiency,
             PlayerHobbyStatus status,
             LocalDate startedOn
+
     ) {
         return new PlayerHobby(
                 playerId,
