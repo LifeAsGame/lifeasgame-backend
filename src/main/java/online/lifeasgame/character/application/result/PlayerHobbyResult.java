@@ -37,7 +37,7 @@ public class PlayerHobbyResult {
 
     public record ChangedPlayerHobby(
             Long hobbyId,
-            String customerName,
+            String customName,
             String detail,
             int proficiency,
             String status,
