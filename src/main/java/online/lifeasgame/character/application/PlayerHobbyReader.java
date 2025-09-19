@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class PlayerHobbyReader {
+class PlayerHobbyReader {
 
     private final PlayerHobbyQuery playerHobbyQuery;
 

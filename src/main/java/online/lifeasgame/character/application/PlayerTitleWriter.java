@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class PlayerTitleWriter {
+class PlayerTitleWriter {
 
     private final PlayerTitleRepository repository;
 

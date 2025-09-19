@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class PlayerCertificationWriter {
+class PlayerCertificationWriter {
 
     private final PlayerCertificationRepository repository;
 

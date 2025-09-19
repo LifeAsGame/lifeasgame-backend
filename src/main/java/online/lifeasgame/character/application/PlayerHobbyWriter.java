@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class PlayerHobbyWriter {
+class PlayerHobbyWriter {
 
     private final PlayerHobbyRepository repository;
 

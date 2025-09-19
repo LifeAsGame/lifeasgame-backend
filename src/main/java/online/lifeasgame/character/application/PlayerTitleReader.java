@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class PlayerTitleReader {
+class PlayerTitleReader {
 
     private final PlayerTitleQuery playerTitleQuery;
     private final PlayerTitleRepository playerTitleRepository;

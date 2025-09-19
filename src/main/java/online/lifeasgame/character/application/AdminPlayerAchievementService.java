@@ -21,7 +21,7 @@ public class AdminPlayerAchievementService {
 
     @Transactional
     public AdminPlayerAchievementResult.GrantedAchievement grantAchievement(Long playerId, Long achievementId) {
-        if (!playerReader.exists(playerId)) {
+        if (playerReader.notExists(playerId)) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
 

@@ -22,7 +22,7 @@ public class AdminPlayerCertificationService {
 
     @Transactional
     public AdminPlayerCertificationResult.GrantedCertification grantCertification(AdminPlayerCertificationCommand.GrantCertification command) {
-        if (!playerReader.exists(command.playerId())) {
+        if (playerReader.notExists(command.playerId())) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
 

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class UserWriter {
+class UserWriter {
 
     private final UserRepository userRepository;
     private final DomainEventPublisher domainEventPublisher;

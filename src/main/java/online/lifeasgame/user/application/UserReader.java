@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class UserReader {
+class UserReader {
 
     private final UserRepository userRepository;
 

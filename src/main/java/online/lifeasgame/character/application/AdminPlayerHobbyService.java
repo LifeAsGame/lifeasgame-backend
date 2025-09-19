@@ -23,7 +23,7 @@ public class AdminPlayerHobbyService {
 
     @Transactional
     public AdminPlayerHobbyResult.GrantedHobby grantHobby(AdminPlayerHobbyCommand.GrantHobby command) {
-        if (!playerReader.exists(command.playerId())) {
+        if (playerReader.notExists(command.playerId())) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
 

@@ -78,7 +78,7 @@ public class PlayerHobbyWebMapper {
     ) {
         return PlayerHobbyResponse.ChangedPlayerHobby.of(
                 result.hobbyId(),
-                result.customerName(),
+                result.customName(),
                 result.detail(),
                 result.proficiency(),
                 result.status(),
