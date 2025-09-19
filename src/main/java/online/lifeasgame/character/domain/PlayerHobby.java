@@ -23,7 +23,7 @@ import online.lifeasgame.core.annotation.AggregateRoot;
 @Table(
         name = "player_hobbies",
         indexes = @Index(name = "idx_hobby_player", columnList = "player_id"),
-        uniqueConstraints = @UniqueConstraint(name = "uq_player_hobby", columnNames = {"playerId", "hobbyId"})
+        uniqueConstraints = @UniqueConstraint(name = "uq_player_hobby", columnNames = {"player_id", "hobby_id"})
 )
 public class PlayerHobby {
 
@@ -34,7 +34,7 @@ public class PlayerHobby {
     @Column(name = "player_id", nullable = false)
     private Long playerId;
 
-    @Column(name = "hobbyId", nullable = false)
+    @Column(name = "hobby_id", nullable = false)
     private Long hobbyId;
 
     @Column(name = "custom_name", length = 60, nullable = false)
