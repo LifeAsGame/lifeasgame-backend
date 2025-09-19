@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class TitleReader {
+class TitleReader {
 
     private final TitleRepository repository;
 

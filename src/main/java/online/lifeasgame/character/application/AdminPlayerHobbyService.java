@@ -9,12 +9,10 @@ import online.lifeasgame.character.domain.PlayerHobbyStatus;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminPlayerHobbyService {
 
     private final HobbyReader hobbyReader;
@@ -23,7 +21,7 @@ public class AdminPlayerHobbyService {
 
     @Transactional
     public AdminPlayerHobbyResult.GrantedHobby grantHobby(AdminPlayerHobbyCommand.GrantHobby command) {
-        if (!playerReader.exists(command.playerId())) {
+        if (playerReader.notExists(command.playerId())) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
 

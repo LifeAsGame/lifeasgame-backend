@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class PlayerEquipmentWriter {
+class PlayerEquipmentWriter {
 
     private final PlayerEquipmentRepository playerEquipmentRepository;
 

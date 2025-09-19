@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.user.domain.UserSetting;
 import online.lifeasgame.user.domain.repository.UserSettingRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class UserSettingWriter {
+@Transactional(propagation = Propagation.MANDATORY)
+class UserSettingWriter {
 
     private final UserSettingRepository userSettingRepository;
 

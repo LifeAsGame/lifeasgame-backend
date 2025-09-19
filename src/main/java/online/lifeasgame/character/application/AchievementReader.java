@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class AchievementReader {
+class AchievementReader {
 
     private final AchievementRepository repository;
 

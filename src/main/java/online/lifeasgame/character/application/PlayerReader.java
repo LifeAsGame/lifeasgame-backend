@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class PlayerReader {
+class PlayerReader {
 
     private final PlayerRepository playerRepository;
 
@@ -22,7 +22,7 @@ public class PlayerReader {
         );
     }
 
-    public boolean exists(Long playerId) {
-        return playerRepository.existsById(playerId);
+    public boolean notExists(Long playerId) {
+        return !playerRepository.existsById(playerId);
     }
 }

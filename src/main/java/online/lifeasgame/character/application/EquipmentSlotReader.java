@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class EquipmentSlotReader {
+class EquipmentSlotReader {
 
     private final EquipmentSlotRepository repository;
 

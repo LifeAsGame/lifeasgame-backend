@@ -9,13 +9,11 @@ import online.lifeasgame.character.application.view.PlayerHobbyView;
 import online.lifeasgame.character.domain.PlayerHobby;
 import online.lifeasgame.character.domain.PlayerHobbyStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class PlayerHobbyService {
 
     private final PlayerHobbyWriter playerHobbyWriter;
