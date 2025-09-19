@@ -23,6 +23,6 @@ class PlayerReader {
     }
 
     public boolean notExists(Long playerId) {
-        return playerRepository.existsById(playerId);
+        return !playerRepository.existsById(playerId);
     }
 }
