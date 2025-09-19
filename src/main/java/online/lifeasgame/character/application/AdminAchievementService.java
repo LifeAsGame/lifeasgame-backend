@@ -6,12 +6,10 @@ import online.lifeasgame.character.application.result.AdminAchievementResult;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminAchievementService {
 
     private final AchievementWriter achievementWriter;

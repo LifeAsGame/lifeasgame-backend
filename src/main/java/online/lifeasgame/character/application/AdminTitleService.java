@@ -6,12 +6,10 @@ import online.lifeasgame.character.application.result.AdminTitleResult;
 import online.lifeasgame.character.domain.Title;
 import online.lifeasgame.character.domain.TitleCategory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminTitleService {
 
     private final TitleWriter titleWriter;

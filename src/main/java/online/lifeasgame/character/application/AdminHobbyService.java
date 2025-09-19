@@ -6,12 +6,10 @@ import online.lifeasgame.character.application.result.AdminHobbyResult;
 import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.HobbyCategory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminHobbyService {
 
     private final HobbyWriter hobbyWriter;

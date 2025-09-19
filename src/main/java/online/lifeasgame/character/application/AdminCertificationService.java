@@ -6,12 +6,10 @@ import online.lifeasgame.character.application.result.AdminCertificationResult;
 import online.lifeasgame.character.domain.Certification;
 import online.lifeasgame.character.domain.CertificationCategory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminCertificationService {
 
     private final CertificationWriter CertificationWriter;

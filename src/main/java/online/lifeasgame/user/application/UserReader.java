@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 class UserReader {
 
     private final UserRepository userRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
     public User findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserError.USER_NOT_FOUND));

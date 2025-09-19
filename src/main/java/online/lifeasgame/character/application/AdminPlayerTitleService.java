@@ -5,12 +5,10 @@ import online.lifeasgame.character.application.result.AdminPlayerTitleResult;
 import online.lifeasgame.character.domain.PlayerTitle;
 import online.lifeasgame.character.domain.Title;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminPlayerTitleService {
 
     private final PlayerTitleWriter playerTitleWriter;

@@ -9,12 +9,10 @@ import online.lifeasgame.character.domain.PlayerHobbyStatus;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class AdminPlayerHobbyService {
 
     private final HobbyReader hobbyReader;
