@@ -10,8 +10,7 @@ import java.util.Map;
 class BaseAttrsConverter implements AttributeConverter<BaseAttrs, String> {
 
     private static final ObjectMapper M = new ObjectMapper();
-    private static final TypeReference<Map<String, Integer>> T = new TypeReference<>() {
-    };
+    private static final TypeReference<Map<String, Integer>> T = new TypeReference<>() {};
 
     @Override
     public String convertToDatabaseColumn(BaseAttrs attr) {

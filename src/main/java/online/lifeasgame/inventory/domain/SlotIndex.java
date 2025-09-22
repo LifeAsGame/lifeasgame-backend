@@ -10,18 +10,17 @@ import online.lifeasgame.core.guard.Guard;
 @Embeddable
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Quantity {
+public class SlotIndex {
 
-    @Column(name = "quantity", nullable = false)
+    @Column(name = "slot_index", nullable = false)
     private int value;
 
-    private Quantity(int v) {
-        Guard.minValue(v, 0, "quantity");
-        this.value = v;
+    private SlotIndex(int v) {
+        this.value = Guard.minValue(v, 0, "slot_index");
     }
 
-    public static Quantity of(int v) {
-        return new Quantity(v);
+    public static SlotIndex of(int v) {
+        return new SlotIndex(v);
     }
 
     public int value() {

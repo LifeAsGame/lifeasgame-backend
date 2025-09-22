@@ -4,10 +4,12 @@ package online.lifeasgame.inventory.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemName {
 
@@ -15,9 +17,9 @@ public class ItemName {
     private String value;
 
     private ItemName(String raw) {
-        String v = raw == null ? "" : raw.trim();
+        String v = (raw == null ? "" : raw.trim());
         Guard.minLength(v, 2, "item name");
-        Guard.maxLength(v, 10, "item name");
+        Guard.maxLength(v, 80, "item name");
         this.value = v;
     }
 
