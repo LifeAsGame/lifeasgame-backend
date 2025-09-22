@@ -10,27 +10,35 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
+@Getter
 @Entity
 @AggregateRoot
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "items",
         indexes = @Index(name = "idx_item_name", columnList = "name")
 )
-public class Item {
+public class Item extends AbstractTime {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 20, nullable = false)
     private ItemCategory category;
 
-    @Embedded
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 40, nullable = false)
     private ItemType type;
 
     @Embedded
@@ -50,12 +58,52 @@ public class Item {
     @Column(name = "max_stack", nullable = false)
     private int maxStack = 1;
 
-    @PrePersist
-    @PreUpdate
-    void validate() {
-        if (!stackable && maxStack != 1)
-            throw new IllegalStateException("non-stackable item must have maxStack=1");
-        if (stackable && maxStack < 2)
-            throw new IllegalStateException("stackable item must have maxStack >= 2");
+    @Embedded
+    private DurabilityPolicy durabilityPolicy;
+
+    private Item(
+            ItemCategory category,
+            ItemType type,
+            ItemName name,
+            Rarity rarity,
+            BaseAttrs baseAttrs,
+            boolean stackable,
+            int maxStack,
+            DurabilityPolicy durabilityPolicy
+    ) {
+        this.category = Guard.notNull(category, "category");
+        this.type = Guard.notNull(type, "type");
+        this.name = Guard.notNull(name, "name");
+        this.rarity = (rarity == null) ? Rarity.COMMON : rarity;
+        this.baseAttrs = (baseAttrs == null) ? BaseAttrs.empty() : baseAttrs;
+        this.stackable = stackable;
+        this.maxStack = stackable ? Guard.minValue(maxStack, 2, "maxStack") : 1;
+        this.durabilityPolicy = durabilityPolicy;
+    }
+
+    public static Item create(
+            ItemCategory category,
+            ItemType type,
+            ItemName name,
+            Rarity rarity,
+            BaseAttrs baseAttrs,
+            boolean stackable,
+            Integer maxStack,
+            DurabilityPolicy dp
+    ) {
+        int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
+        return new Item(category, type, name, rarity, baseAttrs, stackable, ms, dp);
+    }
+
+    public boolean isStackable() {
+        return stackable;
+    }
+
+    public int maxStack() {
+        return maxStack;
+    }
+
+    public Optional<DurabilityPolicy> durabilityPolicy() {
+        return Optional.ofNullable(durabilityPolicy);
     }
 }

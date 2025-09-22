@@ -5,26 +5,24 @@ import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Quantity {
+public class Durability {
 
-    @Column(name = "quantity", nullable = false)
-    private int value;
+    @Column(name = "durability")
+    private Integer value;
 
-    private Quantity(int v) {
-        Guard.minValue(v, 0, "quantity");
+    private Durability(Integer v) {
         this.value = v;
     }
 
-    public static Quantity of(int v) {
-        return new Quantity(v);
+    public static Durability of(int v) {
+        return new Durability(v);
     }
 
-    public int value() {
+    public Integer value() {
         return value;
     }
 }
