@@ -8,6 +8,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -39,6 +40,7 @@ public class PlayerInventory extends AbstractTime {
     @Version
     private Long version;
 
+    @Getter(AccessLevel.NONE)
     @OneToMany(
             mappedBy = "inventory",
             cascade = CascadeType.ALL,
@@ -240,5 +242,9 @@ public class PlayerInventory extends AbstractTime {
         }
 
         throw new DomainException(InventoryError.INVENTORY_FULL);
+    }
+
+    public List<InventoryEntry> getEntries() {
+        return Collections.unmodifiableList(entries);
     }
 }

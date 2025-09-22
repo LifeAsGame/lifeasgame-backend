@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.Map;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -139,7 +140,10 @@ public class InventoryEntry {
     public boolean isSameStackKey(Item def, boolean bound, InstanceAttrs attrs) {
         return Objects.equals(itemId, def.getId())
                 && this.bound == bound
-                && Objects.equals(this.instAttrs, (attrs == null ? InstanceAttrs.empty() : attrs));
+                && Objects.equals(
+                        this.instAttrs == null ? Map.of() : this.instAttrs.attrs(),
+                        attrs == null ? Map.of() : attrs.attrs()
+                );
     }
 
     public boolean canMergeWith(InventoryEntry other, Item def) {

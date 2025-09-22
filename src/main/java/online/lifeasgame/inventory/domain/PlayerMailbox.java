@@ -8,6 +8,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -35,6 +36,7 @@ public class PlayerMailbox {
     @Version
     private Long version;
 
+    @Getter(AccessLevel.NONE)
     @OneToMany(mappedBy = "mailbox", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MailboxEntry> entries = new ArrayList<>();
 
@@ -196,5 +198,9 @@ public class PlayerMailbox {
             targetInventory.add(def, qty, e.instAttrs, e.bound);
             entries.remove(e);
         }
+    }
+
+    public List<MailboxEntry> getEntries() {
+        return Collections.unmodifiableList(entries);
     }
 }
