@@ -1,16 +1,6 @@
 package online.lifeasgame.inventory.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +8,11 @@ import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Entity
@@ -77,127 +72,73 @@ public class PlayerMailbox {
     }
 
     /** 시스템/이벤트로 우편 지급 */
-    public SlotIndex deliver(Item def, int quantity, InstanceAttrs attrs, boolean bound) {
+    public SlotIndex deliver(ItemCarryPolicy p, int quantity, InstanceAttrs attrs, boolean bound) {
         Guard.minValue(quantity, 1, "qty");
         InstanceAttrs safeAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
 
-        if (!def.isStackable()) {
-            if (freeSlots() < quantity) {
-                throw new DomainException(InventoryError.MAILBOX_FULL);
-            }
-
-            SlotIndex first = null;
-
-            for (int i = 0; i < quantity; i++) {
-                SlotIndex free = nextFreeSlot();
-
-                MailboxEntry e = MailboxEntry.of(
-                        this,
-                        free,
-                        def,
-                        Quantity.of(1),
-                        null, bound,
-                        safeAttrs
-                );
-
-                def.durabilityPolicy().ifPresent(e::ensureDurabilityWithin);
-
-                entries.add(e);
-
-                if (first == null) {
-                    first = free;
-                }
-            }
-
-            return first;
-        }
-
         int remaining = quantity;
 
-        List<MailboxEntry> stacks = entries.stream()
-                .filter(e -> e.isSameStackKey(def, bound, safeAttrs))
+        // 1) 기존 스택 채우기
+        var stacks = entries.stream()
+                .filter(e -> e.isSameStackKey(p, bound, safeAttrs))
                 .toList();
 
         for (MailboxEntry stack : stacks) {
-            if (remaining == 0) {
-                break;
+            if (remaining == 0) break;
+            int canPush = p.clampAddToLimit(stack.getQuantity().value(), remaining);
+            if (canPush > 0) {
+                stack.increaseQuantity(canPush, p);
+                remaining -= canPush;
             }
-
-            int canPush = def.maxStack() - stack.quantity.value();
-
-            if (canPush <= 0) {
-                continue;
-            }
-
-            int add = Math.min(canPush, remaining);
-            stack.increaseQuantity(add, def);
-            remaining -= add;
         }
 
+        // 2) Pre-flight: 새 스택 갯수 계산
+        int capacityInExisting = stacks.stream()
+                .mapToInt(s -> p.spaceInStack(s.getQuantity().value()))
+                .sum();
+        int remainAfterExisting = Math.max(0, remaining - capacityInExisting);
+        int needNew = p.estimateNewStacksNeeded(remainAfterExisting);
+        if (needNew > freeSlots()) throw new DomainException(InventoryError.MAILBOX_FULL);
+
+        // 3) 신규 스택 생성
         SlotIndex first = null;
-
         while (remaining > 0) {
-            if (freeSlots() <= 0) {
-                throw new DomainException(InventoryError.MAILBOX_FULL);
-            }
-
-            int put = Math.min(def.maxStack(), remaining);
-
+            int put = p.stackable() ? Math.min(p.maxStack(), remaining) : 1;
             SlotIndex free = nextFreeSlot();
-
             MailboxEntry e = MailboxEntry.of(
-                    this,
-                    free,
-                    def,
+                    this, free, p,
                     Quantity.of(put),
-                    null,
-                    bound,
-                    safeAttrs
+                    (p.maxDurability() == null ? null : Durability.of(p.maxDurability())),
+                    bound, safeAttrs
             );
-
             entries.add(e);
-
-            if (first == null) {
-                first = free;
-            }
-
+            if (first == null) first = free;
             remaining -= put;
         }
 
-        return first;
+        return first; // null 아닌 상태 보장(remaining >= 1이었음)
     }
 
-    /** 우편 수령: 메일함 슬롯에서 꺼내 인벤토리로 넣기 */
-    public void claimToInventory(SlotIndex from, int qty, Item def, PlayerInventory targetInventory) {
+    /** 수령 슬라이스 VO (인벤토리에 넣을 정보) */
+    public record ClaimedSlice(int quantity, InstanceAttrs attrs, boolean bound) {}
+
+    /** 우편 수령: 메일함에서 차감만 하고, 인벤토리에 넣을 데이터를 반환 */
+    public ClaimedSlice claim(SlotIndex from, int qty, ItemCarryPolicy p) {
         ensureValidSlot(from);
         MailboxEntry src = findBySlot(from).orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
 
         Guard.minValue(qty, 1, "qty");
-        if (qty > src.quantity.value()) {
-            throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
-        }
+        if (qty > src.getQuantity().value()) throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
 
-        // 인벤토리에 먼저 add(실패 시 메일 감소 방지)
-        targetInventory.add(def, qty, src.instAttrs, src.bound);
+        // (정책 일관성 체크: 스택 규칙이 깨진 상태 방지용. 보통은 저장 당시 보장됨)
+        if (!p.itemId().equals(src.getItemId())) throw new DomainException(InventoryError.ITEM_NOT_FOUND);
 
-        // 성공했으면 메일에서 차감/삭제
+        // 먼저 메일함에서 차감
         src.decreaseQuantity(qty);
+        if (src.getQuantity().value() == 0) entries.remove(src);
 
-        if (src.quantity.value() == 0) {
-            entries.remove(src);
-        }
-    }
-
-    /** 전체 수령(가능한 만큼) — 필요 시 사용 */
-    public void claimAllToInventory(PlayerInventory targetInventory, Item def) {
-        // 같은 정의만 일괄 수령하고 싶을 때(확장 가능)
-        List<MailboxEntry> list = new ArrayList<>(entries);
-
-        for (MailboxEntry e : list) {
-            int qty = e.quantity.value();
-            targetInventory.add(def, qty, e.instAttrs, e.bound);
-            entries.remove(e);
-        }
+        // 인벤토리에 넣을 페이로드 반환
+        return new ClaimedSlice(qty, src.getInstAttrs(), src.isBound());
     }
 
     public List<MailboxEntry> getEntries() {

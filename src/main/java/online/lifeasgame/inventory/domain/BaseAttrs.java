@@ -1,13 +1,12 @@
 package online.lifeasgame.inventory.domain;
 
-import jakarta.persistence.Embeddable;
 import jakarta.persistence.Transient;
-import java.util.Map;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Embeddable
+import java.util.Map;
+
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BaseAttrs {
@@ -21,6 +20,10 @@ public class BaseAttrs {
 
     public static BaseAttrs empty() {
         return new BaseAttrs(Map.of());
+    }
+
+    public static BaseAttrs of(Map<String, Integer> baseAttrs) {
+        return new BaseAttrs(baseAttrs);
     }
 
     public Map<String, Integer> attrs() {

@@ -12,14 +12,17 @@ import online.lifeasgame.core.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Durability {
 
-    @Column(name = "durability", nullable = false)
+    @Column(name = "durability")
     private Integer value;
 
     private Durability(Integer v) {
         this.value = Guard.minValue(v, 0, "durability");
     }
 
-    public static Durability of(int v) {
+    public static Durability of(Integer v) {
+        if (v == null) {
+            return null;
+        }
         return new Durability(v);
     }
 
