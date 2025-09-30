@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +19,7 @@ import java.util.Objects;
         uniqueConstraints = @UniqueConstraint(name = "uq_mailbox_slot", columnNames = {"player_id", "slot_index"})
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MailboxEntry {
+public class MailboxEntry extends AbstractTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

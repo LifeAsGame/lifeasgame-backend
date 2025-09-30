@@ -8,6 +8,7 @@ import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.Optional;
 @AggregateRoot
 @Table(name = "player_mailbox")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PlayerMailbox {
+public class PlayerMailbox extends AbstractTime {
 
     @Id
     @Column(name = "player_id")
