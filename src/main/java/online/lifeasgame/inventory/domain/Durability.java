@@ -19,10 +19,7 @@ public class Durability {
         this.value = Guard.minValue(v, 0, "durability");
     }
 
-    public static Durability of(Integer v) {
-        if (v == null) {
-            return null;
-        }
+    public static Durability of(int v) {
         return new Durability(v);
     }
 

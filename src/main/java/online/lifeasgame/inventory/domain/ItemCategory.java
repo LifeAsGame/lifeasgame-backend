@@ -16,10 +16,6 @@ public enum ItemCategory {
     ;
 
     public static ItemCategory parse(String raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-
         return EnumParsers.parseStrict(
                 ItemCategory.class,
                 raw,
@@ -29,10 +25,6 @@ public enum ItemCategory {
     }
 
     public static List<ItemCategory> parse(List<String> raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-
         return EnumParsers.parseListStrict(
                 ItemCategory.class,
                 raw,

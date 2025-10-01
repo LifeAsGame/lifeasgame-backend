@@ -113,7 +113,7 @@ public class PlayerInventory extends AbstractTime {
                     slotIndex,
                     policy,
                     Quantity.of(put),
-                    Durability.of(policy.maxDurability()),
+                    policy.maxDurability() == null ? null : Durability.of(policy.maxDurability()),
                     bound,
                     instanceAttrs
             );
@@ -135,7 +135,7 @@ public class PlayerInventory extends AbstractTime {
                 .orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
         inventoryEntry.decreaseQuantity(quantity);
 
-        if (inventoryEntry.quantity.value() == 0) {
+        if (inventoryEntry.getQuantity().value() == 0) {
             entries.remove(inventoryEntry);
         }
     }
@@ -228,14 +228,25 @@ public class PlayerInventory extends AbstractTime {
         Map<String, Object> target = (attrs == null) ? Map.of() : attrs.attrs();
         return entries.stream()
                 .filter(
-                        inventoryEntry -> inventoryEntry.getItemId().equals(policy.itemId())
-                        && policy.sameStackKey(
+                        inventoryEntry -> Objects.equals(inventoryEntry.getItemId(), policy.itemId())
+                                && policy.sameStackKey(
                                 inventoryEntry.isBound(),
-                                (inventoryEntry.getInstAttrs() == null ? null : inventoryEntry.getInstAttrs().attrs()),
+                                safeAttrs(inventoryEntry.getInstAttrs()),
                                 bound,
                                 target
                         )
                 )
                 .toList();
+    }
+
+    private Map<String,Object> safeAttrs(InstanceAttrs x) {
+        return (x == null) ? Map.of() : x.attrs();
+    }
+
+    public InventoryEntry getEntry(SlotIndex of) {
+        return entries.stream()
+                .filter(e -> e.slotIndex.equals(of))
+                .findFirst()
+                .orElse(null);
     }
 }

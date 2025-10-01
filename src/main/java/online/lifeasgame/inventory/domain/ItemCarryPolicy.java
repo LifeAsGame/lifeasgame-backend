@@ -78,13 +78,12 @@ public record ItemCarryPolicy(
      * 같은 스택 키(귀속/속성 동일) 여부
      */
     public boolean sameStackKey(
-            boolean boundA, Map<String, Object> attrsA,
-            boolean boundB, Map<String, Object> attrsB
+            boolean boundA, Map<String,Object> attrsA,
+            boolean boundB, Map<String,Object> attrsB
     ) {
-        if (!stackable) return false;
         var a = (attrsA == null) ? Map.of() : attrsA;
         var b = (attrsB == null) ? Map.of() : attrsB;
-        return boundA == boundB && Objects.equals(a, b);
+        return stackable && (boundA == boundB) && Objects.equals(a, b);
     }
 
     /**

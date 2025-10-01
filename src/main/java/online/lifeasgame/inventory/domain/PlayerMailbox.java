@@ -84,25 +84,31 @@ public class PlayerMailbox extends AbstractTime {
                 .filter(e -> e.isSameStackKey(p, bound, safeAttrs))
                 .toList();
 
+        SlotIndex firstExisting = null; // 기존 스택 중 처음으로 건드린 슬롯
         for (MailboxEntry stack : stacks) {
             if (remaining == 0) break;
             int canPush = p.clampAddToLimit(stack.getQuantity().value(), remaining);
             if (canPush > 0) {
                 stack.increaseQuantity(canPush, p);
                 remaining -= canPush;
+                if (firstExisting == null) {
+                    firstExisting = stack.getSlotIndex();
+                }
             }
         }
 
-        // 2) Pre-flight: 새 스택 갯수 계산
+        // 2) Pre-flight: 새 스택 필요 개수 계산
         int capacityInExisting = stacks.stream()
                 .mapToInt(s -> p.spaceInStack(s.getQuantity().value()))
                 .sum();
         int remainAfterExisting = Math.max(0, remaining - capacityInExisting);
         int needNew = p.estimateNewStacksNeeded(remainAfterExisting);
-        if (needNew > freeSlots()) throw new DomainException(InventoryError.MAILBOX_FULL);
+        if (needNew > freeSlots()) {
+            throw new DomainException(InventoryError.MAILBOX_FULL);
+        }
 
         // 3) 신규 스택 생성
-        SlotIndex first = null;
+        SlotIndex firstNew = null;
         while (remaining > 0) {
             int put = p.stackable() ? Math.min(p.maxStack(), remaining) : 1;
             SlotIndex free = nextFreeSlot();
@@ -113,11 +119,25 @@ public class PlayerMailbox extends AbstractTime {
                     bound, safeAttrs
             );
             entries.add(e);
-            if (first == null) first = free;
+            if (firstNew == null) {
+                firstNew = free;
+            }
             remaining -= put;
         }
 
-        return first; // null 아닌 상태 보장(remaining >= 1이었음)
+        // 반환 우선순위: 새로 만든 슬롯 > 기존에 채운 슬롯
+        if (firstNew != null) return firstNew;
+        if (firstExisting != null) return firstExisting;
+
+        // quantity >= 1 이었으므로 이 지점 도달하면 로직 결함
+        throw new IllegalStateException("deliver() must return a slot when quantity > 0");
+    }
+
+    public MailboxEntry getEntry(SlotIndex of) {
+        return entries.stream()
+                .filter(e -> e.slotIndex.equals(of))
+                .findFirst()
+                .orElse(null);
     }
 
     /** 수령 슬라이스 VO (인벤토리에 넣을 정보) */

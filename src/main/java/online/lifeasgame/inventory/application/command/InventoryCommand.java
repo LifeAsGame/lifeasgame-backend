@@ -35,25 +35,23 @@ public final class InventoryCommand {
         }
     }
 
-    public record Merge(int from, int to, Long itemId) {
-        public static Merge of(int from, int to, Long itemId) {
-            return new Merge(from, to, itemId);
+    public record Merge(int from, int to) {
+        public static Merge of(int from, int to) {
+            return new Merge(from, to);
         }
     }
 
     public record Split(
             int from,
             Integer to,
-            int quantity,
-            Long itemId
+            int quantity
     ) {
         public static Split of(
                 int from,
                 Integer to,
-                int quantity,
-                Long itemId
+                int quantity
         ) {
-            return new Split(from, to, quantity, itemId);
+            return new Split(from, to, quantity);
         }
     }
 }

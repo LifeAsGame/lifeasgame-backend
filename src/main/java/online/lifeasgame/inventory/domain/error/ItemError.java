@@ -8,7 +8,9 @@ public enum ItemError implements ErrorCode {
     ITEM_NAME_DUP("ITM-409-NAME-DUP", "Duplicate item name", 409),
     INVALID_ITEM_CATEGORY("ITM-400-INVALID-ITEM-CATEGORY", "Invalid item category", 400),
     INVALID_ITEM_TYPE("ITM-400-INVALID-ITEM-TYPE", "Invalid item type", 400),
-    INVALID_ITEM_RARITY("ITM-400-INVALID-ITEM-RARITY", "Invalid item rarity", 400)
+    INVALID_ITEM_RARITY("ITM-400-INVALID-ITEM-RARITY", "Invalid item rarity", 400),
+    POLICY_CONFLICT("ITM-409-POLICY-CONFLICT",
+            "Item policy change conflicts with existing stacks (reconciliation required).", 409)
     ;
 
     private final String code;

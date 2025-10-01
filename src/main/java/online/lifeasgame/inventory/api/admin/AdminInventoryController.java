@@ -7,7 +7,7 @@ import online.lifeasgame.inventory.application.InventoryService;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.api.admin.mapper.AdminInventoryWebMapper;
 import online.lifeasgame.inventory.api.admin.request.AdminInventoryRequest;
-import online.lifeasgame.inventory.api.admin.reseponse.AdminInventoryResponse;
+import online.lifeasgame.inventory.api.admin.response.AdminInventoryResponse;
 import online.lifeasgame.inventory.api.admin.spec.AdminInventoryApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;

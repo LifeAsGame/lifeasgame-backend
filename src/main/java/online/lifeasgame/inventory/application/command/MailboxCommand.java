@@ -18,9 +18,9 @@ public final class MailboxCommand {
         }
     }
 
-    public record Claim(int slotIndex, int quantity, Long itemId) {
-        public static Claim of(int slotIndex, int quantity, Long itemId) {
-            return new Claim(slotIndex, quantity, itemId);
+    public record Claim(int slotIndex, int quantity) {
+        public static Claim of(int slotIndex, int quantity) {
+            return new Claim(slotIndex, quantity);
         }
     }
 }

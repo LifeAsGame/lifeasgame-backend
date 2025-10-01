@@ -7,7 +7,7 @@ import online.lifeasgame.inventory.application.ItemService;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.api.admin.mapper.AdminItemWebMapper;
 import online.lifeasgame.inventory.api.admin.request.AdminItemRequest;
-import online.lifeasgame.inventory.api.admin.reseponse.AdminItemResponse;
+import online.lifeasgame.inventory.api.admin.response.AdminItemResponse;
 import online.lifeasgame.inventory.api.admin.spec.AdminItemApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class AdminItemController implements AdminItemApiSpecV1 {
     ) {
         ItemResult.Id adminResult = itemService.create(AdminItemWebMapper.toCommand(request));
         return ApiResponses.created(
-                URI.create("/api/v1/items/" + adminResult.id()),
+                URI.create("/admin/v1/items/"),
                 AdminItemWebMapper.toResponse(adminResult)
         );
     }

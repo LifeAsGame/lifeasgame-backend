@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class PlayerInventoryRepositoryAdapter implements PlayerInventoryRepository {
+public class PlayerItemStackPolicyRepositoryAdapter implements PlayerInventoryRepository {
 
     private final JpaInventoryRepository jpa;
 

@@ -19,8 +19,7 @@ public final class MailboxRequest {
 
     public record Claim(
             @Min(0) int slotIndex,
-            @Min(1) int quantity,
-            @NotNull Long itemId
+            @Min(1) int quantity
     ) {
     }
 }

@@ -3,7 +3,7 @@ package online.lifeasgame.inventory.api.admin.mapper;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.api.admin.request.AdminMailboxRequest;
-import online.lifeasgame.inventory.api.admin.reseponse.AdminMailboxResponse;
+import online.lifeasgame.inventory.api.admin.response.AdminMailboxResponse;
 
 public final class AdminMailboxWebMapper {
 

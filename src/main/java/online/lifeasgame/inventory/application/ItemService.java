@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.application.command.ItemCommand;
 import online.lifeasgame.inventory.application.model.ItemSpec;
+import online.lifeasgame.inventory.application.query.ItemStackPolicyQuery;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.domain.*;
 import online.lifeasgame.inventory.domain.error.ItemError;
@@ -20,6 +21,7 @@ public class ItemService {
 
     private final ItemReader itemReader;
     private final ItemWriter itemWriter;
+    private final ItemStackPolicyQuery itemStackPolicyQuery;
 
     @Transactional
     public ItemResult.Id create(ItemCommand.Create cmd) {
@@ -34,19 +36,30 @@ public class ItemService {
     @Transactional
     public ItemResult.Id update(ItemCommand.Update cmd) {
         Item item = itemReader.getItem(cmd.id());
-        itemWriter.update(item, ItemSpec.Update.from(cmd));
-        return ItemResult.Id.of(cmd.id());
+
+        if (!item.getName().value().equals(cmd.name()) && itemReader.existsByName(cmd.name())) {
+            throw new DomainException(ItemError.ITEM_NAME_DUP);
+        }
+
+        boolean turnOffStack = !cmd.stackable();
+        int newLimit = turnOffStack ? 1 : (cmd.maxStack() == null ? 1 : cmd.maxStack());
+
+        long violating = itemStackPolicyQuery.countTotalStacksExceeding(item.getId(), newLimit);
+        if (violating > 0) {
+            throw new DomainException(ItemError.POLICY_CONFLICT);
+        }
+
+        Item updated = itemWriter.update(item, ItemSpec.Update.from(cmd));
+        return ItemResult.Id.of(updated.getId());
     }
 
     @Transactional
     public ItemResult.Deleted delete(Long id) {
-        if (!itemReader.existsById(id)) {
-            throw new DomainException(ItemError.ITEM_NOT_FOUND);
-        }
+        Item item = itemReader.getItem(id);
 
-        itemWriter.delete(id);
+        itemWriter.delete(item);
 
-        return ItemResult.Deleted.of(id);
+        return ItemResult.Deleted.of(item.getId());
     }
 
     @Transactional(readOnly = true)

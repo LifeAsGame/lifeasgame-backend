@@ -19,7 +19,7 @@ public final class MailboxWebMapper {
     }
 
     public static MailboxCommand.Claim toCommand(MailboxRequest.Claim request) {
-        return MailboxCommand.Claim.of(request.slotIndex(), request.quantity(), request.itemId());
+        return MailboxCommand.Claim.of(request.slotIndex(), request.quantity());
     }
 
     public static MailboxResponse.Mails toLMails(MailboxResult.Mails result) {

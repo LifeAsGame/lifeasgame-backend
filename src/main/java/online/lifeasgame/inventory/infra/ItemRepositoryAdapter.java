@@ -34,11 +34,6 @@ public class ItemRepositoryAdapter implements ItemRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
-        jpa.deleteById(id);
-    }
-
-    @Override
     public boolean existsByName(String name) {
         return jpa.existsByName(name);
     }
@@ -47,5 +42,10 @@ public class ItemRepositoryAdapter implements ItemRepository {
     public Page<Item> search(String q, ItemCategory category, ItemType type, Rarity rarity, Pageable pageable) {
         var spec = ItemSpecifications.search(q, category, type, rarity);
         return jpa.findAll(spec, pageable);
+    }
+
+    @Override
+    public void delete(Item item) {
+        jpa.delete(item);
     }
 }

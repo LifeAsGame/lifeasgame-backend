@@ -19,7 +19,7 @@ public class SlotIndex {
         this.value = Guard.minValue(v, 0, "slot_index");
     }
 
-    public static SlotIndex of(Integer v) {
+    public static SlotIndex of(int v) {
         return new SlotIndex(v);
     }
 

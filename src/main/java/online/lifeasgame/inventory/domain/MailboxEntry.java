@@ -82,23 +82,35 @@ public class MailboxEntry extends AbstractTime {
     }
 
     boolean isSameStackKey(ItemCarryPolicy p, boolean boundB, InstanceAttrs attrsB) {
-        if (!Objects.equals(itemId, p.itemId())) return false;
-        Map<String,Object> a = (instAttrs == null) ? Map.of() : instAttrs.attrs();
-        Map<String,Object> b = (attrsB == null) ? Map.of() : attrsB.attrs();
-        return p.sameStackKey(this.bound, a, boundB, b);
+        if (!Objects.equals(this.itemId, p.itemId())) {
+            return false;
+        }
+
+        return p.sameStackKey(
+                this.bound, safeAttrs(this.instAttrs),
+                boundB, safeAttrs(attrsB)
+        );
+    }
+
+    private Map<String,Object> safeAttrs(InstanceAttrs x) {
+        return (x == null) ? Map.of() : x.attrs();
     }
 
     void increaseQuantity(int delta, ItemCarryPolicy p) {
         Guard.minValue(delta, 1, "delta");
         int next = quantity.value() + delta;
-        if (!p.stackable() || next > p.maxStack()) throw new DomainException(InventoryError.INVALID_STACK_RULE);
+        if (!p.stackable() || next > p.maxStack()) {
+            throw new DomainException(InventoryError.INVALID_STACK_RULE);
+        }
         this.quantity = Quantity.of(next);
     }
 
     void decreaseQuantity(int delta) {
         Guard.minValue(delta, 1, "delta");
         int next = quantity.value() - delta;
-        if (next < 0) throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
+        if (next < 0) {
+            throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
+        }
         this.quantity = Quantity.of(next);
     }
 }

@@ -1,10 +1,8 @@
 package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.application.model.ItemSpec;
 import online.lifeasgame.inventory.domain.Item;
-import online.lifeasgame.inventory.domain.error.ItemError;
 import online.lifeasgame.inventory.domain.repository.ItemRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -47,10 +45,7 @@ public class ItemWriter {
         return item;
     }
 
-    public void delete(Long id) {
-        if (!itemRepository.existsById(id)) {
-            throw new DomainException(ItemError.ITEM_NOT_FOUND);
-        }
-        itemRepository.deleteById(id);
+    public void delete(Item item) {
+        itemRepository.delete(item);
     }
 }

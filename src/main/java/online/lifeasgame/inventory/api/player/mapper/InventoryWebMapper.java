@@ -36,8 +36,7 @@ public class InventoryWebMapper {
     public static InventoryCommand.Merge toCommand(InventoryRequest.Merge request) {
         return InventoryCommand.Merge.of(
                 request.from(),
-                request.to(),
-                request.itemId()
+                request.to()
         );
     }
 
@@ -45,8 +44,7 @@ public class InventoryWebMapper {
         return InventoryCommand.Split.of(
                 request.from(),
                 request.to(),
-                request.quantity(),
-                request.itemId()
+                request.quantity()
         );
     }
 

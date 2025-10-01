@@ -101,19 +101,39 @@ public class InventoryEntry extends AbstractTime {
 
     public void increaseQuantity(int delta, ItemCarryPolicy p) {
         Guard.minValue(delta, 1, "delta");
-        int next = quantity.value() + delta;
-        if (!p.stackable() || next > p.maxStack()) {
+
+        int space = p.spaceInStack(quantity.value());
+        if (!p.stackable() || delta > space) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
+
+        int next;
+        try {
+            next = Math.addExact(quantity.value(), delta);
+        } catch (ArithmeticException ex) {
+            throw new DomainException(InventoryError.INVALID_STACK_RULE);
+        }
+
+        if (next > p.maxStack()) {
+            throw new DomainException(InventoryError.INVALID_STACK_RULE);
+        }
+
         this.quantity = Quantity.of(next);
     }
 
     public void decreaseQuantity(int delta) {
         Guard.minValue(delta, 1, "delta");
-        int next = quantity.value() - delta;
+        int next;
+        try {
+            next = Math.subtractExact(quantity.value(), delta);
+        } catch (ArithmeticException ex) {
+            throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
+        }
+
         if (next < 0) {
             throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
         }
+
         this.quantity = Quantity.of(next);
     }
 
@@ -122,18 +142,18 @@ public class InventoryEntry extends AbstractTime {
             return false;
         }
 
-        if (!Objects.equals(itemId, toEntry.itemId)) {
+        if (!Objects.equals(this.itemId, toEntry.itemId)) {
             return false;
         }
 
-        if (bound != toEntry.bound) {
-            return false;
-        }
+        return policy.sameStackKey(
+                this.bound, safeAttrs(this.instAttrs),
+                toEntry.bound, safeAttrs(toEntry.instAttrs)
+        );
+    }
 
-        Map<String, Object> a = (instAttrs == null) ? Map.of() : instAttrs.attrs();
-        Map<String, Object> b = (toEntry.instAttrs == null) ? Map.of() : toEntry.instAttrs.attrs();
-
-        return Objects.equals(a, b);
+    private Map<String, Object> safeAttrs(InstanceAttrs x) {
+        return (x == null) ? Map.of() : x.attrs();
     }
 
     public InventoryEntry splitTo(PlayerInventory playerInventory, SlotIndex to, int quantity, ItemCarryPolicy policy) {

@@ -4,8 +4,8 @@ public enum CommonSuccess implements SuccessCode {
 
     OK(200, "COMMON-200", "성공입니다."),
     CREATED(201, "COMMON-201", "생성에 성공했습니다."),
-    DELETED(204, "COMMON-204", "삭제에 성공했습니다."),
-    NO_CONTENT(204, "COMMON-204", "No Content"),
+    DELETED(204, "COMMON-204-DELETED", "삭제에 성공했습니다."),
+    NO_CONTENT(204, "COMMON-204-NO-CONTENT", "컨텐트가 없습니다."),
     ;
 
     private final int status;

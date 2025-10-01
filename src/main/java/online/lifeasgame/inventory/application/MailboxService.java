@@ -34,11 +34,19 @@ public class MailboxService {
     @Transactional
     public void claim(Long playerId, MailboxCommand.Claim command) {
 
-        Item item = itemReader.getItem(command.itemId());
-        ItemCarryPolicy policy = ItemCarryPolicy.from(item);
         PlayerMailbox playerMailbox = mailboxReader.getPlayerMailbox(playerId);
+        MailboxEntry mailboxEntry = playerMailbox.getEntry(SlotIndex.of(command.slotIndex()));
+        Item item = itemReader.getItem(mailboxEntry.getItemId());
+        ItemCarryPolicy policy = ItemCarryPolicy.from(item);
 
-        var slice = mailboxWriter.claimSlice(playerMailbox, policy, MailboxSpec.Claim.from(command));
+        var slice = mailboxWriter.claimSlice(
+                playerMailbox,
+                policy,
+                MailboxSpec.Claim.of(
+                        command.slotIndex(),
+                        command.quantity()
+                )
+        );
 
         PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
 

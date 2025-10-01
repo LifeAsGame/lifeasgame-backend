@@ -53,17 +53,31 @@ public class InventoryService {
 
     @Transactional
     public void merge(Long playerId, InventoryCommand.Merge command) {
-        Item item = itemReader.getItem(command.itemId());
-        ItemCarryPolicy itemCarryPolicy = ItemCarryPolicy.from(item);
+        SlotIndex from = SlotIndex.of(command.from());
+        SlotIndex to = SlotIndex.of(command.to());
+
         PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
-        inventoryWriter.merge(playerInventory, itemCarryPolicy, SlotIndex.of(command.from()), SlotIndex.of(command.to()));
+        InventoryEntry fromEntry = playerInventory.getEntry(from);
+
+        Item item = itemReader.getItem(fromEntry.getItemId());
+        ItemCarryPolicy fromItemCarryPolicy = ItemCarryPolicy.from(item);
+
+        inventoryWriter.merge(
+                playerInventory,
+                fromItemCarryPolicy,
+                from,
+                to
+        );
     }
 
     @Transactional
     public InventoryResult.Slot split(Long playerId, InventoryCommand.Split command) {
-        Item item = itemReader.getItem(command.itemId());
-        ItemCarryPolicy itemCarryPolicy = ItemCarryPolicy.from(item);
         PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
+        InventoryEntry inventoryEntry = playerInventory.getEntry(SlotIndex.of(command.from()));
+
+        Item item = itemReader.getItem(inventoryEntry.getItemId());
+        ItemCarryPolicy itemCarryPolicy = ItemCarryPolicy.from(item);
+
         SlotIndex slotIndex = inventoryWriter.split(
                 playerInventory,
                 itemCarryPolicy,
@@ -71,6 +85,7 @@ public class InventoryService {
                 SlotIndex.ofNullable(command.to()),
                 command.quantity()
         );
+
         return InventoryResult.Slot.of(slotIndex.value());
     }
 }

@@ -7,7 +7,7 @@ import online.lifeasgame.inventory.application.MailboxService;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.api.admin.mapper.AdminMailboxWebMapper;
 import online.lifeasgame.inventory.api.admin.request.AdminMailboxRequest;
-import online.lifeasgame.inventory.api.admin.reseponse.AdminMailboxResponse;
+import online.lifeasgame.inventory.api.admin.response.AdminMailboxResponse;
 import online.lifeasgame.inventory.api.admin.spec.AdminMailboxApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;

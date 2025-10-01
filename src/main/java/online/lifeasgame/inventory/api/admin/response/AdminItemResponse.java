@@ -1,4 +1,4 @@
-package online.lifeasgame.inventory.api.admin.reseponse;
+package online.lifeasgame.inventory.api.admin.response;
 
 public final class AdminItemResponse {
 

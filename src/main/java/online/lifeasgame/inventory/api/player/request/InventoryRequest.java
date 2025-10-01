@@ -31,16 +31,14 @@ public final class InventoryRequest {
 
     public record Merge(
             @Min(0) int from,
-            @Min(0) int to,
-            @NotNull Long itemId
+            @Min(0) int to
     ) {
     }
 
     public record Split(
             @Min(0) int from,
             Integer to,
-            @Min(1) int quantity,
-            @NotNull Long itemId
+            @Min(1) int quantity
     ) {
     }
 }

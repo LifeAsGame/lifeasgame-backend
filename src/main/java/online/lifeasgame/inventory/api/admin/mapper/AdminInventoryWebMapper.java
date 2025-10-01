@@ -3,7 +3,7 @@ package online.lifeasgame.inventory.api.admin.mapper;
 import online.lifeasgame.inventory.application.command.InventoryCommand;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.api.admin.request.AdminInventoryRequest;
-import online.lifeasgame.inventory.api.admin.reseponse.AdminInventoryResponse;
+import online.lifeasgame.inventory.api.admin.response.AdminInventoryResponse;
 
 public final class AdminInventoryWebMapper {
 
