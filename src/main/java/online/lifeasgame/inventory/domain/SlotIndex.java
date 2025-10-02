@@ -23,6 +23,10 @@ public class SlotIndex {
         return new SlotIndex(v);
     }
 
+    public static SlotIndex ofNullable(Integer v) {
+        return (v == null) ? null : of(v);
+    }
+
     public int value() {
         return value;
     }

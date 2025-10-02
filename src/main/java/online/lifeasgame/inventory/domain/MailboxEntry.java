@@ -1,27 +1,16 @@
 package online.lifeasgame.inventory.domain;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.util.Objects;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -30,7 +19,7 @@ import online.lifeasgame.inventory.domain.error.InventoryError;
         uniqueConstraints = @UniqueConstraint(name = "uq_mailbox_slot", columnNames = {"player_id", "slot_index"})
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MailboxEntry {
+public class MailboxEntry extends AbstractTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,66 +57,49 @@ public class MailboxEntry {
     @Column(name = "inst_attrs", columnDefinition = "json")
     InstanceAttrs instAttrs = InstanceAttrs.empty();
 
-    private MailboxEntry(PlayerMailbox box, SlotIndex slotIndex, Item def,
-                         Quantity quantity, Durability durability, boolean bound, InstanceAttrs attrs) {
-        this.mailbox = Guard.notNull(box, "mailbox");
-        this.slotIndex = Guard.notNull(slotIndex, "slotIndex");
-        this.itemId = Guard.notNull(def.getId(), "itemId");
-        this.rarity = def.getRarity();
-        this.quantity = Guard.notNull(quantity, "quantity");
-        this.bound = bound;
+    private MailboxEntry(
+            PlayerMailbox box, SlotIndex slot, ItemCarryPolicy p,
+            Quantity qty, Durability dur, boolean bound, InstanceAttrs attrs
+    ) {
+        this.mailbox   = Guard.notNull(box, "mailbox");
+        this.slotIndex = Guard.notNull(slot, "slotIndex");
+        this.itemId    = Guard.notNull(p.itemId(), "itemId");
+        this.rarity    = p.rarity();
+        this.quantity  = Guard.notNull(qty, "quantity");
+        this.bound     = bound;
         this.instAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
-        ensureStackRule(def, quantity.value());
-        this.durability = applyDurability(def, durability);
+
+        p.assertValidInitialQuantity(qty.value());
+        Integer nd = p.normalizedDurability(dur == null ? null : dur.value());
+        this.durability = (nd == null) ? null : Durability.of(nd);
     }
 
-    static MailboxEntry of(PlayerMailbox box, SlotIndex slot, Item def,
-                           Quantity qty, Durability dur, boolean bound, InstanceAttrs attrs) {
-        return new MailboxEntry(box, slot, def, qty, dur, bound, attrs);
+    static MailboxEntry of(
+            PlayerMailbox box, SlotIndex slot, ItemCarryPolicy p,
+            Quantity qty, Durability dur, boolean bound, InstanceAttrs attrs
+    ) {
+        return new MailboxEntry(box, slot, p, qty, dur, bound, attrs);
     }
 
-    private void ensureStackRule(Item def, int q) {
-        if (!def.isStackable() && q != 1) {
-            throw new DomainException(InventoryError.INVALID_STACK_RULE);
+    boolean isSameStackKey(ItemCarryPolicy p, boolean boundB, InstanceAttrs attrsB) {
+        if (!Objects.equals(this.itemId, p.itemId())) {
+            return false;
         }
-        if (def.isStackable() && (q < 1 || q > def.maxStack())) {
-            throw new DomainException(InventoryError.INVALID_STACK_RULE);
-        }
+
+        return p.sameStackKey(
+                this.bound, safeAttrs(this.instAttrs),
+                boundB, safeAttrs(attrsB)
+        );
     }
 
-    private Durability applyDurability(Item def, Durability given) {
-        if (def.durabilityPolicy().isEmpty()) {
-            return null;
-        }
-
-        DurabilityPolicy dp = def.durabilityPolicy().get();
-        Durability d = (given == null) ? Durability.of(dp.max()) : given;
-        if (d.value() < 0 || d.value() > dp.max()) {
-            throw new DomainException(InventoryError.DURABILITY_POLICY);
-        }
-        return d;
+    private Map<String,Object> safeAttrs(InstanceAttrs x) {
+        return (x == null) ? Map.of() : x.attrs();
     }
 
-    void ensureDurabilityWithin(DurabilityPolicy dp) {
-        if (durability == null) {
-            durability = Durability.of(dp.max());
-        }
-
-        if (durability.value() < 0 || durability.value() > dp.max()) {
-            throw new DomainException(InventoryError.DURABILITY_POLICY);
-        }
-    }
-
-    boolean isSameStackKey(Item def, boolean bound, InstanceAttrs attrs) {
-        return Objects.equals(itemId, def.getId())
-                && this.bound == bound
-                && Objects.equals(this.instAttrs, (attrs == null ? InstanceAttrs.empty() : attrs));
-    }
-
-    void increaseQuantity(int delta, Item def) {
+    void increaseQuantity(int delta, ItemCarryPolicy p) {
         Guard.minValue(delta, 1, "delta");
         int next = quantity.value() + delta;
-        if (!def.isStackable() || next > def.maxStack()) {
+        if (!p.stackable() || next > p.maxStack()) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
         this.quantity = Quantity.of(next);

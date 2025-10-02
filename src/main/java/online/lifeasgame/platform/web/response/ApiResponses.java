@@ -22,4 +22,8 @@ public final class ApiResponses {
         return ResponseEntity.status(CommonSuccess.DELETED.status())
                 .body(ApiResponse.onDeleteSuccess(result));
     }
+
+    public static ResponseEntity<ApiResponse<Void>> noContent() {
+        return ResponseEntity.status(CommonSuccess.NO_CONTENT.status()).build();
+    }
 }

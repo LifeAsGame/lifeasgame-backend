@@ -1,5 +1,10 @@
 package online.lifeasgame.inventory.domain;
 
+import online.lifeasgame.core.lang.EnumParsers;
+import online.lifeasgame.inventory.domain.error.ItemError;
+
+import java.util.List;
+
 public enum ItemCategory {
     WEAPON,
     ARMOR,
@@ -9,4 +14,30 @@ public enum ItemCategory {
     QUEST,
     MISC
     ;
+
+    public static ItemCategory parse(String raw) {
+        return EnumParsers.parseStrict(
+                ItemCategory.class,
+                raw,
+                ItemError.INVALID_ITEM_CATEGORY,
+                "Item category"
+        );
+    }
+
+    public static ItemCategory parseNullable(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
+    public static List<ItemCategory> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                ItemCategory.class,
+                raw,
+                ItemError.INVALID_ITEM_CATEGORY,
+                "Item categories"
+        );
+    }
 }

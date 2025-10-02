@@ -5,6 +5,7 @@ import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
 @EqualsAndHashCode
@@ -15,7 +16,7 @@ public class Durability {
     private Integer value;
 
     private Durability(Integer v) {
-        this.value = v;
+        this.value = Guard.minValue(v, 0, "durability");
     }
 
     public static Durability of(int v) {
