@@ -24,10 +24,6 @@ public final class EnumParsers {
             ErrorCode errorCode,
             String fieldLabel
     ) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-
         String norm = normalize(raw);
         if (norm.isEmpty()) {
             throw new DomainException(errorCode, fieldLabel + " is blank");

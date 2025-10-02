@@ -24,6 +24,14 @@ public enum ItemCategory {
         );
     }
 
+    public static ItemCategory parseNullable(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
     public static List<ItemCategory> parse(List<String> raw) {
         return EnumParsers.parseListStrict(
                 ItemCategory.class,

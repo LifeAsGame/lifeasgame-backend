@@ -1,6 +1,6 @@
 package online.lifeasgame.inventory.application.command;
 
-import online.lifeasgame.inventory.domain.InstanceAttrs;
+import java.util.Map;
 
 public final class MailboxCommand {
 
@@ -9,12 +9,16 @@ public final class MailboxCommand {
     public record Deliver(
             Long itemId,
             int quantity,
-            InstanceAttrs instanceAttrs,
+            Map<String, Object> instanceAttrs,
             boolean bound
     ) {
         public static Deliver of(
-                Long itemId, int quantity, InstanceAttrs attrs, boolean bound) {
-            return new Deliver(itemId, quantity, attrs, bound);
+                Long itemId,
+                int quantity,
+                Map<String, Object> instanceAttrs,
+                boolean bound
+        ) {
+            return new Deliver(itemId, quantity, instanceAttrs, bound);
         }
     }
 

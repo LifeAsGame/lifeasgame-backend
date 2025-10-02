@@ -57,7 +57,7 @@ public class InventoryWebMapper {
     }
 
     public static InventoryResponse.Entries toEntries(InventoryResult.Entries result) {
-        return InventoryResponse.Entries.fromList(
+        return InventoryResponse.Entries.of(
                 result.entries().stream()
                         .map(
                                 entry -> InventoryResponse.Entry.of(

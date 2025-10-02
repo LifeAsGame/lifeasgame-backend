@@ -31,16 +31,8 @@ public final class InventoryResponse {
     }
 
     public record Entries(List<Entry> entries) {
-        public static Entries fromList(List<Entry> entries) {
-            return new Entries(
-                    entries.stream().map(e -> new InventoryResponse.Entry(
-                            e.slotIndex(),
-                            e.itemId(),
-                            e.rarity(),
-                            e.quantity(),
-                            e.bound()
-                    )).toList()
-            );
+        public static Entries of(List<Entry> entries) {
+            return new Entries(entries);
         }
     }
 }

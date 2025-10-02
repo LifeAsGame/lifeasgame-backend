@@ -16,7 +16,7 @@ public final class MailboxSpec {
             return new Deliver(
                     command.itemId(),
                     command.quantity(),
-                    command.instanceAttrs(),
+                    InstanceAttrs.of(command.instanceAttrs()),
                     command.bound()
             );
         }

@@ -2,7 +2,8 @@ package online.lifeasgame.inventory.api.player.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import online.lifeasgame.inventory.domain.InstanceAttrs;
+
+import java.util.Map;
 
 public final class MailboxRequest {
 
@@ -12,7 +13,7 @@ public final class MailboxRequest {
     public record Deliver(
             @NotNull Long itemId,
             @Min(1) int quantity,
-            InstanceAttrs instanceAttrs,
+            Map<String, Object> instanceAttrs,
             boolean bound
     ) {
     }

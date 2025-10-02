@@ -41,8 +41,8 @@ public final class InventoryResult {
         public static Entries fromList(List<InventoryEntry> entries) {
             return new Entries(
                     entries.stream()
-                        .map(Entry::from)
-                        .toList()
+                            .map(Entry::from)
+                            .toList()
             );
         }
     }

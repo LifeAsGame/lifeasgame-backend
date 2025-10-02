@@ -94,9 +94,9 @@ public class ItemService {
     ) {
         Page<ItemResult.Summary> page = itemReader.search(
                 name,
-                ItemCategory.parse(category),
-                ItemType.parse(type),
-                Rarity.parse(rarity),
+                ItemCategory.parseNullable(category),
+                ItemType.parseNullable(type),
+                Rarity.parseNullable(rarity),
                 pageable
         ).map(ItemResult.Summary::from);
 

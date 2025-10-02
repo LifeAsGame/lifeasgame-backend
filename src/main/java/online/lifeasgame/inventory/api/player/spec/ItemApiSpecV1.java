@@ -13,7 +13,7 @@ public interface ItemApiSpecV1 {
 
 
     @Operation(summary = "아이템 상세 조회", description = "아이템 상세 정보를 조회합니다.")
-    ResponseEntity<ApiResponse<ItemResponse.Detail>> getItems(@PathVariable Long itemId);
+    ResponseEntity<ApiResponse<ItemResponse.Detail>> getItem(@PathVariable Long itemId);
 
     @Operation(summary = "아이템 목록 조회", description = "필터/페이지로 아이템 카탈로그를 조회합니다.")
     ResponseEntity<ApiResponse<ItemResponse.Page<ItemResponse.Summary>>> search(

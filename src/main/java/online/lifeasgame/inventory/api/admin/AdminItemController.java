@@ -29,7 +29,7 @@ public class AdminItemController implements AdminItemApiSpecV1 {
     ) {
         ItemResult.Id adminResult = itemService.create(AdminItemWebMapper.toCommand(request));
         return ApiResponses.created(
-                URI.create("/admin/v1/items/"),
+                URI.create("/admin/v1/items/" + adminResult.id()),
                 AdminItemWebMapper.toResponse(adminResult)
         );
     }

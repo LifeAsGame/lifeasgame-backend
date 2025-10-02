@@ -30,6 +30,14 @@ public enum ItemType {
         );
     }
 
+    public static ItemType parseNullable(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
     public static List<ItemType> parse(List<String> raw) {
         return EnumParsers.parseListStrict(
                 ItemType.class,

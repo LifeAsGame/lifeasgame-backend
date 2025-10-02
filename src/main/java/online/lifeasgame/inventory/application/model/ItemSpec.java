@@ -47,10 +47,10 @@ public final class ItemSpec {
     ) {
         public static Update from(ItemCommand.Update cmd) {
             return new Update(
-                    ItemName.of(cmd.name()),
-                    ItemCategory.parse(cmd.category()),
-                    ItemType.parse(cmd.type()),
-                    Rarity.parse(cmd.rarity()),
+                    ItemName.ofNullable(cmd.name()),
+                    ItemCategory.parseNullable(cmd.category()),
+                    ItemType.parseNullable(cmd.type()),
+                    Rarity.parseNullable(cmd.rarity()),
                     BaseAttrs.of(cmd.baseAttrs()),
                     cmd.stackable(),
                     cmd.maxStack(),
