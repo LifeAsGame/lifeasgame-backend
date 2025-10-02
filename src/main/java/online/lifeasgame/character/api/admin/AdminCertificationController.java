@@ -1,0 +1,39 @@
+package online.lifeasgame.character.api.admin;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.api.admin.mapper.AdminCertificationWebMapper;
+import online.lifeasgame.character.api.admin.request.AdminCertificationRequest;
+import online.lifeasgame.character.api.admin.response.AdminCertificationResponse;
+import online.lifeasgame.character.api.admin.spec.AdminCertificationApiSpecV1;
+import online.lifeasgame.character.application.CertificationService;
+import online.lifeasgame.character.application.result.CertificationResult;
+import online.lifeasgame.core.response.ApiResponse;
+import online.lifeasgame.platform.web.response.ApiResponses;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/admin/v1/certifications")
+public class AdminCertificationController implements AdminCertificationApiSpecV1 {
+
+    private final CertificationService adminCertificationService;
+
+    @Override
+    @PostMapping
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> create(
+            @Valid @RequestBody AdminCertificationRequest.Create request
+    ) {
+        CertificationResult.Info Info = adminCertificationService.create(AdminCertificationWebMapper.toCommand(request));
+        return ApiResponses.created(
+                URI.create("/admin/v1/certifications/"),
+                AdminCertificationWebMapper.toCertificationInfo(Info)
+        );
+    }
+}

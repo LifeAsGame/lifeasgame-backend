@@ -2,7 +2,7 @@ package online.lifeasgame.character.application;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.command.PlayerEquipmentCommand.EquipEquipment;
+import online.lifeasgame.character.application.command.PlayerEquipmentCommand.Equip;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
@@ -18,12 +18,12 @@ public class PlayerEquipmentService {
     private final PlayerEquipmentReader playerEquipmentReader;
 
     @Transactional
-    public PlayerEquipmentResult.EquippedEquipment equip(Long playerId, EquipEquipment command) {
+    public PlayerEquipmentResult.Equipped equip(Long playerId, Equip command) {
         if (playerEquipmentReader.existsItemInstance(command.itemInstanceId())) {
             throw new DomainException(PlayerEquipmentError.ALREADY_EQUIPPED_ITEM);
         }
 
-        return PlayerEquipmentResult.EquippedEquipment.of(
+        return PlayerEquipmentResult.Equipped.of(
                 playerEquipmentWriter.equip(playerId, command.slotId(), command.itemInstanceId())
         );
     }
@@ -33,10 +33,10 @@ public class PlayerEquipmentService {
         playerEquipmentWriter.unEquip(playerId, slotId);
     }
 
-    public List<PlayerEquipmentResult.PlayerEquipmentInfo> getPlayerEquipmentInfos(Long playerId) {
+    public List<PlayerEquipmentResult.Info> getPlayerEquipmentInfos(Long playerId) {
         List<PlayerEquipment> playerEquipmentInfos = playerEquipmentReader.getPlayerEquipmentInfos(playerId);
         return playerEquipmentInfos.stream()
-                .map(PlayerEquipmentResult.PlayerEquipmentInfo::from)
+                .map(PlayerEquipmentResult.Info::from)
                 .toList();
     }
 }

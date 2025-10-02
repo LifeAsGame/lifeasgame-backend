@@ -1,21 +1,22 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.Certification;
 
-public class CertificationResult {
+import java.util.List;
+
+public final class CertificationResult {
 
     private CertificationResult() {
     }
 
-    public record CertificationInfo(
+    public record Info(
             Long certificationId,
             String name,
             String issuer,
             String category
     ) {
-        public static CertificationInfo from(Certification certification) {
-            return new CertificationInfo(
+        public static Info from(Certification certification) {
+            return new Info(
                     certification.getId(),
                     certification.getName(),
                     certification.getIssuer(),
@@ -23,8 +24,12 @@ public class CertificationResult {
             );
         }
 
-        public static List<CertificationInfo> fromList(List<Certification> Certifications) {
-            return Certifications.stream().map(CertificationResult.CertificationInfo::from).toList();
+        public static List<Info> fromList(List<Certification> Certifications) {
+            return Certifications.stream().map(Info::from).toList();
+        }
+
+        public static Info of(Long certificationId, String name, String issuer, String category) {
+            return new Info(certificationId, name, issuer, category);
         }
     }
 }

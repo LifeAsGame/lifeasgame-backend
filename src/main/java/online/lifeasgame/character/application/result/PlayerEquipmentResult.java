@@ -2,26 +2,26 @@ package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.domain.PlayerEquipment;
 
-public class PlayerEquipmentResult {
+public final class PlayerEquipmentResult {
 
     private PlayerEquipmentResult() {
     }
 
-    public record EquippedEquipment(Long slotId, Long itemInstanceId) {
-        public static EquippedEquipment of(PlayerEquipment playerEquipment) {
-            return new EquippedEquipment(
+    public record Equipped(Long slotId, Long itemInstanceId) {
+        public static Equipped of(PlayerEquipment playerEquipment) {
+            return new Equipped(
                     playerEquipment.getSlotId(),
                     playerEquipment.getItemInstanceId()
             );
         }
     }
 
-    public record PlayerEquipmentInfo(
+    public record Info(
             Long slotId,
             Long itemInstanceId
     ) {
-        public static PlayerEquipmentResult.PlayerEquipmentInfo from(PlayerEquipment playerEquipment) {
-            return new PlayerEquipmentResult.PlayerEquipmentInfo(
+        public static Info from(PlayerEquipment playerEquipment) {
+            return new Info(
                     playerEquipment.getSlotId(),
                     playerEquipment.getItemInstanceId()
             );

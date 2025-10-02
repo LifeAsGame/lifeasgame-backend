@@ -15,17 +15,17 @@ public class PlayerHobbyFacade {
     private final PlayerHobbyService playerHobbyService;
 
 
-    public List<PlayerHobbyResult.PlayerHobbyInfo> getPlayerHobbyInfos() {
+    public List<PlayerHobbyResult.Info> getPlayerHobbyInfos() {
         return playerHobbyService.getPlayerHobbyInfos(getPlayerId());
     }
 
-    public PlayerHobbyResult.CreatedPlayerHobby createPlayerHobby(
-            PlayerHobbyCommand.CreatePlayerHobby command
+    public PlayerHobbyResult.Created createPlayerHobby(
+            PlayerHobbyCommand.Create command
     ) {
         return playerHobbyService.createPlayerHobby(getPlayerId(), command);
     }
 
-    public PlayerHobbyResult.ChangedPlayerHobby changePlayerHobby(PlayerHobbyCommand.ChangePlayerHobby command) {
+    public PlayerHobbyResult.Changed changePlayerHobby(PlayerHobbyCommand.Change command) {
         return playerHobbyService.changePlayerHobby(getPlayerId(), command);
     }
 

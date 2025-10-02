@@ -1,0 +1,17 @@
+package online.lifeasgame.character.api.admin.spec;
+
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
+import online.lifeasgame.character.api.admin.response.AdminTitleResponse.Info;
+import online.lifeasgame.core.response.ApiResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
+
+public interface AdminTitleApiSpecV1 {
+
+    @Operation(summary = "Title 추가", description = "Title을 생성합니다")
+    ResponseEntity<ApiResponse<Info>> create(
+            @Valid @RequestBody AdminTitleRequest.Create request
+    );
+}

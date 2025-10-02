@@ -14,7 +14,7 @@ public class PlayerAchievementFacade {
     private final PlayerAchievementService playerAchievementService;
 
 
-    public List<PlayerAchievementResult.PlayerAchievementInfo> getPlayerAchievementInfos() {
+    public List<PlayerAchievementResult.Info> getPlayerAchievementInfos() {
         return playerAchievementService.getPlayerAchievementInfos(currentPlayerAccessor.currentPlayerIdOrThrow());
     }
 }

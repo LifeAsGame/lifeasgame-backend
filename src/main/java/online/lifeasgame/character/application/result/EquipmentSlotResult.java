@@ -1,21 +1,22 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.EquipmentSlot;
 
-public class EquipmentSlotResult {
+import java.util.List;
+
+public final class EquipmentSlotResult {
 
     private EquipmentSlotResult() {
     }
 
-    public record EquipmentSlotInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String role
     ) {
-        public static EquipmentSlotInfo from(EquipmentSlot equipmentSlot) {
-            return new EquipmentSlotInfo(
+        public static Info from(EquipmentSlot equipmentSlot) {
+            return new Info(
                     equipmentSlot.getCode(),
                     equipmentSlot.getName(),
                     equipmentSlot.getCategory().name(),
@@ -23,8 +24,8 @@ public class EquipmentSlotResult {
             );
         }
 
-        public static List<EquipmentSlotInfo> fromList(List<EquipmentSlot> EquipmentSlots) {
-            return EquipmentSlots.stream().map(EquipmentSlotResult.EquipmentSlotInfo::from).toList();
+        public static List<Info> fromList(List<EquipmentSlot> EquipmentSlots) {
+            return EquipmentSlots.stream().map(Info::from).toList();
         }
     }
 }

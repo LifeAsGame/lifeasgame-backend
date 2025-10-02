@@ -14,7 +14,7 @@ public class PlayerEquipmentFacade {
     public final CurrentPlayerAccessor currentPlayerAccessor;
     private final PlayerEquipmentService playerEquipmentService;
 
-    public PlayerEquipmentResult.EquippedEquipment equip(PlayerEquipmentCommand.EquipEquipment command) {
+    public PlayerEquipmentResult.Equipped equip(PlayerEquipmentCommand.Equip command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return playerEquipmentService.equip(playerId, command);
     }
@@ -24,7 +24,7 @@ public class PlayerEquipmentFacade {
         playerEquipmentService.unEquip(playerId, slotId);
     }
 
-    public List<PlayerEquipmentResult.PlayerEquipmentInfo> getPlayerEquipmentInfos() {
+    public List<PlayerEquipmentResult.Info> getPlayerEquipmentInfos() {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return playerEquipmentService.getPlayerEquipmentInfos(playerId);
     }

@@ -15,16 +15,16 @@ public class PlayerCertificationFacade {
     private final PlayerCertificationService playerCertificationService;
 
 
-    public List<PlayerCertificationResult.PlayerCertificationInfo> getPlayerCertificationInfos() {
+    public List<PlayerCertificationResult.Info> getPlayerCertificationInfos() {
         return playerCertificationService.getPlayerCertificationInfos(getPlayerId());
     }
 
-    public PlayerCertificationResult.ChangedPlayerCertification changePlayerCertification(PlayerCertificationCommand.ChangePlayerCertification command) {
+    public PlayerCertificationResult.Changed changePlayerCertification(PlayerCertificationCommand.Change command) {
         return playerCertificationService.changePlayerCertification(getPlayerId(), command);
     }
 
-    public PlayerCertificationResult.CreatedPlayerCertification createPlayerCertification(
-            PlayerCertificationCommand.CreatePlayerCertification command
+    public PlayerCertificationResult.Created createPlayerCertification(
+            PlayerCertificationCommand.Create command
     ) {
         return playerCertificationService.createPlayerCertification(getPlayerId(), command);
     }

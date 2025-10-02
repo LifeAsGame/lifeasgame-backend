@@ -1,14 +1,15 @@
 package online.lifeasgame.character.application.result;
 
-import java.time.Instant;
 import online.lifeasgame.character.application.view.PlayerAchievementView;
 
-public class PlayerAchievementResult {
+import java.time.Instant;
+
+public final class PlayerAchievementResult {
 
     private PlayerAchievementResult() {
     }
 
-    public record PlayerAchievementInfo(
+    public record Info(
             Long achievementId,
             String code,
             String name,
@@ -16,14 +17,41 @@ public class PlayerAchievementResult {
             String descMd,
             Instant acquiredAt
     ) {
-        public static PlayerAchievementInfo from(PlayerAchievementView v) {
-            return new PlayerAchievementInfo(
+        public static Info from(PlayerAchievementView v) {
+            return new Info(
                     v.getAchievementId(),
                     v.getCode(),
                     v.getName(),
                     v.getCategory() != null ? v.getCategory().name() : null,
                     v.getDescMd(),
                     v.getAcquiredAt()
+            );
+        }
+    }
+
+    public record Granted(
+            Long playerId,
+            Long achievementId,
+            String code,
+            String name,
+            String category,
+            Instant acquiredAt
+    ) {
+        public static Granted of(
+                Long playerId,
+                Long achievementId,
+                String code,
+                String name,
+                String category,
+                Instant acquiredAt
+        ) {
+            return new Granted(
+                    playerId,
+                    achievementId,
+                    code,
+                    name,
+                    category,
+                    acquiredAt
             );
         }
     }

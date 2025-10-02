@@ -1,28 +1,33 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.Hobby;
 
-public class HobbyResult {
+import java.util.List;
+
+public final class HobbyResult {
 
     private HobbyResult() {
     }
 
-    public record HobbyInfo(
+    public record Info(
             Long hobbyId,
             String name,
             String category
     ) {
-        public static HobbyInfo from(Hobby hobby) {
-            return new HobbyInfo(
+        public static Info from(Hobby hobby) {
+            return new Info(
                     hobby.getId(),
                     hobby.getName(),
                     hobby.getCategory().name()
             );
         }
 
-        public static List<HobbyInfo> fromList(List<Hobby> hobbies) {
-            return hobbies.stream().map(HobbyResult.HobbyInfo::from).toList();
+        public static List<Info> fromList(List<Hobby> hobbies) {
+            return hobbies.stream().map(Info::from).toList();
+        }
+
+        public static Info of(Long hobbyId, String name, String category) {
+            return new Info(hobbyId, name, category);
         }
     }
 }

@@ -1,22 +1,23 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import online.lifeasgame.character.domain.Title;
 
-public class TitleResult {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public final class TitleResult {
 
     private TitleResult() {
     }
 
-    public record TitleInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String descMd
     ) {
-        public static TitleResult.TitleInfo from(Title title) {
-            return new TitleResult.TitleInfo(
+        public static Info from(Title title) {
+            return new Info(
                     title.getCode(),
                     title.getName(),
                     title.getCategory().name(),
@@ -24,8 +25,12 @@ public class TitleResult {
             );
         }
 
-        public static List<TitleInfo> fromList(List<Title> titles) {
-            return titles.stream().map(TitleResult.TitleInfo::from).collect(Collectors.toList());
+        public static List<Info> fromList(List<Title> titles) {
+            return titles.stream().map(Info::from).collect(Collectors.toList());
+        }
+
+        public static Info of(String code, String name, String category, String descMd) {
+            return new Info(code, name, category, descMd);
         }
     }
 }

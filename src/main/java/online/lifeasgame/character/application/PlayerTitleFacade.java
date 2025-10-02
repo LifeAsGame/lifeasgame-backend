@@ -14,7 +14,7 @@ public class PlayerTitleFacade {
     private final PlayerTitleService playerTitleService;
 
 
-    public List<PlayerTitleResult.PlayerTitleInfo> getPlayerTitleInfos() {
+    public List<PlayerTitleResult.Info> getPlayerTitleInfos() {
         return playerTitleService.getPlayerTitleInfos(currentPlayerAccessor.currentPlayerIdOrThrow());
     }
 }
