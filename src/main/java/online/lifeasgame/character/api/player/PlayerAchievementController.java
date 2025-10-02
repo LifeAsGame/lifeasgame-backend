@@ -23,11 +23,11 @@ public class PlayerAchievementController implements PlayerAchievementApiSpecV1 {
 
     @Override
     @GetMapping("/achievements")
-    public ResponseEntity<ApiResponse<PlayerAchievementResponse.PlayerAchievementInfos>> playerAchievementInfos() {
-        List<PlayerAchievementResult.PlayerAchievementInfo> playerAchievementInfos = playerAchievementFacade.getPlayerAchievementInfos();
+    public ResponseEntity<ApiResponse<PlayerAchievementResponse.Infos>> playerAchievementInfos() {
+        List<PlayerAchievementResult.Info> infos = playerAchievementFacade.getPlayerAchievementInfos();
 
         return ApiResponses.ok(
-                PlayerAchievementWebMapper.toPlayerAchievementInfos(playerAchievementInfos)
+                PlayerAchievementWebMapper.toPlayerAchievementInfos(infos)
         );
     }
 }

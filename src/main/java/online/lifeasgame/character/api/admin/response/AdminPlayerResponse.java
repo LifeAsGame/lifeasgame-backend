@@ -19,7 +19,7 @@ public class AdminPlayerResponse {
             long capacityToNextLevel,
             double progressRatio
     ) {
-        public static AdminPlayerResponse.ExpGranted of(
+        public static ExpGranted of(
                 Long playerId,
                 long requestedExp,
                 long appliedExp,
@@ -31,7 +31,7 @@ public class AdminPlayerResponse {
                 long capacityToNextLevel,
                 double progressRatio
         ) {
-            return new AdminPlayerResponse.ExpGranted(
+            return new ExpGranted(
                     playerId,
                     requestedExp,
                     appliedExp,

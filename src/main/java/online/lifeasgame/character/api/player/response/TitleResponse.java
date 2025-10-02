@@ -7,22 +7,22 @@ public class TitleResponse {
     private TitleResponse() {
     }
 
-    public record TitleInfos(
-            List<TitleInfo> titleInfos
+    public record Infos(
+            List<Info> infos
     ) {
-        public static TitleInfos of(List<TitleInfo> titleInfos) {
-            return new TitleInfos(titleInfos);
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record TitleInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String descMd
     ) {
-        public static TitleInfo of(String code, String name, String category, String descMd) {
-            return new TitleInfo(code, name, category, descMd);
+        public static Info of(String code, String name, String category, String descMd) {
+            return new Info(code, name, category, descMd);
         }
     }
 }

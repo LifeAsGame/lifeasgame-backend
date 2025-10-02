@@ -8,10 +8,10 @@ public class AdminPlayerTitleWebMapper {
     private AdminPlayerTitleWebMapper() {
     }
 
-    public static AdminPlayerTitleResponse.GrantedTitle toGrantedTitle(
-            PlayerTitleResult.GrantedTitle result
+    public static AdminPlayerTitleResponse.Granted toGrantedTitle(
+            PlayerTitleResult.Granted result
     ) {
-        return AdminPlayerTitleResponse.GrantedTitle.of(
+        return AdminPlayerTitleResponse.Granted.of(
                 result.playerId(),
                 result.titleId(),
                 result.code(),

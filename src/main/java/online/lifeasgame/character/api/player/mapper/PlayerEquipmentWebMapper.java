@@ -10,25 +10,25 @@ public class PlayerEquipmentWebMapper {
 
     private PlayerEquipmentWebMapper() {}
 
-    public static PlayerEquipmentCommand.EquipEquipment toCommand(Long slotId, PlayerEquipmentRequest.EquipEquipment request) {
-        return PlayerEquipmentCommand.EquipEquipment.of(
+    public static PlayerEquipmentCommand.Equip toCommand(Long slotId, PlayerEquipmentRequest.Equip request) {
+        return PlayerEquipmentCommand.Equip.of(
                 slotId,
                 request.itemInstanceId()
         );
     }
 
-    public static PlayerEquipmentResponse.EquippedEquipment toEquippedEquipment(
-            PlayerEquipmentResult.EquippedEquipment equippedEquipment
+    public static PlayerEquipmentResponse.Equipped toEquippedEquipment(
+            PlayerEquipmentResult.Equipped equipped
     ) {
-        return PlayerEquipmentResponse.EquippedEquipment.of(equippedEquipment);
+        return PlayerEquipmentResponse.Equipped.of(equipped);
     }
 
-    public static PlayerEquipmentResponse.PlayerEquipmentInfos toPlayerEquipmentInfos(List<PlayerEquipmentResult.PlayerEquipmentInfo> playerEquipmentInfos) {
-        return PlayerEquipmentResponse.PlayerEquipmentInfos.of(
-                playerEquipmentInfos.stream()
+    public static PlayerEquipmentResponse.Infos toPlayerEquipmentInfos(List<PlayerEquipmentResult.Info> infos) {
+        return PlayerEquipmentResponse.Infos.of(
+                infos.stream()
                         .map(
                                 playerEquipmentInfo ->
-                                        PlayerEquipmentResponse.PlayerEquipmentInfo.of(
+                                        PlayerEquipmentResponse.Info.of(
                                                 playerEquipmentInfo.slotId(),
                                                 playerEquipmentInfo.itemInstanceId()
                                         )

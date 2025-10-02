@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.PlayerEquipmentFacade;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
-import online.lifeasgame.character.application.result.PlayerEquipmentResult.PlayerEquipmentInfo;
+import online.lifeasgame.character.application.result.PlayerEquipmentResult.Info;
 import online.lifeasgame.character.api.player.mapper.PlayerEquipmentWebMapper;
 import online.lifeasgame.character.api.player.request.PlayerEquipmentRequest;
 import online.lifeasgame.character.api.player.response.PlayerEquipmentResponse;
@@ -29,25 +29,25 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
 
     @Override
     @PutMapping("/equipment/{slotId}")
-    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.EquippedEquipment>> equip(
+    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Equipped>> equip(
             @PathVariable Long slotId,
-            @RequestBody PlayerEquipmentRequest.EquipEquipment request
+            @RequestBody PlayerEquipmentRequest.Equip request
     ) {
-        PlayerEquipmentResult.EquippedEquipment equippedEquipment = playerEquipmentFacade.equip(
+        PlayerEquipmentResult.Equipped equipped = playerEquipmentFacade.equip(
                 PlayerEquipmentWebMapper.toCommand(slotId, request)
         );
 
         return ApiResponses.ok(
-                PlayerEquipmentWebMapper.toEquippedEquipment(equippedEquipment)
+                PlayerEquipmentWebMapper.toEquippedEquipment(equipped)
         );
     }
 
     @Override
     @GetMapping("/equipment")
-    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.PlayerEquipmentInfos>> playerEquipmentInfos() {
-        List<PlayerEquipmentInfo> playerEquipmentInfos = playerEquipmentFacade.getPlayerEquipmentInfos();
+    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Infos>> playerEquipmentInfos() {
+        List<Info> infos = playerEquipmentFacade.getPlayerEquipmentInfos();
         return ApiResponses.ok(
-                PlayerEquipmentWebMapper.toPlayerEquipmentInfos(playerEquipmentInfos)
+                PlayerEquipmentWebMapper.toPlayerEquipmentInfos(infos)
         );
     }
 

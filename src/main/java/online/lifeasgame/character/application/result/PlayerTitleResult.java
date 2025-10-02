@@ -9,7 +9,7 @@ public class PlayerTitleResult {
     private PlayerTitleResult() {
     }
 
-    public record PlayerTitleInfo(
+    public record Info(
             Long titleId,
             String code,
             String name,
@@ -17,8 +17,8 @@ public class PlayerTitleResult {
             String descMd,
             Instant acquiredAt
     ) {
-        public static PlayerTitleInfo from(PlayerTitleView v) {
-            return new PlayerTitleInfo(
+        public static Info from(PlayerTitleView v) {
+            return new Info(
                     v.getTitleId(),
                     v.getCode(),
                     v.getName(),
@@ -29,7 +29,7 @@ public class PlayerTitleResult {
         }
     }
 
-    public record GrantedTitle(
+    public record Granted(
             Long playerId,
             Long titleId,
             String code,
@@ -37,7 +37,7 @@ public class PlayerTitleResult {
             String category,
             Instant acquiredAt
     ) {
-        public static GrantedTitle of(
+        public static Granted of(
                 Long playerId,
                 Long titleId,
                 String code,
@@ -45,7 +45,7 @@ public class PlayerTitleResult {
                 String category,
                 Instant acquiredAt
         ) {
-            return new GrantedTitle(
+            return new Granted(
                     playerId,
                     titleId,
                     code,

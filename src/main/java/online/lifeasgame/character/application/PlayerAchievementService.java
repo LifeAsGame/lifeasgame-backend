@@ -23,15 +23,15 @@ public class PlayerAchievementService {
     private final PlayerAchievementWriter playerAchievementWriter;
     private final PlayerReader playerReader;
 
-    public List<PlayerAchievementResult.PlayerAchievementInfo> getPlayerAchievementInfos(Long playerId) {
+    public List<PlayerAchievementResult.Info> getPlayerAchievementInfos(Long playerId) {
         List<PlayerAchievementView> playerAchievementViews = playerAchievementReader.getPlayerAchievementInfos(playerId);
         return playerAchievementViews.stream()
-                .map(PlayerAchievementResult.PlayerAchievementInfo::from)
+                .map(PlayerAchievementResult.Info::from)
                 .toList();
     }
 
     @Transactional
-    public PlayerAchievementResult.GrantedAchievement grantAchievement(Long playerId, Long achievementId) {
+    public PlayerAchievementResult.Granted grantAchievement(Long playerId, Long achievementId) {
         if (playerReader.notExists(playerId)) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
@@ -45,7 +45,7 @@ public class PlayerAchievementService {
                 )
         );
 
-        return PlayerAchievementResult.GrantedAchievement.of(
+        return PlayerAchievementResult.Granted.of(
                 saved.getPlayerId(),
                 saved.getAchievementId(),
                 achievement.getCode(),

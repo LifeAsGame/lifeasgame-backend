@@ -17,13 +17,13 @@ public class TitleService {
     private final TitleReader titleReader;
     private final TitleWriter titleWriter;
 
-    public List<TitleResult.TitleInfo> getTitles(List<String> categories) {
+    public List<TitleResult.Info> getTitles(List<String> categories) {
         List<Title> titles = titleReader.getTitles(TitleCategory.parse(categories));
-        return TitleResult.TitleInfo.fromList(titles);
+        return TitleResult.Info.fromList(titles);
     }
 
     @Transactional
-    public TitleResult.TitleInfo create(TitleCommand.CreateTitle command) {
+    public TitleResult.Info create(TitleCommand.Create command) {
         Title title = titleWriter.create(
                 Title.of(
                         command.code(),
@@ -33,7 +33,7 @@ public class TitleService {
                 )
         );
 
-        return TitleResult.TitleInfo.of(
+        return TitleResult.Info.of(
                 title.getCode(),
                 title.getName(),
                 title.getCategory().name(),

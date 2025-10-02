@@ -10,7 +10,7 @@ public class PlayerHobbyResult {
     private PlayerHobbyResult() {
     }
 
-    public record PlayerHobbyInfo(
+    public record Info(
             Long hobbyId,
             String name,
             String category,
@@ -21,8 +21,8 @@ public class PlayerHobbyResult {
             LocalDate startedOn,
             long xp
     ) {
-        public static PlayerHobbyInfo from(PlayerHobbyView v) {
-            return new PlayerHobbyInfo(
+        public static Info from(PlayerHobbyView v) {
+            return new Info(
                     v.getHobbyId(),
                     v.getName(),
                     v.getCategory() != null ? v.getCategory().name() : null,
@@ -36,7 +36,7 @@ public class PlayerHobbyResult {
         }
     }
 
-    public record ChangedPlayerHobby(
+    public record Changed(
             Long hobbyId,
             String customName,
             String detail,
@@ -45,8 +45,8 @@ public class PlayerHobbyResult {
             LocalDate startedOn,
             long xp
     ) {
-        public static ChangedPlayerHobby from(PlayerHobby playerHobby) {
-            return new ChangedPlayerHobby(
+        public static Changed from(PlayerHobby playerHobby) {
+            return new Changed(
                     playerHobby.getHobbyId(),
                     playerHobby.getCustomName(),
                     playerHobby.getDetail(),
@@ -58,7 +58,7 @@ public class PlayerHobbyResult {
         }
     }
 
-    public record CreatedPlayerHobby(
+    public record Created(
             Long hobbyId,
             String customName,
             String detail,
@@ -67,8 +67,8 @@ public class PlayerHobbyResult {
             LocalDate startedOn,
             long xp
     ) {
-        public static CreatedPlayerHobby from(PlayerHobby playerHobby) {
-            return new CreatedPlayerHobby(
+        public static Created from(PlayerHobby playerHobby) {
+            return new Created(
                     playerHobby.getHobbyId(),
                     playerHobby.getCustomName(),
                     playerHobby.getDetail(),
@@ -80,7 +80,7 @@ public class PlayerHobbyResult {
         }
     }
 
-    public record GrantedHobby(
+    public record Granted(
             Long playerId,
             Long hobbyId,
             String name,
@@ -92,7 +92,7 @@ public class PlayerHobbyResult {
             LocalDate startedOn,
             long xp
     ) {
-        public static GrantedHobby of(
+        public static Granted of(
                 Long playerId,
                 Long hobbyId,
                 String name,
@@ -104,7 +104,7 @@ public class PlayerHobbyResult {
                 LocalDate startedOn,
                 long xp
         ) {
-            return new GrantedHobby(
+            return new Granted(
                     playerId,
                     hobbyId,
                     name,

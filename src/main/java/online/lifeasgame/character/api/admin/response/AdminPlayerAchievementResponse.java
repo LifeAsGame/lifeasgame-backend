@@ -7,7 +7,7 @@ public class AdminPlayerAchievementResponse {
     private AdminPlayerAchievementResponse() {
     }
 
-    public record GrantedAchievement(
+    public record Granted(
             Long playerId,
             Long achievementId,
             String code,
@@ -15,7 +15,7 @@ public class AdminPlayerAchievementResponse {
             String category,
             Instant acquiredAt
     ) {
-        public static AdminPlayerAchievementResponse.GrantedAchievement of(
+        public static Granted of(
                 Long playerId,
                 Long achievementId,
                 String code,
@@ -23,7 +23,7 @@ public class AdminPlayerAchievementResponse {
                 String category,
                 Instant acquiredAt
         ) {
-            return new AdminPlayerAchievementResponse.GrantedAchievement(
+            return new Granted(
                     playerId,
                     achievementId,
                     code,

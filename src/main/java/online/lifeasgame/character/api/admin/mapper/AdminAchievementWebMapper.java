@@ -7,7 +7,7 @@ import online.lifeasgame.character.application.result.AchievementResult;
 
 public class AdminAchievementWebMapper {
 
-    public static AchievementCommand.Create toCommand(AdminAchievementRequest.CreateAchievement request) {
+    public static AchievementCommand.Create toCommand(AdminAchievementRequest.Create request) {
         return AchievementCommand.Create.of(
                 request.code(),
                 request.name(),
@@ -16,10 +16,10 @@ public class AdminAchievementWebMapper {
         );
     }
 
-    public static AdminAchievementResponse.AchievementInfo toAchievementInfo(
+    public static AdminAchievementResponse.Info toAchievementInfo(
             AchievementResult.Info result
     ) {
-        return AdminAchievementResponse.AchievementInfo.of(
+        return AdminAchievementResponse.Info.of(
                 result.code(),
                 result.name(),
                 result.category(),

@@ -18,8 +18,8 @@ public class PlayerWebMapper {
         return new PlayerResponse.Created(result.id());
     }
 
-    public static PlayerResponse.PlayerInfo toPlayerInfo(PlayerResult.PlayerInfo result) {
-        return PlayerResponse.PlayerInfo.of(
+    public static PlayerResponse.Info toPlayerInfo(PlayerResult.PlayerInfo result) {
+        return PlayerResponse.Info.of(
                 result.name(),
                 result.gender(),
                 result.job(),
@@ -37,13 +37,13 @@ public class PlayerWebMapper {
                 result.luc(),
                 result.extraStats(),
                 result.effects().stream()
-                        .map((effect) -> PlayerResponse.PlayerInfo.StatusEffects.of(effect.name(), effect.category().name()))
+                        .map((effect) -> PlayerResponse.Info.StatusEffects.of(effect.name(), effect.category().name()))
                         .toList()
         );
     }
 
-    public static PlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
-        return PlayerResponse.UpdatedTitle.of(
+    public static PlayerResponse.Updated toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
+        return PlayerResponse.Updated.of(
                 updatedTitle.titleId()
         );
     }

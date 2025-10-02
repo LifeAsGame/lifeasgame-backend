@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface AdminPlayerTitleApiSpecV1 {
 
     @Operation(summary = "Player Title 지급", description = "Player에게 Title을 지급합니다.")
-    ResponseEntity<ApiResponse<AdminPlayerTitleResponse.GrantedTitle>> grantTitle(
+    ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Granted>> grantTitle(
             @PathVariable Long playerId,
             @PathVariable Long titleId
     );

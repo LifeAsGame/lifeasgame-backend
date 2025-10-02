@@ -8,12 +8,12 @@ public class TitleWebMapper {
 
     private TitleWebMapper() {}
 
-    public static TitleResponse.TitleInfos toTitleInfos(List<TitleResult.TitleInfo> titleInfos) {
-        return TitleResponse.TitleInfos.of(
-                titleInfos.stream()
+    public static TitleResponse.Infos toTitleInfos(List<TitleResult.Info> infos) {
+        return TitleResponse.Infos.of(
+                infos.stream()
                         .map(
                                 titleInfo ->
-                                        TitleResponse.TitleInfo.of(
+                                        TitleResponse.Info.of(
                                                 titleInfo.code(),
                                                 titleInfo.name(),
                                                 titleInfo.category(),

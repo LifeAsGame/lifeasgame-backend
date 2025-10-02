@@ -27,13 +27,13 @@ public class AdminCertificationController implements AdminCertificationApiSpecV1
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<AdminCertificationResponse.CertificationInfo>> create(
-            @Valid @RequestBody AdminCertificationRequest.CreateCertification request
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> create(
+            @Valid @RequestBody AdminCertificationRequest.Create request
     ) {
-        CertificationResult.CertificationInfo CertificationInfo = adminCertificationService.create(AdminCertificationWebMapper.toCommand(request));
+        CertificationResult.Info Info = adminCertificationService.create(AdminCertificationWebMapper.toCommand(request));
         return ApiResponses.created(
                 URI.create("/admin/v1/certifications/"),
-                AdminCertificationWebMapper.toCertificationInfo(CertificationInfo)
+                AdminCertificationWebMapper.toCertificationInfo(Info)
         );
     }
 }

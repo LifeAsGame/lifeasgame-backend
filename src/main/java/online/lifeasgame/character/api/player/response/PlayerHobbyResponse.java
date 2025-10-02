@@ -8,13 +8,13 @@ public class PlayerHobbyResponse {
     private PlayerHobbyResponse() {
     }
 
-    public record PlayerHobbyInfos(List<PlayerHobbyInfo> playerHobbyInfos) {
-        public static PlayerHobbyInfos of(List<PlayerHobbyInfo> playerHobbyInfos) {
-            return new PlayerHobbyInfos(playerHobbyInfos);
+    public record Infos(List<Info> infos) {
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record PlayerHobbyInfo(
+    public record Info(
             Long hobbyId,
             String name,
             String category,
@@ -25,7 +25,7 @@ public class PlayerHobbyResponse {
             LocalDate startedOn,
             long xp
     ) {
-        public static PlayerHobbyInfo of(
+        public static Info of(
                 Long hobbyId,
                 String name,
                 String category,
@@ -36,7 +36,7 @@ public class PlayerHobbyResponse {
                 LocalDate startedOn,
                 long xp
         ) {
-            return new PlayerHobbyInfo(
+            return new Info(
                     hobbyId,
                     name,
                     category,
@@ -50,7 +50,7 @@ public class PlayerHobbyResponse {
         }
     }
 
-    public record ChangedPlayerHobby(
+    public record Changed(
             Long hobbyId,
             String customName,
             String detail,
@@ -59,7 +59,7 @@ public class PlayerHobbyResponse {
             LocalDate startedOn,
             long xp
     ) {
-        public static ChangedPlayerHobby of(
+        public static Changed of(
                 Long hobbyId,
                 String customName,
                 String detail,
@@ -68,7 +68,7 @@ public class PlayerHobbyResponse {
                 LocalDate startedOn,
                 long xp
         ) {
-            return new ChangedPlayerHobby(
+            return new Changed(
                     hobbyId,
                     customName,
                     detail,
@@ -80,7 +80,7 @@ public class PlayerHobbyResponse {
         }
     }
 
-    public record CreatedPlayerHobby(
+    public record Created(
             Long hobbyId,
             String customName,
             String detail,
@@ -89,7 +89,7 @@ public class PlayerHobbyResponse {
             LocalDate startedOn,
             long xp
     ) {
-        public static CreatedPlayerHobby of(
+        public static Created of(
                 Long hobbyId,
                 String customName,
                 String detail,
@@ -98,7 +98,7 @@ public class PlayerHobbyResponse {
                 LocalDate startedOn,
                 long xp
         ) {
-            return new CreatedPlayerHobby(
+            return new Created(
                     hobbyId,
                     customName,
                     detail,

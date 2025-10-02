@@ -7,27 +7,27 @@ public class PlayerCertificationRequest {
     private PlayerCertificationRequest() {
     }
 
-    public record ChangePlayerCertification(
+    public record Change(
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static ChangePlayerCertification of(
+        public static Change of(
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new ChangePlayerCertification(acquiredDate, expiresDate);
+            return new Change(acquiredDate, expiresDate);
         }
     }
 
-    public record CreatePlayerCertification(
+    public record Create(
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static CreatePlayerCertification of(
+        public static Create of(
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new CreatePlayerCertification(
+            return new Create(
                     acquiredDate,
                     expiresDate
             );

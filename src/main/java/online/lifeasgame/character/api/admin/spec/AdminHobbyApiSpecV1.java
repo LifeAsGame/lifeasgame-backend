@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AdminHobbyApiSpecV1 {
 
     @Operation(summary = "Hobby 추가", description = "Hobby을 생성합니다")
-    ResponseEntity<ApiResponse<AdminHobbyResponse.HobbyInfo>> create(
-            @Valid @RequestBody AdminHobbyRequest.CreateHobby request
+    ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> create(
+            @Valid @RequestBody AdminHobbyRequest.Create request
     );
 }

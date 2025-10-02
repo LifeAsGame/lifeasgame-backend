@@ -8,13 +8,13 @@ public class PlayerAchievementResponse {
     private PlayerAchievementResponse() {
     }
 
-    public record PlayerAchievementInfos(List<PlayerAchievementInfo> playerAchievementInfos) {
-        public static PlayerAchievementInfos of(List<PlayerAchievementInfo> playerAchievementInfos) {
-            return new PlayerAchievementInfos(playerAchievementInfos);
+    public record Infos(List<Info> infos) {
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record PlayerAchievementInfo(
+    public record Info(
             Long achievementId,
             String code,
             String name,
@@ -22,7 +22,7 @@ public class PlayerAchievementResponse {
             String descMd,
             Instant acquiredAt
     ) {
-        public static PlayerAchievementInfo of(
+        public static Info of(
                 Long achievementId,
                 String code,
                 String name,
@@ -30,7 +30,7 @@ public class PlayerAchievementResponse {
                 String descMd,
                 Instant acquiredAt
         ) {
-            return new PlayerAchievementInfo(achievementId, code, name, category, descMd, acquiredAt);
+            return new Info(achievementId, code, name, category, descMd, acquiredAt);
         }
     }
 }

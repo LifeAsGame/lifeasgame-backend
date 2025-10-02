@@ -24,7 +24,7 @@ public class AchievementController implements AchievementApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<AchievementResponse.AchievementInfos>> achievementInfos(
+    public ResponseEntity<ApiResponse<AchievementResponse.Infos>> achievementInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
         List<Info> infos = achievementService.getAchievements(categories);

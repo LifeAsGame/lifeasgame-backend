@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface HobbyApiSpecV1 {
 
     @Operation(summary = "Hobby 목록 조회", description = "Hobby 목록 조회: category 설정 가능")
-    ResponseEntity<ApiResponse<HobbyResponse.HobbyInfos>> HobbyInfos(
+    ResponseEntity<ApiResponse<HobbyResponse.Infos>> HobbyInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     );
 }

@@ -9,8 +9,8 @@ public class AdminTitleWebMapper {
 
     private AdminTitleWebMapper() {}
 
-    public static TitleCommand.CreateTitle toCommand(AdminTitleRequest.CreateTitle request) {
-        return TitleCommand.CreateTitle.of(
+    public static TitleCommand.Create toCommand(AdminTitleRequest.Create request) {
+        return TitleCommand.Create.of(
                 request.code(),
                 request.name(),
                 request.category(),
@@ -18,8 +18,8 @@ public class AdminTitleWebMapper {
         );
     }
 
-    public static AdminTitleResponse.TitleInfo toTitleInfo(TitleResult.TitleInfo result) {
-        return AdminTitleResponse.TitleInfo.of(
+    public static AdminTitleResponse.Info toTitleInfo(TitleResult.Info result) {
+        return AdminTitleResponse.Info.of(
                 result.code(),
                 result.name(),
                 result.category(),

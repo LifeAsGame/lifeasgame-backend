@@ -14,7 +14,7 @@ public class PlayerResponse {
         }
     }
 
-    public record PlayerInfo(
+    public record Info(
             String name,
             String gender,
             String job,
@@ -28,7 +28,7 @@ public class PlayerResponse {
             Map<String, Integer> extraStats,
             List<StatusEffects> effects
     ) {
-        public static PlayerInfo of(
+        public static Info of(
                 String name,
                 String gender,
                 String job,
@@ -42,7 +42,7 @@ public class PlayerResponse {
                 Map<String, Integer> stringIntegerMap,
                 List<StatusEffects> effects
         ) {
-            return new PlayerInfo(
+            return new Info(
                     name,
                     gender,
                     job,
@@ -65,9 +65,9 @@ public class PlayerResponse {
         }
     }
 
-    public record UpdatedTitle(Long titleId) {
-        public static UpdatedTitle of(Long titleId) {
-            return new UpdatedTitle(titleId);
+    public record Updated(Long titleId) {
+        public static Updated of(Long titleId) {
+            return new Updated(titleId);
         }
     }
 }

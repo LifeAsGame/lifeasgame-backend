@@ -7,22 +7,22 @@ public class EquipmentSlotResponse {
     private EquipmentSlotResponse() {
     }
 
-    public record EquipmentSlotInfos(
-            List<EquipmentSlotResponse.EquipmentSlotInfo> EquipmentSlotInfos
+    public record Infos(
+            List<Info> infos
     ) {
-        public static EquipmentSlotResponse.EquipmentSlotInfos of(List<EquipmentSlotResponse.EquipmentSlotInfo> EquipmentSlotInfos) {
-            return new EquipmentSlotResponse.EquipmentSlotInfos(EquipmentSlotInfos);
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record EquipmentSlotInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String role
     ) {
-        public static EquipmentSlotResponse.EquipmentSlotInfo of(String code, String name, String category, String role) {
-            return new EquipmentSlotResponse.EquipmentSlotInfo(code, name, category, role);
+        public static Info of(String code, String name, String category, String role) {
+            return new Info(code, name, category, role);
         }
     }
 }

@@ -7,7 +7,7 @@ public class AdminPlayerHobbyResponse {
     private AdminPlayerHobbyResponse() {
     }
 
-    public record GrantedHobby(
+    public record Granted(
             Long playerId,
             Long hobbyId,
             String name,
@@ -19,7 +19,7 @@ public class AdminPlayerHobbyResponse {
             LocalDate startedOn,
             long xp
     ) {
-        public static AdminPlayerHobbyResponse.GrantedHobby of(
+        public static Granted of(
                 Long playerId,
                 Long hobbyId,
                 String name,
@@ -31,7 +31,7 @@ public class AdminPlayerHobbyResponse {
                 LocalDate startedOn,
                 long xp
         ) {
-            return new AdminPlayerHobbyResponse.GrantedHobby(
+            return new Granted(
                     playerId,
                     hobbyId,
                     name,

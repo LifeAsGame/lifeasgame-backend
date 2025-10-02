@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface PlayerEquipmentApiSpecV1 {
 
     @Operation(summary = "Player 장비 장착", description = "장비를 장착합니다.")
-    ResponseEntity<ApiResponse<PlayerEquipmentResponse.EquippedEquipment>> equip(
+    ResponseEntity<ApiResponse<PlayerEquipmentResponse.Equipped>> equip(
             @PathVariable Long slotId,
-            @RequestBody PlayerEquipmentRequest.EquipEquipment request
+            @RequestBody PlayerEquipmentRequest.Equip request
     );
 
     @Operation(summary = "Player 장비 현황 조회", description = "파츠별 장비를 조회합니다")
-    ResponseEntity<ApiResponse<PlayerEquipmentResponse.PlayerEquipmentInfos>> playerEquipmentInfos();
+    ResponseEntity<ApiResponse<PlayerEquipmentResponse.Infos>> playerEquipmentInfos();
 
     @Operation(summary = "Player 장비 해제", description = "장비를 해제합니다")
     ResponseEntity<ApiResponse<Long>> unEquip(

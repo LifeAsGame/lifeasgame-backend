@@ -20,15 +20,15 @@ public class PlayerTitleService {
     private final PlayerTitleWriter playerTitleWriter;
     private final TitleReader titleReader;
 
-    public List<PlayerTitleResult.PlayerTitleInfo> getPlayerTitleInfos(Long playerId) {
+    public List<PlayerTitleResult.Info> getPlayerTitleInfos(Long playerId) {
         List<PlayerTitleView> playerTitleViews = playerTitleReader.getPlayerTitleInfos(playerId);
         return playerTitleViews.stream()
-                .map(PlayerTitleResult.PlayerTitleInfo::from)
+                .map(PlayerTitleResult.Info::from)
                 .toList();
     }
 
     @Transactional
-    public PlayerTitleResult.GrantedTitle grantTitle(Long playerId, Long titleId) {
+    public PlayerTitleResult.Granted grantTitle(Long playerId, Long titleId) {
         Title title = titleReader.getTitle(titleId);
 
         PlayerTitle saved = playerTitleWriter.grantTitle(
@@ -38,7 +38,7 @@ public class PlayerTitleService {
                 )
         );
 
-        return PlayerTitleResult.GrantedTitle.of(
+        return PlayerTitleResult.Granted.of(
                 saved.getPlayerId(),
                 saved.getTitleId(),
                 title.getCode(),

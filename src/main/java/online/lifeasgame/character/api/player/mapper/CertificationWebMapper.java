@@ -8,12 +8,12 @@ public class CertificationWebMapper {
 
     private CertificationWebMapper() {}
 
-    public static CertificationResponse.CertificationInfos toCertificationInfos(List<CertificationResult.CertificationInfo> certificationInfos) {
-        return CertificationResponse.CertificationInfos.of(
-                certificationInfos.stream()
+    public static CertificationResponse.Infos toCertificationInfos(List<CertificationResult.Info> infos) {
+        return CertificationResponse.Infos.of(
+                infos.stream()
                         .map(
                                 certificationInfo ->
-                                        CertificationResponse.CertificationInfo.of(
+                                        CertificationResponse.Info.of(
                                                 certificationInfo.certificationId(),
                                                 certificationInfo.name(),
                                                 certificationInfo.issuer(),

@@ -23,11 +23,11 @@ public class PlayerTitleController implements PlayerTitleApiSpecV1 {
 
     @Override
     @GetMapping("/titles")
-    public ResponseEntity<ApiResponse<PlayerTitleResponse.PlayerTitleInfos>> playerTitleInfos() {
-        List<PlayerTitleResult.PlayerTitleInfo> playerTitleInfos = playerTitleFacade.getPlayerTitleInfos();
+    public ResponseEntity<ApiResponse<PlayerTitleResponse.Infos>> playerTitleInfos() {
+        List<PlayerTitleResult.Info> infos = playerTitleFacade.getPlayerTitleInfos();
 
         return ApiResponses.ok(
-                PlayerTitleWebMapper.toPlayerTitleInfos(playerTitleInfos)
+                PlayerTitleWebMapper.toPlayerTitleInfos(infos)
         );
     }
 }

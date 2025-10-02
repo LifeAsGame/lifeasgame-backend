@@ -7,7 +7,7 @@ import online.lifeasgame.character.application.result.CertificationResult;
 
 public class AdminCertificationWebMapper {
 
-    public static CertificationCommand.Create toCommand(AdminCertificationRequest.CreateCertification request) {
+    public static CertificationCommand.Create toCommand(AdminCertificationRequest.Create request) {
         return CertificationCommand.Create.of(
                 request.name(),
                 request.issuer(),
@@ -15,10 +15,10 @@ public class AdminCertificationWebMapper {
         );
     }
 
-    public static AdminCertificationResponse.CertificationInfo toCertificationInfo(
-            CertificationResult.CertificationInfo result
+    public static AdminCertificationResponse.Info toCertificationInfo(
+            CertificationResult.Info result
     ) {
-        return AdminCertificationResponse.CertificationInfo.of(
+        return AdminCertificationResponse.Info.of(
                 result.name(),
                 result.issuer(),
                 result.category()

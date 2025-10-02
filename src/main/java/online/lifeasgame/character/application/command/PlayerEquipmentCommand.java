@@ -5,9 +5,9 @@ public class PlayerEquipmentCommand {
     private PlayerEquipmentCommand() {
     }
 
-    public record EquipEquipment(Long slotId, Long itemInstanceId) {
-        public static EquipEquipment of(Long slotId, Long itemInstanceId) {
-            return new EquipEquipment(slotId, itemInstanceId);
+    public record Equip(Long slotId, Long itemInstanceId) {
+        public static Equip of(Long slotId, Long itemInstanceId) {
+            return new Equip(slotId, itemInstanceId);
         }
     }
 }

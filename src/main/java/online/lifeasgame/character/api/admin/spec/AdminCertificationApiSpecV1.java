@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AdminCertificationApiSpecV1 {
 
     @Operation(summary = "Certification 추가", description = "Certification을 생성합니다")
-    ResponseEntity<ApiResponse<AdminCertificationResponse.CertificationInfo>> create(
-            @Valid @RequestBody AdminCertificationRequest.CreateCertification request
+    ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> create(
+            @Valid @RequestBody AdminCertificationRequest.Create request
     );
 }

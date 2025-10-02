@@ -9,10 +9,10 @@ public class AdminPlayerHobbyWebMapper {
 
     private AdminPlayerHobbyWebMapper() {}
 
-    public static AdminPlayerHobbyResponse.GrantedHobby toGrantedHobby(
-            PlayerHobbyResult.GrantedHobby result
+    public static AdminPlayerHobbyResponse.Granted toGrantedHobby(
+            PlayerHobbyResult.Granted result
     ) {
-        return AdminPlayerHobbyResponse.GrantedHobby.of(
+        return AdminPlayerHobbyResponse.Granted.of(
                 result.playerId(),
                 result.hobbyId(),
                 result.name(),
@@ -26,12 +26,12 @@ public class AdminPlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyCommand.GrantHobby toCommand(
+    public static PlayerHobbyCommand.Grant toCommand(
             Long playerId,
             Long hobbyId,
-            AdminPlayerHobbyRequest.GrantHobby request
+            AdminPlayerHobbyRequest.Grant request
     ) {
-        return PlayerHobbyCommand.GrantHobby.of(
+        return PlayerHobbyCommand.Grant.of(
                 playerId,
                 hobbyId,
                 request.customName(),

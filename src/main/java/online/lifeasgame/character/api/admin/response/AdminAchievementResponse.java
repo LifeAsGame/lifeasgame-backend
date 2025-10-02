@@ -5,14 +5,14 @@ public class AdminAchievementResponse {
     private AdminAchievementResponse() {
     }
 
-    public record AchievementInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String description
     ) {
-        public static AchievementInfo of(String code, String name, String category, String description) {
-            return new AchievementInfo(code, name, category, description);
+        public static Info of(String code, String name, String category, String description) {
+            return new Info(code, name, category, description);
         }
     }
 }

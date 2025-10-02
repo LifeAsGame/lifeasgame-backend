@@ -11,7 +11,7 @@ public class PlayerCertificationResult {
     private PlayerCertificationResult() {
     }
 
-    public record PlayerCertificationInfo(
+    public record Info(
             Long certificationId,
             String name,
             String issuer,
@@ -20,8 +20,8 @@ public class PlayerCertificationResult {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static PlayerCertificationInfo from(PlayerCertificationView v) {
-            return new PlayerCertificationInfo(
+        public static Info from(PlayerCertificationView v) {
+            return new Info(
                     v.getCertificationId(),
                     v.getName(),
                     v.getIssuer(),
@@ -33,13 +33,13 @@ public class PlayerCertificationResult {
         }
     }
 
-    public record ChangedPlayerCertification(
+    public record Changed(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static ChangedPlayerCertification from(PlayerCertification playerCertification) {
-            return new ChangedPlayerCertification(
+        public static Changed from(PlayerCertification playerCertification) {
+            return new Changed(
                     playerCertification.getCertificationId(),
                     playerCertification.getAcquiredDate(),
                     playerCertification.getExpiresDate()
@@ -47,13 +47,13 @@ public class PlayerCertificationResult {
         }
     }
 
-    public record CreatedPlayerCertification(
+    public record Created(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static CreatedPlayerCertification from(PlayerCertification playerCertification) {
-            return new CreatedPlayerCertification(
+        public static Created from(PlayerCertification playerCertification) {
+            return new Created(
                     playerCertification.getCertificationId(),
                     playerCertification.getAcquiredDate(),
                     playerCertification.getExpiresDate()
@@ -61,7 +61,7 @@ public class PlayerCertificationResult {
         }
     }
 
-    public record GrantedCertification(
+    public record Granted(
             Long playerId,
             Long certificationId,
             String name,
@@ -71,7 +71,7 @@ public class PlayerCertificationResult {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static GrantedCertification of(
+        public static Granted of(
                 Long playerId,
                 Long certificationId,
                 String name,
@@ -81,7 +81,7 @@ public class PlayerCertificationResult {
                 LocalDate expiresDate,
                 Instant grantedAt
         ) {
-            return new GrantedCertification(
+            return new Granted(
                     playerId,
                     certificationId,
                     name,

@@ -7,14 +7,14 @@ public class AdminAchievementRequest {
     private AdminAchievementRequest() {
     }
 
-    public record CreateAchievement(
+    public record Create(
             @NotBlank String code,
             @NotBlank String name,
             @NotBlank String category,
             @NotBlank String descMd
     ) {
-        public static CreateAchievement of(String code, String name, String category, String descMd) {
-            return new CreateAchievement(code, name, category, descMd);
+        public static Create of(String code, String name, String category, String descMd) {
+            return new Create(code, name, category, descMd);
         }
     }
 }

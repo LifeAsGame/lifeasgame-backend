@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.HobbyService;
-import online.lifeasgame.character.application.result.HobbyResult.HobbyInfo;
+import online.lifeasgame.character.application.result.HobbyResult.Info;
 import online.lifeasgame.character.api.player.mapper.HobbyWebMapper;
 import online.lifeasgame.character.api.player.response.HobbyResponse;
 import online.lifeasgame.character.api.player.spec.HobbyApiSpecV1;
@@ -24,12 +24,12 @@ public class HobbyController implements HobbyApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<HobbyResponse.HobbyInfos>> HobbyInfos(
+    public ResponseEntity<ApiResponse<HobbyResponse.Infos>> HobbyInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<HobbyInfo> HobbyInfos = hobbyService.getHobbies(categories);
+        List<Info> infos = hobbyService.getHobbies(categories);
         return ApiResponses.ok(
-                HobbyWebMapper.toHobbyInfos(HobbyInfos)
+                HobbyWebMapper.toHobbyInfos(infos)
         );
     }
 }

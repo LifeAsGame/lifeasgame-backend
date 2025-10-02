@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AdminPlayerHobbyApiSpecV1 {
 
     @Operation(summary = "Player Hobby 지급", description = "Player에게 Hobby를 지급합니다")
-    ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.GrantedHobby>> grantHobby(
+    ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.Granted>> grantHobby(
             @PathVariable Long playerId,
             @PathVariable Long hobbyId,
-            @Valid @RequestBody AdminPlayerHobbyRequest.GrantHobby request
+            @Valid @RequestBody AdminPlayerHobbyRequest.Grant request
     );
 }

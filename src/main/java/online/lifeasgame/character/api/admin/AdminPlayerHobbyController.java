@@ -22,17 +22,17 @@ public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
 
     @Override
     @PostMapping("/{playerId}/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.GrantedHobby>> grantHobby(
+    public ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.Granted>> grantHobby(
             @PathVariable Long playerId,
             @PathVariable Long hobbyId,
-            @Valid @RequestBody AdminPlayerHobbyRequest.GrantHobby request
+            @Valid @RequestBody AdminPlayerHobbyRequest.Grant request
     ) {
-        PlayerHobbyResult.GrantedHobby grantedHobby = adminPlayerHobbyService.grantHobby(
+        PlayerHobbyResult.Granted granted = adminPlayerHobbyService.grantHobby(
                 AdminPlayerHobbyWebMapper.toCommand(playerId, hobbyId, request)
         );
 
         return ApiResponses.ok(
-                AdminPlayerHobbyWebMapper.toGrantedHobby(grantedHobby)
+                AdminPlayerHobbyWebMapper.toGrantedHobby(granted)
         );
     }
 }

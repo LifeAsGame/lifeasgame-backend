@@ -8,16 +8,16 @@ public class EquipmentSlotWebMapper {
 
     private EquipmentSlotWebMapper() {}
 
-    public static EquipmentSlotResponse.EquipmentSlotInfos toEquipmentSlotInfos(List<EquipmentSlotResult.EquipmentSlotInfo> equipmentSlotInfos) {
-        return EquipmentSlotResponse.EquipmentSlotInfos.of(
-                equipmentSlotInfos.stream()
+    public static EquipmentSlotResponse.Infos toEquipmentSlotInfos(List<EquipmentSlotResult.Info> infos) {
+        return EquipmentSlotResponse.Infos.of(
+                infos.stream()
                         .map(
-                                equipmentSlotInfo ->
-                                        EquipmentSlotResponse.EquipmentSlotInfo.of(
-                                                equipmentSlotInfo.code(),
-                                                equipmentSlotInfo.name(),
-                                                equipmentSlotInfo.category(),
-                                                equipmentSlotInfo.role()
+                                info ->
+                                        EquipmentSlotResponse.Info.of(
+                                                info.code(),
+                                                info.name(),
+                                                info.category(),
+                                                info.role()
                                         )
                         )
                         .toList()

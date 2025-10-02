@@ -31,21 +31,21 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
     @Override
     @GetMapping("/certifications")
-    public ResponseEntity<ApiResponse<PlayerCertificationResponse.PlayerCertificationInfos>> playerCertificationInfos() {
-        List<PlayerCertificationResult.PlayerCertificationInfo> playerCertificationInfos = playerCertificationFacade.getPlayerCertificationInfos();
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Infos>> playerCertificationInfos() {
+        List<PlayerCertificationResult.Info> infos = playerCertificationFacade.getPlayerCertificationInfos();
 
         return ApiResponses.ok(
-                PlayerCertificationWebMapper.toPlayerCertificationInfos(playerCertificationInfos)
+                PlayerCertificationWebMapper.toPlayerCertificationInfos(infos)
         );
     }
 
     @Override
     @PostMapping("/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<PlayerCertificationResponse.CreatedPlayerCertification>> createPlayerCertification(
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Created>> createPlayerCertification(
             @PathVariable Long certificationId,
-            @Valid @RequestBody PlayerCertificationRequest.CreatePlayerCertification request
+            @Valid @RequestBody PlayerCertificationRequest.Create request
     ) {
-        PlayerCertificationResult.CreatedPlayerCertification certificationInfo = playerCertificationFacade.createPlayerCertification(
+        PlayerCertificationResult.Created certificationInfo = playerCertificationFacade.createPlayerCertification(
                 PlayerCertificationWebMapper.toCommand(certificationId, request)
         );
         return ApiResponses.created(
@@ -56,13 +56,13 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
     @Override
     @PatchMapping("/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<PlayerCertificationResponse.ChangedPlayerCertification>> updatePlayerCertification(
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Changed>> updatePlayerCertification(
             @PathVariable Long certificationId,
-            @Valid @RequestBody PlayerCertificationRequest.ChangePlayerCertification request
+            @Valid @RequestBody PlayerCertificationRequest.Change request
     ) {
-        PlayerCertificationResult.ChangedPlayerCertification changedPlayerCertification = playerCertificationFacade.changePlayerCertification(PlayerCertificationWebMapper.toCommand(certificationId, request));
+        PlayerCertificationResult.Changed changed = playerCertificationFacade.changePlayerCertification(PlayerCertificationWebMapper.toCommand(certificationId, request));
         return ApiResponses.ok(
-                PlayerCertificationWebMapper.toChangedPlayerCertification(changedPlayerCertification)
+                PlayerCertificationWebMapper.toChangedPlayerCertification(changed)
         );
     }
 

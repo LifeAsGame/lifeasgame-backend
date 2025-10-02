@@ -25,12 +25,12 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<AdminTitleResponse.TitleInfo>> create(
-            @Valid @RequestBody AdminTitleRequest.CreateTitle request
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> create(
+            @Valid @RequestBody AdminTitleRequest.Create request
     ) {
-        TitleResult.TitleInfo titleInfo = adminTitleService.create(AdminTitleWebMapper.toCommand(request));
+        TitleResult.Info info = adminTitleService.create(AdminTitleWebMapper.toCommand(request));
         return ApiResponses.ok(
-                AdminTitleWebMapper.toTitleInfo(titleInfo)
+                AdminTitleWebMapper.toTitleInfo(info)
         );
     }
 }

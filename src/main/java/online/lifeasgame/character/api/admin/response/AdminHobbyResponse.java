@@ -5,13 +5,13 @@ public class AdminHobbyResponse {
     private AdminHobbyResponse() {
     }
 
-    public record HobbyInfo(
+    public record Info(
             Long hobbyId,
             String name,
             String category
     ) {
-        public static HobbyInfo of(Long hobbyId, String name, String category) {
-            return new HobbyInfo(hobbyId, name, category);
+        public static Info of(Long hobbyId, String name, String category) {
+            return new Info(hobbyId, name, category);
         }
     }
 }

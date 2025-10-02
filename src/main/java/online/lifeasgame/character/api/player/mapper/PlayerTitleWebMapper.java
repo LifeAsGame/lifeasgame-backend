@@ -8,12 +8,12 @@ public class PlayerTitleWebMapper {
 
     private PlayerTitleWebMapper() {}
 
-    public static PlayerTitleResponse.PlayerTitleInfos toPlayerTitleInfos(List<PlayerTitleResult.PlayerTitleInfo> playerTitleInfos) {
-        return PlayerTitleResponse.PlayerTitleInfos.of(
-                playerTitleInfos.stream()
+    public static PlayerTitleResponse.Infos toPlayerTitleInfos(List<PlayerTitleResult.Info> infos) {
+        return PlayerTitleResponse.Infos.of(
+                infos.stream()
                         .map(
                                 playerTitleInfo ->
-                                        PlayerTitleResponse.PlayerTitleInfo.of(
+                                        PlayerTitleResponse.Info.of(
                                                 playerTitleInfo.titleId(),
                                                 playerTitleInfo.code(),
                                                 playerTitleInfo.name(),

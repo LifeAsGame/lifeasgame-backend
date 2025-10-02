@@ -7,22 +7,22 @@ public class AchievementResponse {
     private AchievementResponse() {
     }
 
-    public record AchievementInfos(
-            List<AchievementResponse.AchievementInfo> achievementInfos
+    public record Infos(
+            List<Info> infos
     ) {
-        public static AchievementResponse.AchievementInfos of(List<AchievementResponse.AchievementInfo> achievementInfos) {
-            return new AchievementResponse.AchievementInfos(achievementInfos);
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record AchievementInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String descMd
     ) {
-        public static AchievementResponse.AchievementInfo of(String code, String name, String category, String descMd) {
-            return new AchievementResponse.AchievementInfo(code, name, category, descMd);
+        public static Info of(String code, String name, String category, String descMd) {
+            return new Info(code, name, category, descMd);
         }
     }
 }

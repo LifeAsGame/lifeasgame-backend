@@ -23,14 +23,14 @@ public class AdminPlayerAchievementController implements AdminPlayerAchievementA
 
     @Override
     @PostMapping("/{playerId}/achievements/{achievementId}")
-    public ResponseEntity<ApiResponse<AdminPlayerAchievementResponse.GrantedAchievement>> grantAchievement(
+    public ResponseEntity<ApiResponse<AdminPlayerAchievementResponse.Granted>> grantAchievement(
             @PathVariable Long playerId,
             @PathVariable Long achievementId
     ) {
-        PlayerAchievementResult.GrantedAchievement grantedAchievement = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
+        PlayerAchievementResult.Granted granted = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
 
         return ApiResponses.ok(
-                AdminPlayerAchievementWebMapper.toGrantedAchievement(grantedAchievement)
+                AdminPlayerAchievementWebMapper.toGrantedAchievement(granted)
         );
     }
 }

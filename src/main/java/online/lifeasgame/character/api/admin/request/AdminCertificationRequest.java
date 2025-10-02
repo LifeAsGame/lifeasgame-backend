@@ -7,13 +7,13 @@ public class AdminCertificationRequest {
     private AdminCertificationRequest() {
     }
 
-    public record CreateCertification(
+    public record Create(
             @NotBlank String name,
             @NotBlank String issuer,
             @NotBlank String category
     ) {
-        public static CreateCertification of(String name, String issuer, String category) {
-            return new CreateCertification(name, issuer, category);
+        public static Create of(String name, String issuer, String category) {
+            return new Create(name, issuer, category);
         }
     }
 }

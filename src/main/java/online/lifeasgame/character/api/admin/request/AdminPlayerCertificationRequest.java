@@ -7,7 +7,7 @@
         private AdminPlayerCertificationRequest() {
         }
 
-        public record GrantCertification(
+        public record Grant(
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {

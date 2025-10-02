@@ -14,12 +14,12 @@ public class EquipmentSlotService {
 
     private final EquipmentSlotReader equipmentSlotReader;
 
-    public List<EquipmentSlotResult.EquipmentSlotInfo> getEquipmentSlots(List<String> categories, List<String> roles) {
+    public List<EquipmentSlotResult.Info> getEquipmentSlots(List<String> categories, List<String> roles) {
         List<EquipmentSlot> EquipmentSlots = equipmentSlotReader.getEquipmentSlots(
                 EquipmentSlotCategory.parse(categories),
                 EquipmentSlotRole.parse(roles)
         );
 
-        return EquipmentSlotResult.EquipmentSlotInfo.fromList(EquipmentSlots);
+        return EquipmentSlotResult.Info.fromList(EquipmentSlots);
     }
 }

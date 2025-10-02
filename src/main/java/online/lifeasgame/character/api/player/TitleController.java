@@ -24,12 +24,12 @@ public class TitleController implements TitleApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<TitleResponse.TitleInfos>> titleInfos(
+    public ResponseEntity<ApiResponse<TitleResponse.Infos>> titleInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<TitleResult.TitleInfo> titleInfos = titleService.getTitles(categories);
+        List<TitleResult.Info> infos = titleService.getTitles(categories);
         return ApiResponses.ok(
-                TitleWebMapper.toTitleInfos(titleInfos)
+                TitleWebMapper.toTitleInfos(infos)
         );
     }
 }

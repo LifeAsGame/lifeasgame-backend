@@ -41,7 +41,7 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<PlayerResponse.PlayerInfo>> playerInfo() {
+    public ResponseEntity<ApiResponse<PlayerResponse.Info>> playerInfo() {
         PlayerResult.PlayerInfo playerInfo = playerFacade.getPlayerInfo();
         return ApiResponses.ok(
                 PlayerWebMapper.toPlayerInfo(playerInfo)
@@ -50,7 +50,7 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/titles/{titleId}")
-    public ResponseEntity<ApiResponse<PlayerResponse.UpdatedTitle>> updateTitle(
+    public ResponseEntity<ApiResponse<PlayerResponse.Updated>> updateTitle(
             @PathVariable Long titleId
     ) {
         PlayerResult.UpdatedTitle updatedTitle = playerFacade.changeRepresentativeTitle(titleId);

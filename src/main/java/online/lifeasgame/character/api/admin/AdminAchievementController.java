@@ -27,8 +27,8 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<AdminAchievementResponse.AchievementInfo>> create(
-            @Valid @RequestBody AdminAchievementRequest.CreateAchievement request
+    public ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> create(
+            @Valid @RequestBody AdminAchievementRequest.Create request
     ) {
         AchievementResult.Info info = adminAchievementService.create(AdminAchievementWebMapper.toCommand(request));
         return ApiResponses.created(

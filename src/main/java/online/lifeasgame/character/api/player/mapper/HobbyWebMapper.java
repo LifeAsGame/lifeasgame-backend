@@ -8,12 +8,12 @@ public class HobbyWebMapper {
 
     private HobbyWebMapper() {}
 
-    public static HobbyResponse.HobbyInfos toHobbyInfos(List<HobbyResult.HobbyInfo> hobbyInfos) {
-        return HobbyResponse.HobbyInfos.of(
-                hobbyInfos.stream()
+    public static HobbyResponse.Infos toHobbyInfos(List<HobbyResult.Info> infos) {
+        return HobbyResponse.Infos.of(
+                infos.stream()
                         .map(
                                 hobbyInfo ->
-                                        HobbyResponse.HobbyInfo.of(
+                                        HobbyResponse.Info.of(
                                                 hobbyInfo.hobbyId(),
                                                 hobbyInfo.name(),
                                                 hobbyInfo.category()

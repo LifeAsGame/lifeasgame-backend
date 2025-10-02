@@ -7,7 +7,7 @@ public class AdminPlayerTitleResponse {
     private AdminPlayerTitleResponse() {
     }
 
-    public record GrantedTitle(
+    public record Granted(
             Long playerId,
             Long titleId,
             String code,
@@ -15,7 +15,7 @@ public class AdminPlayerTitleResponse {
             String category,
             Instant acquiredAt
     ) {
-        public static GrantedTitle of(
+        public static Granted of(
                 Long playerId,
                 Long titleId,
                 String code,
@@ -23,7 +23,7 @@ public class AdminPlayerTitleResponse {
                 String category,
                 Instant acquiredAt
         ) {
-            return new GrantedTitle(
+            return new Granted(
                     playerId,
                     titleId,
                     code,

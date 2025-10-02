@@ -24,7 +24,7 @@ public class PlayerCertificationService {
     private final PlayerReader playerReader;
 
     @Transactional
-    public PlayerCertificationResult.GrantedCertification grantCertification(PlayerCertificationCommand.GrantCertification command) {
+    public PlayerCertificationResult.Granted grantCertification(PlayerCertificationCommand.Grant command) {
         if (playerReader.notExists(command.playerId())) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
@@ -40,7 +40,7 @@ public class PlayerCertificationService {
                 )
         );
 
-        return PlayerCertificationResult.GrantedCertification.of(
+        return PlayerCertificationResult.Granted.of(
                 saved.getPlayerId(),
                 saved.getCertificationId(),
                 certification.getName(),
@@ -52,16 +52,16 @@ public class PlayerCertificationService {
         );
     }
 
-    public List<PlayerCertificationResult.PlayerCertificationInfo> getPlayerCertificationInfos(Long playerId) {
+    public List<PlayerCertificationResult.Info> getPlayerCertificationInfos(Long playerId) {
         List<PlayerCertificationView> playerCertificationViews = playerCertificationReader.getPlayerCertificationInfos(
                 playerId);
         return playerCertificationViews.stream()
-                .map(PlayerCertificationResult.PlayerCertificationInfo::from)
+                .map(PlayerCertificationResult.Info::from)
                 .toList();
     }
 
     @Transactional
-    public PlayerCertificationResult.ChangedPlayerCertification changePlayerCertification(Long playerId, PlayerCertificationCommand.ChangePlayerCertification command) {
+    public PlayerCertificationResult.Changed changePlayerCertification(Long playerId, PlayerCertificationCommand.Change command) {
         PlayerCertification playerCertification = playerCertificationWriter.changePlayerCertification(
                 playerId,
                 command.certificationId(),
@@ -69,13 +69,13 @@ public class PlayerCertificationService {
                 command.expiresDate()
         );
 
-        return PlayerCertificationResult.ChangedPlayerCertification.from(playerCertification);
+        return PlayerCertificationResult.Changed.from(playerCertification);
     }
 
     @Transactional
-    public PlayerCertificationResult.CreatedPlayerCertification createPlayerCertification(
+    public PlayerCertificationResult.Created createPlayerCertification(
             Long playerId,
-            PlayerCertificationCommand.CreatePlayerCertification command
+            PlayerCertificationCommand.Create command
     ) {
         PlayerCertification playerCertification = playerCertificationWriter.createPlayerCertification(
                 PlayerCertification.create(
@@ -86,7 +86,7 @@ public class PlayerCertificationService {
                 )
         );
 
-        return PlayerCertificationResult.CreatedPlayerCertification.from(playerCertification);
+        return PlayerCertificationResult.Created.from(playerCertification);
     }
 
     @Transactional

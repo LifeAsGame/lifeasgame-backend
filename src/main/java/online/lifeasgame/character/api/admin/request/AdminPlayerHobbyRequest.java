@@ -7,21 +7,21 @@ public class AdminPlayerHobbyRequest {
     private AdminPlayerHobbyRequest() {
     }
 
-    public record GrantHobby(
+    public record Grant(
             String customName,
             String detail,
             Integer proficiency,
             String status,
             LocalDate startedOn
     ) {
-        public static GrantHobby of(
+        public static Grant of(
                 String customName,
                 String detail,
                 Integer proficiency,
                 String status,
                 LocalDate startedOn
         ) {
-            return new GrantHobby(customName, detail, proficiency, status, startedOn);
+            return new Grant(customName, detail, proficiency, status, startedOn);
         }
     }
 }

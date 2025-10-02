@@ -7,10 +7,10 @@ public class AdminPlayerAchievementWebMapper {
 
     private AdminPlayerAchievementWebMapper() {}
 
-    public static AdminPlayerAchievementResponse.GrantedAchievement toGrantedAchievement(
-            PlayerAchievementResult.GrantedAchievement result
+    public static AdminPlayerAchievementResponse.Granted toGrantedAchievement(
+            PlayerAchievementResult.Granted result
     ) {
-        return AdminPlayerAchievementResponse.GrantedAchievement.of(
+        return AdminPlayerAchievementResponse.Granted.of(
                 result.playerId(),
                 result.achievementId(),
                 result.code(),

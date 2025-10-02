@@ -7,21 +7,21 @@ public class HobbyResponse {
     private HobbyResponse() {
     }
 
-    public record HobbyInfos(
-            List<HobbyResponse.HobbyInfo> hobbyInfos
+    public record Infos(
+            List<Info> infos
     ) {
-        public static HobbyResponse.HobbyInfos of(List<HobbyResponse.HobbyInfo> hobbyInfos) {
-            return new HobbyResponse.HobbyInfos(hobbyInfos);
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record HobbyInfo(
+    public record Info(
             Long hobbyId,
             String name,
             String category
     ) {
-        public static HobbyResponse.HobbyInfo of(Long hobbyId, String name, String category) {
-            return new HobbyResponse.HobbyInfo(hobbyId, name, category);
+        public static Info of(Long hobbyId, String name, String category) {
+            return new Info(hobbyId, name, category);
         }
     }
 }

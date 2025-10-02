@@ -7,22 +7,22 @@ public class CertificationResponse {
     private CertificationResponse() {
     }
 
-    public record CertificationInfos(
-            List<CertificationResponse.CertificationInfo> certificationInfos
+    public record Infos(
+            List<Info> infos
     ) {
-        public static CertificationResponse.CertificationInfos of(List<CertificationResponse.CertificationInfo> CertificationInfos) {
-            return new CertificationResponse.CertificationInfos(CertificationInfos);
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record CertificationInfo(
+    public record Info(
             Long certificationId,
             String name,
             String issuer,
             String category
     ) {
-        public static CertificationResponse.CertificationInfo of(Long certificationId, String name, String issuer, String category) {
-            return new CertificationResponse.CertificationInfo(certificationId, name, issuer, category);
+        public static Info of(Long certificationId, String name, String issuer, String category) {
+            return new Info(certificationId, name, issuer, category);
         }
     }
 }

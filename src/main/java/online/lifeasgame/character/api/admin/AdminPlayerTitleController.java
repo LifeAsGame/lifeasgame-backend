@@ -23,14 +23,14 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
 
     @Override
     @PostMapping("/{playerId}/titles/{titleId}")
-    public ResponseEntity<ApiResponse<AdminPlayerTitleResponse.GrantedTitle>> grantTitle(
+    public ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Granted>> grantTitle(
             @PathVariable Long playerId,
             @PathVariable Long titleId
     ) {
-        PlayerTitleResult.GrantedTitle grantedTitle = adminPlayerTitleService.grantTitle(playerId, titleId);
+        PlayerTitleResult.Granted granted = adminPlayerTitleService.grantTitle(playerId, titleId);
 
         return ApiResponses.ok(
-                AdminPlayerTitleWebMapper.toGrantedTitle(grantedTitle)
+                AdminPlayerTitleWebMapper.toGrantedTitle(granted)
         );
     }
 }

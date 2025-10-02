@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.CertificationService;
-import online.lifeasgame.character.application.result.CertificationResult.CertificationInfo;
+import online.lifeasgame.character.application.result.CertificationResult.Info;
 import online.lifeasgame.character.api.player.mapper.CertificationWebMapper;
 import online.lifeasgame.character.api.player.response.CertificationResponse;
 import online.lifeasgame.character.api.player.spec.CertificationApiSpecV1;
@@ -24,12 +24,12 @@ public class CertificationController implements CertificationApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<CertificationResponse.CertificationInfos>> certificationInfos(
+    public ResponseEntity<ApiResponse<CertificationResponse.Infos>> certificationInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<CertificationInfo> CertificationInfos = CertificationService.getCertifications(categories);
+        List<Info> infos = CertificationService.getCertifications(categories);
         return ApiResponses.ok(
-                CertificationWebMapper.toCertificationInfos(CertificationInfos)
+                CertificationWebMapper.toCertificationInfos(infos)
         );
     }
 }

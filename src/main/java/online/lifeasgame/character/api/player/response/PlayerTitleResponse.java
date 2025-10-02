@@ -8,13 +8,13 @@ public class PlayerTitleResponse {
     private PlayerTitleResponse() {
     }
 
-    public record PlayerTitleInfos(List<PlayerTitleInfo> playerTitleInfos) {
-        public static PlayerTitleInfos of(List<PlayerTitleInfo> playerTitleInfos) {
-            return new PlayerTitleInfos(playerTitleInfos);
+    public record Infos(List<Info> infos) {
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record PlayerTitleInfo(
+    public record Info(
             Long titleId,
             String code,
             String name,
@@ -22,7 +22,7 @@ public class PlayerTitleResponse {
             String descMd,
             Instant acquiredAt
     ) {
-        public static PlayerTitleInfo of(
+        public static Info of(
                 Long titleId,
                 String code,
                 String name,
@@ -30,7 +30,7 @@ public class PlayerTitleResponse {
                 String descMd,
                 Instant acquiredAt
         ) {
-            return new PlayerTitleInfo(titleId, code, name, category, descMd, acquiredAt);
+            return new Info(titleId, code, name, category, descMd, acquiredAt);
         }
     }
 }

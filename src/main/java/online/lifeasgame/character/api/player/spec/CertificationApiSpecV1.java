@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface CertificationApiSpecV1 {
 
     @Operation(summary = "Certification 목록 조회", description = "Certification 목록 조회: category 설정 가능")
-    ResponseEntity<ApiResponse<CertificationResponse.CertificationInfos>> certificationInfos(
+    ResponseEntity<ApiResponse<CertificationResponse.Infos>> certificationInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     );
 }

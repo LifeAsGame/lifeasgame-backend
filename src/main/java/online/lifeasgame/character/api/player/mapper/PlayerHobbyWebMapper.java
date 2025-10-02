@@ -10,12 +10,12 @@ public class PlayerHobbyWebMapper {
 
     private PlayerHobbyWebMapper() {}
 
-    public static PlayerHobbyResponse.PlayerHobbyInfos toPlayerHobbyInfos(List<PlayerHobbyResult.PlayerHobbyInfo> playerHobbyInfos) {
-        return PlayerHobbyResponse.PlayerHobbyInfos.of(
-                playerHobbyInfos.stream()
+    public static PlayerHobbyResponse.Infos toPlayerHobbyInfos(List<PlayerHobbyResult.Info> infos) {
+        return PlayerHobbyResponse.Infos.of(
+                infos.stream()
                         .map(
                                 playerHobbyInfo ->
-                                        PlayerHobbyResponse.PlayerHobbyInfo.of(
+                                        PlayerHobbyResponse.Info.of(
                                                 playerHobbyInfo.hobbyId(),
                                                 playerHobbyInfo.name(),
                                                 playerHobbyInfo.category(),
@@ -31,11 +31,11 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyCommand.ChangePlayerHobby toCommand(
+    public static PlayerHobbyCommand.Change toCommand(
             Long hobbyId,
-            PlayerHobbyRequest.ChangePlayerHobby request
+            PlayerHobbyRequest.Change request
     ) {
-        return PlayerHobbyCommand.ChangePlayerHobby.of(
+        return PlayerHobbyCommand.Change.of(
                 hobbyId,
                 request.customName(),
                 request.detail(),
@@ -45,11 +45,11 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyCommand.CreatePlayerHobby toCommand(
+    public static PlayerHobbyCommand.Create toCommand(
             Long hobbyId,
-            PlayerHobbyRequest.CreatePlayerHobby request
+            PlayerHobbyRequest.Create request
     ) {
-        return PlayerHobbyCommand.CreatePlayerHobby.of(
+        return PlayerHobbyCommand.Create.of(
                 hobbyId,
                 request.customName(),
                 request.detail(),
@@ -59,10 +59,10 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyResponse.CreatedPlayerHobby toCreatedPlayerHobby(
-            PlayerHobbyResult.CreatedPlayerHobby result
+    public static PlayerHobbyResponse.Created toCreatedPlayerHobby(
+            PlayerHobbyResult.Created result
     ) {
-        return PlayerHobbyResponse.CreatedPlayerHobby.of(
+        return PlayerHobbyResponse.Created.of(
                 result.hobbyId(),
                 result.customName(),
                 result.detail(),
@@ -73,10 +73,10 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyResponse.ChangedPlayerHobby toChangedPlayerHobby(
-            PlayerHobbyResult.ChangedPlayerHobby result
+    public static PlayerHobbyResponse.Changed toChangedPlayerHobby(
+            PlayerHobbyResult.Changed result
     ) {
-        return PlayerHobbyResponse.ChangedPlayerHobby.of(
+        return PlayerHobbyResponse.Changed.of(
                 result.hobbyId(),
                 result.customName(),
                 result.detail(),

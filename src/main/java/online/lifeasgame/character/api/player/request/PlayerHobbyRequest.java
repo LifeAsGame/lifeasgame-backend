@@ -7,39 +7,39 @@ public class PlayerHobbyRequest {
     private PlayerHobbyRequest() {
     }
 
-    public record CreatePlayerHobby(
+    public record Create(
             String customName,
             String detail,
             Integer proficiency,
             String status,
             LocalDate startedOn
     ) {
-        public static CreatePlayerHobby of(
+        public static Create of(
                 String customName,
                 String detail,
                 Integer proficiency,
                 String status,
                 LocalDate startedOn
         ) {
-            return new CreatePlayerHobby(customName, detail, proficiency, status, startedOn);
+            return new Create(customName, detail, proficiency, status, startedOn);
         }
     }
 
-    public record ChangePlayerHobby(
+    public record Change(
             String customName,
             String detail,
             Integer proficiency,
             String status,
             LocalDate startedOn
     ) {
-        public static ChangePlayerHobby of(
+        public static Change of(
                 String customName,
                 String detail,
                 Integer proficiency,
                 String status,
                 LocalDate startedOn
         ) {
-            return new ChangePlayerHobby(customName, detail, proficiency, status, startedOn);
+            return new Change(customName, detail, proficiency, status, startedOn);
         }
     }
 }

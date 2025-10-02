@@ -1,37 +1,38 @@
 package online.lifeasgame.character.api.player.response;
 
-import java.util.List;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
+
+import java.util.List;
 
 public class PlayerEquipmentResponse {
 
     private PlayerEquipmentResponse() {
     }
 
-    public record EquippedEquipment(Long slotId, Long itemInstanceId) {
-        public static EquippedEquipment of(PlayerEquipmentResult.EquippedEquipment equippedEquipment) {
-            return new EquippedEquipment(
-                    equippedEquipment.slotId(),
-                    equippedEquipment.itemInstanceId()
+    public record Equipped(Long slotId, Long itemInstanceId) {
+        public static Equipped of(PlayerEquipmentResult.Equipped equipped) {
+            return new Equipped(
+                    equipped.slotId(),
+                    equipped.itemInstanceId()
             );
         }
     }
 
-    public record PlayerEquipmentInfos(List<PlayerEquipmentResponse.PlayerEquipmentInfo> playerEquipmentInfos) {
-        public static PlayerEquipmentResponse.PlayerEquipmentInfos of(List<PlayerEquipmentResponse.PlayerEquipmentInfo> playerEquipmentInfos) {
-            return new PlayerEquipmentResponse.PlayerEquipmentInfos(playerEquipmentInfos);
+    public record Infos(List<Info> infos) {
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record PlayerEquipmentInfo(
+    public record Info(
             Long slotId,
             Long itemInstanceId
     ) {
-        public static PlayerEquipmentResponse.PlayerEquipmentInfo of(
+        public static Info of(
                 Long slotId,
                 Long itemInstanceId
         ) {
-            return new PlayerEquipmentResponse.PlayerEquipmentInfo(slotId, itemInstanceId);
+            return new Info(slotId, itemInstanceId);
         }
     }
 }

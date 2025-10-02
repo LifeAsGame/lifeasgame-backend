@@ -7,12 +7,12 @@ public class AdminHobbyRequest {
     private AdminHobbyRequest() {
     }
 
-    public record CreateHobby(
+    public record Create(
             @NotBlank String name,
             @NotBlank String category
     ) {
-        public static CreateHobby of(String name, String category) {
-            return new CreateHobby(name, category);
+        public static Create of(String name, String category) {
+            return new Create(name, category);
         }
     }
 }

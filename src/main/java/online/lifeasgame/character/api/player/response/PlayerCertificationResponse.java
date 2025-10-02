@@ -9,13 +9,13 @@ public class PlayerCertificationResponse {
     private PlayerCertificationResponse() {
     }
 
-    public record PlayerCertificationInfos(List<PlayerCertificationInfo> playerCertificationInfos) {
-        public static PlayerCertificationInfos of(List<PlayerCertificationInfo> playerCertificationInfos) {
-            return new PlayerCertificationInfos(playerCertificationInfos);
+    public record Infos(List<Info> infos) {
+        public static Infos of(List<Info> infos) {
+            return new Infos(infos);
         }
     }
 
-    public record PlayerCertificationInfo(
+    public record Info(
             Long certificationId,
             String name,
             String issuer,
@@ -24,7 +24,7 @@ public class PlayerCertificationResponse {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static PlayerCertificationInfo of(
+        public static Info of(
                 Long certificationId,
                 String name,
                 String issuer,
@@ -33,7 +33,7 @@ public class PlayerCertificationResponse {
                 LocalDate expiresDate,
                 Instant grantedAt
         ) {
-            return new PlayerCertificationInfo(
+            return new Info(
                     certificationId,
                     name,
                     issuer,
@@ -45,17 +45,17 @@ public class PlayerCertificationResponse {
         }
     }
 
-    public record ChangedPlayerCertification(
+    public record Changed(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static ChangedPlayerCertification of(
+        public static Changed of(
                 Long certificationId,
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new ChangedPlayerCertification(
+            return new Changed(
                     certificationId,
                     acquiredDate,
                     expiresDate
@@ -63,17 +63,17 @@ public class PlayerCertificationResponse {
         }
     }
 
-    public record CreatedPlayerCertification(
+    public record Created(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static CreatedPlayerCertification of(
+        public static Created of(
                 Long certificationId,
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new CreatedPlayerCertification(
+            return new Created(
                     certificationId,
                     acquiredDate,
                     expiresDate

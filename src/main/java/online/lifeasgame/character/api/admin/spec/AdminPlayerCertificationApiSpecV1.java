@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AdminPlayerCertificationApiSpecV1 {
 
     @Operation(summary = "Player Certification 지급", description = "Player에게 Certification를 지급합니다")
-    ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.GrantedCertification>> grantCertification(
+    ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Granted>> grantCertification(
             @PathVariable Long playerId,
             @PathVariable Long certificationId,
-            @Valid @RequestBody AdminPlayerCertificationRequest.GrantCertification request
+            @Valid @RequestBody AdminPlayerCertificationRequest.Grant request
     );
 }

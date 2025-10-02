@@ -7,17 +7,17 @@ import online.lifeasgame.character.application.result.HobbyResult;
 
 public class AdminHobbyWebMapper {
 
-    public static HobbyCommand.Create toCommand(AdminHobbyRequest.CreateHobby request) {
+    public static HobbyCommand.Create toCommand(AdminHobbyRequest.Create request) {
         return HobbyCommand.Create.of(
                 request.name(),
                 request.category()
         );
     }
 
-    public static AdminHobbyResponse.HobbyInfo toHobbyInfo(
-            HobbyResult.HobbyInfo result
+    public static AdminHobbyResponse.Info toHobbyInfo(
+            HobbyResult.Info result
     ) {
-        return AdminHobbyResponse.HobbyInfo.of(
+        return AdminHobbyResponse.Info.of(
                 result.hobbyId(),
                 result.name(),
                 result.category()

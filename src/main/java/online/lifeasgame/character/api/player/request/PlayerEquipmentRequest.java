@@ -5,11 +5,11 @@ public class PlayerEquipmentRequest {
     private PlayerEquipmentRequest() {
     }
 
-    public record EquipEquipment(
+    public record Equip(
             Long itemInstanceId
     ) {
-        public static EquipEquipment of(Long itemInstanceId) {
-            return new EquipEquipment(itemInstanceId);
+        public static Equip of(Long itemInstanceId) {
+            return new Equip(itemInstanceId);
         }
     }
 }

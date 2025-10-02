@@ -7,47 +7,47 @@ public class PlayerCertificationCommand {
     private PlayerCertificationCommand() {
     }
 
-    public record ChangePlayerCertification(
+    public record Change(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static ChangePlayerCertification of(
+        public static Change of(
                 Long certificationId,
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new ChangePlayerCertification(certificationId, acquiredDate, expiresDate);
+            return new Change(certificationId, acquiredDate, expiresDate);
         }
     }
 
-    public record CreatePlayerCertification(
+    public record Create(
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static CreatePlayerCertification of(
+        public static Create of(
                 Long certificationId,
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new CreatePlayerCertification(certificationId, acquiredDate, expiresDate);
+            return new Create(certificationId, acquiredDate, expiresDate);
         }
     }
 
-    public record GrantCertification(
+    public record Grant(
             Long playerId,
             Long certificationId,
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static GrantCertification of(
+        public static Grant of(
                 Long playerId,
                 Long certificationId,
                 LocalDate acquiredDate,
                 LocalDate expiresDate
         ) {
-            return new GrantCertification(playerId, certificationId, acquiredDate, expiresDate);
+            return new Grant(playerId, certificationId, acquiredDate, expiresDate);
         }
     }
 }

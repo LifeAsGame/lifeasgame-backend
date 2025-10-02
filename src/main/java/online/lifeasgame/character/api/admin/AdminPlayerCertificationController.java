@@ -22,17 +22,17 @@ public class AdminPlayerCertificationController implements AdminPlayerCertificat
 
     @Override
     @PostMapping("/{playerId}/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.GrantedCertification>> grantCertification(
+    public ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Granted>> grantCertification(
             @PathVariable Long playerId,
             @PathVariable Long certificationId,
-            @Valid @RequestBody AdminPlayerCertificationRequest.GrantCertification request
+            @Valid @RequestBody AdminPlayerCertificationRequest.Grant request
     ) {
-        PlayerCertificationResult.GrantedCertification grantedCertification = adminPlayerCertificationService.grantCertification(
+        PlayerCertificationResult.Granted granted = adminPlayerCertificationService.grantCertification(
                 AdminPlayerCertificationWebMapper.toCommand(playerId, certificationId, request)
         );
 
         return ApiResponses.ok(
-                AdminPlayerCertificationWebMapper.toGrantedCertification(grantedCertification)
+                AdminPlayerCertificationWebMapper.toGrantedCertification(granted)
         );
     }
 }

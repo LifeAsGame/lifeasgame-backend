@@ -9,10 +9,10 @@ public class AdminPlayerCertificationWebMapper {
 
     private AdminPlayerCertificationWebMapper() {}
 
-    public static AdminPlayerCertificationResponse.GrantedCertification toGrantedCertification(
-            PlayerCertificationResult.GrantedCertification result
+    public static AdminPlayerCertificationResponse.Granted toGrantedCertification(
+            PlayerCertificationResult.Granted result
     ) {
-        return AdminPlayerCertificationResponse.GrantedCertification.of(
+        return AdminPlayerCertificationResponse.Granted.of(
                 result.playerId(),
                 result.certificationId(),
                 result.name(),
@@ -24,12 +24,12 @@ public class AdminPlayerCertificationWebMapper {
         );
     }
 
-    public static PlayerCertificationCommand.GrantCertification toCommand(
+    public static PlayerCertificationCommand.Grant toCommand(
             Long playerId,
             Long certificationId,
-            AdminPlayerCertificationRequest.GrantCertification request
+            AdminPlayerCertificationRequest.Grant request
     ) {
-        return PlayerCertificationCommand.GrantCertification.of(
+        return PlayerCertificationCommand.Grant.of(
                 playerId,
                 certificationId,
                 request.acquiredDate(),

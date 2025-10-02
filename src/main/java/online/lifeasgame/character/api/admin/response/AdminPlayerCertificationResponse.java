@@ -8,7 +8,7 @@ public class AdminPlayerCertificationResponse {
     private AdminPlayerCertificationResponse() {
     }
 
-    public record GrantedCertification(
+    public record Granted(
             Long playerId,
             Long certificationId,
             String name,
@@ -18,7 +18,7 @@ public class AdminPlayerCertificationResponse {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static AdminPlayerCertificationResponse.GrantedCertification of(
+        public static Granted of(
                 Long playerId,
                 Long certificationId,
                 String name,
@@ -28,7 +28,7 @@ public class AdminPlayerCertificationResponse {
                 LocalDate expiresDate,
                 Instant grantedAt
         ) {
-            return new AdminPlayerCertificationResponse.GrantedCertification(
+            return new Granted(
                     playerId,
                     certificationId,
                     name,

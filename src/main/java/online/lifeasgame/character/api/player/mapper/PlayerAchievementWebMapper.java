@@ -8,12 +8,12 @@ public class PlayerAchievementWebMapper {
 
     private PlayerAchievementWebMapper() {}
 
-    public static PlayerAchievementResponse.PlayerAchievementInfos toPlayerAchievementInfos(List<PlayerAchievementResult.PlayerAchievementInfo> playerAchievementInfos) {
-        return PlayerAchievementResponse.PlayerAchievementInfos.of(
-                playerAchievementInfos.stream()
+    public static PlayerAchievementResponse.Infos toPlayerAchievementInfos(List<PlayerAchievementResult.Info> infos) {
+        return PlayerAchievementResponse.Infos.of(
+                infos.stream()
                         .map(
                                 playerAchievementInfo ->
-                                        PlayerAchievementResponse.PlayerAchievementInfo.of(
+                                        PlayerAchievementResponse.Info.of(
                                                 playerAchievementInfo.achievementId(),
                                                 playerAchievementInfo.code(),
                                                 playerAchievementInfo.name(),

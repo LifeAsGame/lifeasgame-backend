@@ -9,7 +9,7 @@ public class PlayerAchievementResult {
     private PlayerAchievementResult() {
     }
 
-    public record PlayerAchievementInfo(
+    public record Info(
             Long achievementId,
             String code,
             String name,
@@ -17,8 +17,8 @@ public class PlayerAchievementResult {
             String descMd,
             Instant acquiredAt
     ) {
-        public static PlayerAchievementInfo from(PlayerAchievementView v) {
-            return new PlayerAchievementInfo(
+        public static Info from(PlayerAchievementView v) {
+            return new Info(
                     v.getAchievementId(),
                     v.getCode(),
                     v.getName(),
@@ -29,7 +29,7 @@ public class PlayerAchievementResult {
         }
     }
 
-    public record GrantedAchievement(
+    public record Granted(
             Long playerId,
             Long achievementId,
             String code,
@@ -37,7 +37,7 @@ public class PlayerAchievementResult {
             String category,
             Instant acquiredAt
     ) {
-        public static GrantedAchievement of(
+        public static Granted of(
                 Long playerId,
                 Long achievementId,
                 String code,
@@ -45,7 +45,7 @@ public class PlayerAchievementResult {
                 String category,
                 Instant acquiredAt
         ) {
-            return new GrantedAchievement(
+            return new Granted(
                     playerId,
                     achievementId,
                     code,

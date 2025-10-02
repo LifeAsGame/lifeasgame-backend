@@ -8,12 +8,12 @@ public class AchievementWebMapper {
 
     private AchievementWebMapper() {}
 
-    public static AchievementResponse.AchievementInfos toAchievementInfos(List<AchievementResult.Info> infos) {
-        return AchievementResponse.AchievementInfos.of(
+    public static AchievementResponse.Infos toAchievementInfos(List<AchievementResult.Info> infos) {
+        return AchievementResponse.Infos.of(
                 infos.stream()
                         .map(
                                 achievementInfo ->
-                                        AchievementResponse.AchievementInfo.of(
+                                        AchievementResponse.Info.of(
                                                 achievementInfo.code(),
                                                 achievementInfo.name(),
                                                 achievementInfo.category(),

@@ -27,7 +27,7 @@ public class PlayerHobbyService {
     private final PlayerReader playerReader;
 
     @Transactional
-    public PlayerHobbyResult.GrantedHobby grantHobby(PlayerHobbyCommand.GrantHobby command) {
+    public PlayerHobbyResult.Granted grantHobby(PlayerHobbyCommand.Grant command) {
         if (playerReader.notExists(command.playerId())) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
         }
@@ -46,7 +46,7 @@ public class PlayerHobbyService {
                 )
         );
 
-        return PlayerHobbyResult.GrantedHobby.of(
+        return PlayerHobbyResult.Granted.of(
                 saved.getPlayerId(),
                 saved.getHobbyId(),
                 hobby.getName(),
@@ -60,17 +60,17 @@ public class PlayerHobbyService {
         );
     }
 
-    public List<PlayerHobbyResult.PlayerHobbyInfo> getPlayerHobbyInfos(Long playerId) {
+    public List<PlayerHobbyResult.Info> getPlayerHobbyInfos(Long playerId) {
         List<PlayerHobbyView> playerHobbyViews = playerHobbyReader.getPlayerHobbyInfos(playerId);
         return playerHobbyViews.stream()
-                .map(PlayerHobbyResult.PlayerHobbyInfo::from)
+                .map(PlayerHobbyResult.Info::from)
                 .toList();
     }
 
     @Transactional
-    public PlayerHobbyResult.CreatedPlayerHobby createPlayerHobby(
+    public PlayerHobbyResult.Created createPlayerHobby(
             Long playerId,
-            PlayerHobbyCommand.CreatePlayerHobby command
+            PlayerHobbyCommand.Create command
     ) {
         PlayerHobby playerHobby = playerHobbyWriter.createPlayerHobby(
                 PlayerHobby.create(
@@ -84,11 +84,11 @@ public class PlayerHobbyService {
                 )
         );
 
-        return PlayerHobbyResult.CreatedPlayerHobby.from(playerHobby);
+        return PlayerHobbyResult.Created.from(playerHobby);
     }
 
     @Transactional
-    public PlayerHobbyResult.ChangedPlayerHobby changePlayerHobby(Long playerId, PlayerHobbyCommand.ChangePlayerHobby command) {
+    public PlayerHobbyResult.Changed changePlayerHobby(Long playerId, PlayerHobbyCommand.Change command) {
         PlayerHobby playerHobby = playerHobbyWriter.changePlayerHobby(
                 playerId,
                 command.hobbyId(),
@@ -99,7 +99,7 @@ public class PlayerHobbyService {
                 command.startedOn()
         );
 
-        return PlayerHobbyResult.ChangedPlayerHobby.from(playerHobby);
+        return PlayerHobbyResult.Changed.from(playerHobby);
     }
 
     @Transactional

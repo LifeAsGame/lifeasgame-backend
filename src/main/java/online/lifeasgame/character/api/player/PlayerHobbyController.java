@@ -31,21 +31,21 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
     @Override
     @GetMapping("/hobbies")
-    public ResponseEntity<ApiResponse<PlayerHobbyResponse.PlayerHobbyInfos>> playerHobbyInfos() {
-        List<PlayerHobbyResult.PlayerHobbyInfo> playerHobbyInfos = playerHobbyFacade.getPlayerHobbyInfos();
+    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Infos>> playerHobbyInfos() {
+        List<PlayerHobbyResult.Info> infos = playerHobbyFacade.getPlayerHobbyInfos();
 
         return ApiResponses.ok(
-                PlayerHobbyWebMapper.toPlayerHobbyInfos(playerHobbyInfos)
+                PlayerHobbyWebMapper.toPlayerHobbyInfos(infos)
         );
     }
 
     @Override
     @PostMapping("/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<PlayerHobbyResponse.CreatedPlayerHobby>> createPlayerHobby(
+    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Created>> createPlayerHobby(
             @PathVariable Long hobbyId,
-            @Valid @RequestBody PlayerHobbyRequest.CreatePlayerHobby request
+            @Valid @RequestBody PlayerHobbyRequest.Create request
     ) {
-        PlayerHobbyResult.CreatedPlayerHobby hobbyInfo = playerHobbyFacade.createPlayerHobby(
+        PlayerHobbyResult.Created hobbyInfo = playerHobbyFacade.createPlayerHobby(
                 PlayerHobbyWebMapper.toCommand(hobbyId, request)
         );
         return ApiResponses.created(
@@ -56,13 +56,13 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
     @Override
     @PatchMapping("/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<PlayerHobbyResponse.ChangedPlayerHobby>> updatePlayerHobby(
+    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Changed>> updatePlayerHobby(
             @PathVariable Long hobbyId,
-            @Valid @RequestBody PlayerHobbyRequest.ChangePlayerHobby request
+            @Valid @RequestBody PlayerHobbyRequest.Change request
     ) {
-        PlayerHobbyResult.ChangedPlayerHobby changedPlayerHobby = playerHobbyFacade.changePlayerHobby(PlayerHobbyWebMapper.toCommand(hobbyId, request));
+        PlayerHobbyResult.Changed changed = playerHobbyFacade.changePlayerHobby(PlayerHobbyWebMapper.toCommand(hobbyId, request));
         return ApiResponses.ok(
-                PlayerHobbyWebMapper.toChangedPlayerHobby(changedPlayerHobby)
+                PlayerHobbyWebMapper.toChangedPlayerHobby(changed)
         );
     }
 

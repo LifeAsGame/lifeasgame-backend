@@ -17,13 +17,13 @@ public class CertificationService {
     private final CertificationReader certificationReader;
     private final CertificationWriter certificationWriter;
 
-    public List<CertificationResult.CertificationInfo> getCertifications(List<String> categories) {
+    public List<CertificationResult.Info> getCertifications(List<String> categories) {
         List<Certification> Certifications = certificationReader.getCertifications(CertificationCategory.parse(categories));
-        return CertificationResult.CertificationInfo.fromList(Certifications);
+        return CertificationResult.Info.fromList(Certifications);
     }
 
     @Transactional
-    public CertificationResult.CertificationInfo create(CertificationCommand.Create command) {
+    public CertificationResult.Info create(CertificationCommand.Create command) {
         Certification certification = certificationWriter.create(
                 Certification.of(
                         command.name(),
@@ -32,7 +32,7 @@ public class CertificationService {
                 )
         );
 
-        return CertificationResult.CertificationInfo.of(
+        return CertificationResult.Info.of(
                 certification.getId(),
                 certification.getName(),
                 certification.getIssuer(),

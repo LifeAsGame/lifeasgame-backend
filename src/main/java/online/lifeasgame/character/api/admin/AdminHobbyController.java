@@ -27,13 +27,13 @@ public class AdminHobbyController implements AdminHobbyApiSpecV1 {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<AdminHobbyResponse.HobbyInfo>> create(
-            @Valid @RequestBody AdminHobbyRequest.CreateHobby request
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> create(
+            @Valid @RequestBody AdminHobbyRequest.Create request
     ) {
-        HobbyResult.HobbyInfo hobbyInfo = adminHobbyService.create(AdminHobbyWebMapper.toCommand(request));
+        HobbyResult.Info info = adminHobbyService.create(AdminHobbyWebMapper.toCommand(request));
         return ApiResponses.created(
                 URI.create("/admin/v1/hobbies/"),
-                AdminHobbyWebMapper.toHobbyInfo(hobbyInfo)
+                AdminHobbyWebMapper.toHobbyInfo(info)
         );
     }
 }

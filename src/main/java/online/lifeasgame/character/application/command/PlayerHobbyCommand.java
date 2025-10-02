@@ -7,7 +7,7 @@ public class PlayerHobbyCommand {
     private PlayerHobbyCommand() {
     }
 
-    public record ChangePlayerHobby(
+    public record Change(
             Long hobbyId,
             String name,
             String detail,
@@ -15,7 +15,7 @@ public class PlayerHobbyCommand {
             String status,
             LocalDate startedOn
     ) {
-        public static ChangePlayerHobby of(
+        public static Change of(
                 Long hobbyId,
                 String name,
                 String detail,
@@ -23,11 +23,11 @@ public class PlayerHobbyCommand {
                 String status,
                 LocalDate startedOn
         ) {
-            return new ChangePlayerHobby(hobbyId, name, detail, proficiency, status, startedOn);
+            return new Change(hobbyId, name, detail, proficiency, status, startedOn);
         }
     }
 
-    public record CreatePlayerHobby(
+    public record Create(
             Long hobbyId,
             String name,
             String detail,
@@ -35,7 +35,7 @@ public class PlayerHobbyCommand {
             String status,
             LocalDate startedOn
     ) {
-        public static CreatePlayerHobby of(
+        public static Create of(
                 Long hobbyId,
                 String name,
                 String detail,
@@ -43,11 +43,11 @@ public class PlayerHobbyCommand {
                 String status,
                 LocalDate startedOn
         ) {
-            return new CreatePlayerHobby(hobbyId, name, detail, proficiency, status, startedOn);
+            return new Create(hobbyId, name, detail, proficiency, status, startedOn);
         }
     }
 
-    public record GrantHobby(
+    public record Grant(
             Long playerId,
             Long hobbyId,
             String customName,        // PlayerHobby.customName
@@ -56,7 +56,7 @@ public class PlayerHobbyCommand {
             String status,      // raw enum
             LocalDate startedOn
     ) {
-        public static GrantHobby of(
+        public static Grant of(
                 Long playerId,
                 Long hobbyId,
                 String customName,        // PlayerHobby.customName
@@ -65,7 +65,7 @@ public class PlayerHobbyCommand {
                 String status,      // raw enum
                 LocalDate startedOn
         ) {
-            return new GrantHobby(
+            return new Grant(
                     playerId,
                     hobbyId,
                     customName,

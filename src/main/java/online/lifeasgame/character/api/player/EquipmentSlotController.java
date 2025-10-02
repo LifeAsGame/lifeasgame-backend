@@ -24,13 +24,13 @@ public class EquipmentSlotController implements EquipmentSlotApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<EquipmentSlotResponse.EquipmentSlotInfos>> EquipmentSlotInfos(
+    public ResponseEntity<ApiResponse<EquipmentSlotResponse.Infos>> EquipmentSlotInfos(
             @RequestParam(name = "category", required = false) List<String> categories,
             @RequestParam(name = "role", required = false) List<String> roles
     ) {
-        List<EquipmentSlotResult.EquipmentSlotInfo> EquipmentSlotInfos = equipmentSlotService.getEquipmentSlots(categories, roles);
+        List<EquipmentSlotResult.Info> infos = equipmentSlotService.getEquipmentSlots(categories, roles);
         return ApiResponses.ok(
-                EquipmentSlotWebMapper.toEquipmentSlotInfos(EquipmentSlotInfos)
+                EquipmentSlotWebMapper.toEquipmentSlotInfos(infos)
         );
     }
 }

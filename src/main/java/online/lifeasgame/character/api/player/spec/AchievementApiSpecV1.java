@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface AchievementApiSpecV1 {
 
     @Operation(summary = "Achievement 목록 조회", description = "Achievement 목록 조회: category 설정 가능")
-    ResponseEntity<ApiResponse<AchievementResponse.AchievementInfos>> achievementInfos(
+    ResponseEntity<ApiResponse<AchievementResponse.Infos>> achievementInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     );
 }
