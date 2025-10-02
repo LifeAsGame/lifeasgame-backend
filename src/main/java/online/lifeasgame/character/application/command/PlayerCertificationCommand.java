@@ -2,7 +2,7 @@ package online.lifeasgame.character.application.command;
 
 import java.time.LocalDate;
 
-public class PlayerCertificationCommand {
+public final class PlayerCertificationCommand {
 
     private PlayerCertificationCommand() {
     }

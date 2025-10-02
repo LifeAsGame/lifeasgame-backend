@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class PlayerRequest {
+public final class PlayerRequest {
 
     private PlayerRequest() {
     }

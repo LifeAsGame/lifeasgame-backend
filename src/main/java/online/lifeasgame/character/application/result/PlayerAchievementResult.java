@@ -4,7 +4,7 @@ import online.lifeasgame.character.application.view.PlayerAchievementView;
 
 import java.time.Instant;
 
-public class PlayerAchievementResult {
+public final class PlayerAchievementResult {
 
     private PlayerAchievementResult() {
     }

@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player.response;
 import java.time.LocalDate;
 import java.util.List;
 
-public class PlayerHobbyResponse {
+public final class PlayerHobbyResponse {
 
     private PlayerHobbyResponse() {
     }

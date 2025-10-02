@@ -5,7 +5,7 @@ import online.lifeasgame.character.domain.Title;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TitleResult {
+public final class TitleResult {
 
     private TitleResult() {
     }

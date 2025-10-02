@@ -4,7 +4,7 @@ import online.lifeasgame.character.application.view.PlayerTitleView;
 
 import java.time.Instant;
 
-public class PlayerTitleResult {
+public final class PlayerTitleResult {
 
     private PlayerTitleResult() {
     }

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 
-public class AdminPlayerRequest {
+public final class AdminPlayerRequest {
 
     private AdminPlayerRequest() {
     }

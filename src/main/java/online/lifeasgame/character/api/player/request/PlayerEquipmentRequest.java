@@ -1,6 +1,6 @@
 package online.lifeasgame.character.api.player.request;
 
-public class PlayerEquipmentRequest {
+public final class PlayerEquipmentRequest {
 
     private PlayerEquipmentRequest() {
     }

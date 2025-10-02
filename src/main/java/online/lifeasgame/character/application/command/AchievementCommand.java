@@ -1,7 +1,7 @@
 package online.lifeasgame.character.application.command;
 
 
-public class AchievementCommand {
+public final class AchievementCommand {
 
     private AchievementCommand() {
     }

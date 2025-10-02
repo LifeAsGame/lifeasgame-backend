@@ -6,7 +6,7 @@ import online.lifeasgame.character.domain.PlayerCertification;
 import java.time.Instant;
 import java.time.LocalDate;
 
-public class PlayerCertificationResult {
+public final class PlayerCertificationResult {
 
     private PlayerCertificationResult() {
     }

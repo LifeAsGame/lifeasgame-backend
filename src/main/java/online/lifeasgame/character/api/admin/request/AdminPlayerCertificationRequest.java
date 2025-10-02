@@ -1,15 +1,15 @@
-    package online.lifeasgame.character.api.admin.request;
+package online.lifeasgame.character.api.admin.request;
 
-    import java.time.LocalDate;
+import java.time.LocalDate;
 
-    public class AdminPlayerCertificationRequest {
+public final class AdminPlayerCertificationRequest {
 
-        private AdminPlayerCertificationRequest() {
-        }
-
-        public record Grant(
-                LocalDate acquiredDate,
-                LocalDate expiresDate
-        ) {
-        }
+    private AdminPlayerCertificationRequest() {
     }
+
+    public record Grant(
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+    }
+}

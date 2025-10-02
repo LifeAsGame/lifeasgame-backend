@@ -4,7 +4,7 @@ import online.lifeasgame.character.domain.Achievement;
 
 import java.util.List;
 
-public class AchievementResult {
+public final class AchievementResult {
 
     private AchievementResult() {
     }

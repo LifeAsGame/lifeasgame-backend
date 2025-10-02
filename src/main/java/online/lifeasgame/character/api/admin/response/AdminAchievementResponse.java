@@ -1,6 +1,6 @@
 package online.lifeasgame.character.api.admin.response;
 
-public class AdminAchievementResponse {
+public final class AdminAchievementResponse {
 
     private AdminAchievementResponse() {
     }

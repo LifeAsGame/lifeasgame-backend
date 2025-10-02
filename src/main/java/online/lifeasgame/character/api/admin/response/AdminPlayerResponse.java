@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.admin.response;
 
 import java.util.List;
 
-public class AdminPlayerResponse {
+public final class AdminPlayerResponse {
 
     private AdminPlayerResponse() {
     }

@@ -1,7 +1,7 @@
 package online.lifeasgame.character.application.command;
 
 
-public class HobbyCommand {
+public final class HobbyCommand {
 
     private HobbyCommand() {
     }

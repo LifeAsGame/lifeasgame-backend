@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.admin.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class AdminHobbyRequest {
+public final class AdminHobbyRequest {
 
     private AdminHobbyRequest() {
     }

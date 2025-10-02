@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.admin.response;
 import java.time.Instant;
 import java.time.LocalDate;
 
-public class AdminPlayerCertificationResponse {
+public final class AdminPlayerCertificationResponse {
 
     private AdminPlayerCertificationResponse() {
     }

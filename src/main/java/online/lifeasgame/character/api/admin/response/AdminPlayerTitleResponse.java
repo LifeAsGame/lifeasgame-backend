@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.admin.response;
 
 import java.time.Instant;
 
-public class AdminPlayerTitleResponse {
+public final class AdminPlayerTitleResponse {
 
     private AdminPlayerTitleResponse() {
     }

@@ -1,6 +1,6 @@
 package online.lifeasgame.character.api.admin.response;
 
-public class AdminHobbyResponse {
+public final class AdminHobbyResponse {
 
     private AdminHobbyResponse() {
     }

@@ -2,7 +2,7 @@ package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.domain.PlayerEquipment;
 
-public class PlayerEquipmentResult {
+public final class PlayerEquipmentResult {
 
     private PlayerEquipmentResult() {
     }

@@ -1,6 +1,6 @@
 package online.lifeasgame.character.application.command;
 
-public class PlayerEquipmentCommand {
+public final class PlayerEquipmentCommand {
 
     private PlayerEquipmentCommand() {
     }

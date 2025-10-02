@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-public class PlayerCertificationResponse {
+public final class PlayerCertificationResponse {
 
     private PlayerCertificationResponse() {
     }

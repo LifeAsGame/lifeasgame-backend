@@ -1,6 +1,6 @@
 package online.lifeasgame.character.application.command;
 
-public class TitleCommand {
+public final class TitleCommand {
 
     private TitleCommand() {
     }

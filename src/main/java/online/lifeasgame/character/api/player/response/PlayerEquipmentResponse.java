@@ -4,7 +4,7 @@ import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 
 import java.util.List;
 
-public class PlayerEquipmentResponse {
+public final class PlayerEquipmentResponse {
 
     private PlayerEquipmentResponse() {
     }

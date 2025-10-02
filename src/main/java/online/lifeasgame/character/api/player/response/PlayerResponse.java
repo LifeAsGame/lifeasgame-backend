@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player.response;
 import java.util.List;
 import java.util.Map;
 
-public class PlayerResponse {
+public final class PlayerResponse {
 
     private PlayerResponse() {
     }

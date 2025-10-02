@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.admin.response;
 
 import java.time.LocalDate;
 
-public class AdminPlayerHobbyResponse {
+public final class AdminPlayerHobbyResponse {
 
     private AdminPlayerHobbyResponse() {
     }

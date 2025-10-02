@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.player.response;
 
 import java.util.List;
 
-public class CertificationResponse {
+public final class CertificationResponse {
 
     private CertificationResponse() {
     }

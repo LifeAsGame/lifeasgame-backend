@@ -4,7 +4,7 @@ import online.lifeasgame.character.domain.EquipmentSlot;
 
 import java.util.List;
 
-public class EquipmentSlotResult {
+public final class EquipmentSlotResult {
 
     private EquipmentSlotResult() {
     }

@@ -4,7 +4,7 @@ import online.lifeasgame.character.domain.Certification;
 
 import java.util.List;
 
-public class CertificationResult {
+public final class CertificationResult {
 
     private CertificationResult() {
     }

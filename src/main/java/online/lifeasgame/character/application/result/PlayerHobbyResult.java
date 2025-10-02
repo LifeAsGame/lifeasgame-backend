@@ -5,7 +5,7 @@ import online.lifeasgame.character.domain.PlayerHobby;
 
 import java.time.LocalDate;
 
-public class PlayerHobbyResult {
+public final class PlayerHobbyResult {
 
     private PlayerHobbyResult() {
     }

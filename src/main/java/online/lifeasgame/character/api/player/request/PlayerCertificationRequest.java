@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.player.request;
 
 import java.time.LocalDate;
 
-public class PlayerCertificationRequest {
+public final class PlayerCertificationRequest {
 
     private PlayerCertificationRequest() {
     }

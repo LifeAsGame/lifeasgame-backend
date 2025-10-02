@@ -2,7 +2,7 @@ package online.lifeasgame.character.api.player.response;
 
 import java.util.List;
 
-public class EquipmentSlotResponse {
+public final class EquipmentSlotResponse {
 
     private EquipmentSlotResponse() {
     }

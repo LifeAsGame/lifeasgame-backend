@@ -8,7 +8,7 @@ import online.lifeasgame.character.domain.StatusEffects;
 import java.util.List;
 import java.util.Map;
 
-public class PlayerResult {
+public final class PlayerResult {
 
     private PlayerResult() {
     }

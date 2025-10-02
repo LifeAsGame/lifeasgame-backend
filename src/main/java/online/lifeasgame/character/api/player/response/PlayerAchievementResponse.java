@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player.response;
 import java.time.Instant;
 import java.util.List;
 
-public class PlayerAchievementResponse {
+public final class PlayerAchievementResponse {
 
     private PlayerAchievementResponse() {
     }

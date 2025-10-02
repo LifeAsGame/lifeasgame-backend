@@ -1,7 +1,7 @@
 package online.lifeasgame.character.application.command;
 
 
-public class CertificationCommand {
+public final class CertificationCommand {
 
     private CertificationCommand() {
     }

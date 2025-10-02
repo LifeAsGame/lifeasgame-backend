@@ -4,7 +4,7 @@ import online.lifeasgame.character.domain.Hobby;
 
 import java.util.List;
 
-public class HobbyResult {
+public final class HobbyResult {
 
     private HobbyResult() {
     }
