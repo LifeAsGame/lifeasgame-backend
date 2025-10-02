@@ -1,8 +1,8 @@
 package online.lifeasgame.character.application.command;
 
-public class AdminTitleCommand {
+public class TitleCommand {
 
-    private AdminTitleCommand() {
+    private TitleCommand() {
     }
 
     public record CreateTitle(

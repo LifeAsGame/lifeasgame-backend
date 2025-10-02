@@ -1,7 +1,7 @@
 package online.lifeasgame.character.api.admin.mapper;
 
-import online.lifeasgame.character.application.result.AdminPlayerTitleResult;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
+import online.lifeasgame.character.application.result.PlayerTitleResult;
 
 public class AdminPlayerTitleWebMapper {
 
@@ -9,7 +9,7 @@ public class AdminPlayerTitleWebMapper {
     }
 
     public static AdminPlayerTitleResponse.GrantedTitle toGrantedTitle(
-            AdminPlayerTitleResult.GrantedTitle result
+            PlayerTitleResult.GrantedTitle result
     ) {
         return AdminPlayerTitleResponse.GrantedTitle.of(
                 result.playerId(),

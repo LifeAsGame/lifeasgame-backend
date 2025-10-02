@@ -2,12 +2,12 @@ package online.lifeasgame.character.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.AdminTitleService;
-import online.lifeasgame.character.application.result.AdminTitleResult;
 import online.lifeasgame.character.api.admin.mapper.AdminTitleWebMapper;
 import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
 import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
 import online.lifeasgame.character.api.admin.spec.AdminTitleApiSpecV1;
+import online.lifeasgame.character.application.TitleService;
+import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/titles")
 public class AdminTitleController implements AdminTitleApiSpecV1 {
 
-    private final AdminTitleService adminTitleService;
+    private final TitleService adminTitleService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<AdminTitleResponse.TitleInfo>> create(
             @Valid @RequestBody AdminTitleRequest.CreateTitle request
     ) {
-        AdminTitleResult.TitleInfo titleInfo = adminTitleService.create(AdminTitleWebMapper.toCommand(request));
+        TitleResult.TitleInfo titleInfo = adminTitleService.create(AdminTitleWebMapper.toCommand(request));
         return ApiResponses.ok(
                 AdminTitleWebMapper.toTitleInfo(titleInfo)
         );

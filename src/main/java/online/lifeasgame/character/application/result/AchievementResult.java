@@ -1,21 +1,22 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.Achievement;
+
+import java.util.List;
 
 public class AchievementResult {
 
     private AchievementResult() {
     }
 
-    public record AchievementInfo(
+    public record Info(
             String code,
             String name,
             String category,
             String descMd
     ) {
-        public static AchievementInfo from(Achievement achievement) {
-            return new AchievementInfo(
+        public static Info from(Achievement achievement) {
+            return new Info(
                     achievement.getCode(),
                     achievement.getName(),
                     achievement.getCategory().name(),
@@ -23,8 +24,12 @@ public class AchievementResult {
             );
         }
 
-        public static List<AchievementInfo> fromList(List<Achievement> achievements) {
-            return achievements.stream().map(AchievementResult.AchievementInfo::from).toList();
+        public static List<Info> fromList(List<Achievement> achievements) {
+            return achievements.stream().map(Info::from).toList();
+        }
+
+        public static AchievementResult.Info of(String code, String name, String category, String descMd) {
+            return new AchievementResult.Info(code, name, category, descMd);
         }
     }
 }

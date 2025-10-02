@@ -1,11 +1,11 @@
 package online.lifeasgame.character.api.admin;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.AdminPlayerAchievementService;
-import online.lifeasgame.character.application.result.AdminPlayerAchievementResult;
 import online.lifeasgame.character.api.admin.mapper.AdminPlayerAchievementWebMapper;
 import online.lifeasgame.character.api.admin.response.AdminPlayerAchievementResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerAchievementApiSpecV1;
+import online.lifeasgame.character.application.PlayerAchievementService;
+import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerAchievementController implements AdminPlayerAchievementApiSpecV1 {
 
-    private final AdminPlayerAchievementService adminPlayerAchievementService;
+    private final PlayerAchievementService adminPlayerAchievementService;
 
     @Override
     @PostMapping("/{playerId}/achievements/{achievementId}")
@@ -27,7 +27,7 @@ public class AdminPlayerAchievementController implements AdminPlayerAchievementA
             @PathVariable Long playerId,
             @PathVariable Long achievementId
     ) {
-        AdminPlayerAchievementResult.GrantedAchievement grantedAchievement = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
+        PlayerAchievementResult.GrantedAchievement grantedAchievement = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
 
         return ApiResponses.ok(
                 AdminPlayerAchievementWebMapper.toGrantedAchievement(grantedAchievement)

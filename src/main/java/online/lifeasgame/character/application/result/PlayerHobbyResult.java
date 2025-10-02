@@ -1,8 +1,9 @@
 package online.lifeasgame.character.application.result;
 
-import java.time.LocalDate;
 import online.lifeasgame.character.application.view.PlayerHobbyView;
 import online.lifeasgame.character.domain.PlayerHobby;
+
+import java.time.LocalDate;
 
 public class PlayerHobbyResult {
 
@@ -75,6 +76,45 @@ public class PlayerHobbyResult {
                     playerHobby.getStatus() != null ? playerHobby.getStatus().name() : null,
                     playerHobby.getStartedOn(),
                     playerHobby.getXp()
+            );
+        }
+    }
+
+    public record GrantedHobby(
+            Long playerId,
+            Long hobbyId,
+            String name,
+            String category,
+            String customName,
+            String detail,
+            int proficiency,
+            String status,
+            LocalDate startedOn,
+            long xp
+    ) {
+        public static GrantedHobby of(
+                Long playerId,
+                Long hobbyId,
+                String name,
+                String category,
+                String customName,
+                String detail,
+                int proficiency,
+                String status,
+                LocalDate startedOn,
+                long xp
+        ) {
+            return new GrantedHobby(
+                    playerId,
+                    hobbyId,
+                    name,
+                    category,
+                    customName,
+                    detail,
+                    proficiency,
+                    status,
+                    startedOn,
+                    xp
             );
         }
     }

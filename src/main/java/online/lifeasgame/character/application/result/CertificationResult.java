@@ -1,7 +1,8 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.Certification;
+
+import java.util.List;
 
 public class CertificationResult {
 
@@ -25,6 +26,10 @@ public class CertificationResult {
 
         public static List<CertificationInfo> fromList(List<Certification> Certifications) {
             return Certifications.stream().map(CertificationResult.CertificationInfo::from).toList();
+        }
+
+        public static CertificationInfo of(Long certificationId, String name, String issuer, String category) {
+            return new CertificationInfo(certificationId, name, issuer, category);
         }
     }
 }

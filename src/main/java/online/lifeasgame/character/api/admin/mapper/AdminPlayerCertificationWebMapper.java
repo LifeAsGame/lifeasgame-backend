@@ -1,16 +1,16 @@
 package online.lifeasgame.character.api.admin.mapper;
 
-import online.lifeasgame.character.application.command.AdminPlayerCertificationCommand;
-import online.lifeasgame.character.application.result.AdminPlayerCertificationResult;
 import online.lifeasgame.character.api.admin.request.AdminPlayerCertificationRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerCertificationResponse;
+import online.lifeasgame.character.application.command.PlayerCertificationCommand;
+import online.lifeasgame.character.application.result.PlayerCertificationResult;
 
 public class AdminPlayerCertificationWebMapper {
 
     private AdminPlayerCertificationWebMapper() {}
 
     public static AdminPlayerCertificationResponse.GrantedCertification toGrantedCertification(
-            AdminPlayerCertificationResult.GrantedCertification result
+            PlayerCertificationResult.GrantedCertification result
     ) {
         return AdminPlayerCertificationResponse.GrantedCertification.of(
                 result.playerId(),
@@ -24,12 +24,12 @@ public class AdminPlayerCertificationWebMapper {
         );
     }
 
-    public static AdminPlayerCertificationCommand.GrantCertification toCommand(
+    public static PlayerCertificationCommand.GrantCertification toCommand(
             Long playerId,
             Long certificationId,
             AdminPlayerCertificationRequest.GrantCertification request
     ) {
-        return AdminPlayerCertificationCommand.GrantCertification.of(
+        return PlayerCertificationCommand.GrantCertification.of(
                 playerId,
                 certificationId,
                 request.acquiredDate(),

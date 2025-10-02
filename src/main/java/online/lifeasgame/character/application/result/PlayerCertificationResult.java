@@ -1,9 +1,10 @@
 package online.lifeasgame.character.application.result;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import online.lifeasgame.character.application.view.PlayerCertificationView;
 import online.lifeasgame.character.domain.PlayerCertification;
+
+import java.time.Instant;
+import java.time.LocalDate;
 
 public class PlayerCertificationResult {
 
@@ -56,6 +57,39 @@ public class PlayerCertificationResult {
                     playerCertification.getCertificationId(),
                     playerCertification.getAcquiredDate(),
                     playerCertification.getExpiresDate()
+            );
+        }
+    }
+
+    public record GrantedCertification(
+            Long playerId,
+            Long certificationId,
+            String name,
+            String issuer,
+            String category,
+            LocalDate acquiredDate,
+            LocalDate expiresDate,
+            Instant grantedAt
+    ) {
+        public static GrantedCertification of(
+                Long playerId,
+                Long certificationId,
+                String name,
+                String issuer,
+                String category,
+                LocalDate acquiredDate,
+                LocalDate expiresDate,
+                Instant grantedAt
+        ) {
+            return new GrantedCertification(
+                    playerId,
+                    certificationId,
+                    name,
+                    issuer,
+                    category,
+                    acquiredDate,
+                    expiresDate,
+                    grantedAt
             );
         }
     }

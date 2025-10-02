@@ -8,9 +8,9 @@ public class AchievementWebMapper {
 
     private AchievementWebMapper() {}
 
-    public static AchievementResponse.AchievementInfos toAchievementInfos(List<AchievementResult.AchievementInfo> achievementInfos) {
+    public static AchievementResponse.AchievementInfos toAchievementInfos(List<AchievementResult.Info> infos) {
         return AchievementResponse.AchievementInfos.of(
-                achievementInfos.stream()
+                infos.stream()
                         .map(
                                 achievementInfo ->
                                         AchievementResponse.AchievementInfo.of(

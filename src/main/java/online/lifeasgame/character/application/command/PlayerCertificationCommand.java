@@ -34,4 +34,20 @@ public class PlayerCertificationCommand {
             return new CreatePlayerCertification(certificationId, acquiredDate, expiresDate);
         }
     }
+
+    public record GrantCertification(
+            Long playerId,
+            Long certificationId,
+            LocalDate acquiredDate,
+            LocalDate expiresDate
+    ) {
+        public static GrantCertification of(
+                Long playerId,
+                Long certificationId,
+                LocalDate acquiredDate,
+                LocalDate expiresDate
+        ) {
+            return new GrantCertification(playerId, certificationId, acquiredDate, expiresDate);
+        }
+    }
 }

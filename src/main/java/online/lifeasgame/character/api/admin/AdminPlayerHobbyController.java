@@ -2,27 +2,23 @@ package online.lifeasgame.character.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.AdminPlayerHobbyService;
-import online.lifeasgame.character.application.result.AdminPlayerHobbyResult;
 import online.lifeasgame.character.api.admin.mapper.AdminPlayerHobbyWebMapper;
 import online.lifeasgame.character.api.admin.request.AdminPlayerHobbyRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerHobbyResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerHobbyApiSpecV1;
+import online.lifeasgame.character.application.PlayerHobbyService;
+import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
 
-    private final AdminPlayerHobbyService adminPlayerHobbyService;
+    private final PlayerHobbyService adminPlayerHobbyService;
 
     @Override
     @PostMapping("/{playerId}/hobbies/{hobbyId}")
@@ -31,7 +27,7 @@ public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody AdminPlayerHobbyRequest.GrantHobby request
     ) {
-        AdminPlayerHobbyResult.GrantedHobby grantedHobby = adminPlayerHobbyService.grantHobby(
+        PlayerHobbyResult.GrantedHobby grantedHobby = adminPlayerHobbyService.grantHobby(
                 AdminPlayerHobbyWebMapper.toCommand(playerId, hobbyId, request)
         );
 

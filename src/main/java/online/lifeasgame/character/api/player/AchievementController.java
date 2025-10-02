@@ -3,7 +3,7 @@ package online.lifeasgame.character.api.player;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.AchievementService;
-import online.lifeasgame.character.application.result.AchievementResult.AchievementInfo;
+import online.lifeasgame.character.application.result.AchievementResult.Info;
 import online.lifeasgame.character.api.player.mapper.AchievementWebMapper;
 import online.lifeasgame.character.api.player.response.AchievementResponse;
 import online.lifeasgame.character.api.player.spec.AchievementApiSpecV1;
@@ -27,9 +27,9 @@ public class AchievementController implements AchievementApiSpecV1 {
     public ResponseEntity<ApiResponse<AchievementResponse.AchievementInfos>> achievementInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<AchievementInfo> achievementInfos = achievementService.getAchievements(categories);
+        List<Info> infos = achievementService.getAchievements(categories);
         return ApiResponses.ok(
-                AchievementWebMapper.toAchievementInfos(achievementInfos)
+                AchievementWebMapper.toAchievementInfos(infos)
         );
     }
 }

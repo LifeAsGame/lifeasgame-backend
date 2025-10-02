@@ -1,14 +1,14 @@
 package online.lifeasgame.character.api.admin.mapper;
 
-import online.lifeasgame.character.application.result.AdminPlayerAchievementResult;
 import online.lifeasgame.character.api.admin.response.AdminPlayerAchievementResponse;
+import online.lifeasgame.character.application.result.PlayerAchievementResult;
 
 public class AdminPlayerAchievementWebMapper {
 
     private AdminPlayerAchievementWebMapper() {}
 
     public static AdminPlayerAchievementResponse.GrantedAchievement toGrantedAchievement(
-            AdminPlayerAchievementResult.GrantedAchievement result
+            PlayerAchievementResult.GrantedAchievement result
     ) {
         return AdminPlayerAchievementResponse.GrantedAchievement.of(
                 result.playerId(),

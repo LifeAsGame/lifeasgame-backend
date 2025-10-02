@@ -1,11 +1,11 @@
 package online.lifeasgame.character.api.admin;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.AdminPlayerTitleService;
-import online.lifeasgame.character.application.result.AdminPlayerTitleResult;
 import online.lifeasgame.character.api.admin.mapper.AdminPlayerTitleWebMapper;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerTitleApiSpecV1;
+import online.lifeasgame.character.application.PlayerTitleService;
+import online.lifeasgame.character.application.result.PlayerTitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
 
-    private final AdminPlayerTitleService adminPlayerTitleService;
+    private final PlayerTitleService adminPlayerTitleService;
 
     @Override
     @PostMapping("/{playerId}/titles/{titleId}")
@@ -27,7 +27,7 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     ) {
-        AdminPlayerTitleResult.GrantedTitle grantedTitle = adminPlayerTitleService.grantTitle(playerId, titleId);
+        PlayerTitleResult.GrantedTitle grantedTitle = adminPlayerTitleService.grantTitle(playerId, titleId);
 
         return ApiResponses.ok(
                 AdminPlayerTitleWebMapper.toGrantedTitle(grantedTitle)

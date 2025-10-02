@@ -1,20 +1,43 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.command.AchievementCommand;
 import online.lifeasgame.character.application.result.AchievementResult;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AchievementService {
 
     private final AchievementReader achievementReader;
+    private final AchievementWriter achievementWriter;
 
-    public List<AchievementResult.AchievementInfo> getAchievements(List<String> categories) {
+    public List<AchievementResult.Info> getAchievements(List<String> categories) {
         List<Achievement> achievements = achievementReader.getAchievements(AchievementCategory.parse(categories));
-        return AchievementResult.AchievementInfo.fromList(achievements);
+        return AchievementResult.Info.fromList(achievements);
+    }
+
+    @Transactional
+    public AchievementResult.Info create(AchievementCommand.Create command) {
+        Achievement achievement = achievementWriter.create(
+                Achievement.of(
+                        command.code(),
+                        command.name(),
+                        AchievementCategory.parse(command.category()),
+                        command.descMd()
+                )
+        );
+
+        return AchievementResult.Info.of(
+                achievement.getCode(),
+                achievement.getName(),
+                achievement.getCategory().name(),
+                achievement.getDescMd()
+        );
     }
 }

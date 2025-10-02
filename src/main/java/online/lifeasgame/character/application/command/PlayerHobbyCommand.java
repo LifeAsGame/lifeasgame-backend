@@ -46,4 +46,34 @@ public class PlayerHobbyCommand {
             return new CreatePlayerHobby(hobbyId, name, detail, proficiency, status, startedOn);
         }
     }
+
+    public record GrantHobby(
+            Long playerId,
+            Long hobbyId,
+            String customName,        // PlayerHobby.customName
+            String detail,
+            Integer proficiency,
+            String status,      // raw enum
+            LocalDate startedOn
+    ) {
+        public static GrantHobby of(
+                Long playerId,
+                Long hobbyId,
+                String customName,        // PlayerHobby.customName
+                String detail,
+                Integer proficiency,
+                String status,      // raw enum
+                LocalDate startedOn
+        ) {
+            return new GrantHobby(
+                    playerId,
+                    hobbyId,
+                    customName,
+                    detail,
+                    proficiency,
+                    status,
+                    startedOn
+            );
+        }
+    }
 }

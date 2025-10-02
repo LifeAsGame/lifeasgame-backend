@@ -1,16 +1,16 @@
 package online.lifeasgame.character.api.admin.mapper;
 
-import online.lifeasgame.character.application.command.AdminPlayerCommand;
-import online.lifeasgame.character.application.result.AdminPlayerResult;
 import online.lifeasgame.character.api.admin.request.AdminPlayerRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerResponse;
+import online.lifeasgame.character.application.command.PlayerCommand;
+import online.lifeasgame.character.application.result.PlayerResult;
 
 public class AdminPlayerWebMapper {
 
     private AdminPlayerWebMapper() {
     }
 
-    public static AdminPlayerResponse.ExpGranted toExpGranted(AdminPlayerResult.ExpGranted result) {
+    public static AdminPlayerResponse.ExpGranted toExpGranted(PlayerResult.ExpGranted result) {
         return AdminPlayerResponse.ExpGranted.of(
                 result.playerId(),
                 result.requestedExp(),
@@ -25,24 +25,24 @@ public class AdminPlayerWebMapper {
         );
     }
 
-    public static AdminPlayerCommand.ChangeHp toCommand(Long playerId, AdminPlayerRequest.ChangeHp request) {
-        return AdminPlayerCommand.ChangeHp.of(playerId, request.hpDelta());
+    public static PlayerCommand.ChangeHp toCommand(Long playerId, AdminPlayerRequest.ChangeHp request) {
+        return PlayerCommand.ChangeHp.of(playerId, request.hpDelta());
     }
 
-    public static AdminPlayerCommand.ChangeHpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeHpCapacity request) {
-        return AdminPlayerCommand.ChangeHpCapacity.of(playerId, request.hpCapacityDelta());
+    public static PlayerCommand.ChangeHpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeHpCapacity request) {
+        return PlayerCommand.ChangeHpCapacity.of(playerId, request.hpCapacityDelta());
     }
 
-    public static AdminPlayerCommand.ChangeMp toCommand(Long playerId, AdminPlayerRequest.ChangeMp request) {
-        return AdminPlayerCommand.ChangeMp.of(playerId, request.mpDelta());
+    public static PlayerCommand.ChangeMp toCommand(Long playerId, AdminPlayerRequest.ChangeMp request) {
+        return PlayerCommand.ChangeMp.of(playerId, request.mpDelta());
     }
 
-    public static AdminPlayerCommand.ChangeMpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeMpCapacity request) {
-        return AdminPlayerCommand.ChangeMpCapacity.of(playerId, request.mpCapacityDelta());
+    public static PlayerCommand.ChangeMpCapacity toCommand(Long playerId, AdminPlayerRequest.ChangeMpCapacity request) {
+        return PlayerCommand.ChangeMpCapacity.of(playerId, request.mpCapacityDelta());
     }
 
-    public static AdminPlayerCommand.GrantCoreStats toCommand(Long playerId, AdminPlayerRequest.GrantCoreStats request) {
-        return new AdminPlayerCommand.GrantCoreStats(
+    public static PlayerCommand.GrantCoreStats toCommand(Long playerId, AdminPlayerRequest.GrantCoreStats request) {
+        return new PlayerCommand.GrantCoreStats(
                 playerId,
                 request.nStr(),
                 request.nAgi(),
@@ -53,39 +53,40 @@ public class AdminPlayerWebMapper {
         );
     }
 
-    public static AdminPlayerCommand.GrantStatusEffects toCommand(Long playerId,
-                                                                  AdminPlayerRequest.GrantStatusEffects request) {
-        return AdminPlayerCommand.GrantStatusEffects.of(
+    public static PlayerCommand.GrantStatusEffects toCommand(
+            Long playerId, AdminPlayerRequest.GrantStatusEffects request
+    ) {
+        return PlayerCommand.GrantStatusEffects.of(
                 playerId,
                 request.codes()
         );
     }
 
-    public static AdminPlayerResponse.CurrentHp toCurrentHp(AdminPlayerResult.CurrentHp result) {
+    public static AdminPlayerResponse.CurrentHp toCurrentHp(PlayerResult.CurrentHp result) {
         return AdminPlayerResponse.CurrentHp.of(
                 result.value()
         );
     }
 
-    public static AdminPlayerResponse.HpCapacity toHpCapacity(AdminPlayerResult.HpCapacity result) {
+    public static AdminPlayerResponse.HpCapacity toHpCapacity(PlayerResult.HpCapacity result) {
         return AdminPlayerResponse.HpCapacity.of(
                 result.cap()
         );
     }
 
-    public static AdminPlayerResponse.CurrentMp toCurrentMp(AdminPlayerResult.CurrentMp result) {
+    public static AdminPlayerResponse.CurrentMp toCurrentMp(PlayerResult.CurrentMp result) {
         return AdminPlayerResponse.CurrentMp.of(
                 result.value()
         );
     }
 
-    public static AdminPlayerResponse.MpCapacity toMpCapacity(AdminPlayerResult.MpCapacity result) {
+    public static AdminPlayerResponse.MpCapacity toMpCapacity(PlayerResult.MpCapacity result) {
         return AdminPlayerResponse.MpCapacity.of(
                 result.cap()
         );
     }
 
-    public static AdminPlayerResponse.CoreStatsGranted toCoreStatsGranted(AdminPlayerResult.CoreStatsGranted result) {
+    public static AdminPlayerResponse.CoreStatsGranted toCoreStatsGranted(PlayerResult.CoreStatsGranted result) {
         return AdminPlayerResponse.CoreStatsGranted.of(
                 result.playerId(),
                 result.str(),
@@ -98,7 +99,7 @@ public class AdminPlayerWebMapper {
     }
 
     public static AdminPlayerResponse.StatusEffectsGranted toStatusEffectsGranted(
-            AdminPlayerResult.StatusEffectsGranted result
+            PlayerResult.StatusEffectsGranted result
     ) {
         return AdminPlayerResponse.StatusEffectsGranted.of(
                 result.playerId(),
@@ -108,7 +109,7 @@ public class AdminPlayerWebMapper {
         );
     }
 
-    public static AdminPlayerResponse.UpdatedTitle toUpdatedTitle(AdminPlayerResult.UpdatedTitle updatedTitle) {
+    public static AdminPlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
         return AdminPlayerResponse.UpdatedTitle.of(
                 updatedTitle.titleId()
         );

@@ -1,7 +1,8 @@
 package online.lifeasgame.character.application.result;
 
-import java.util.List;
 import online.lifeasgame.character.domain.Hobby;
+
+import java.util.List;
 
 public class HobbyResult {
 
@@ -23,6 +24,10 @@ public class HobbyResult {
 
         public static List<HobbyInfo> fromList(List<Hobby> hobbies) {
             return hobbies.stream().map(HobbyResult.HobbyInfo::from).toList();
+        }
+
+        public static HobbyInfo of(Long hobbyId, String name, String category) {
+            return new HobbyInfo(hobbyId, name, category);
         }
     }
 }
