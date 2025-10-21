@@ -56,6 +56,13 @@ public final class Guard {
         return value;
     }
 
+    public static double inRange(double value, double min, double max, String name) {
+        if (min > max) throw new IllegalArgumentException("min must be <= max");
+        if (value < min || value > max)
+            throw new IllegalArgumentException(name + " must be between " + min + " and " + max);
+        return value;
+    }
+
     public static <E> E oneOf(E value, Set<E> allowed, String name) {
         notNull(value, name);
         notNull(allowed, name + " allowed set");
@@ -69,4 +76,10 @@ public final class Guard {
     }
 
     public static void check(boolean ok, String msg) { if (!ok) throw new IllegalStateException(msg); }
+
+    public static void hasText(String value, String msg) {
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException(msg);
+        }
+    }
 }
