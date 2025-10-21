@@ -1,6 +1,6 @@
 package online.lifeasgame.lifelog.domain;
 
 
-public enum CollectionCategory {
+public enum CollectionKind {
     FIGURE, CARD, BOOK, DIGITAL, THEME, ETC
 }

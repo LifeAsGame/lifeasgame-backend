@@ -1,36 +1,23 @@
 package online.lifeasgame.lifelog.domain;
 
 
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
-import online.lifeasgame.core.guard.Guard;
 
+
+@Getter
 @Entity
 @AggregateRoot
-@Table(
-        name = "collection_items",
-        indexes = @Index(name = "idx_collect_acquired", columnList = "player_id,acquired_at")
-)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(
+        name = "lifelog_collections", indexes = {
+        @Index(name = "idx_col_player", columnList = "player_id"), @Index(name = "idx_col_kind", columnList = "kind")
+}
+)
 public class CollectionItem extends AbstractTime {
 
     @Id
@@ -41,51 +28,71 @@ public class CollectionItem extends AbstractTime {
     private Long playerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private CollectionCategory category;
+    @Column(name = "kind", nullable = false, length = 20)
+    private CollectionKind kind;
 
-    @Column(length = 120, nullable = false)
+    @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Column(length = 200)
-    private String description;
+    @Column(name = "series", length = 200)
+    private String series; // e.g., set/series name for cards/figures
 
-    @Column(name = "acquired_at", nullable = false)
-    private Instant acquiredAt = Instant.now();
+    @Column(name = "owned", nullable = false)
+    private boolean owned; // quickly check if already owned
 
-    @Column(length = 80)
-    private String source;
+    @Column(name = "tags", length = 200)
+    private String tags; // simple CSV tags for quick search (alt: separate table later)
 
-    @Column(name = "image_url", length = 300)
-    private String imageUrl;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "collection_item_tags",
-            joinColumns = @JoinColumn(name = "collection_item_id"),
-            uniqueConstraints = @UniqueConstraint(name = "uq_collect_item_tag", columnNames = {"collection_item_id", "tag"})
-    )
-    private Set<Tag> tags = new HashSet<>();
-
-    private CollectionItem(Long playerId, CollectionCategory category, String name, Instant acquiredAt) {
-        this.playerId = Guard.notNull(playerId, "playerId");
-        this.category = Guard.notNull(category, "category");
-        Guard.notBlank(name, "name");
-        Guard.inRange(name.length(), 1, 120, "name");
+    protected CollectionItem(
+            Long playerId,
+            CollectionKind kind,
+            String name,
+            String series,
+            boolean owned,
+            String tags
+    ) {
+        this.playerId = playerId;
+        this.kind = kind;
         this.name = name;
-        this.acquiredAt = Guard.notNull(acquiredAt, "acquiredAt");
+        this.series = series;
+        this.owned = owned;
+        this.tags = tags;
     }
 
-    public static CollectionItem acquire(Long playerId, CollectionCategory category, String name, Instant acquiredAt) {
-        return new CollectionItem(playerId, category, name, acquiredAt == null ? Instant.now() : acquiredAt);
+    public static CollectionItem create(
+            Long playerId,
+            CollectionKind kind,
+            String name,
+            String series,
+            boolean owned,
+            String tags
+    ) {
+        if (playerId == null || playerId <= 0) {
+            throw new IllegalArgumentException("playerId invalid");
+        }
+
+        if (kind == null) {
+            throw new IllegalArgumentException("kind required");
+        }
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("name required");
+        }
+        return new CollectionItem(
+                playerId,
+                kind,
+                name.trim(),
+                (series == null ? null : series.trim()),
+                owned,
+                (tags == null ? null : tags.trim())
+        );
     }
 
-    public void describe(String description, String source, String imageUrl) {
-        this.description = (description == null) ? null : Guard.maxLength(description.strip(), 200, "description");
-        this.source = (source == null) ? null : Guard.maxLength(source.strip(), 80, "source");
-        this.imageUrl = (imageUrl == null) ? null : Guard.maxLength(imageUrl.strip(), 300, "imageUrl");
+    public void markOwned(boolean owned) {
+        this.owned = owned;
     }
 
-    public void addTag(String t) { this.tags.add(Tag.of(t)); }
-    public void removeTag(String t) { this.tags.remove(Tag.of(t)); }
+    public void retag(String tags) {
+        this.tags = (tags == null ? null : tags.trim());
+    }
 }
