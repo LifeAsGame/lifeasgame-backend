@@ -19,7 +19,7 @@ public class Title {
     private String original;
 
     private Title(String value, String original) {
-        Guard.hasText(value, "title");
+        Guard.notBlank(value, "title");
         this.value = value.trim();
         this.original = (original == null || original.isBlank()) ? null : original.trim();
     }
