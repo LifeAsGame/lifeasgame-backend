@@ -76,10 +76,4 @@ public final class Guard {
     }
 
     public static void check(boolean ok, String msg) { if (!ok) throw new IllegalStateException(msg); }
-
-    public static void hasText(String value, String msg) {
-        if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(msg);
-        }
-    }
 }
