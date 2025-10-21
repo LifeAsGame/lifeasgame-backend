@@ -1,0 +1,42 @@
+package online.lifeasgame.lifelog.api.player.spec;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import online.lifeasgame.lifelog.api.player.request.PlayerMediaLogRequest;
+import online.lifeasgame.lifelog.api.player.response.PlayerMediaLogResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+@Tag(name = "LifeLog Media API V1 (Player)")
+public interface PlayerMediaLogSpecV1 {
+
+    @Operation(summary = "미디어 로그 생성(플레이어)")
+    ResponseEntity<PlayerMediaLogResponse.Created> create(PlayerMediaLogRequest.Create request);
+
+    @Operation(summary = "평점 반영(플레이어)")
+    ResponseEntity<PlayerMediaLogResponse.Info> rate(Long mediaId, PlayerMediaLogRequest.Rate request);
+
+    @Operation(summary = "에피소드 진도 증가(플레이어)")
+    ResponseEntity<PlayerMediaLogResponse.Info> advance(Long mediaId, PlayerMediaLogRequest.Advance request);
+
+    @Operation(summary = "상태 변경(플레이어)")
+    ResponseEntity<PlayerMediaLogResponse.Info> markStatus(Long mediaId, PlayerMediaLogRequest.MarkStatus request);
+
+    @Operation(summary = "리와치(+1)(플레이어)")
+    ResponseEntity<PlayerMediaLogResponse.Info> rewatch(@PathVariable Long mediaId);
+
+    @Operation(summary = "최근 항목 조회(플레이어)")
+    ResponseEntity<List<PlayerMediaLogResponse.Info>> recent(Integer limit);
+
+    @Operation(summary = "검색(플레이어)")
+    ResponseEntity<List<PlayerMediaLogResponse.Info>> search(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false, name = "titleLike") String titleLike,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    );
+}
