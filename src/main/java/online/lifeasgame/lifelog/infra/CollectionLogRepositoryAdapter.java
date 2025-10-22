@@ -36,7 +36,7 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository, 
 
     @Override
     public List<CollectionLog> findByPlayer(Long playerId, int limit) {
-        return jpa.findByPlayerIdOrderByIdDesc(playerId, PageRequest.of(0, limit));
+        return jpa.findRecentWithTags(playerId, PageRequest.of(0, limit));
     }
 
     @Override
@@ -47,12 +47,16 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository, 
             int page,
             int size
     ) {
-        Page<CollectionLog> pr = jpa.search(
+        Page<Long> idPage = jpa.searchIds(
                 playerId,
                 category,
                 titleLike,
-                PageRequest.of(page, size, Sort.by("id").descending())
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"))
         );
-        return pr.getContent();
+        if (idPage.isEmpty()) return List.of();
+
+        // 2) fetch join by ids
+        List<Long> ids = idPage.getContent();
+        return jpa.findAllWithTagsByIdIn(ids);
     }
 }

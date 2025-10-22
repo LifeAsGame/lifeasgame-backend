@@ -43,7 +43,9 @@ public class CollectionLogService {
     }
 
     public List<CollectionResult.Info> recent(Long playerId, int limit) {
-        return collectionLogReader.recent(playerId, limit).stream().map(CollectionResult.Info::from).toList();
+        return collectionLogReader.recent(playerId, limit).stream()
+                .map(CollectionResult.Info::from)
+                .toList();
     }
 
     public List<CollectionResult.Info> search(Long playerId, CollectionCommand.Search command) {
