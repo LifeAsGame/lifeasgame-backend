@@ -1,6 +1,8 @@
 package online.lifeasgame.lifelog.api.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminExerciseWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
@@ -51,7 +53,7 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
     @Override
     public ResponseEntity<List<AdminExerciseResponse.Info>> recent(
             @PathVariable Long playerId,
-            @RequestParam(defaultValue = "20") Integer limit
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
         List<ExerciseResult.Info> infos = exerciseLogService.recent(playerId, limit);
         return ResponseEntity.ok(AdminExerciseWebMapper.toResponseList(infos));

@@ -74,7 +74,7 @@ public class ExerciseLog extends AbstractTime {
 
     // 변경감지 행위
     public void changeMetrics(ExerciseMetrics metrics) {
-        this.metrics = metrics;
+        this.metrics = Guard.notNull(metrics, "metrics");
     }
 
     public void changeMemo(String memo) {
@@ -82,6 +82,6 @@ public class ExerciseLog extends AbstractTime {
     }
 
     public void changeExercisedOn(LocalDate when) {
-        this.exercisedOn = when;
+        this.exercisedOn = Guard.notNull(when, "when");
     }
 }

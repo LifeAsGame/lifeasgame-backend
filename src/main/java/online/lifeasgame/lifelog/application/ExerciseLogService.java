@@ -29,9 +29,10 @@ public class ExerciseLogService {
 
     @Transactional
     public ExerciseResult.Info update(Long playerId, Long exerciseId, ExerciseCommand.Update command) {
-        ExerciseLog exerciseLog = exerciseLogReader.get(exerciseId, playerId);
+        ExerciseLog exerciseLog = exerciseLogReader.getExerciseLog(exerciseId, playerId);
         exerciseLogWriter.update(
-                exerciseLog, new ExerciseSpec.Create(
+                exerciseLog,
+                new ExerciseSpec.Create(
                         playerId,
                         ExerciseCategory.parse(command.category() == null ? exerciseLog.getCategory().name() : command.category()),
                         ExerciseMetrics.of(
@@ -44,7 +45,7 @@ public class ExerciseLogService {
                 )
         );
 
-        return ExerciseResult.Info.from(exerciseLog);
+        return ExerciseResult.Info.from(exerciseLogReader.getExerciseLog(exerciseId, playerId));
     }
 
     public List<ExerciseResult.Info> recent(Long playerId, int limit) {

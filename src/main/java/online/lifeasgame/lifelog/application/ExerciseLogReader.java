@@ -20,7 +20,7 @@ public class ExerciseLogReader {
     private final ExerciseLogRepository exerciseLogRepository;
     private final ExerciseLogQueryRepository exerciseLogQueryRepository;
 
-    public ExerciseLog get(Long id, Long playerId) {
+    public ExerciseLog getExerciseLog(Long id, Long playerId) {
         return exerciseLogRepository.findByIdAndPlayerId(id, playerId)
                 .orElseThrow(() -> new IllegalArgumentException("EXERCISE_NOT_FOUND"));
     }
