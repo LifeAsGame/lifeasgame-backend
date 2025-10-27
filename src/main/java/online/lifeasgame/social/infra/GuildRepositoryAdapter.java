@@ -56,6 +56,7 @@ public class GuildRepositoryAdapter implements GuildRepository, GuildQueryReposi
 
     @Override
     public List<Guild> recent(int limit) {
-        return guildJpaRepository.findRecentWithTags(PageRequest.of(0, Math.min(Math.max(limit, 1), 100)));
+        List<Long> ids = guildJpaRepository.findRecent(limit);
+        return guildJpaRepository.findRecentWithTags(ids);
     }
 }

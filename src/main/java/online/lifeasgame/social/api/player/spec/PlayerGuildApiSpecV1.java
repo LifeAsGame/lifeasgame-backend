@@ -133,6 +133,11 @@ public interface PlayerGuildApiSpecV1 {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
+    @Operation(summary = "길드 상세 조회")
+    ResponseEntity<ApiResponse<PlayerGuildResponse.Summary>> getGuildInfo(
+            @PathVariable Long guildId
+    );
+
     @Operation(summary = "길드 검색")
     ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,

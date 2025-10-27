@@ -26,21 +26,23 @@ public class GuildReader {
                 .orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 
-    public Guild getOwned(Long guildId, Long playerId) {
-        return guildRepository.findByIdAndPlayerId(
-                guildId,
-                playerId
-        ).orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
+    public Guild getOwned(Long playerId, Long id) {
+        return guildRepository.findByIdAndPlayerId(id, playerId)
+                .orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 
     public List<Guild> search(String keyword, String visibility, int page, int size) {
-        GuildVisibility vis = (visibility == null || visibility.isBlank()) ? null : GuildVisibility.valueOf(visibility);
+        GuildVisibility vis = parseVisibility(visibility);
         return guildQueryRepository.search(keyword, vis, page, size);
     }
 
     public long countSearch(String keyword, String visibility) {
-        GuildVisibility vis = (visibility == null || visibility.isBlank()) ? null : GuildVisibility.valueOf(visibility);
+        GuildVisibility vis = parseVisibility(visibility);
         return guildQueryRepository.countSearch(keyword, vis);
+    }
+
+    private GuildVisibility parseVisibility(String visibility) {
+        return (visibility == null || visibility.isBlank()) ? null : GuildVisibility.valueOf(visibility);
     }
 
     public List<Guild> recent(int limit) {

@@ -11,11 +11,19 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity(name = "GuildMember")
-@Table(name = "guild_members",
+@Table(
+        name = "guild_members",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_guild_member_guild_player",
+                        columnNames = {"guild_id", "player_id"}
+                )
+        },
         indexes = {
                 @Index(name = "idx_guild_member_guild", columnList = "guild_id"),
                 @Index(name = "idx_guild_member_player", columnList = "player_id")
-        })
+        }
+)
 public class GuildMember extends AbstractTime {
 
     @Id

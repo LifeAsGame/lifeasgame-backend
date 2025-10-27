@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.time.LocalDateTime;
@@ -48,6 +49,10 @@ public class GuildWaitMember extends AbstractTime {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     public static GuildWaitMember joinRequest(Guild guild, Long playerId, String message) {
         GuildWaitMember w = new GuildWaitMember();
         w.guild = guild;
@@ -72,14 +77,21 @@ public class GuildWaitMember extends AbstractTime {
     }
 
     public void approve() {
+        Guard.checkState(this.status == GuildWaitStatus.PENDING, "not pending");
         this.status = GuildWaitStatus.APPROVED;
     }
 
     public void reject() {
+        Guard.checkState(this.status == GuildWaitStatus.PENDING, "not pending");
         this.status = GuildWaitStatus.REJECTED;
     }
 
     public void cancel() {
+        Guard.checkState(this.status == GuildWaitStatus.PENDING, "not pending");
         this.status = GuildWaitStatus.CANCELLED;
+    }
+
+    public boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
     }
 }

@@ -18,6 +18,12 @@ import java.util.List;
 @Tag(name = "Social Guild API V1 (Admin)")
 public interface AdminGuildApiSpecV1 {
 
+    @Operation(summary = "길드 단건 조회 (Admin)")
+    ResponseEntity<ApiResponse<AdminGuildResponse.Summary>> getGuildInfo(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    );
+
     // 조회
     @Operation(summary = "길드 검색 (Admin)")
     ResponseEntity<ApiResponse<AdminGuildResponse.Page<AdminGuildResponse.Summary>>> search(

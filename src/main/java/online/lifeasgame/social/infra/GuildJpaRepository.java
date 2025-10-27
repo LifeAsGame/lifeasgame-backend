@@ -2,6 +2,7 @@ package online.lifeasgame.social.infra;
 
 import online.lifeasgame.social.domain.Guild;
 import online.lifeasgame.social.domain.GuildVisibility;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,9 +49,21 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
                         select distinct g
                         from Guild g
                         left join fetch g.tags t
-                        order by g.id desc
+                        where g.id in :ids
                     """
     )
-    List<Guild> findRecentWithTags(Pageable pageable);
-}
+    List<Guild> findRecentWithTags(List<Long> ids);
 
+    List<Guild> findById(Long id, Limit limit);
+
+    @Query(
+            value = """
+                SELECT g.id
+                FROM Guild g
+                ORDER BY g.createdAt
+                LIMIT :limits
+            """
+            , nativeQuery = true
+    )
+    List<Long> findRecent(@Param("limits") Integer limits);
+}

@@ -29,126 +29,126 @@ public class GuildService {
     }
 
     @Transactional
-    public GuildResult.Info rename(Long playerId, Long guildId, GuildCommand.Rename c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info rename(Long playerId, Long id, GuildCommand.Rename c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.rename(g, c));
     }
 
     @Transactional
-    public GuildResult.Info changePolicy(Long playerId, Long guildId, GuildCommand.ChangePolicy c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info changePolicy(Long playerId, Long id, GuildCommand.ChangePolicy c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.changePolicy(g, c));
     }
 
     @Transactional
-    public GuildResult.Info changeDescription(Long playerId, Long guildId, GuildCommand.ChangeDescription c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info changeDescription(Long playerId, Long id, GuildCommand.ChangeDescription c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.changeDescription(g, c));
     }
 
     @Transactional
-    public GuildResult.Info changeEmblem(Long playerId, Long guildId, GuildCommand.ChangeEmblem c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info changeEmblem(Long playerId, Long id, GuildCommand.ChangeEmblem c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.changeEmblem(g, c));
     }
 
     @Transactional
-    public GuildResult.Info addTag(Long playerId, Long guildId, GuildCommand.TagOp c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info addTag(Long playerId, Long id, GuildCommand.TagOp c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.addTag(g, c));
     }
 
     @Transactional
-    public GuildResult.Info removeTag(Long playerId, Long guildId, GuildCommand.TagOp c) {
-        Guild g = guildReader.getOwned(guildId, playerId);
+    public GuildResult.Info removeTag(Long playerId, Long id, GuildCommand.TagOp c) {
+        Guild g = guildReader.getOwned(playerId, id);
         return GuildResult.Info.from(guildWriter.removeTag(g, c));
     }
 
     // 가입/권한
     @Transactional
-    public void requestJoin(Long playerId, Long guildId, GuildCommand.RequestJoin c) {
-        Guild g = guildReader.get(guildId);
+    public void requestJoin(Long playerId, Long id, GuildCommand.RequestJoin c) {
+        Guild g = guildReader.get(id);
         guildWriter.requestJoin(g, playerId, c);
     }
 
     @Transactional
-    public void approveJoin(Long playerId, Long guildId, GuildCommand.Approve c) {
-        Guild g = guildReader.get(guildId);
+    public void approveJoin(Long playerId, Long id, GuildCommand.Approve c) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.approveJoin(g, c);
     }
 
     @Transactional
-    public void rejectJoin(Long playerId, Long guildId, GuildCommand.Reject c) {
-        Guild g = guildReader.get(guildId);
+    public void rejectJoin(Long playerId, Long id, GuildCommand.Reject c) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.rejectJoin(g, c);
     }
 
     @Transactional
-    public void cancelJoin(Long playerId, Long guildId) {
-        Guild g = guildReader.get(guildId);
+    public void cancelJoin(Long playerId, Long id) {
+        Guild g = guildReader.get(id);
         guildWriter.cancelJoin(g, playerId);
     }
 
     @Transactional
-    public void transferLeader(Long playerId, Long guildId, GuildCommand.TransferLeader c) {
-        Guild g = guildReader.get(guildId);
+    public void transferLeader(Long playerId, Long id, GuildCommand.TransferLeader c) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.transferLeader(g, c);
     }
 
     @Transactional
-    public void kick(Long playerId, Long guildId, GuildCommand.Kick c) {
-        Guild g = guildReader.get(guildId);
+    public void kick(Long playerId, Long id, GuildCommand.Kick c) {
+        Guild g = guildReader.get(id);
         ensureLeaderOrOfficer(g, playerId);
         guildWriter.kick(g, c);
     }
 
     @Transactional
-    public void promote(Long playerId, Long guildId, GuildCommand.Promote c) {
-        Guild g = guildReader.get(guildId);
+    public void promote(Long playerId, Long id, GuildCommand.Promote c) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.promote(g, c);
     }
 
     @Transactional
-    public void demote(Long playerId, Long guildId, GuildCommand.Demote c) {
-        Guild g = guildReader.get(guildId);
+    public void demote(Long playerId, Long id, GuildCommand.Demote c) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.demote(g, c);
     }
 
     @Transactional
-    public void leave(Long playerId, Long guildId) {
-        Guild g = guildReader.get(guildId);
+    public void leave(Long playerId, Long id) {
+        Guild g = guildReader.get(id);
         guildWriter.leave(g, playerId);
     }
 
     @Transactional
-    public void disbandByLeader(Long playerId, Long guildId) {
-        Guild g = guildReader.get(guildId);
+    public void disbandByLeader(Long playerId, Long id) {
+        Guild g = guildReader.get(id);
         ensureLeader(g, playerId);
         guildWriter.disbandByLeader(g, playerId);
     }
 
     // 초대
     @Transactional
-    public void invite(Long playerId, Long guildId, GuildCommand.Invite c) {
-        Guild g = guildReader.get(guildId);
+    public void invite(Long playerId, Long id, GuildCommand.Invite c) {
+        Guild g = guildReader.get(id);
         ensureLeaderOrOfficer(g, playerId);
         guildWriter.invite(g, playerId, c);
     }
 
     @Transactional
-    public void acceptInvitation(Long playerId, Long guildId) {
-        Guild g = guildReader.get(guildId);
+    public void acceptInvitation(Long playerId, Long id) {
+        Guild g = guildReader.get(id);
         guildWriter.acceptInvitation(g, playerId);
     }
 
     @Transactional
-    public void declineInvitation(Long playerId, Long guildId) {
-        Guild g = guildReader.get(guildId);
+    public void declineInvitation(Long playerId, Long id) {
+        Guild g = guildReader.get(id);
         guildWriter.declineInvitation(g, playerId);
     }
 
@@ -163,8 +163,8 @@ public class GuildService {
         return guildReader.recent(limit).stream().map(GuildResult.Summary::from).toList();
     }
 
-    public GuildResult.Summary getGuild(Long playerId, Long guildId) {
-        Guild guild = guildReader.getGuild(playerId, guildId);
+    public GuildResult.Summary getGuild(Long playerId, Long id) {
+        Guild guild = guildReader.getGuild(playerId, id);
         return GuildResult.Summary.from(guild);
     }
 

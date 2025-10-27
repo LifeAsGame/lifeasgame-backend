@@ -87,7 +87,7 @@ public class Guild extends AbstractTime {
         Guard.notNull(playerId, "playerId");
         Guard.notBlank(name, "name");
         Guard.notBlank(code, "code");
-        Guard.minValue(maxMembers, 0, "maxMembers");
+        Guard.minValue(maxMembers, 1, "maxMembers");
         Guard.notNull(visibility, "visibility");
         Guard.notNull(joinPolicy, "joinPolicy");
 
@@ -150,7 +150,7 @@ public class Guild extends AbstractTime {
     }
 
     public void changeMaxMembers(int max) {
-        Guard.minValue(max, 0, "maxMembers must be positive");
+        Guard.minValue(max, 1, "maxMembers must be positive");
         Guard.check(memberCount() <= max, "maxMembers must be >= current members");
         this.maxMembers = max;
     }
@@ -225,6 +225,9 @@ public class Guild extends AbstractTime {
         Guard.check(memberCount() < maxMembers, "capacity exceeded");
         GuildWaitMember inv = findPendingInvite(playerId)
                 .orElseThrow(() -> new IllegalStateException("invitation not found"));
+        if (inv.getExpiresAt() != null) {
+            Guard.checkState(!inv.isExpired(), "invitation expired");
+        }
         inv.approve();
         Guard.check(findMember(playerId).isEmpty(), "already member");
         this.members.add(GuildMember.createMember(this, playerId));
