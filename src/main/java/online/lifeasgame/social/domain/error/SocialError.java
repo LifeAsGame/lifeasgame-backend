@@ -10,7 +10,9 @@ public enum SocialError implements ErrorCode {
     OFFICER_OR_LEADER_ONLY("SOC-403-OFF-OR-LEADER","Officer or Leader Only",403),
     INVALID_STATE("SOC-400-INVALID-STATE","Invalid State",400),
 
-    PARTY_NOT_FOUND("SOC-404-PARTY-NOT-FOUND","Party Not Found",404);
+    PARTY_NOT_FOUND("SOC-404-PARTY-NOT-FOUND","Party Not Found",404),
+
+    FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404);
 
     private final String code;
     private final String message;
