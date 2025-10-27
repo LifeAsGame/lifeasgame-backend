@@ -1,37 +1,27 @@
 package online.lifeasgame.social.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
-import online.lifeasgame.core.guard.Guard;
+
+import java.time.LocalDateTime;
 
 @Getter
-@Entity
-@Table(
-        name = "party_members",
-        uniqueConstraints = @UniqueConstraint(name = "uq_party_member", columnNames = {"party_id", "player_id"}),
-        indexes = @Index(name = "idx_party_member_player", columnList = "player_id")
-)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity(name = "PartyMember")
+@Table(
+        name = "party_members", indexes = {
+        @Index(name = "idx_party_member_party", columnList = "party_id"),
+        @Index(name = "idx_party_member_player", columnList = "player_id")
+}
+)
 public class PartyMember extends AbstractTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "party_member_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,18 +32,31 @@ public class PartyMember extends AbstractTime {
     private Long playerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private PartyRole role = PartyRole.MEMBER;
+    @Column(name = "role", nullable = false, length = 32)
+    private PartyMemberRole role;
 
-    @Version
-    private Long version;
+    @Column(name = "joined_at", nullable = false)
+    private LocalDateTime joinedAt;
 
-    private PartyMember(Party party, Long playerId, PartyRole role) {
-        Guard.notNull(party, "party");
-        Guard.notNull(playerId, "playerId");
-        Guard.minValue(playerId, 1, "playerId");
-        this.party = party;
-        this.playerId = playerId;
-        this.role = role == null ? PartyRole.MEMBER : role;
+    public static PartyMember createLeader(Party party, Long playerId) {
+        PartyMember m = new PartyMember();
+        m.party = party;
+        m.playerId = playerId;
+        m.role = PartyMemberRole.LEADER;
+        m.joinedAt = LocalDateTime.now();
+        return m;
+    }
+
+    public static PartyMember createMember(Party party, Long playerId) {
+        PartyMember m = new PartyMember();
+        m.party = party;
+        m.playerId = playerId;
+        m.role = PartyMemberRole.MEMBER;
+        m.joinedAt = LocalDateTime.now();
+        return m;
+    }
+
+    public void changeRole(PartyMemberRole role) {
+        this.role = role;
     }
 }
