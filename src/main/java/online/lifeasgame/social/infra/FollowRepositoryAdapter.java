@@ -70,7 +70,7 @@ public class FollowRepositoryAdapter implements FollowRepository, FollowQueryRep
 
     @Override
     public long countFollowers(Long playerId) {
-        return followJpaRepository.findFollowerIds(playerId, PageRequest.of(0, 1)).getTotalElements();
+        return followJpaRepository.countByPlayerId(playerId);
     }
 
     @Override

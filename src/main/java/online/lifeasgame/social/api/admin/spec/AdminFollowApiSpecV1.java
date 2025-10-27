@@ -39,36 +39,31 @@ public interface AdminFollowApiSpecV1 {
     @Operation(summary = "플레이어로 언팔로우 (Admin)")
     ResponseEntity<ApiResponse<Void>> unfollow(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @Valid @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "플레이어로 뮤트 (Admin)")
     ResponseEntity<ApiResponse<Void>> mute(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @Valid @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "플레이어로 뮤트 해제 (Admin)")
     ResponseEntity<ApiResponse<Void>> unmute(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @Valid @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "플레이어로 차단 (Admin)")
     ResponseEntity<ApiResponse<Void>> block(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @Valid @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "플레이어로 차단 해제 (Admin)")
     ResponseEntity<ApiResponse<Void>> unblock(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @Valid @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     );
 }
 

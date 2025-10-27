@@ -26,31 +26,31 @@ public class FollowService {
     }
 
     @Transactional
-    public void unfollow(Long playerId, Long followId, FollowCommand.Unfollow command) {
+    public void unfollow(Long playerId, Long followId) {
         Follow f = followReader.get(followId, playerId);
         followWriter.unfollow(f);
     }
 
     @Transactional
-    public void mute(Long playerId, Long followId, FollowCommand.Mute command) {
+    public void mute(Long playerId, Long followId) {
         Follow f = followReader.get(followId, playerId);
         followWriter.mute(f);
     }
 
     @Transactional
-    public void unmute(Long playerId, Long followId, FollowCommand.Unmute command) {
+    public void unmute(Long playerId, Long followId) {
         Follow f = followReader.get(followId, playerId);
         followWriter.unmute(f);
     }
 
     @Transactional
-    public void block(Long playerId, Long followId, FollowCommand.Block command) {
+    public void block(Long playerId, Long followId) {
         Follow f = followReader.get(followId, playerId);
         followWriter.block(f);
     }
 
     @Transactional
-    public void unblock(Long playerId, Long followId, FollowCommand.Unblock command) {
+    public void unblock(Long playerId, Long followId) {
         Follow f = followReader.get(followId, playerId);
         followWriter.unblock(f);
     }

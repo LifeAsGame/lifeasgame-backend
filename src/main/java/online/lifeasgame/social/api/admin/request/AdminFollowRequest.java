@@ -1,7 +1,9 @@
 package online.lifeasgame.social.api.admin.request;
 
+import jakarta.validation.constraints.NotNull;
+
 public final class AdminFollowRequest {
-    public record Create(Long targetPlayerId) {
+    public record Create(@NotNull Long targetPlayerId) {
         public static Create of(Long targetPlayerId) {
             return new Create(targetPlayerId);
         }

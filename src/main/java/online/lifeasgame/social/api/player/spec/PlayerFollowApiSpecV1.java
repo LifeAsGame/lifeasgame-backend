@@ -27,32 +27,27 @@ public interface PlayerFollowApiSpecV1 {
     // 상태 변경
     @Operation(summary = "언팔로우")
     ResponseEntity<ApiResponse<Void>> unfollow(
-            @PathVariable Long followId,
-            @Valid @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "뮤트")
     ResponseEntity<ApiResponse<Void>> mute(
-            @PathVariable Long followId,
-            @Valid @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "뮤트 해제")
     ResponseEntity<ApiResponse<Void>> unmute(
-            @PathVariable Long followId,
-            @Valid @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "차단")
     ResponseEntity<ApiResponse<Void>> block(
-            @PathVariable Long followId,
-            @Valid @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     @Operation(summary = "차단 해제")
     ResponseEntity<ApiResponse<Void>> unblock(
-            @PathVariable Long followId,
-            @Valid @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     );
 
     // 조회

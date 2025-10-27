@@ -33,46 +33,41 @@ public class PlayerFollowController implements PlayerFollowApiSpecV1 {
     // 상태 변경
     @PostMapping("/{followId}/unfollow")
     public ResponseEntity<ApiResponse<Void>> unfollow(
-            @PathVariable Long followId,
-            @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followFacade.unfollow(followId, PlayerFollowWebMapper.toUnfollow(request));
+        followFacade.unfollow(followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/mute")
     public ResponseEntity<ApiResponse<Void>> mute(
-            @PathVariable Long followId,
-            @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followFacade.mute(followId, PlayerFollowWebMapper.toMute(request));
+        followFacade.mute(followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/unmute")
     public ResponseEntity<ApiResponse<Void>> unmute(
-            @PathVariable Long followId,
-            @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followFacade.unmute(followId, PlayerFollowWebMapper.toUnmute(request));
+        followFacade.unmute(followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/block")
     public ResponseEntity<ApiResponse<Void>> block(
-            @PathVariable Long followId,
-            @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followFacade.block(followId, PlayerFollowWebMapper.toBlock(request));
+        followFacade.block(followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/unblock")
     public ResponseEntity<ApiResponse<Void>> unblock(
-            @PathVariable Long followId,
-            @RequestBody PlayerFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followFacade.unblock(followId, PlayerFollowWebMapper.toUnblock(request));
+        followFacade.unblock(followId);
         return ApiResponses.ok(null);
     }
 

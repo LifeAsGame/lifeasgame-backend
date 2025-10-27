@@ -20,29 +20,29 @@ public class FollowFacade {
         return followService.follow(playerId, command);
     }
 
-    public void unfollow(Long followId, FollowCommand.Unfollow command) {
+    public void unfollow(Long followId) {
         Long playerId = getPlayer();
-        followService.unfollow(playerId, followId, command);
+        followService.unfollow(playerId, followId);
     }
 
-    public void mute(Long followId, FollowCommand.Mute command) {
+    public void mute(Long followId) {
         Long playerId = getPlayer();
-        followService.mute(playerId, followId, command);
+        followService.mute(playerId, followId);
     }
 
-    public void unmute(Long followId, FollowCommand.Unmute command) {
+    public void unmute(Long followId) {
         Long playerId = getPlayer();
-        followService.unmute(playerId, followId, command);
+        followService.unmute(playerId, followId);
     }
 
-    public void block(Long followId, FollowCommand.Block command) {
+    public void block(Long followId) {
         Long playerId = getPlayer();
-        followService.block(playerId, followId, command);
+        followService.block(playerId, followId);
     }
 
-    public void unblock(Long followId, FollowCommand.Unblock command) {
+    public void unblock(Long followId) {
         Long playerId = getPlayer();
-        followService.unblock(playerId, followId, command);
+        followService.unblock(playerId, followId);
     }
 
     public FollowResult.Page<FollowResult.Summary> listFollowings(int page, int size) {

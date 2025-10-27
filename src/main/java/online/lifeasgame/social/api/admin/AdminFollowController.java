@@ -1,5 +1,7 @@
 package online.lifeasgame.social.api.admin;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -63,50 +65,45 @@ public class AdminFollowController implements AdminFollowApiSpecV1 {
     @PostMapping("/{followId}/unfollow")
     public ResponseEntity<ApiResponse<Void>> unfollow(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followService.unfollow(playerId, followId, AdminFollowWebMapper.toUnfollow(request));
+        followService.unfollow(playerId, followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/mute")
     public ResponseEntity<ApiResponse<Void>> mute(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followService.mute(playerId, followId, AdminFollowWebMapper.toMute(request));
+        followService.mute(playerId, followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/unmute")
     public ResponseEntity<ApiResponse<Void>> unmute(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followService.unmute(playerId, followId, AdminFollowWebMapper.toUnmute(request));
+        followService.unmute(playerId, followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/block")
     public ResponseEntity<ApiResponse<Void>> block(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followService.block(playerId, followId, AdminFollowWebMapper.toBlock(request));
+        followService.block(playerId, followId);
         return ApiResponses.ok(null);
     }
 
     @PostMapping("/{followId}/unblock")
     public ResponseEntity<ApiResponse<Void>> unblock(
             @PathVariable Long playerId,
-            @PathVariable Long followId,
-            @RequestBody AdminFollowRequest.Empty request
+            @PathVariable Long followId
     ) {
-        followService.unblock(playerId, followId, AdminFollowWebMapper.toUnblock(request));
+        followService.unblock(playerId, followId);
         return ApiResponses.ok(null);
     }
 
@@ -114,7 +111,7 @@ public class AdminFollowController implements AdminFollowApiSpecV1 {
     public ResponseEntity<ApiResponse<List<AdminFollowResponse.Summary>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "followings") String type,
-            @RequestParam(defaultValue = "20") Integer limit
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
         List<FollowResult.Summary> infos = "followers".equalsIgnoreCase(type)
                 ? followService.recentFollowers(playerId, limit) : followService.recentFollowings(playerId, limit);

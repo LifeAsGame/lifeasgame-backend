@@ -16,26 +16,6 @@ public final class PlayerFollowWebMapper {
         return FollowCommand.Create.of(r.targetPlayerId());
     }
 
-    public static FollowCommand.Unfollow toUnfollow(PlayerFollowRequest.Empty r) {
-        return FollowCommand.Unfollow.of();
-    }
-
-    public static FollowCommand.Mute toMute(PlayerFollowRequest.Empty r) {
-        return FollowCommand.Mute.of();
-    }
-
-    public static FollowCommand.Unmute toUnmute(PlayerFollowRequest.Empty r) {
-        return FollowCommand.Unmute.of();
-    }
-
-    public static FollowCommand.Block toBlock(PlayerFollowRequest.Empty r) {
-        return FollowCommand.Block.of();
-    }
-
-    public static FollowCommand.Unblock toUnblock(PlayerFollowRequest.Empty r) {
-        return FollowCommand.Unblock.of();
-    }
-
     // Result -> Response
     public static PlayerFollowResponse.Info toInfo(FollowResult.Info r) {
         return PlayerFollowResponse.Info.of(

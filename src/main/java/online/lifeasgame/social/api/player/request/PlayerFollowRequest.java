@@ -8,10 +8,4 @@ public final class PlayerFollowRequest {
             return new Create(targetPlayerId);
         }
     }
-
-    public record Empty() {
-        public static Empty of() {
-            return new Empty();
-        }
-    }
 }
