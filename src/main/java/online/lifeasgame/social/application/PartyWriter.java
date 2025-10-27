@@ -29,8 +29,8 @@ public class PartyWriter {
                 spec.name(),
                 spec.code(),
                 spec.descriptionMd(),
-                spec.emblemImageUrl(),
-                spec.emblemBgColor(),
+                spec.bannerImageUrl(),
+                spec.bannerBgColor(),
                 spec.visibility(),
                 spec.joinPolicy(),
                 spec.maxMembers()

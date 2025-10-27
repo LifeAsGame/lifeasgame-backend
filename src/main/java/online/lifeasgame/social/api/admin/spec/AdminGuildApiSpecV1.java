@@ -19,7 +19,7 @@ import java.util.List;
 public interface AdminGuildApiSpecV1 {
 
     @Operation(summary = "길드 단건 조회 (Admin)")
-    ResponseEntity<ApiResponse<AdminGuildResponse.Summary>> getGuildInfo(
+    ResponseEntity<ApiResponse<AdminGuildResponse.Info>> getGuildInfo(
             @PathVariable Long playerId,
             @PathVariable Long guildId
     );

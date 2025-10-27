@@ -46,13 +46,13 @@ public final class PlayerPartyRequest {
         }
     }
 
-    public record TagOp(@NotBlank String tag) {
+    public record TagOp(@NotBlank @Size(max = 64) String tag) {
         public static TagOp of(String t) {
             return new TagOp(t);
         }
     }
 
-    public record RequestJoin(String message) {
+    public record RequestJoin(@Size(max = 1000) String message) {
         public static RequestJoin of(String m) {
             return new RequestJoin(m);
         }
@@ -88,7 +88,7 @@ public final class PlayerPartyRequest {
         }
     }
 
-    public record Invite(@NotNull Long inviteePlayerId, String message, String expiresAt) {
+    public record Invite(@NotNull Long inviteePlayerId, @Size(max = 1000) String message, String expiresAt) {
         public static Invite of(Long id, String m, String at) {
             return new Invite(id, m, at);
         }

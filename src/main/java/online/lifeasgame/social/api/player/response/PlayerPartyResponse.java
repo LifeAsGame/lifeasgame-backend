@@ -48,8 +48,8 @@ public final class PlayerPartyResponse {
                 int maxMembers,
                 List<String> tags,
                 String descriptionMd,
-                String emblemImageUrl,
-                String emblemBgColor,
+                String bannerImageUrl,
+                String bannerBgColor,
                 Long leaderPlayerId,
                 Instant createdAt,
                 Instant updatedAt
@@ -65,8 +65,8 @@ public final class PlayerPartyResponse {
                     maxMembers,
                     tags,
                     descriptionMd,
-                    emblemImageUrl,
-                    emblemBgColor,
+                    bannerImageUrl,
+                    bannerBgColor,
                     leaderPlayerId,
                     createdAt,
                     updatedAt

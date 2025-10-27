@@ -2,6 +2,7 @@ package online.lifeasgame.social.api.admin.mapper;
 
 import online.lifeasgame.social.api.admin.request.AdminPartyRequest;
 import online.lifeasgame.social.api.admin.response.AdminPartyResponse;
+import online.lifeasgame.social.api.player.response.PlayerPartyResponse;
 import online.lifeasgame.social.application.command.PartyCommand;
 import online.lifeasgame.social.application.result.PartyResult;
 
@@ -113,6 +114,27 @@ public final class AdminPartyWebMapper {
     public static java.util.List<AdminPartyResponse.Summary> toSummaries(List<PartyResult.Summary> rs) {
         return rs.stream().map(AdminPartyWebMapper::toSummary).toList();
     }
+
+    public static AdminPartyResponse.Info toInfo(PartyResult.Info r) {
+        return AdminPartyResponse.Info.of(
+                r.id(),
+                r.playerId(),
+                r.name(),
+                r.code(),
+                r.visibility(),
+                r.joinPolicy(),
+                r.status(),
+                r.maxMembers(),
+                r.tags(),
+                r.descriptionMd(),
+                r.bannerImageUrl(),
+                r.bannerBgColor(),
+                r.leaderPlayerId(),
+                r.createdAt(),
+                r.updatedAt()
+        );
+    }
+
 
     public static AdminPartyResponse.Page<AdminPartyResponse.Summary> toSummaryPage(PartyResult.Page<PartyResult.Summary> p) {
         return AdminPartyResponse.Page.of(

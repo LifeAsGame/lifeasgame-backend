@@ -74,6 +74,61 @@ public final class AdminPartyResponse {
         }
     }
 
+    public record Info(
+            Long id,
+            Long playerId,
+            String name,
+            String code,
+            String visibility,
+            String joinPolicy,
+            String status,
+            int maxMembers,
+            List<String> tags,
+            String descriptionMd,
+            String emblemImageUrl,
+            String emblemBgColor,
+            Long leaderPlayerId,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        public static AdminPartyResponse.Info of(
+                Long id,
+                Long playerId,
+                String name,
+                String code,
+                String visibility,
+                String joinPolicy,
+                String status,
+                int maxMembers,
+                List<String> tags,
+                String descriptionMd,
+                String emblemImageUrl,
+                String emblemBgColor,
+                Long leaderPlayerId,
+                Instant createdAt,
+                Instant updatedAt
+        ) {
+            return new AdminPartyResponse.Info(
+                    id,
+                    playerId,
+                    name,
+                    code,
+                    visibility,
+                    joinPolicy,
+                    status,
+                    maxMembers,
+                    tags,
+                    descriptionMd,
+                    emblemImageUrl,
+                    emblemBgColor,
+                    leaderPlayerId,
+                    createdAt,
+                    updatedAt
+            );
+        }
+    }
+
+
     public record Page<T>(List<T> contents, int page, int size, long totalElements, int totalPages) {
         public static <T> Page<T> of(List<T> contents, int page, int size, long totalElements, int totalPages) {
             return new Page<>(contents, page, size, totalElements, totalPages);

@@ -37,7 +37,7 @@ public class PartyFacade {
     }
 
     public PartyResult.Info changeBanner(Long partyId, PartyCommand.ChangeEmblem c) {
-        return partyService.changeEmblem(player(), partyId, c);
+        return partyService.changeBanner(player(), partyId, c);
     }
 
     public PartyResult.Info addTag(Long partyId, PartyCommand.TagOp c) {
@@ -104,7 +104,7 @@ public class PartyFacade {
         return partyService.search(keyword, visibility, page, size);
     }
 
-    public PartyResult.Summary getParty(Long partyId) {
+    public PartyResult.Info getParty(Long partyId) {
         return partyService.getParty(player(), partyId);
     }
 

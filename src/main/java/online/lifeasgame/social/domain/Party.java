@@ -220,6 +220,9 @@ public class Party extends AbstractTime {
         Guard.check(memberCount() < maxMembers, "capacity exceeded");
         PartyWaitMember inv = findPendingInvite(playerId).orElseThrow(() -> new IllegalStateException(
                 "invitation not found"));
+        if (inv.getExpiresAt() != null) {
+            Guard.checkState(!inv.isExpired(), "invitation expired");
+        }
         inv.approve();
         Guard.check(findMember(playerId).isEmpty(), "already member");
         members.add(PartyMember.createMember(this, playerId));

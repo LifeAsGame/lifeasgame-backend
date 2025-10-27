@@ -230,11 +230,11 @@ public class PlayerPartyController implements PlayerPartyApiSpecV1 {
 
     @Override
     @GetMapping("/{partyId}")
-    public ResponseEntity<ApiResponse<PlayerPartyResponse.Summary>> getPartyInfo(
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> getPartyInfo(
             @PathVariable Long partyId
     ) {
         var info = partyFacade.getParty(partyId);
-        return ApiResponses.ok(PlayerPartyWebMapper.toSummary(info));
+        return ApiResponses.ok(PlayerPartyWebMapper.toInfo(info));
     }
 
     @Override

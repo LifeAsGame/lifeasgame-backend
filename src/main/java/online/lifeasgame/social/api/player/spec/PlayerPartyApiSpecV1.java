@@ -142,7 +142,7 @@ public interface PlayerPartyApiSpecV1 {
 
 
     @Operation(summary = "파티 상세 조회")
-    ResponseEntity<ApiResponse<PlayerPartyResponse.Summary>> getPartyInfo(
+    ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> getPartyInfo(
             @PathVariable Long partyId
     );
 }

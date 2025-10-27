@@ -82,4 +82,8 @@ public class PartyWaitMember extends AbstractTime {
     public void cancel() {
         this.status = PartyWaitStatus.CANCELLED;
     }
+
+    public boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
+    }
 }

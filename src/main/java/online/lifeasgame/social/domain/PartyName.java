@@ -21,6 +21,7 @@ public class PartyName {
 
     public static PartyName of(String original) {
         Guard.notBlank(original, "name");
+        Guard.maxLength(original, 128, "name");
         String norm = original.trim();
         return new PartyName(norm.toLowerCase(), norm);
     }

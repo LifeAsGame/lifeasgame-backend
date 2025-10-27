@@ -2,7 +2,6 @@ package online.lifeasgame.social.infra;
 
 import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyVisibility;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -52,12 +51,10 @@ public interface PartyJpaRepository extends JpaRepository<Party, Long> {
                         where p.id in :ids
                     """
     )
-    List<Party> findRecentWithTags(List<Long> ids);
-
-    List<Party> findById(Long id, Limit limit);
+    List<Party> findRecentWithTags(@Param("ids") List<Long> ids);
 
     @Query(
-            value = """
+            """
                 SELECT p.id
                 FROM Party p
                 ORDER BY p.createdAt

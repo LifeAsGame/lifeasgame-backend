@@ -19,7 +19,7 @@ import java.util.List;
 public interface AdminPartyApiSpecV1 {
 
     @Operation(summary = "길드 단건 조회 (Admin)")
-    ResponseEntity<ApiResponse<AdminPartyResponse.Summary>> getPartyInfo(
+    ResponseEntity<ApiResponse<AdminPartyResponse.Info>> getPartyInfo(
             @PathVariable Long playerId,
             @PathVariable Long partyId
     );

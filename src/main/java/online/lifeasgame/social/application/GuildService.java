@@ -163,9 +163,9 @@ public class GuildService {
         return guildReader.recent(limit).stream().map(GuildResult.Summary::from).toList();
     }
 
-    public GuildResult.Summary getGuild(Long playerId, Long id) {
+    public GuildResult.Info getGuild(Long playerId, Long id) {
         Guild guild = guildReader.getGuild(playerId, id);
-        return GuildResult.Summary.from(guild);
+        return GuildResult.Info.from(guild);
     }
 
     private static void ensureLeader(Guild g, Long actorId) {

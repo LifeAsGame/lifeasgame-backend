@@ -24,12 +24,12 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
 
     @Override
     @GetMapping("/players/{playerId}/parties/{partyId}")
-    public ResponseEntity<ApiResponse<AdminPartyResponse.Summary>> getPartyInfo(
+    public ResponseEntity<ApiResponse<AdminPartyResponse.Info>> getPartyInfo(
             @PathVariable Long playerId,
             @PathVariable Long partyId
     ) {
         var info = partyService.getParty(playerId, partyId);
-        return ApiResponses.ok(AdminPartyWebMapper.toSummary(info));
+        return ApiResponses.ok(AdminPartyWebMapper.toInfo(info));
     }
 
     // ===== 일반 조회 =====
@@ -113,7 +113,7 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.ChangeEmblem body
     ) {
-        var info = partyService.changeEmblem(playerId, partyId, AdminPartyWebMapper.toCommand(body));
+        var info = partyService.changeBanner(playerId, partyId, AdminPartyWebMapper.toCommand(body));
         return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
     }
 

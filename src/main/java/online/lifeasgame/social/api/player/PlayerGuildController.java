@@ -223,11 +223,11 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
 
     @Override
     @GetMapping("/{guildId}")
-    public ResponseEntity<ApiResponse<PlayerGuildResponse.Summary>> getGuildInfo(
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> getGuildInfo(
             @PathVariable Long guildId
     ) {
         var info = guildFacade.getGuild(guildId);
-        return ApiResponses.ok(PlayerGuildWebMapper.toSummary(info));
+        return ApiResponses.ok(PlayerGuildWebMapper.toInfo(info));
     }
 
     @Override

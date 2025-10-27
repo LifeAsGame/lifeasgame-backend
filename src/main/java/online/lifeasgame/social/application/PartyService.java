@@ -30,37 +30,37 @@ public class PartyService {
 
     @Transactional
     public PartyResult.Info rename(Long playerId, Long id, PartyCommand.Rename c) {
-        Party party = partyReader.getOwned(playerId, id);
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.rename(party, c));
     }
 
     @Transactional
     public PartyResult.Info changePolicy(Long playerId, Long id, PartyCommand.ChangePolicy c) {
-        Party party = partyReader.getOwned(playerId, id);
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.changePolicy(party, c));
     }
 
     @Transactional
     public PartyResult.Info changeDescription(Long playerId, Long id, PartyCommand.ChangeDescription c) {
-        Party party = partyReader.getOwned(playerId, id);
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.changeDescription(party, c));
     }
 
     @Transactional
-    public PartyResult.Info changeEmblem(Long playerId, Long id, PartyCommand.ChangeEmblem c) {
-        Party party = partyReader.getOwned(playerId, id);
+    public PartyResult.Info changeBanner(Long playerId, Long id, PartyCommand.ChangeEmblem c) {
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.changeBanner(party, c));
     }
 
     @Transactional
     public PartyResult.Info addTag(Long playerId, Long id, PartyCommand.TagOp c) {
-        Party party = partyReader.getOwned(playerId, id);
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.addTag(party, c));
     }
 
     @Transactional
     public PartyResult.Info removeTag(Long playerId, Long id, PartyCommand.TagOp c) {
-        Party party = partyReader.getOwned(playerId, id);
+        Party party = partyReader.getParty(playerId, id);
         return PartyResult.Info.from(partyWriter.removeTag(party, c));
     }
 
@@ -163,9 +163,9 @@ public class PartyService {
         return partyReader.recent(limit).stream().map(PartyResult.Summary::from).toList();
     }
 
-    public PartyResult.Summary getParty(Long playerId, Long id) {
+    public PartyResult.Info getParty(Long playerId, Long id) {
         Party party = partyReader.getParty(playerId, id);
-        return PartyResult.Summary.from(party);
+        return PartyResult.Info.from(party);
     }
 
     private static void ensureLeader(Party party, Long actorId) {

@@ -11,8 +11,8 @@ public final class PartySpec {
             String name,
             String code,
             String descriptionMd,
-            String emblemImageUrl,
-            String emblemBgColor,
+            String bannerImageUrl,
+            String bannerBgColor,
             PartyVisibility visibility,
             PartyJoinPolicy joinPolicy,
             int maxMembers

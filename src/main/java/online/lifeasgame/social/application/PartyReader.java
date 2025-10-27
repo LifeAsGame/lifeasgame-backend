@@ -25,7 +25,7 @@ public class PartyReader {
         return partyRepository.findById(id).orElseThrow(() -> new DomainException(SocialError.PARTY_NOT_FOUND));
     }
 
-    public Party getOwned(Long playerId, Long id) {
+    public Party getParty(Long playerId, Long id) {
         return partyRepository.findByIdAndPlayerId(
                 id,
                 playerId
@@ -48,12 +48,5 @@ public class PartyReader {
 
     public List<Party> recent(int limit) {
         return partyQueryRepository.recent(limit);
-    }
-
-    public Party getParty(Long playerId, Long id) {
-        return partyRepository.findByIdAndPlayerId(
-                id,
-                playerId
-        ).orElseThrow(() -> new DomainException(SocialError.PARTY_NOT_FOUND));
     }
 }

@@ -2,6 +2,7 @@ package online.lifeasgame.social.api.admin.mapper;
 
 import online.lifeasgame.social.api.admin.request.AdminGuildRequest;
 import online.lifeasgame.social.api.admin.response.AdminGuildResponse;
+import online.lifeasgame.social.api.player.response.PlayerGuildResponse;
 import online.lifeasgame.social.application.command.GuildCommand;
 import online.lifeasgame.social.application.result.GuildResult;
 
@@ -119,6 +120,26 @@ public final class AdminGuildWebMapper {
                 p.size(),
                 p.totalElements(),
                 p.totalPages()
+        );
+    }
+
+    public static AdminGuildResponse.Info toInfo(GuildResult.Info r) {
+        return AdminGuildResponse.Info.of(
+                r.id(),
+                r.playerId(),
+                r.name(),
+                r.code(),
+                r.visibility(),
+                r.joinPolicy(),
+                r.status(),
+                r.maxMembers(),
+                r.tags(),
+                r.descriptionMd(),
+                r.emblemImageUrl(),
+                r.emblemBgColor(),
+                r.leaderPlayerId(),
+                r.createdAt(),
+                r.updatedAt()
         );
     }
 }
