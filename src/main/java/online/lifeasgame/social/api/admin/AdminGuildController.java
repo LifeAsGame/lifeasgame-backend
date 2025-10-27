@@ -24,12 +24,12 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
 
     @Override
     @GetMapping("/players/{playerId}/guilds/{guildId}")
-    public ResponseEntity<ApiResponse<AdminGuildResponse.Summary>> getGuildInfo(
+    public ResponseEntity<ApiResponse<AdminGuildResponse.Info>> getGuildInfo(
             @PathVariable Long playerId,
             @PathVariable Long guildId
     ) {
         var info = guildService.getGuild(playerId, guildId);
-        return ApiResponses.ok(AdminGuildWebMapper.toSummary(info));
+        return ApiResponses.ok(AdminGuildWebMapper.toInfo(info));
     }
 
     // ===== 일반 조회 =====

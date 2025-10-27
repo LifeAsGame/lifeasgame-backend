@@ -1,9 +1,9 @@
-package online.lifeasgame.social.api.admin.response;
+package online.lifeasgame.social.api.player.response;
 
 import java.time.Instant;
 import java.util.List;
 
-public final class AdminGuildResponse {
+public final class PlayerPartyResponse {
     public record Summary(
             Long id, String name, String code, String visibility, String joinPolicy, String status, int maxMembers
     ) {
@@ -17,60 +17,6 @@ public final class AdminGuildResponse {
                 int maxMembers
         ) {
             return new Summary(id, name, code, visibility, joinPolicy, status, maxMembers);
-        }
-    }
-
-    public record Detail(
-            Long id,
-            Long playerId,
-            String name,
-            String code,
-            String visibility,
-            String joinPolicy,
-            String status,
-            int maxMembers,
-            List<String> tags,
-            String descriptionMd,
-            String emblemImageUrl,
-            String emblemBgColor,
-            Long leaderPlayerId,
-            Instant createdAt,
-            Instant updatedAt
-    ) {
-        public static Detail of(
-                Long id,
-                Long playerId,
-                String name,
-                String code,
-                String visibility,
-                String joinPolicy,
-                String status,
-                int maxMembers,
-                List<String> tags,
-                String descriptionMd,
-                String emblemImageUrl,
-                String emblemBgColor,
-                Long leaderPlayerId,
-                Instant createdAt,
-                Instant updatedAt
-        ) {
-            return new Detail(
-                    id,
-                    playerId,
-                    name,
-                    code,
-                    visibility,
-                    joinPolicy,
-                    status,
-                    maxMembers,
-                    tags,
-                    descriptionMd,
-                    emblemImageUrl,
-                    emblemBgColor,
-                    leaderPlayerId,
-                    createdAt,
-                    updatedAt
-            );
         }
     }
 
@@ -91,7 +37,7 @@ public final class AdminGuildResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
-        public static AdminGuildResponse.Info of(
+        public static Info of(
                 Long id,
                 Long playerId,
                 String name,
@@ -102,13 +48,13 @@ public final class AdminGuildResponse {
                 int maxMembers,
                 List<String> tags,
                 String descriptionMd,
-                String emblemImageUrl,
-                String emblemBgColor,
+                String bannerImageUrl,
+                String bannerBgColor,
                 Long leaderPlayerId,
                 Instant createdAt,
                 Instant updatedAt
         ) {
-            return new AdminGuildResponse.Info(
+            return new Info(
                     id,
                     playerId,
                     name,
@@ -119,8 +65,8 @@ public final class AdminGuildResponse {
                     maxMembers,
                     tags,
                     descriptionMd,
-                    emblemImageUrl,
-                    emblemBgColor,
+                    bannerImageUrl,
+                    bannerBgColor,
                     leaderPlayerId,
                     createdAt,
                     updatedAt

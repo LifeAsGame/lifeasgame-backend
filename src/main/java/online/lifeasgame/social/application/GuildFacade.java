@@ -104,7 +104,7 @@ public class GuildFacade {
         return guildService.search(keyword, visibility, page, size);
     }
 
-    public GuildResult.Summary getGuild(Long guildId) {
+    public GuildResult.Info getGuild(Long guildId) {
         return guildService.getGuild(player(), guildId);
     }
 

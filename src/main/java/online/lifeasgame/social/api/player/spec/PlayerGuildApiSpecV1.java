@@ -134,7 +134,7 @@ public interface PlayerGuildApiSpecV1 {
     );
 
     @Operation(summary = "길드 상세 조회")
-    ResponseEntity<ApiResponse<PlayerGuildResponse.Summary>> getGuildInfo(
+    ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> getGuildInfo(
             @PathVariable Long guildId
     );
 

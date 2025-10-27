@@ -22,13 +22,14 @@ public class GuildReader {
     private final GuildQueryRepository guildQueryRepository;
 
     public Guild get(Long guildId) {
-        return guildRepository.findById(guildId)
-                .orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
+        return guildRepository.findById(guildId).orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 
     public Guild getOwned(Long playerId, Long id) {
-        return guildRepository.findByIdAndPlayerId(id, playerId)
-                .orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
+        return guildRepository.findByIdAndPlayerId(
+                id,
+                playerId
+        ).orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 
     public List<Guild> search(String keyword, String visibility, int page, int size) {
@@ -49,8 +50,10 @@ public class GuildReader {
         return guildQueryRepository.recent(limit);
     }
 
-    public Guild getGuild(Long playerId, Long guildId) {
-        return guildRepository.findByIdAndPlayerId(playerId, guildId)
-                .orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
+    public Guild getGuild(Long playerId, Long id) {
+        return guildRepository.findByIdAndPlayerId(
+                id,
+                playerId
+        ).orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 }

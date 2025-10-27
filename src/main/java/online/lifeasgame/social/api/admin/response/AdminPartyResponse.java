@@ -3,7 +3,7 @@ package online.lifeasgame.social.api.admin.response;
 import java.time.Instant;
 import java.util.List;
 
-public final class AdminGuildResponse {
+public final class AdminPartyResponse {
     public record Summary(
             Long id, String name, String code, String visibility, String joinPolicy, String status, int maxMembers
     ) {
@@ -31,8 +31,8 @@ public final class AdminGuildResponse {
             int maxMembers,
             List<String> tags,
             String descriptionMd,
-            String emblemImageUrl,
-            String emblemBgColor,
+            String bannerImageUrl,
+            String bannerBgColor,
             Long leaderPlayerId,
             Instant createdAt,
             Instant updatedAt
@@ -48,8 +48,8 @@ public final class AdminGuildResponse {
                 int maxMembers,
                 List<String> tags,
                 String descriptionMd,
-                String emblemImageUrl,
-                String emblemBgColor,
+                String bannerImageUrl,
+                String bannerBgColor,
                 Long leaderPlayerId,
                 Instant createdAt,
                 Instant updatedAt
@@ -65,8 +65,8 @@ public final class AdminGuildResponse {
                     maxMembers,
                     tags,
                     descriptionMd,
-                    emblemImageUrl,
-                    emblemBgColor,
+                    bannerImageUrl,
+                    bannerBgColor,
                     leaderPlayerId,
                     createdAt,
                     updatedAt
@@ -91,7 +91,7 @@ public final class AdminGuildResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
-        public static AdminGuildResponse.Info of(
+        public static AdminPartyResponse.Info of(
                 Long id,
                 Long playerId,
                 String name,
@@ -108,7 +108,7 @@ public final class AdminGuildResponse {
                 Instant createdAt,
                 Instant updatedAt
         ) {
-            return new AdminGuildResponse.Info(
+            return new AdminPartyResponse.Info(
                     id,
                     playerId,
                     name,
@@ -127,6 +127,7 @@ public final class AdminGuildResponse {
             );
         }
     }
+
 
     public record Page<T>(List<T> contents, int page, int size, long totalElements, int totalPages) {
         public static <T> Page<T> of(List<T> contents, int page, int size, long totalElements, int totalPages) {
