@@ -2,35 +2,30 @@ package online.lifeasgame.social.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
-@Embeddable
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Embeddable
 public class GuildName {
 
-    @Column(name = "name", length = 60, nullable = false, unique = true)
+    @Column(name = "name_value", nullable = false, length = 128)
     private String value;
 
-    private GuildName(String value) {
+    @Column(name = "name_original", nullable = false, length = 128)
+    private String original;
+
+    public static GuildName of(String original) {
+        Guard.notBlank(original, "name");
+        String norm = original.trim();
+        return new GuildName(norm.toLowerCase(), norm);
+    }
+
+    private GuildName(String value, String original) {
         this.value = value;
+        this.original = original;
     }
-
-    public static GuildName of(String raw) {
-        Guard.notBlank(raw, "guild name");
-        String trimmed = raw.strip();
-        Guard.maxLength(trimmed, 60, "guild name");
-        return new GuildName(trimmed);
-    }
-
-    public String value() { return value; }
-
-    @Override public boolean equals(Object o){
-        if(this==o) return true; if(!(o instanceof GuildName that)) return false;
-        return Objects.equals(value, that.value);
-    }
-    @Override public int hashCode(){ return Objects.hash(value); }
-    @Override public String toString(){ return value; }
 }
