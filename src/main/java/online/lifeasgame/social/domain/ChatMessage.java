@@ -1,22 +1,13 @@
 package online.lifeasgame.social.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
+@Getter
 @Entity
 @Table(name = "chat_messages",
         indexes = {
@@ -49,11 +40,17 @@ public class ChatMessage extends AbstractTime {
     @Version
     private Long version;
 
-    public ChatMessage(ChatChannel channel, Long senderId, String content) {
+    private ChatMessage(ChatChannel channel, Long senderId, String content) {
+        Guard.notNull(channel, "channel");
+        Guard.notNull(senderId, "senderId");
         Guard.notBlank(content, "content");
         this.channel = channel;
         this.senderId = senderId;
         this.content = content;
+    }
+
+    public static ChatMessage create(ChatChannel channel, Long senderId, String content) {
+        return new ChatMessage(channel, senderId, content);
     }
 
     public void edit(String newContent) {

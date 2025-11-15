@@ -1,23 +1,16 @@
 package online.lifeasgame.social.domain;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.social.domain.error.SocialError;
 
+@Getter
 @Entity
 @AggregateRoot
 @Table(
@@ -39,17 +32,13 @@ public class ChatChannel extends AbstractTime {
     private ChatChannelType type;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "name", length = 60))
+    })
     private ChannelName name;
 
     @Column(name = "context_id")
     private Long contextId;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "low", column = @Column(name = "dm_low_id")),
-            @AttributeOverride(name = "high", column = @Column(name = "dm_high_id"))
-    })
-    private PairKey dmKey;
 
     @Column(name = "read_only", nullable = false)
     private boolean readOnly = false;
@@ -57,32 +46,62 @@ public class ChatChannel extends AbstractTime {
     @Version
     private Long version;
 
-    private ChatChannel(ChatChannelType type, ChannelName name, Long contextId, PairKey dmKey) {
-        this.type = type;
+    private ChatChannel(ChatChannelType type, ChannelName name, Long contextId, boolean readOnly) {
+        this.type = Guard.notNull(type, "channelType");
         this.name = name;
         this.contextId = contextId;
-        this.dmKey = dmKey;
+        this.readOnly = readOnly;
     }
 
     public static ChatChannel global(String name) {
-        return new ChatChannel(ChatChannelType.GLOBAL, ChannelName.of(name), null, null);
+        return new ChatChannel(ChatChannelType.GLOBAL, ChannelName.of(name), null, false);
     }
 
     public static ChatChannel guild(Long guildId, String name) {
-        return new ChatChannel(ChatChannelType.GUILD, ChannelName.of(name), guildId, null);
+        Guard.notNull(guildId, "guildId");
+        return new ChatChannel(ChatChannelType.GUILD, ChannelName.of(name), guildId, false);
     }
 
     public static ChatChannel party(Long partyId, String name) {
-        return new ChatChannel(ChatChannelType.PARTY, ChannelName.of(name), partyId, null);
+        Guard.notNull(partyId, "partyId");
+        return new ChatChannel(ChatChannelType.PARTY, ChannelName.of(name), partyId, false);
     }
 
-    public static ChatChannel whisper(Long a, Long b) {
-        return new ChatChannel(ChatChannelType.WHISPER, null, null, PairKey.of(a, b));
+    public static ChatChannel friend(String name) {
+        return new ChatChannel(ChatChannelType.FRIEND, ChannelName.of(name), null, false);
     }
 
     public static ChatChannel systemRoom(String name) {
-        ChatChannel c = new ChatChannel(ChatChannelType.SYSTEM, ChannelName.of(name), null, null);
-        c.readOnly = true;
-        return c;
+        ChatChannel channel = new ChatChannel(ChatChannelType.SYSTEM, ChannelName.of(name), null, true);
+        channel.readOnly = true;
+        return channel;
+    }
+
+    public static ChatChannel admin(Long targetPlayerId, String name) {
+        return new ChatChannel(ChatChannelType.ADMIN, ChannelName.of(name), targetPlayerId, false);
+    }
+
+    public boolean sameContext(ChatChannelType type, Long contextId) {
+        if (this.type != type) {
+            return false;
+        }
+        if (contextId == null) {
+            return this.contextId == null;
+        }
+        return contextId.equals(this.contextId);
+    }
+
+    public void rename(String newName) {
+        this.name = ChannelName.of(newName);
+    }
+
+    public void markReadOnly() {
+        this.readOnly = true;
+    }
+
+    public void ensureWritable() {
+        if (readOnly) {
+            throw new DomainException(SocialError.CHAT_CHANNEL_READ_ONLY);
+        }
     }
 }

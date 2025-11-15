@@ -12,7 +12,11 @@ public enum SocialError implements ErrorCode {
 
     PARTY_NOT_FOUND("SOC-404-PARTY-NOT-FOUND","Party Not Found",404),
 
-    FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404);
+    FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404),
+
+    CHAT_CHANNEL_NOT_FOUND("SOC-404-CHANNEL-NOT-FOUND","Chat Channel Not Found",404),
+    CHAT_CHANNEL_FORBIDDEN("SOC-403-CHANNEL-FORBIDDEN","Channel access denied",403),
+    CHAT_CHANNEL_READ_ONLY("SOC-403-CHANNEL-READ-ONLY","Channel is read only",403);
 
     private final String code;
     private final String message;
