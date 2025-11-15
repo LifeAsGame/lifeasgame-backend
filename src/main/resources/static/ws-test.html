@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="">
+<head><meta charset="utf-8"><title>STOMP WebSocket (SockJS) Test</title></head>
+<body>
+<h1>STOMP WebSocket (SockJS) Test</h1>
+
+<div>
+  <label>SockJS URL:
+    <!-- SockJS는 http(s)로 붙는다 -->
+    <input id="wsUrl" value="http://localhost:8080/ws" style="width:320px;">
+  </label>
+  <button id="btnConnect">Connect</button>
+  <button id="btnDisconnect">Disconnect</button>
+</div>
+
+<div style="margin-top:8px;">
+  <label>Channel ID:
+    <input id="channelId" value="5" style="width:80px;">
+  </label>
+  <button id="btnSub">Subscribe</button>
+</div>
+
+<div style="margin-top:8px;">
+  <label>Message:
+    <input id="msg" value="Ping via SockJS" style="width:280px;">
+  </label>
+  <button id="btnSend">Send</button>
+</div>
+
+<pre id="log" style="background:#111;color:#0f0;padding:12px;min-height:240px;margin-top:12px;white-space:pre-wrap;"></pre>
+
+<!-- SockJS + STOMP -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+<script>
+  const logEl = document.getElementById('log');
+  const log = (m) => { logEl.textContent += m + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+  let client;
+
+  document.getElementById('btnConnect').onclick = () => {
+    const sockUrl = document.getElementById('wsUrl').value; // 예: http://localhost:8080/ws
+    const socketFactory = () => new SockJS(sockUrl);        // ★ SockJS 사용
+
+    client = new StompJs.Client({
+      webSocketFactory: socketFactory,
+      reconnectDelay: 3000,
+      onConnect: () => log('[CONNECTED]'),
+      onStompError: f => log('[STOMP ERROR] ' + f.headers['message'] + ' ' + f.body),
+      onWebSocketError: e => log('[WS ERROR] ' + e)
+    });
+    client.activate();
+  };
+
+  document.getElementById('btnDisconnect').onclick = () => {
+    client?.deactivate();
+    log('[DISCONNECTED]');
+  };
+
+  document.getElementById('btnSub').onclick = () => {
+    const ch = document.getElementById('channelId').value;
+    const dest = `/topic/social/chat/${ch}`;
+    client.subscribe(dest, (msg) => log('[MESSAGE] ' + msg.body));
+    log('[SUBSCRIBED] ' + dest);
+  };
+
+  document.getElementById('btnSend').onclick = () => {
+    const ch = document.getElementById('channelId').value;
+    const payload = { content: document.getElementById('msg').value };
+    const dest = `/app/social/chat/${ch}/send`;
+    client.publish({
+      destination: dest,
+      body: JSON.stringify(payload),
+      headers: { 'content-type': 'application/json' } // ★ 꼭 넣기
+    });
+    log('[SENT] ' + JSON.stringify(payload));
+  };
+</script>
+</body>
+</html>
