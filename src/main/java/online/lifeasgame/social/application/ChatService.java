@@ -20,6 +20,7 @@ public class ChatService {
     private final ChatWriter chatWriter;
     private final GuildReader guildReader;
     private final PartyReader partyReader;
+    private final FollowReader followReader;
 
     @Transactional
     public ChatResult.Channel openGlobal(Long playerId, ChatCommand.OpenGlobal command) {
@@ -67,6 +68,9 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openFriend(Long playerId, Long friendId, ChatCommand.OpenFriend command) {
+        if (!followReader.isFriend(friendId, playerId)) {
+            throw new DomainException(SocialError.NOT_FRIEND);
+        }
         ChatSpec.OpenFriend spec = ChatSpec.OpenFriend.from(playerId, friendId, command);
         ChatChannel channel = chatWriter.ensureFriendChannel(spec.playerId(), spec.friendId(), spec.name());
         ChannelParticipant participant = chatWriter.join(channel, playerId, null);

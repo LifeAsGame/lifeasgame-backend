@@ -67,4 +67,6 @@ public interface FollowJpaRepository extends JpaRepository<Follow, Long> {
     List<Follow> findRecentFollowers(@Param("playerId") Long playerId, Pageable pageable);
 
     long countByPlayerId(Long playerId);
+
+    boolean existsByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId);
 }

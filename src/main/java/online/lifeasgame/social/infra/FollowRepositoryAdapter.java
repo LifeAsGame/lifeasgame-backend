@@ -32,6 +32,11 @@ public class FollowRepositoryAdapter implements FollowRepository, FollowQueryRep
         return followJpaRepository.findByIdAndPlayerId(id, playerId);
     }
 
+    @Override
+    public boolean existsByPlayerIdAndTargetId(Long playerId, Long friendId) {
+        return followJpaRepository.existsByPlayerIdAndTargetPlayerId(playerId, friendId);
+    }
+
     // QueryRepo — 2단계 로딩
     @Override
     public List<Follow> findFollowings(Long playerId, int page, int size) {
