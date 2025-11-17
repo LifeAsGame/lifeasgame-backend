@@ -52,6 +52,7 @@ public class ChatWriter {
         ).orElseGet(() -> chatChannelRepository.save(ChatChannel.admin(playerId, normalized)));
     }
 
+    // 동시 저장 문제 고려 필요
     public ChatChannel ensureFriendChannel(Long playerId, Long friendId, String name) {
         Guard.check(!playerId.equals(friendId), "friend channel participants must differ");
         String normalized = normalizeName(name, "친구 채팅");

@@ -50,7 +50,7 @@ public class AdminChatController implements AdminChatApiSpecV1 {
             @PathVariable Long operatorId,
             @PathVariable Long channelId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     ) {
         ChatResult.MessagePage page = chatService.messages(operatorId, channelId, cursor, size);
         return ApiResponses.ok(AdminChatWebMapper.toMessagePage(page));
