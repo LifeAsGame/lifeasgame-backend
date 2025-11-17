@@ -41,6 +41,7 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openAdminForOperator(Long operatorId, Long playerId, ChatCommand.OpenAdmin command) {
+        // 운영진이 플레이어를 위해 운영진 채널을 여는 경우 검증 필요
         ChatSpec.OpenAdmin spec = ChatSpec.OpenAdmin.forOperator(operatorId, playerId, command);
         ChatChannel channel = chatWriter.ensureAdminChannel(spec.contextId(), spec.name());
         chatWriter.join(channel, playerId, null);
