@@ -9,6 +9,9 @@ public class ChatRealtimeTopicResolver {
     private static final String DESTINATION_PREFIX = "/topic/social/chat/";
 
     public String topic(Long channelId) {
+        if (channelId == null) {
+            throw new IllegalArgumentException("channelId must not be null");
+        }
         return TOPIC_PREFIX + channelId;
     }
 
@@ -17,6 +20,9 @@ public class ChatRealtimeTopicResolver {
     }
 
     public String destination(Long channelId) {
+        if (channelId == null) {
+            throw new IllegalArgumentException("channelId must not be null");
+        }
         return DESTINATION_PREFIX + channelId;
     }
 }
