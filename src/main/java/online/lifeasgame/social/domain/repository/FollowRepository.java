@@ -10,4 +10,6 @@ public interface FollowRepository {
     Optional<Follow> findById(Long id);
 
     Optional<Follow> findByIdAndPlayerId(Long id, Long playerId);
+
+    boolean existsByPlayerIdAndTargetId(Long playerId, Long friendId);
 }

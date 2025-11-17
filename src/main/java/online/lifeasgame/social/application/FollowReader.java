@@ -49,4 +49,9 @@ public class FollowReader {
     public List<Follow> recentFollowers(Long playerId, int limit) {
         return followQueryRepository.recentFollowers(playerId, limit);
     }
+
+    public boolean isFriend(Long friendId, Long playerId) {
+        return followRepository.existsByPlayerIdAndTargetId(playerId, friendId)
+                && followRepository.existsByPlayerIdAndTargetId(friendId, playerId);
+    }
 }
