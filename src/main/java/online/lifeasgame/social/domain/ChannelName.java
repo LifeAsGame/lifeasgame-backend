@@ -2,22 +2,22 @@ package online.lifeasgame.social.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
 import java.util.Objects;
 
 @Getter
 @Embeddable
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChannelName {
 
-    private static final int MAX_LENGTH = 100;
+    private static final int MAX_LENGTH = 60;
 
     @Column(name = "channel_name", length = MAX_LENGTH)
     private String value;
-
-    protected ChannelName() {
-    }
 
     private ChannelName(String value) {
         this.value = value;
