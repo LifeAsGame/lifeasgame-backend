@@ -25,10 +25,10 @@ public class RedisPubSubConfiguration {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         SimpleAsyncTaskExecutor listenerExecutor = new SimpleAsyncTaskExecutor("redis-pubsub-listener-");
-        listenerExecutor.setConcurrencyLimit(SimpleAsyncTaskExecutor.UNBOUNDED_CONCURRENCY);
+        listenerExecutor.setConcurrencyLimit(10);
         container.setTaskExecutor(listenerExecutor);
         SimpleAsyncTaskExecutor subscriptionExecutor = new SimpleAsyncTaskExecutor("redis-pubsub-subscription-");
-        subscriptionExecutor.setConcurrencyLimit(SimpleAsyncTaskExecutor.UNBOUNDED_CONCURRENCY);
+        subscriptionExecutor.setConcurrencyLimit(10);
         container.setSubscriptionExecutor(subscriptionExecutor);
         container.setErrorHandler(error -> log.error("Redis pub/sub listener error", error));
         subscriptions.orderedStream()
