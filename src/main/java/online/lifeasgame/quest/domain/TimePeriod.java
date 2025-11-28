@@ -2,13 +2,14 @@ package online.lifeasgame.quest.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -53,6 +54,10 @@ public class TimePeriod {
     public static TimePeriod monthly(YearMonth ym) {
         Guard.notNull(ym, "yearMonth");
         return new TimePeriod(ym.atDay(1), ym.atEndOfMonth());
+    }
+
+    public static TimePeriod forever() {
+        return new TimePeriod(LocalDate.of(1970, 1, 1), LocalDate.of(9999, 12, 31));
     }
 
     public boolean contains(LocalDate d){

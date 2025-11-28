@@ -1,12 +1,14 @@
 package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.model.ExerciseSpec;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
+import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +22,23 @@ public class ExerciseLogService {
 
     private final ExerciseLogReader exerciseLogReader;
     private final ExerciseLogWriter exerciseLogWriter;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public ExerciseResult.Created create(Long playerId, ExerciseCommand.Create command) {
         ExerciseLog saved = exerciseLogWriter.create(ExerciseSpec.Create.from(playerId, command));
+
+        domainEventPublisher.publish(
+                ExerciseLogged.of(
+                        playerId,
+                        saved.getId(),
+                        saved.getCategory().name(),
+                        saved.getMetrics().durationMinutes(),
+                        saved.getMetrics().distanceKm(),
+                        saved.getMetrics().calories()
+                )
+        );
+
         return ExerciseResult.Created.of(saved.getId());
     }
 
