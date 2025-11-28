@@ -1,25 +1,21 @@
 package online.lifeasgame.character.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.character.domain.converter.ExtraStatsConverter;
 import online.lifeasgame.character.domain.converter.GenderTypeConverter;
 import online.lifeasgame.character.domain.converter.StatusEffectsEnumConverter;
+import online.lifeasgame.character.domain.event.PlayerLeveledUp;
 import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -79,6 +75,9 @@ public class Player extends AbstractTime {
     @Version
     private Long version;
 
+    @Transient
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+
     private Player(Long userId, Name name, GenderType gender) {
         this.userId = Guard.notNull(userId, "userId");
         this.name = Guard.notNull(name, "name");
@@ -116,7 +115,9 @@ public class Player extends AbstractTime {
         int afterLv = leveling.levelFor(this.exp.value());
         if (afterLv != beforeLv) {
             this.level.with(afterLv);
-            // addEvent(new PlayerLeveledUp(this.id, afterLv-beforeLv));
+            if (this.id != null) {
+                recordEvent(PlayerLeveledUp.of(this.id, beforeLv, afterLv));
+            }
         }
 
         var p = leveling.progressOf(this.exp.value(), afterLv);
@@ -171,6 +172,17 @@ public class Player extends AbstractTime {
 
     public void changeRepresentativeTitle(Long titleId) {
         this.titleId = titleId;
+    }
+
+    public List<DomainEvent> pullEvents() {
+        var copy = List.copyOf(domainEvents);
+        domainEvents.clear();
+        return copy;
+    }
+
+    private void recordEvent(DomainEvent event) {
+        if (event == null) return;
+        domainEvents.add(event);
     }
 
     public record GainResult(

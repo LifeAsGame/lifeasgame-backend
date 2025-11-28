@@ -104,7 +104,9 @@ class PlayerWriter {
 
     public GainResult grantExp(Long playerId, long delta) {
         Player player = getPlayer(playerId);
-        return player.gainExp(delta, levelingPolicy);
+        GainResult result = player.gainExp(delta, levelingPolicy);
+        domainEventPublisher.publishAll(player.pullEvents());
+        return result;
     }
 
     public Player grantCoreStats(Long playerId, CoreStatDelta delta) {
