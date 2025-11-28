@@ -1,11 +1,13 @@
 package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
-import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.application.model.MediaSpec;
+import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.MediaLog;
 import online.lifeasgame.lifelog.domain.WatchStatus;
+import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
     private final MediaLogWriter mediaLogWriter;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public MediaLogResult.Created create(Long playerId, MediaLogCommand.Create command) {
@@ -38,7 +41,20 @@ public class MediaLogService {
     @Transactional
     public MediaLogResult.Info advance(Long playerId, Long mediaId, MediaLogCommand.Advance command) {
         MediaLog mediaLog = mediaLogReader.getMediaLog(playerId, mediaId);
-        mediaLogWriter.advance(mediaLog, command.step());
+
+        int step = command.step() == null ? 1 : command.step();
+        mediaLogWriter.advance(mediaLog, step);
+
+        domainEventPublisher.publish(
+                MediaLogAdvanced.of(
+                        playerId,
+                        mediaLog.getId(),
+                        step,
+                        mediaLog.getProgress().current(),
+                        mediaLog.getProgress().total()
+                )
+        );
+
         return MediaLogResult.Info.from(mediaLog);
     }
 

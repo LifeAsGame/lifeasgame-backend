@@ -1,10 +1,12 @@
 package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.model.CollectionSpec;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.CollectionLog;
+import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +20,21 @@ public class CollectionLogService {
 
     private final CollectionLogReader collectionLogReader;
     private final CollectionLogWriter collectionLogWriter;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public CollectionResult.Created create(Long playerId, CollectionCommand.Create command) {
         CollectionLog saved = collectionLogWriter.create(CollectionSpec.Create.from(playerId, command));
+
+        domainEventPublisher.publish(
+                CollectionLogged.of(
+                        playerId,
+                        saved.getId(),
+                        saved.getCategory().name(),
+                        saved.getQuantity().value()
+                )
+        );
+
         return CollectionResult.Created.of(saved.getId());
     }
 
