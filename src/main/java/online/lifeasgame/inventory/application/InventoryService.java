@@ -1,6 +1,7 @@
 package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.inventory.application.command.InventoryCommand;
 import online.lifeasgame.inventory.application.model.InventorySpec;
 import online.lifeasgame.inventory.application.result.InventoryResult;
@@ -18,6 +19,7 @@ public class InventoryService {
     private final InventoryReader inventoryReader;
     private final InventoryWriter inventoryWriter;
     private final ItemReader itemReader;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
@@ -29,6 +31,8 @@ public class InventoryService {
                 ItemCarryPolicy.from(item),
                 InventorySpec.Add.from(command)
         );
+
+        domainEventPublisher.publishAll(playerInventory.pullEvents());
 
         return InventoryResult.Slots.fromList(slotIndexes);
     }

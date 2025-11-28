@@ -6,8 +6,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.util.*;
@@ -36,6 +38,9 @@ public class PlayerInventory extends AbstractTime {
             orphanRemoval = true
     )
     private List<InventoryEntry> entries;
+
+    @Transient
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     private PlayerInventory(Long playerId, int capacitySlots) {
         this.playerId = Guard.notNull(playerId, "playerId");
@@ -122,6 +127,16 @@ public class PlayerInventory extends AbstractTime {
             placed.add(slotIndex);
             remaining -= put;
         }
+
+        recordEvent(InventoryItemAdded.of(
+                this.playerId,
+                policy.itemId(),
+                policy.rarity().name(),
+                policy.stackable(),
+                bound,
+                quantity
+        ));
+
         return placed;
     }
 
@@ -239,7 +254,7 @@ public class PlayerInventory extends AbstractTime {
                 .toList();
     }
 
-    private Map<String,Object> safeAttrs(InstanceAttrs x) {
+    private Map<String, Object> safeAttrs(InstanceAttrs x) {
         return (x == null) ? Map.of() : x.attrs();
     }
 
@@ -248,5 +263,18 @@ public class PlayerInventory extends AbstractTime {
                 .filter(e -> e.slotIndex.equals(of))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public List<DomainEvent> pullEvents() {
+        var copy = List.copyOf(domainEvents);
+        domainEvents.clear();
+        return copy;
+    }
+
+    private void recordEvent(DomainEvent event) {
+        if (event == null) {
+            return;
+        }
+        domainEvents.add(event);
     }
 }
