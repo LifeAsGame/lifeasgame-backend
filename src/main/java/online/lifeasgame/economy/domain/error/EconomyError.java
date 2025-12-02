@@ -14,7 +14,9 @@ public enum EconomyError implements ErrorCode {
     SHOP_PER_PLAYER_LIMIT("ECON-SHOP-PER-PLAYER-LIMIT", "Per-player purchase limit exceeded", 409),
     DUPLICATE_REQUEST("ECON-DUPLICATE-REQUEST", "Duplicate request detected", 409),
     PAYMENT_REJECTED("ECON-PAYMENT-REJECTED", "Payment gateway rejected", 402),
-    HOLD_NOT_FOUND("ECON-HOLD-NOT-FOUND", "Hold not found", 404);
+    HOLD_NOT_FOUND("ECON-HOLD-NOT-FOUND", "Hold not found", 404),
+    CANNOT_PURCHASE_OWN_LISTING("ECON-CANNOT-PURCHASE-OWN", "Cannot purchase own listing", 400),
+    INVALID_RESERVATION_TOKEN("ECON-INVALID-RESERVATION-TOKEN", "Invalid reservation token", 400);
 
     private final String code;
     private final String message;

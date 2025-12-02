@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +78,9 @@ public class MarketplaceService {
         Listing listing = listingReader.getForUpdate(command.listingId());
         Instant now = Instant.now();
         listing.expire(now);
+        if (buyerId.equals(listing.getSellerPlayerId())) {
+            throw new DomainException(EconomyError.CANNOT_PURCHASE_OWN_LISTING);
+        }
         Wallet buyerWallet = walletWriter.getOrCreateForUpdate(buyerId);
         Wallet sellerWallet = walletWriter.getOrCreateForUpdate(listing.getSellerPlayerId());
 
@@ -86,6 +90,9 @@ public class MarketplaceService {
             }
             if (!buyerId.equals(listing.getReservedBy())) {
                 throw new DomainException(EconomyError.LISTING_RESERVED_OTHER);
+            }
+            if (!Objects.equals(command.reservationToken(), listing.getReservationToken())) {
+                throw new DomainException(EconomyError.INVALID_RESERVATION_TOKEN);
             }
             buyerWallet.commitHold(listing.getReservedHoldId());
         } else if (listing.getStatus() == ListingStatus.OPEN) {
@@ -180,12 +187,14 @@ public class MarketplaceService {
     }
 
     private void handleHoldCancellation(WalletHold hold, String holdId) {
-        hold.getWallet().cancelHold(holdId);
-        walletWriter.save(hold.getWallet());
+        Wallet wallet = walletWriter.getOrCreateForUpdate(hold.getWallet().getOwnerId());
+        wallet.cancelHold(holdId);
+        walletWriter.save(wallet);
     }
 
     private void handleHoldExpiry(WalletHold hold, Instant now) {
-        hold.getWallet().expireHolds(now);
-        walletWriter.save(hold.getWallet());
+        Wallet wallet = walletWriter.getOrCreateForUpdate(hold.getWallet().getOwnerId());
+        wallet.expireHolds(now);
+        walletWriter.save(wallet);
     }
 }

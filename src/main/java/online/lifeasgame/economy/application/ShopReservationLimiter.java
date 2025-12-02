@@ -1,11 +1,12 @@
 package online.lifeasgame.economy.application;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
@@ -22,9 +23,16 @@ public class ShopReservationLimiter {
         String itemKey = "economy:shop:" + shopItemId + ":inflight";
         String playerKey = "economy:shop:" + shopItemId + ":player:" + playerId;
 
+        Long itemCount = null;
+        Long playerCount = null;
+        boolean itemUpdated = false;
+        boolean playerUpdated = false;
+
         try {
-            Long itemCount = redisTemplate.opsForValue().increment(itemKey, quantity);
-            Long playerCount = redisTemplate.opsForValue().increment(playerKey, quantity);
+            itemCount = redisTemplate.opsForValue().increment(itemKey, quantity);
+            itemUpdated = true;
+            playerCount = redisTemplate.opsForValue().increment(playerKey, quantity);
+            playerUpdated = true;
 
             redisTemplate.expire(itemKey, effectiveTtl);
             redisTemplate.expire(playerKey, effectiveTtl);
@@ -40,7 +48,12 @@ public class ShopReservationLimiter {
             return true;
         } catch (Exception ex) {
             log.warn("Failed to reserve shop item {} in redis, allowing fallback", shopItemId, ex);
-            release(shopItemId, playerId, quantity);
+            if (itemUpdated) {
+                redisTemplate.opsForValue().decrement(itemKey, quantity);
+            }
+            if (playerUpdated) {
+                redisTemplate.opsForValue().decrement(playerKey, quantity);
+            }
             return true;
         }
     }
@@ -48,7 +61,13 @@ public class ShopReservationLimiter {
     public void release(Long shopItemId, Long playerId, int quantity) {
         String itemKey = "economy:shop:" + shopItemId + ":inflight";
         String playerKey = "economy:shop:" + shopItemId + ":player:" + playerId;
-        redisTemplate.opsForValue().decrement(itemKey, quantity);
-        redisTemplate.opsForValue().decrement(playerKey, quantity);
+        Long itemCount = redisTemplate.opsForValue().decrement(itemKey, quantity);
+        Long playerCount = redisTemplate.opsForValue().decrement(playerKey, quantity);
+        if (itemCount != null && itemCount <= 0) {
+            redisTemplate.delete(itemKey);
+        }
+        if (playerCount != null && playerCount <= 0) {
+            redisTemplate.delete(playerKey);
+        }
     }
 }
