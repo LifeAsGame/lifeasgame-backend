@@ -56,6 +56,11 @@ public class Money {
         return new Money(v, currency);
     }
 
+    public Money multiply(int factor) {
+        Guard.minValue(factor, 0, "factor");
+        return new Money(this.amount * factor, currency);
+    }
+
     private void ensureSameCurrency(Money other) {
         Guard.check(Objects.equals(currency, other.currency), "currency mismatch");
     }

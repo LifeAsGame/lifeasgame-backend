@@ -1,0 +1,83 @@
+package online.lifeasgame.economy.application;
+
+import java.time.Duration;
+import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.economy.application.command.EconomyCommand;
+import online.lifeasgame.economy.application.port.PaymentGateway;
+import online.lifeasgame.economy.application.result.EconomyResult;
+import online.lifeasgame.economy.domain.Money;
+import online.lifeasgame.economy.domain.error.EconomyError;
+import online.lifeasgame.economy.domain.event.EconomyEvent;
+import online.lifeasgame.economy.domain.event.EconomyEventType;
+import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class TopUpService {
+
+    private final WalletWriter walletWriter;
+    private final PaymentGateway paymentGateway;
+    private final IdempotencyKeyStore idempotencyKeyStore;
+    private final DomainEventPublisher domainEventPublisher;
+
+    @Transactional
+    public void topUp(Long ownerId, EconomyCommand.TopUp command) {
+        if (!idempotencyKeyStore.acquire(command.idempotencyKey(), Duration.ofMinutes(10))) {
+            throw new DomainException(EconomyError.DUPLICATE_REQUEST);
+        }
+
+        boolean ok = paymentGateway.confirmCharge(
+                command.paymentKey(),
+                command.orderId(),
+                command.amount(),
+                command.currency()
+        );
+
+        if (!ok) {
+            throw new DomainException(EconomyError.PAYMENT_REJECTED);
+        }
+
+        var wallet = walletWriter.getOrCreateForUpdate(ownerId);
+        wallet.deposit(Money.of(command.amount(), command.currency()));
+        walletWriter.save(wallet);
+
+        domainEventPublisher.publish(
+                EconomyEvent.builder(EconomyEventType.TOPUP_COMPLETED)
+                        .actorId(ownerId)
+                        .attribute("orderId", command.orderId())
+                .occurredAt(java.time.Instant.now())
+                .build()
+        );
+    }
+
+    @Transactional
+    public EconomyResult.WalletBalance adjust(EconomyCommand.AdjustWallet command) {
+        var wallet = walletWriter.getOrCreateForUpdate(command.playerId());
+        Money money = Money.of(command.amount(), command.currency());
+        if (command.debit()) {
+            wallet.withdraw(money);
+        } else {
+            wallet.deposit(money);
+        }
+        walletWriter.save(wallet);
+
+        domainEventPublisher.publish(
+                EconomyEvent.builder(EconomyEventType.WALLET_ADJUSTED)
+                        .actorId(command.playerId())
+                        .attribute("reason", command.reason())
+                        .occurredAt(java.time.Instant.now())
+                        .build()
+        );
+        return EconomyResult.WalletBalance.of(wallet.getBalance().amount(), wallet.getBalance().currency().name());
+    }
+
+    @Transactional
+    public EconomyResult.WalletBalance wallet(Long playerId) {
+        var wallet = walletWriter.getOrCreate(playerId);
+        return EconomyResult.WalletBalance.of(wallet.getBalance().amount(), wallet.getBalance().currency().name());
+    }
+}

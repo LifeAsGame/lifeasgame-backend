@@ -98,4 +98,8 @@ public class WalletHold extends AbstractTime {
     public long getAmount() {
         return amount;
     }
+
+    public Wallet getWallet() {
+        return wallet;
+    }
 }

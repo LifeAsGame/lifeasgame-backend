@@ -167,4 +167,44 @@ public class Listing extends AbstractTime {
     private void closeActive() {
         this.activeFlag = null;
     }
+
+    public Money getPrice() {
+        return price;
+    }
+
+    public Long getSellerPlayerId() {
+        return sellerPlayerId;
+    }
+
+    public ListingStatus getStatus() {
+        return status;
+    }
+
+    public Long getReservedBy() {
+        return reservedBy;
+    }
+
+    public ReservationToken getReservationToken() {
+        return reservationToken;
+    }
+
+    public Instant getReservationExpiresAt() {
+        return reservationExpiresAt;
+    }
+
+    public String getReservedHoldId() {
+        return reservedHoldId;
+    }
+
+    public Long getItemInstanceId() {
+        return itemInstanceId;
+    }
+
+    public Long getItemId() {
+        return itemId;
+    }
+
+    public Long getId() {
+        return id;
+    }
 }
