@@ -65,15 +65,9 @@ public final class AdminEconomyWebMapper {
 
     public static AdminEconomyResponse.ShopPurchases toResponse(EconomyResult.ShopPurchases purchases) {
         return new AdminEconomyResponse.ShopPurchases(purchases.purchases().stream()
-                .map(view -> new AdminEconomyResponse.ShopPurchaseSummary(
-                        view.id(),
-                        view.shopItemId(),
-                        view.playerId(),
-                        view.quantity(),
-                        view.status(),
-                        view.reservationToken(),
-                        view.reservationExpiresAt()
-                )).toList());
+                .map(AdminEconomyWebMapper::toResponse)
+                .toList()
+        );
     }
 
     public static AdminEconomyResponse.WalletBalance toResponse(EconomyResult.WalletBalance balance) {

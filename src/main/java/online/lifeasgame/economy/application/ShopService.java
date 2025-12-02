@@ -1,8 +1,5 @@
 package online.lifeasgame.economy.application;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
@@ -18,6 +15,10 @@ import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -163,9 +164,10 @@ public class ShopService {
         Instant now = Instant.now();
         List<ShopPurchase> purchases = shopPurchaseReader.findExpiringBefore(now);
         for (ShopPurchase purchase : purchases) {
+            String holdId = purchase.getWalletHoldId();
             purchase.expire(now);
-            if (purchase.getWalletHoldId() != null) {
-                walletHoldReader.findByHoldId(purchase.getWalletHoldId())
+            if (holdId != null) {
+                walletHoldReader.findByHoldId(holdId)
                         .ifPresent(hold -> {
                             hold.getWallet().expireHolds(now);
                             walletWriter.save(hold.getWallet());

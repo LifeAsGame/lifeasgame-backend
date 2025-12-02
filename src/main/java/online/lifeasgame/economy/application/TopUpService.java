@@ -1,6 +1,5 @@
 package online.lifeasgame.economy.application;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
@@ -14,6 +13,8 @@ import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor

@@ -1,26 +1,21 @@
 package online.lifeasgame.economy.application;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
-import online.lifeasgame.economy.domain.Listing;
-import online.lifeasgame.economy.domain.ListingStatus;
-import online.lifeasgame.economy.domain.Money;
-import online.lifeasgame.economy.domain.ReservationToken;
-import online.lifeasgame.economy.domain.Trade;
-import online.lifeasgame.economy.domain.Wallet;
-import online.lifeasgame.economy.domain.WalletHold;
+import online.lifeasgame.economy.domain.*;
 import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +53,7 @@ public class MarketplaceService {
             throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
         }
         Wallet wallet = walletWriter.getOrCreateForUpdate(buyerId);
-        String holdId = wallet.placeHold(listing.getPrice(), "listing-reserve" + listing.getId(), now, command.ttlSeconds());
+        String holdId = wallet.placeHold(listing.getPrice(), "listing-reserve-" + listing.getId(), now, command.ttlSeconds());
         ReservationToken token = listing.reserve(buyerId, holdId, now, command.ttlSeconds());
         walletWriter.save(wallet);
         listingWriter.save(listing);

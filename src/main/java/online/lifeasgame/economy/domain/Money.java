@@ -4,10 +4,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
+
+import java.util.Objects;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -58,7 +59,8 @@ public class Money {
 
     public Money multiply(int factor) {
         Guard.minValue(factor, 0, "factor");
-        return new Money(this.amount * factor, currency);
+        long result = Math.multiplyExact(this.amount, factor);
+        return new Money(result, currency);
     }
 
     private void ensureSameCurrency(Money other) {

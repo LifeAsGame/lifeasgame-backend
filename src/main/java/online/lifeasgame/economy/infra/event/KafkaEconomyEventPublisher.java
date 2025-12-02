@@ -1,16 +1,16 @@
 package online.lifeasgame.economy.infra.event;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.economy.domain.event.EconomyEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import online.lifeasgame.economy.domain.event.EconomyEvent;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnBean(name = "economyEventKafkaTemplate")
+@ConditionalOnProperty(prefix = "lifeasgame.economy.events", name = "enabled", havingValue = "true")
 public class KafkaEconomyEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaEconomyEventPublisher.class);

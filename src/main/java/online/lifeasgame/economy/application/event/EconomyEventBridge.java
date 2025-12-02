@@ -1,18 +1,18 @@
 package online.lifeasgame.economy.application.event;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.infra.event.KafkaEconomyEventPublisher;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnBean(KafkaEconomyEventPublisher.class)
+@ConditionalOnProperty(prefix = "lifeasgame.economy.events", name = "enabled", havingValue = "true")
 public class EconomyEventBridge {
 
     private static final Logger log = LoggerFactory.getLogger(EconomyEventBridge.class);
