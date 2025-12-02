@@ -43,16 +43,33 @@ public class ShopItem extends AbstractTime {
     @Column(nullable = false)
     private boolean available = true;
 
+    @Column(name = "global_stock_limit")
+    private Integer globalStockLimit;
+
+    @Column(name = "per_player_limit")
+    private Integer perPlayerLimit;
+
+    @Column(name = "reservation_ttl_sec")
+    private Integer reservationTtlSec = 0;
+
     @Version
     private Long version;
 
-    private ShopItem(Long itemId, Money price) {
+    private ShopItem(Long itemId, Money price, Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {
         this.itemId = Guard.notNull(itemId, "itemId");
         this.price = Guard.notNull(price, "price");
+        this.globalStockLimit = globalStockLimit;
+        this.perPlayerLimit = perPlayerLimit;
+        this.reservationTtlSec = reservationTtlSec;
     }
 
     public static ShopItem create(Long itemId, Money price) {
-        return new ShopItem(itemId, price);
+        return new ShopItem(itemId, price, null, null, 0);
+    }
+
+    public static ShopItem createLimited(Long itemId, Money price, Integer globalStockLimit, Integer perPlayerLimit,
+                                         Integer reservationTtlSec) {
+        return new ShopItem(itemId, price, globalStockLimit, perPlayerLimit, reservationTtlSec);
     }
 
     public void changePrice(Money newPrice) {
@@ -67,5 +84,49 @@ public class ShopItem extends AbstractTime {
 
     public void disable() {
         this.available = false;
+    }
+
+    public void changeLimits(Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {
+        if (globalStockLimit != null) {
+            Guard.minValue(globalStockLimit, 0, "globalStockLimit");
+        }
+        if (perPlayerLimit != null) {
+            Guard.minValue(perPlayerLimit, 0, "perPlayerLimit");
+        }
+        if (reservationTtlSec != null) {
+            Guard.minValue(reservationTtlSec, 0, "reservationTtlSec");
+        }
+
+        this.globalStockLimit = globalStockLimit;
+        this.perPlayerLimit = perPlayerLimit;
+        this.reservationTtlSec = reservationTtlSec;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public Money getPrice() {
+        return price;
+    }
+
+    public Integer getGlobalStockLimit() {
+        return globalStockLimit;
+    }
+
+    public Integer getPerPlayerLimit() {
+        return perPlayerLimit;
+    }
+
+    public int getReservationTtlSec() {
+        return reservationTtlSec == null ? 0 : reservationTtlSec;
+    }
+
+    public Long getItemId() {
+        return itemId;
+    }
+
+    public Long getId() {
+        return id;
     }
 }
