@@ -38,11 +38,9 @@ public class WalletHold extends AbstractTime {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    @Getter
     @Column(name = "hold_id", length = 36, unique = true, nullable = false)
     private String holdId;
 
-    @Getter
     @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
     private Currency currency;
@@ -57,7 +55,6 @@ public class WalletHold extends AbstractTime {
     @Column(name = "reason", length = 100)
     private String reason;
 
-    @Getter
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
@@ -97,5 +94,21 @@ public class WalletHold extends AbstractTime {
 
     public long getAmount() {
         return amount;
+    }
+
+    public String getHoldId() {
+        return holdId;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
+    public Wallet getWallet() {
+        return wallet;
     }
 }

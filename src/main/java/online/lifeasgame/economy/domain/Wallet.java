@@ -118,4 +118,12 @@ public class Wallet extends AbstractTime {
     public Long getOwnerId() {
         return ownerId;
     }
+
+    public WalletBalance getBalance(Currency currency) {
+        return balance(currency);
+    }
+
+    public WalletBalance getBalance() {
+        return balance(Currency.GOLD);
+    }
 }
