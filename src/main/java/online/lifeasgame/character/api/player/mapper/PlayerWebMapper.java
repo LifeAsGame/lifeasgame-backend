@@ -10,8 +10,8 @@ public class PlayerWebMapper {
     private PlayerWebMapper() {
     }
 
-    public static PlayerCommand.Register toCommand(PlayerRequest.Register request) {
-        return PlayerCommand.Register.of(request.name(), request.gender());
+    public static PlayerCommand.Register toRegisterCommand(PlayerRequest.Register request) {
+        return new PlayerCommand.Register(request.name(), request.gender());
     }
 
     public static PlayerResponse.Created toCreated(PlayerResult.Created result) {
@@ -19,7 +19,7 @@ public class PlayerWebMapper {
     }
 
     public static PlayerResponse.Info toPlayerInfo(PlayerResult.PlayerInfo result) {
-        return PlayerResponse.Info.of(
+        return new PlayerResponse.Info(
                 result.name(),
                 result.gender(),
                 result.job(),
@@ -37,14 +37,18 @@ public class PlayerWebMapper {
                 result.luc(),
                 result.extraStats(),
                 result.effects().stream()
-                        .map((effect) -> PlayerResponse.Info.StatusEffects.of(effect.name(), effect.category().name()))
+                        .map(
+                                effect ->
+                                        new PlayerResponse.Info.StatusEffects(
+                                                effect.name(),
+                                                effect.category().name()
+                                        )
+                        )
                         .toList()
         );
     }
 
-    public static PlayerResponse.Updated toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
-        return PlayerResponse.Updated.of(
-                updatedTitle.titleId()
-        );
+    public static PlayerResponse.Updated toUpdatedTitle(PlayerResult.UpdatedTitle result) {
+        return new PlayerResponse.Updated(result.titleId());
     }
 }

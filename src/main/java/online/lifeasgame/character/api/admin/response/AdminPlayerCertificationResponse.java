@@ -18,26 +18,5 @@ public final class AdminPlayerCertificationResponse {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static Granted of(
-                Long playerId,
-                Long certificationId,
-                String name,
-                String issuer,
-                String category,
-                LocalDate acquiredDate,
-                LocalDate expiresDate,
-                Instant grantedAt
-        ) {
-            return new Granted(
-                    playerId,
-                    certificationId,
-                    name,
-                    issuer,
-                    category,
-                    acquiredDate,
-                    expiresDate,
-                    grantedAt
-            );
-        }
     }
 }

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
-    private final PlayerService adminPlayerService;
+    private final PlayerService playerService;
 
     @Override
     @PostMapping("/{playerId}/exp/grant")
@@ -26,10 +26,8 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantExp request
     ) {
-        PlayerResult.ExpGranted expGranted = adminPlayerService.grantExp(playerId, request.expDelta());
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toExpGranted(expGranted)
-        );
+        PlayerResult.ExpGranted result = playerService.grantExp(playerId, request.expDelta());
+        return ApiResponses.ok(AdminPlayerWebMapper.toExpGranted(result));
     }
 
     @Override
@@ -38,10 +36,9 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHp request
     ){
-        PlayerResult.CurrentHp currentHp = adminPlayerService.changeHp(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toCurrentHp(currentHp)
-        );
+        PlayerResult.CurrentHp result =
+                playerService.changeHp(AdminPlayerWebMapper.toChangeHpCommand(playerId, request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toCurrentHp(result));
     }
 
     @Override
@@ -50,10 +47,9 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
     ) {
-        PlayerResult.HpCapacity hpCapacity = adminPlayerService.changeHpCapacity(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toHpCapacity(hpCapacity)
-        );
+        PlayerResult.HpCapacity result =
+                playerService.changeHpCapacity(AdminPlayerWebMapper.toChangeHpCapacityCommand(playerId, request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toHpCapacity(result));
     }
 
     @Override
@@ -62,10 +58,8 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMp request
     ){
-        PlayerResult.CurrentMp currentMp = adminPlayerService.changeMp(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toCurrentMp(currentMp)
-        );
+        PlayerResult.CurrentMp result = playerService.changeMp(AdminPlayerWebMapper.toChangeMpCommand(playerId, request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toCurrentMp(result));
     }
 
     @Override
@@ -74,10 +68,9 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
     ) {
-        PlayerResult.MpCapacity mpCapacity = adminPlayerService.changeMpCapacity(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toMpCapacity(mpCapacity)
-        );
+        PlayerResult.MpCapacity result =
+                playerService.changeMpCapacity(AdminPlayerWebMapper.toChangeMpCapacityCommand(playerId, request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toMpCapacity(result));
     }
 
     @Override
@@ -86,11 +79,9 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantCoreStats request
     ) {
-        PlayerResult.CoreStatsGranted coreStatsGranted =
-                adminPlayerService.grantCoreStats(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toCoreStatsGranted(coreStatsGranted)
-        );
+        PlayerResult.CoreStatsGranted result =
+                playerService.grantCoreStats(AdminPlayerWebMapper.toGrantCoreStatsCommand(playerId, request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toCoreStatsGranted(result));
     }
 
     @Override
@@ -99,10 +90,11 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantStatusEffects request
     ) {
-        PlayerResult.StatusEffectsGranted statusEffectsGranted = adminPlayerService.grantStatusEffects(AdminPlayerWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toStatusEffectsGranted(statusEffectsGranted)
-        );
+        PlayerResult.StatusEffectsGranted result =
+                playerService.grantStatusEffects(
+                        AdminPlayerWebMapper.toGrantStatusEffectsCommand(playerId, request)
+                );
+        return ApiResponses.ok(AdminPlayerWebMapper.toStatusEffectsGranted(result));
     }
 
     @Override
@@ -111,10 +103,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     ) {
-        PlayerResult.UpdatedTitle updatedTitle = adminPlayerService.changeRepresentativeTitle(playerId, titleId);
-
-        return ApiResponses.ok(
-                AdminPlayerWebMapper.toUpdatedTitle(updatedTitle)
-        );
+        PlayerResult.UpdatedTitle result = playerService.changeRepresentativeTitle(playerId, titleId);
+        return ApiResponses.ok(AdminPlayerWebMapper.toUpdatedTitle(result));
     }
 }

@@ -27,12 +27,10 @@ public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody AdminPlayerHobbyRequest.Grant request
     ) {
-        PlayerHobbyResult.Granted granted = adminPlayerHobbyService.grantHobby(
-                AdminPlayerHobbyWebMapper.toCommand(playerId, hobbyId, request)
+        PlayerHobbyResult.Granted result = adminPlayerHobbyService.grantHobby(
+                AdminPlayerHobbyWebMapper.toGrantCommand(playerId, hobbyId, request)
         );
 
-        return ApiResponses.ok(
-                AdminPlayerHobbyWebMapper.toGrantedHobby(granted)
-        );
+        return ApiResponses.ok(AdminPlayerHobbyWebMapper.toGranted(result));
     }
 }

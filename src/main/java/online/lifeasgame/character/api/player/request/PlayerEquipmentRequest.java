@@ -8,8 +8,5 @@ public final class PlayerEquipmentRequest {
     public record Equip(
             Long itemInstanceId
     ) {
-        public static Equip of(Long itemInstanceId) {
-            return new Equip(itemInstanceId);
-        }
     }
 }

@@ -1,41 +1,39 @@
 package online.lifeasgame.character.api.player.mapper;
 
-import java.util.List;
-import online.lifeasgame.character.application.command.PlayerHobbyCommand;
-import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.character.api.player.request.PlayerHobbyRequest;
 import online.lifeasgame.character.api.player.response.PlayerHobbyResponse;
+import online.lifeasgame.character.application.command.PlayerHobbyCommand;
+import online.lifeasgame.character.application.result.PlayerHobbyResult;
+
+import java.util.List;
 
 public class PlayerHobbyWebMapper {
 
     private PlayerHobbyWebMapper() {}
 
-    public static PlayerHobbyResponse.Infos toPlayerHobbyInfos(List<PlayerHobbyResult.Info> infos) {
-        return PlayerHobbyResponse.Infos.of(
-                infos.stream()
+    public static PlayerHobbyResponse.Infos toInfos(List<PlayerHobbyResult.Info> results) {
+        return new PlayerHobbyResponse.Infos(
+                results.stream()
                         .map(
-                                playerHobbyInfo ->
-                                        PlayerHobbyResponse.Info.of(
-                                                playerHobbyInfo.hobbyId(),
-                                                playerHobbyInfo.name(),
-                                                playerHobbyInfo.category(),
-                                                playerHobbyInfo.customName(),
-                                                playerHobbyInfo.detail(),
-                                                playerHobbyInfo.proficiency(),
-                                                playerHobbyInfo.status(),
-                                                playerHobbyInfo.startedOn(),
-                                                playerHobbyInfo.xp()
+                                result ->
+                                        new PlayerHobbyResponse.Info(
+                                                result.hobbyId(),
+                                                result.name(),
+                                                result.category(),
+                                                result.customName(),
+                                                result.detail(),
+                                                result.proficiency(),
+                                                result.status(),
+                                                result.startedOn(),
+                                                result.xp()
                                         )
                         )
                         .toList()
         );
     }
 
-    public static PlayerHobbyCommand.Change toCommand(
-            Long hobbyId,
-            PlayerHobbyRequest.Change request
-    ) {
-        return PlayerHobbyCommand.Change.of(
+    public static PlayerHobbyCommand.Create toCreateCommand(Long hobbyId, PlayerHobbyRequest.Create request) {
+        return new PlayerHobbyCommand.Create(
                 hobbyId,
                 request.customName(),
                 request.detail(),
@@ -45,24 +43,8 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyCommand.Create toCommand(
-            Long hobbyId,
-            PlayerHobbyRequest.Create request
-    ) {
-        return PlayerHobbyCommand.Create.of(
-                hobbyId,
-                request.customName(),
-                request.detail(),
-                request.proficiency(),
-                request.status(),
-                request.startedOn()
-        );
-    }
-
-    public static PlayerHobbyResponse.Created toCreatedPlayerHobby(
-            PlayerHobbyResult.Created result
-    ) {
-        return PlayerHobbyResponse.Created.of(
+    public static PlayerHobbyResponse.Created toCreated(PlayerHobbyResult.Created result) {
+        return new PlayerHobbyResponse.Created(
                 result.hobbyId(),
                 result.customName(),
                 result.detail(),
@@ -73,10 +55,19 @@ public class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyResponse.Changed toChangedPlayerHobby(
-            PlayerHobbyResult.Changed result
-    ) {
-        return PlayerHobbyResponse.Changed.of(
+    public static PlayerHobbyCommand.Change toChangeCommand(Long hobbyId, PlayerHobbyRequest.Change request) {
+        return new PlayerHobbyCommand.Change(
+                hobbyId,
+                request.customName(),
+                request.detail(),
+                request.proficiency(),
+                request.status(),
+                request.startedOn()
+        );
+    }
+
+    public static PlayerHobbyResponse.Changed toChanged(PlayerHobbyResult.Changed result) {
+        return new PlayerHobbyResponse.Changed(
                 result.hobbyId(),
                 result.customName(),
                 result.detail(),

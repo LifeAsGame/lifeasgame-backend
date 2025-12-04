@@ -4,8 +4,7 @@ import java.time.LocalDate;
 
 public final class AdminPlayerCertificationRequest {
 
-    private AdminPlayerCertificationRequest() {
-    }
+    private AdminPlayerCertificationRequest() {}
 
     public record Grant(
             LocalDate acquiredDate,

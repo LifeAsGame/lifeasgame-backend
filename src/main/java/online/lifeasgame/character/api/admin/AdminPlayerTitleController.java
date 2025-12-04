@@ -27,10 +27,7 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     ) {
-        PlayerTitleResult.Granted granted = adminPlayerTitleService.grantTitle(playerId, titleId);
-
-        return ApiResponses.ok(
-                AdminPlayerTitleWebMapper.toGrantedTitle(granted)
-        );
+        PlayerTitleResult.Granted result = adminPlayerTitleService.grantTitle(playerId, titleId);
+        return ApiResponses.ok(AdminPlayerTitleWebMapper.toGrantedTitle(result));
     }
 }

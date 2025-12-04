@@ -27,10 +27,8 @@ public class AdminPlayerAchievementController implements AdminPlayerAchievementA
             @PathVariable Long playerId,
             @PathVariable Long achievementId
     ) {
-        PlayerAchievementResult.Granted granted = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
+        PlayerAchievementResult.Granted result = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
 
-        return ApiResponses.ok(
-                AdminPlayerAchievementWebMapper.toGrantedAchievement(granted)
-        );
+        return ApiResponses.ok(AdminPlayerAchievementWebMapper.toGranted(result));
     }
 }

@@ -27,12 +27,10 @@ public class AdminPlayerCertificationController implements AdminPlayerCertificat
             @PathVariable Long certificationId,
             @Valid @RequestBody AdminPlayerCertificationRequest.Grant request
     ) {
-        PlayerCertificationResult.Granted granted = adminPlayerCertificationService.grantCertification(
-                AdminPlayerCertificationWebMapper.toCommand(playerId, certificationId, request)
+        PlayerCertificationResult.Granted result = adminPlayerCertificationService.grantCertification(
+                AdminPlayerCertificationWebMapper.toGrantCommand(playerId, certificationId, request)
         );
 
-        return ApiResponses.ok(
-                AdminPlayerCertificationWebMapper.toGrantedCertification(granted)
-        );
+        return ApiResponses.ok(AdminPlayerCertificationWebMapper.toGranted(result));
     }
 }

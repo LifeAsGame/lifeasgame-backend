@@ -1,24 +1,19 @@
 package online.lifeasgame.character.api.player;
 
 import jakarta.validation.Valid;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.PlayerFacade;
-import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.api.player.mapper.PlayerWebMapper;
 import online.lifeasgame.character.api.player.request.PlayerRequest;
 import online.lifeasgame.character.api.player.response.PlayerResponse;
 import online.lifeasgame.character.api.player.spec.PlayerApiSpecV1;
+import online.lifeasgame.character.application.PlayerFacade;
+import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,20 +27,18 @@ public class PlayerController implements PlayerApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerResponse.Created>> linkStart(
             @Valid @RequestBody PlayerRequest.Register request
     ) {
-        PlayerResult.Created playerResult = playerFacade.linkStart(PlayerWebMapper.toCommand(request));
+        PlayerResult.Created result = playerFacade.linkStart(PlayerWebMapper.toRegisterCommand(request));
         return ApiResponses.created(
-                URI.create("/api/v1/players/" + playerResult.id()),
-                PlayerWebMapper.toCreated(playerResult)
+                URI.create("/api/v1/players/" + result.id()),
+                PlayerWebMapper.toCreated(result)
         );
     }
 
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<PlayerResponse.Info>> playerInfo() {
-        PlayerResult.PlayerInfo playerInfo = playerFacade.getPlayerInfo();
-        return ApiResponses.ok(
-                PlayerWebMapper.toPlayerInfo(playerInfo)
-        );
+        PlayerResult.PlayerInfo result = playerFacade.getPlayerInfo();
+        return ApiResponses.ok(PlayerWebMapper.toPlayerInfo(result));
     }
 
     @Override
@@ -53,10 +46,7 @@ public class PlayerController implements PlayerApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerResponse.Updated>> updateTitle(
             @PathVariable Long titleId
     ) {
-        PlayerResult.UpdatedTitle updatedTitle = playerFacade.changeRepresentativeTitle(titleId);
-
-        return ApiResponses.ok(
-                PlayerWebMapper.toUpdatedTitle(updatedTitle)
-        );
+        PlayerResult.UpdatedTitle result = playerFacade.changeRepresentativeTitle(titleId);
+        return ApiResponses.ok(PlayerWebMapper.toUpdatedTitle(result));
     }
 }
