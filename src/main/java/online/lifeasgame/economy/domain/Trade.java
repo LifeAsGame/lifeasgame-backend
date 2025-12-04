@@ -80,4 +80,32 @@ public class Trade extends AbstractTime {
     static Trade of(Long listingId, Long buyerId, Long sellerId, Long itemInstId, Money price) {
         return new Trade(listingId, buyerId, sellerId, itemInstId, price, 100);
     }
+
+    public Money getPrice() {
+        return price;
+    }
+
+    public Money getSellerProceeds() {
+        return sellerProceeds;
+    }
+
+    public Long getBuyerPlayerId() {
+        return buyerPlayerId;
+    }
+
+    public Long getSellerPlayerId() {
+        return sellerPlayerId;
+    }
+
+    public Long getItemInstanceId() {
+        return itemInstanceId;
+    }
+
+    public Long getListingId() {
+        return listingId;
+    }
+
+    public Long getId() {
+        return id;
+    }
 }
