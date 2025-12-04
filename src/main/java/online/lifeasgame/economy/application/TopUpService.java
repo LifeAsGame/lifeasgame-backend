@@ -7,6 +7,7 @@ import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.port.PaymentGateway;
 import online.lifeasgame.economy.application.result.EconomyResult;
 import online.lifeasgame.economy.domain.Money;
+import online.lifeasgame.economy.domain.Wallet;
 import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
@@ -20,6 +21,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class TopUpService {
 
+    private final WalletReader walletReader;
     private final WalletWriter walletWriter;
     private final PaymentGateway paymentGateway;
     private final IdempotencyKeyStore idempotencyKeyStore;
@@ -42,29 +44,27 @@ public class TopUpService {
             throw new DomainException(EconomyError.PAYMENT_REJECTED);
         }
 
-        var wallet = walletWriter.getOrCreateForUpdate(ownerId);
-        wallet.deposit(Money.of(command.amount(), command.currency()));
-        walletWriter.save(wallet);
+        var wallet = lockOrCreateWallet(ownerId);
+        walletWriter.deposit(wallet, Money.of(command.amount(), command.currency()));
 
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.TOPUP_COMPLETED)
                         .actorId(ownerId)
                         .attribute("orderId", command.orderId())
-                .occurredAt(java.time.Instant.now())
-                .build()
+                        .occurredAt(java.time.Instant.now())
+                        .build()
         );
     }
 
     @Transactional
     public EconomyResult.WalletBalance adjust(EconomyCommand.AdjustWallet command) {
-        var wallet = walletWriter.getOrCreateForUpdate(command.playerId());
+        var wallet = lockOrCreateWallet(command.playerId());
         Money money = Money.of(command.amount(), command.currency());
         if (command.debit()) {
-            wallet.withdraw(money);
+            walletWriter.withdraw(wallet, money);
         } else {
-            wallet.deposit(money);
+            walletWriter.deposit(wallet, money);
         }
-        walletWriter.save(wallet);
 
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.WALLET_ADJUSTED)
@@ -79,8 +79,14 @@ public class TopUpService {
 
     @Transactional
     public EconomyResult.WalletBalance wallet(Long playerId) {
-        var wallet = walletWriter.getOrCreate(playerId);
+        var wallet = walletReader.find(playerId)
+                .orElseGet(() -> walletWriter.save(Wallet.open(playerId)));
         var balance = wallet.getBalance();
         return EconomyResult.WalletBalance.of(balance.available(), balance.getCurrency().name());
+    }
+
+    private Wallet lockOrCreateWallet(Long ownerId) {
+        return walletReader.findForUpdate(ownerId)
+                .orElseGet(() -> walletWriter.save(Wallet.open(ownerId)));
     }
 }

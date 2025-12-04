@@ -27,6 +27,7 @@ public class MarketplaceService {
     private final TradeWriter tradeWriter;
     private final TradeReader tradeReader;
     private final WalletWriter walletWriter;
+    private final WalletReader walletReader;
     private final WalletHoldReader walletHoldReader;
     private final IdempotencyKeyStore idempotencyKeyStore;
     private final DomainEventPublisher domainEventPublisher;
@@ -53,10 +54,9 @@ public class MarketplaceService {
         if (listing.getStatus() != ListingStatus.OPEN) {
             throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
         }
-        Wallet wallet = walletWriter.getOrCreateForUpdate(buyerId);
-        String holdId = wallet.placeHold(listing.getPrice(), "listing-reserve-" + listing.getId(), now, command.ttlSeconds());
+        Wallet wallet = lockOrCreateWallet(buyerId);
+        String holdId = walletWriter.placeHold(wallet, listing.getPrice(), "listing-reserve" + listing.getId(), now, command.ttlSeconds());
         ReservationToken token = listing.reserve(buyerId, holdId, now, command.ttlSeconds());
-        walletWriter.save(wallet);
         listingWriter.save(listing);
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.LISTING_RESERVED)
@@ -81,8 +81,8 @@ public class MarketplaceService {
         if (buyerId.equals(listing.getSellerPlayerId())) {
             throw new DomainException(EconomyError.CANNOT_PURCHASE_OWN_LISTING);
         }
-        Wallet buyerWallet = walletWriter.getOrCreateForUpdate(buyerId);
-        Wallet sellerWallet = walletWriter.getOrCreateForUpdate(listing.getSellerPlayerId());
+        Wallet buyerWallet = lockOrCreateWallet(buyerId);
+        Wallet sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
 
         if (listing.getStatus() == ListingStatus.RESERVED) {
             if (listing.getReservationExpiresAt() != null && now.isAfter(listing.getReservationExpiresAt())) {
@@ -94,18 +94,15 @@ public class MarketplaceService {
             if (!Objects.equals(command.reservationToken(), listing.getReservationToken())) {
                 throw new DomainException(EconomyError.INVALID_RESERVATION_TOKEN);
             }
-            buyerWallet.commitHold(listing.getReservedHoldId());
+            walletWriter.commitHold(buyerWallet, listing.getReservedHoldId());
         } else if (listing.getStatus() == ListingStatus.OPEN) {
-            buyerWallet.withdraw(listing.getPrice());
+            walletWriter.withdraw(buyerWallet, listing.getPrice());
         } else {
             throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
         }
 
         Trade trade = listing.sellTo(buyerId, command.reservationToken());
-        sellerWallet.deposit(trade.getSellerProceeds());
-
-        walletWriter.save(buyerWallet);
-        walletWriter.save(sellerWallet);
+        walletWriter.deposit(sellerWallet, trade.getSellerProceeds());
         listingWriter.save(listing);
 
         Trade savedTrade = tradeWriter.save(trade);
@@ -187,14 +184,17 @@ public class MarketplaceService {
     }
 
     private void handleHoldCancellation(WalletHold hold, String holdId) {
-        Wallet wallet = walletWriter.getOrCreateForUpdate(hold.getWallet().getOwnerId());
-        wallet.cancelHold(holdId);
-        walletWriter.save(wallet);
+        Wallet wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
+        walletWriter.cancelHold(wallet, holdId);
     }
 
     private void handleHoldExpiry(WalletHold hold, Instant now) {
-        Wallet wallet = walletWriter.getOrCreateForUpdate(hold.getWallet().getOwnerId());
-        wallet.expireHolds(now);
-        walletWriter.save(wallet);
+        Wallet wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
+        walletWriter.expireHolds(wallet, now);
+    }
+
+    private Wallet lockOrCreateWallet(Long ownerId) {
+        return walletReader.findForUpdate(ownerId)
+                .orElseGet(() -> walletWriter.save(Wallet.open(ownerId)));
     }
 }

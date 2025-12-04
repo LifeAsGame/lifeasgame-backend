@@ -4,11 +4,9 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.economy.application.command.EconomyCommand;
+import online.lifeasgame.economy.application.port.ShopReservationLimiter;
 import online.lifeasgame.economy.application.result.EconomyResult;
-import online.lifeasgame.economy.domain.Money;
-import online.lifeasgame.economy.domain.ReservationToken;
-import online.lifeasgame.economy.domain.ShopItem;
-import online.lifeasgame.economy.domain.ShopPurchase;
+import online.lifeasgame.economy.domain.*;
 import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
@@ -28,6 +26,7 @@ public class ShopService {
     private final ShopItemWriter shopItemWriter;
     private final ShopPurchaseReader shopPurchaseReader;
     private final ShopPurchaseWriter shopPurchaseWriter;
+    private final WalletReader walletReader;
     private final WalletWriter walletWriter;
     private final WalletHoldReader walletHoldReader;
     private final IdempotencyKeyStore idempotencyKeyStore;
@@ -89,15 +88,14 @@ public class ShopService {
 
         try {
             var purchase = shopPurchaseWriter.request(item.getId(), playerId, command.quantity(), item.getPrice());
-            var wallet = walletWriter.getOrCreateForUpdate(playerId);
+            var wallet = lockOrCreateWallet(playerId);
             int ttl = item.getReservationTtlSec();
             Money total = item.getPrice().multiply(command.quantity());
             if (command.reserveOnly() || ttl > 0) {
                 ttl = Math.max(ttl, 30);
-                String holdId = wallet.placeHold(total, "shop-reserve" + item.getId(), now, ttl);
+                String holdId = walletWriter.placeHold(wallet, total, "shop-reserve" + item.getId(), now, ttl);
                 ReservationToken token = ReservationToken.newToken();
                 purchase.reserve(token, now.plusSeconds(ttl), holdId);
-                walletWriter.save(wallet);
                 ShopPurchase saved = shopPurchaseWriter.save(purchase);
                 domainEventPublisher.publish(
                         EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_RESERVED)
@@ -110,9 +108,8 @@ public class ShopService {
                 );
                 return EconomyResult.ShopPurchaseId.of(saved.getId());
             } else {
-                wallet.withdraw(total);
+                walletWriter.withdraw(wallet, total);
                 purchase.completeImmediately();
-                walletWriter.save(wallet);
                 ShopPurchase saved = shopPurchaseWriter.save(purchase);
                 domainEventPublisher.publish(
                         EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_COMPLETED)
@@ -142,10 +139,9 @@ public class ShopService {
             shopPurchaseWriter.save(purchase);
             throw new DomainException(EconomyError.LISTING_RESERVATION_EXPIRED);
         }
-        var wallet = walletWriter.getOrCreateForUpdate(playerId);
-        wallet.commitHold(purchase.getWalletHoldId());
+        var wallet = lockOrCreateWallet(playerId);
+        walletWriter.commitHold(wallet, purchase.getWalletHoldId());
         purchase.completeFromReservation(command.reservationToken());
-        walletWriter.save(wallet);
         shopPurchaseWriter.save(purchase);
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_COMPLETED)
@@ -164,13 +160,13 @@ public class ShopService {
         Instant now = Instant.now();
         List<ShopPurchase> purchases = shopPurchaseReader.findExpiringBefore(now);
         for (ShopPurchase purchase : purchases) {
-            String holdId = purchase.getWalletHoldId();
             purchase.expire(now);
+            String holdId = purchase.getWalletHoldId();
             if (holdId != null) {
                 walletHoldReader.findByHoldId(holdId)
                         .ifPresent(hold -> {
-                            hold.getWallet().expireHolds(now);
-                            walletWriter.save(hold.getWallet());
+                            var wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
+                            walletWriter.expireHolds(wallet, now);
                         });
             }
             shopPurchaseWriter.save(purchase);
@@ -244,5 +240,10 @@ public class ShopService {
                 .map(EconomyResult.ShopPurchaseView::from)
                 .toList();
         return new EconomyResult.ShopPurchases(purchases);
+    }
+
+    private Wallet lockOrCreateWallet(Long ownerId) {
+        return walletReader.findForUpdate(ownerId)
+                .orElseGet(() -> walletWriter.save(Wallet.open(ownerId)));
     }
 }
