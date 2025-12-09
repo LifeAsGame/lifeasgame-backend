@@ -9,38 +9,38 @@ public final class AdminItemWebMapper {
 
     private AdminItemWebMapper(){}
 
-    public static ItemCommand.Create toCommand(AdminItemRequest.Create r) {
-        return ItemCommand.Create.of(
-                r.name(),
-                r.category(),
-                r.type(),
-                r.rarity(),
-                r.baseAttrs(),
-                r.stackable(),
-                r.maxStack(),
-                r.maxDurability()
+    public static ItemCommand.Create toCreateCommand(AdminItemRequest.Create request) {
+        return new ItemCommand.Create(
+                request.name(),
+                request.category(),
+                request.type(),
+                request.rarity(),
+                request.baseAttrs(),
+                request.stackable(),
+                request.maxStack(),
+                request.maxDurability()
         );
     }
 
-    public static ItemCommand.Update toCommand(Long itemId, AdminItemRequest.Update r) {
-        return ItemCommand.Update.of(
+    public static ItemCommand.Update toUpdateCommand(Long itemId, AdminItemRequest.Update request) {
+        return new ItemCommand.Update(
                 itemId,
-                r.name(),
-                r.category(),
-                r.type(),
-                r.rarity(),
-                r.baseAttrs(),
-                r.stackable(),
-                r.maxStack(),
-                r.maxDurability()
+                request.name(),
+                request.category(),
+                request.type(),
+                request.rarity(),
+                request.baseAttrs(),
+                request.stackable(),
+                request.maxStack(),
+                request.maxDurability()
         );
     }
 
-    public static AdminItemResponse.Id toResponse(ItemResult.Id r){
-        return AdminItemResponse.Id.of(r.id());
-    }
-    public static AdminItemResponse.Deleted toResponse(ItemResult.Deleted r){
-        return AdminItemResponse.Deleted.of(r.id());
+    public static AdminItemResponse.Id toInfo(ItemResult.Id result){
+        return new AdminItemResponse.Id(result.id());
     }
 
+    public static AdminItemResponse.Deleted toDeleted(ItemResult.Deleted result){
+        return new AdminItemResponse.Deleted(result.id());
+    }
 }

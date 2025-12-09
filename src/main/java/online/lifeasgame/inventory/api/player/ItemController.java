@@ -28,8 +28,8 @@ public class ItemController implements ItemApiSpecV1 {
     @Override
     @GetMapping("/{itemId}")
     public ResponseEntity<ApiResponse<ItemResponse.Detail>> getItem(@PathVariable Long itemId) {
-        ItemResult.Detail detail = itemService.getItem(itemId);
-        return ApiResponses.ok(ItemWebMapper.toDetail(detail));
+        ItemResult.Detail result = itemService.getItem(itemId);
+        return ApiResponses.ok(ItemWebMapper.toDetail(result));
     }
 
     @Override
@@ -43,7 +43,7 @@ public class ItemController implements ItemApiSpecV1 {
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
-        ItemResult.Page<Summary> summaryPage = itemService.search(name, category, type, rarity, pageable);
-        return ApiResponses.ok(ItemWebMapper.toSummaryPage(summaryPage));
+        ItemResult.Page<Summary> result = itemService.search(name, category, type, rarity, pageable);
+        return ApiResponses.ok(ItemWebMapper.toSummaryPage(result));
     }
 }

@@ -27,10 +27,10 @@ public class AdminItemController implements AdminItemApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminItemResponse.Id>> create(
             @Valid @RequestBody AdminItemRequest.Create request
     ) {
-        ItemResult.Id adminResult = itemService.create(AdminItemWebMapper.toCommand(request));
+        ItemResult.Id result = itemService.create(AdminItemWebMapper.toCreateCommand(request));
         return ApiResponses.created(
-                URI.create("/admin/v1/items/" + adminResult.id()),
-                AdminItemWebMapper.toResponse(adminResult)
+                URI.create("/admin/v1/items/" + result.id()),
+                AdminItemWebMapper.toInfo(result)
         );
     }
 
@@ -40,14 +40,14 @@ public class AdminItemController implements AdminItemApiSpecV1 {
             @PathVariable Long itemId,
             @Valid @RequestBody AdminItemRequest.Update request
     ) {
-        ItemResult.Id adminResult = itemService.update(AdminItemWebMapper.toCommand(itemId, request));
-        return ApiResponses.ok(AdminItemWebMapper.toResponse(adminResult));
+        ItemResult.Id result = itemService.update(AdminItemWebMapper.toUpdateCommand(itemId, request));
+        return ApiResponses.ok(AdminItemWebMapper.toInfo(result));
     }
 
     @Override
     @DeleteMapping("/{itemId}")
     public ResponseEntity<ApiResponse<AdminItemResponse.Deleted>> delete(@PathVariable Long itemId) {
-        ItemResult.Deleted adminResult = itemService.delete(itemId);
-        return ApiResponses.ok(AdminItemWebMapper.toResponse(adminResult));
+        ItemResult.Deleted result = itemService.delete(itemId);
+        return ApiResponses.ok(AdminItemWebMapper.toDeleted(result));
     }
 }

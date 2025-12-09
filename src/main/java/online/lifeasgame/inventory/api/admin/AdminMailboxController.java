@@ -26,8 +26,8 @@ public class AdminMailboxController implements AdminMailboxApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminMailboxRequest.Deliver request
     ) {
-        MailboxResult.Slot adminResult =
+        MailboxResult.Slot result =
                 mailboxService.deliver(playerId, AdminMailboxWebMapper.toCommand(request));
-        return ApiResponses.ok(AdminMailboxWebMapper.toSlot(adminResult));
+        return ApiResponses.ok(AdminMailboxWebMapper.toSlot(result));
     }
 }

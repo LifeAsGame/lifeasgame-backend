@@ -11,7 +11,7 @@ public final class AdminMailboxWebMapper {
     }
 
     public static MailboxCommand.Deliver toCommand(AdminMailboxRequest.Deliver request) {
-        return MailboxCommand.Deliver.of(
+        return new MailboxCommand.Deliver(
                 request.itemId(),
                 request.quantity(),
                 request.instanceAttrs(),
@@ -20,6 +20,6 @@ public final class AdminMailboxWebMapper {
     }
 
     public static AdminMailboxResponse.Slot toSlot(MailboxResult.Slot result) {
-        return AdminMailboxResponse.Slot.of(result.slot());
+        return new AdminMailboxResponse.Slot(result.slot());
     }
 }

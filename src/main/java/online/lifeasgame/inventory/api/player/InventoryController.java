@@ -29,7 +29,7 @@ public class InventoryController implements InventoryApiSpecV1 {
     @Override
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request) {
-        InventoryResult.Slots slots = inventoryFacade.add(InventoryWebMapper.toCommand(request));
+        InventoryResult.Slots slots = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
         return ApiResponses.ok(InventoryWebMapper.toSlots(slots));
     }
 
@@ -43,21 +43,21 @@ public class InventoryController implements InventoryApiSpecV1 {
     @Override
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse<Void>> remove(@Valid @RequestBody InventoryRequest.Remove request) {
-        inventoryFacade.remove(InventoryWebMapper.toCommand(request));
+        inventoryFacade.remove(InventoryWebMapper.toRemoveCommand(request));
         return ApiResponses.noContent();
     }
 
     @Override
     @PatchMapping("/move")
     public ResponseEntity<ApiResponse<Void>> move(@Valid @RequestBody InventoryRequest.Move request) {
-        inventoryFacade.move(InventoryWebMapper.toCommand(request));
+        inventoryFacade.move(InventoryWebMapper.toMoveCommand(request));
         return ApiResponses.noContent();
     }
 
     @Override
     @PatchMapping("/merge")
     public ResponseEntity<ApiResponse<Void>> merge(@Valid @RequestBody InventoryRequest.Merge request) {
-        inventoryFacade.merge(InventoryWebMapper.toCommand(request));
+        inventoryFacade.merge(InventoryWebMapper.toMergeCommand(request));
         return ApiResponses.noContent();
     }
 
@@ -66,7 +66,7 @@ public class InventoryController implements InventoryApiSpecV1 {
     public ResponseEntity<ApiResponse<InventoryResponse.Slot>> split(
             @Valid @RequestBody InventoryRequest.Split request
     ) {
-        InventoryResult.Slot slot = inventoryFacade.split(InventoryWebMapper.toCommand(request));
+        InventoryResult.Slot slot = inventoryFacade.split(InventoryWebMapper.toSplitCommand(request));
         return ApiResponses.ok(InventoryWebMapper.toSlot(slot));
     }
 }

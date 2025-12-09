@@ -23,7 +23,7 @@ public final class ItemWebMapper {
     }
 
     public static ItemResponse.Summary toSummary(ItemResult.Summary result) {
-        return ItemResponse.Summary.of(
+        return new ItemResponse.Summary(
                 result.id(),
                 result.name(),
                 result.category(),
