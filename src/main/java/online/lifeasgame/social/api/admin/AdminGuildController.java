@@ -23,17 +23,6 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     private final GuildService guildService;
 
     @Override
-    @GetMapping("/players/{playerId}/guilds/{guildId}")
-    public ResponseEntity<ApiResponse<AdminGuildResponse.Info>> getGuildInfo(
-            @PathVariable Long playerId,
-            @PathVariable Long guildId
-    ) {
-        var info = guildService.getGuild(playerId, guildId);
-        return ApiResponses.ok(AdminGuildWebMapper.toInfo(info));
-    }
-
-    // ===== 일반 조회 =====
-    @Override
     @GetMapping("/guilds/search")
     public ResponseEntity<ApiResponse<AdminGuildResponse.Page<AdminGuildResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,
@@ -41,13 +30,14 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        GuildResult.Page<GuildResult.Summary> pages = guildService.search(
+        GuildResult.Page<GuildResult.Summary> results = guildService.search(
                 keyword,
                 visibility,
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), 100)
         );
-        return ApiResponses.ok(AdminGuildWebMapper.toSummaryPage(pages));
+
+        return ApiResponses.ok(AdminGuildWebMapper.toSummaryPage(results));
     }
 
     @Override
@@ -55,33 +45,44 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<List<AdminGuildResponse.Summary>>> recent(
             @RequestParam(defaultValue="10") Integer limit
     ) {
-        var infos = guildService.recent(Math.min(Math.max(limit, 1), 100));
-        return ApiResponses.ok(AdminGuildWebMapper.toSummaries(infos));
+        List<GuildResult.Summary> results = guildService.recent(Math.min(Math.max(limit, 1), 100));
+        return ApiResponses.ok(AdminGuildWebMapper.toSummaries(results));
     }
 
-    // ===== 플레이어 스코프(acting as playerId) =====
+    @Override
+    @GetMapping("/players/{playerId}/guilds/{guildId}")
+    public ResponseEntity<ApiResponse<AdminGuildResponse.Info>> getGuildInfo(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    ) {
+        GuildResult.Info result = guildService.getGuild(playerId, guildId);
+        return ApiResponses.ok(AdminGuildWebMapper.toInfo(result));
+    }
 
-    // 생성
     @Override
     @PostMapping("/players/{playerId}/guilds")
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> create(
             @PathVariable Long playerId,
-            @Valid @RequestBody AdminGuildRequest.Create body
+            @Valid @RequestBody AdminGuildRequest.Create request
     ) {
-        var info = guildService.create(playerId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.create(playerId, AdminGuildWebMapper.toCreateCommand(request));
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
-    // 기본 변경
     @Override
     @PostMapping("/players/{playerId}/guilds/{guildId}/rename")
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> rename(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.Rename body
+            @Valid @RequestBody AdminGuildRequest.Rename request
     ) {
-        var info = guildService.rename(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.rename(
+                playerId, 
+                guildId,
+                AdminGuildWebMapper.toRenameCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
     @Override
@@ -89,10 +90,15 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> changePolicy(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.ChangePolicy body
+            @Valid @RequestBody AdminGuildRequest.ChangePolicy request
     ) {
-        var info = guildService.changePolicy(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.changePolicy(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toChangePolicyCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
     @Override
@@ -100,10 +106,15 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> changeDescription(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.ChangeDescription body
+            @Valid @RequestBody AdminGuildRequest.ChangeDescription request
     ) {
-        var info = guildService.changeDescription(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.changeDescription(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toChangeDescriptionCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
     @Override
@@ -111,10 +122,15 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> changeEmblem(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.ChangeEmblem body
+            @Valid @RequestBody AdminGuildRequest.ChangeEmblem request
     ) {
-        var info = guildService.changeEmblem(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.changeEmblem(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toChangeEmblemCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
     @Override
@@ -122,10 +138,15 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> addTag(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.TagOp body
+            @Valid @RequestBody AdminGuildRequest.TagOp request
     ) {
-        var info = guildService.addTag(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.addTag(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toTagOpCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
     @Override
@@ -133,21 +154,40 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminGuildResponse.Detail>> removeTag(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.TagOp body
+            @Valid @RequestBody AdminGuildRequest.TagOp request
     ) {
-        var info = guildService.removeTag(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminGuildWebMapper.toDetail(info));
+        GuildResult.Info result = guildService.removeTag(
+                playerId, 
+                guildId,
+                AdminGuildWebMapper.toTagOpCommand(request)
+        );
+        
+        return ApiResponses.ok(AdminGuildWebMapper.toDetail(result));
     }
 
-    // 가입/권한
     @Override
     @PostMapping("/players/{playerId}/guilds/{guildId}/request-join")
     public ResponseEntity<ApiResponse<Void>> requestJoin(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.RequestJoin body
+            @Valid @RequestBody AdminGuildRequest.RequestJoin request
     ) {
-        guildService.requestJoin(playerId, guildId, AdminGuildWebMapper.toCommand(body));
+        guildService.requestJoin(
+                playerId, 
+                guildId,
+                AdminGuildWebMapper.toRequestJoinCommand(request)
+        );
+        
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/cancel-join")
+    public ResponseEntity<ApiResponse<Void>> cancelJoin(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    ) {
+        guildService.cancelJoin(playerId, guildId);
         return ApiResponses.ok(null);
     }
 
@@ -156,9 +196,14 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<Void>> approve(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.Approve body
+            @Valid @RequestBody AdminGuildRequest.Approve request
     ) {
-        guildService.approveJoin(playerId, guildId, AdminGuildWebMapper.toCommand(body));
+        guildService.approveJoin(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toApproveCommand(request)
+        );
+
         return ApiResponses.ok(null);
     }
 
@@ -167,92 +212,39 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<Void>> reject(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.Reject body
+            @Valid @RequestBody AdminGuildRequest.Reject request
     ) {
-        guildService.rejectJoin(playerId, guildId, AdminGuildWebMapper.toCommand(body));
+        guildService.rejectJoin(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toRejectCommand(request)
+        );
+
         return ApiResponses.ok(null);
     }
 
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/cancel-join")
-    public ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long playerId, @PathVariable Long guildId) {
-        guildService.cancelJoin(playerId, guildId);
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/transfer-leader")
-    public ResponseEntity<ApiResponse<Void>> transferLeader(
-            @PathVariable Long playerId,
-            @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.TransferLeader body
-    ) {
-        guildService.transferLeader(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/kick")
-    public ResponseEntity<ApiResponse<Void>> kick(
-            @PathVariable Long playerId,
-            @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.Kick body
-    ) {
-        guildService.kick(playerId, guildId, AdminGuildWebMapper.toCommand(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/promote")
-    public ResponseEntity<ApiResponse<Void>> promote(
-            @PathVariable Long playerId,
-            @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.MemberOp body
-    ) {
-        guildService.promote(playerId, guildId, AdminGuildWebMapper.toCommandPromote(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/demote")
-    public ResponseEntity<ApiResponse<Void>> demote(
-            @PathVariable Long playerId,
-            @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.MemberOp body
-    ) {
-        guildService.demote(playerId, guildId, AdminGuildWebMapper.toCommandDemote(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/leave")
-    public ResponseEntity<ApiResponse<Void>> leave(@PathVariable Long playerId, @PathVariable Long guildId) {
-        guildService.leave(playerId, guildId);
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/guilds/{guildId}/disband")
-    public ResponseEntity<ApiResponse<Void>> disband(@PathVariable Long playerId, @PathVariable Long guildId) {
-        guildService.disbandByLeader(playerId, guildId);
-        return ApiResponses.ok(null);
-    }
-
-    // 초대
     @Override
     @PostMapping("/players/{playerId}/guilds/{guildId}/invite")
     public ResponseEntity<ApiResponse<Void>> invite(
             @PathVariable Long playerId,
             @PathVariable Long guildId,
-            @Valid @RequestBody AdminGuildRequest.Invite body
+            @Valid @RequestBody AdminGuildRequest.Invite request
     ) {
-        guildService.invite(playerId, guildId, AdminGuildWebMapper.toCommand(body));
+        guildService.invite(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toInviteCommand(request)
+        );
+
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/players/{playerId}/guilds/{guildId}/accept-invitation")
-    public ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long playerId, @PathVariable Long guildId) {
+    public ResponseEntity<ApiResponse<Void>> acceptInvitation(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    ) {
         guildService.acceptInvitation(playerId, guildId);
         return ApiResponses.ok(null);
     }
@@ -264,6 +256,90 @@ public class AdminGuildController implements AdminGuildApiSpecV1 {
             @PathVariable Long guildId
     ) {
         guildService.declineInvitation(playerId, guildId);
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/transfer-leader")
+    public ResponseEntity<ApiResponse<Void>> transferLeader(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId,
+            @Valid @RequestBody AdminGuildRequest.TransferLeader request
+    ) {
+        guildService.transferLeader(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toTransferLeaderCommand(request)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/kick")
+    public ResponseEntity<ApiResponse<Void>> kick(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId,
+            @Valid @RequestBody AdminGuildRequest.Kick request
+    ) {
+        guildService.kick(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toKickCommand(request)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/promote")
+    public ResponseEntity<ApiResponse<Void>> promote(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId,
+            @Valid @RequestBody AdminGuildRequest.MemberOp request
+    ) {
+        guildService.promote(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toPromoteCommand(request)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/demote")
+    public ResponseEntity<ApiResponse<Void>> demote(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId,
+            @Valid @RequestBody AdminGuildRequest.MemberOp request
+    ) {
+        guildService.demote(
+                playerId,
+                guildId,
+                AdminGuildWebMapper.toDemoteCommand(request)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/leave")
+    public ResponseEntity<ApiResponse<Void>> leave(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    ) {
+        guildService.leave(playerId, guildId);
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/guilds/{guildId}/disband")
+    public ResponseEntity<ApiResponse<Void>> disband(
+            @PathVariable Long playerId,
+            @PathVariable Long guildId
+    ) {
+        guildService.disbandByLeader(playerId, guildId);
         return ApiResponses.ok(null);
     }
 }

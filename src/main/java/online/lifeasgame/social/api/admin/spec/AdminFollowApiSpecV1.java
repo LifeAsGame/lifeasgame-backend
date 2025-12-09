@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Social Follow API V1 (Admin)")
 public interface AdminFollowApiSpecV1 {
 
-    // 조회(플레이어 스코프)
     @Operation(summary = "플레이어의 팔로잉 목록 (Admin)")
     ResponseEntity<ApiResponse<AdminFollowResponse.Page<AdminFollowResponse.Summary>>> followings(
             @PathVariable Long playerId,
@@ -29,7 +28,6 @@ public interface AdminFollowApiSpecV1 {
             @RequestParam(defaultValue = "20") int size
     );
 
-    // 조작(플레이어 스코프)
     @Operation(summary = "플레이어로 팔로우 생성 (Admin)")
     ResponseEntity<ApiResponse<Void>> follow(
             @PathVariable Long playerId,

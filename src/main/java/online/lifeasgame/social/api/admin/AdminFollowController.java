@@ -23,19 +23,18 @@ public class AdminFollowController implements AdminFollowApiSpecV1 {
 
     private final FollowService followService;
 
-    // 조회
     @GetMapping("/followings")
     public ResponseEntity<ApiResponse<AdminFollowResponse.Page<AdminFollowResponse.Summary>>> followings(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        FollowResult.Page<FollowResult.Summary> pages = followService.listFollowings(
+        FollowResult.Page<FollowResult.Summary> result = followService.listFollowings(
                 playerId,
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), 100)
         );
-        return ApiResponses.ok(AdminFollowWebMapper.toSummaryPage(pages));
+        return ApiResponses.ok(AdminFollowWebMapper.toSummaryPage(result));
     }
 
     @GetMapping("/followers")
@@ -44,21 +43,20 @@ public class AdminFollowController implements AdminFollowApiSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        FollowResult.Page<FollowResult.Summary> pages = followService.listFollowers(
+        FollowResult.Page<FollowResult.Summary> result = followService.listFollowers(
                 playerId,
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), 100)
         );
-        return ApiResponses.ok(AdminFollowWebMapper.toSummaryPage(pages));
+        return ApiResponses.ok(AdminFollowWebMapper.toSummaryPage(result));
     }
 
-    // 조작
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> follow(
             @PathVariable Long playerId,
             @RequestBody AdminFollowRequest.Create request
     ) {
-        followService.follow(playerId, AdminFollowWebMapper.toCommand(request));
+        followService.follow(playerId, AdminFollowWebMapper.toCreateCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -113,8 +111,9 @@ public class AdminFollowController implements AdminFollowApiSpecV1 {
             @RequestParam(defaultValue = "followings") String type,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<FollowResult.Summary> infos = "followers".equalsIgnoreCase(type)
-                ? followService.recentFollowers(playerId, limit) : followService.recentFollowings(playerId, limit);
-        return ApiResponses.ok(AdminFollowWebMapper.toSummaries(infos));
+        List<FollowResult.Summary> results =
+                "followers".equalsIgnoreCase(type) ?
+                        followService.recentFollowers(playerId, limit) : followService.recentFollowings(playerId, limit);
+        return ApiResponses.ok(AdminFollowWebMapper.toSummaries(results));
     }
 }

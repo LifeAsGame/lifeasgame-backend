@@ -29,26 +29,42 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
     private final ChatFacade chatFacade;
 
     @Override
+    @GetMapping("/channels")
+    public ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels() {
+        ChatResult.ChannelGroup result = chatFacade.myChannels();
+        return ApiResponses.ok(PlayerChatWebMapper.toChannelGroup(result));
+    }
+
+    @Override
+    @PostMapping("/channels/admin")
+    public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openAdmin(
+            @Valid @RequestBody PlayerChatRequest.OpenAdmin request
+    ) {
+        ChatResult.Channel result = chatFacade.openAdmin(PlayerChatWebMapper.toOpenAdminCommand(request));
+        return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
+    }
+
+    @Override
     @PostMapping("/channels/global")
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGlobal(
             @Valid @RequestBody PlayerChatRequest.OpenGlobal request
     ) {
-        ChatResult.Channel channel = chatFacade.openGlobal(PlayerChatWebMapper.toCommand(request));
-        return ApiResponses.ok(PlayerChatWebMapper.toChannel(channel));
+        ChatResult.Channel result = chatFacade.openGlobal(PlayerChatWebMapper.toOpenGlobalCommand(request));
+        return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
     @PostMapping("/channels/guild/{guildId}")
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGuild(@PathVariable Long guildId) {
-        ChatResult.Channel channel = chatFacade.openGuild(guildId);
-        return ApiResponses.ok(PlayerChatWebMapper.toChannel(channel));
+        ChatResult.Channel result = chatFacade.openGuild(guildId);
+        return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
     @PostMapping("/channels/party/{partyId}")
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openParty(@PathVariable Long partyId) {
-        ChatResult.Channel channel = chatFacade.openParty(partyId);
-        return ApiResponses.ok(PlayerChatWebMapper.toChannel(channel));
+        ChatResult.Channel result = chatFacade.openParty(partyId);
+        return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
@@ -57,24 +73,12 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @PathVariable Long friendId,
             @Valid @RequestBody PlayerChatRequest.OpenFriend request
     ) {
-        ChatResult.Channel channel = chatFacade.openFriend(friendId, PlayerChatWebMapper.toCommand(request));
-        return ApiResponses.ok(PlayerChatWebMapper.toChannel(channel));
-    }
+        ChatResult.Channel result = chatFacade.openFriend(
+                friendId,
+                PlayerChatWebMapper.toOpenFriendCommand(request)
+        );
 
-    @Override
-    @PostMapping("/channels/admin")
-    public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openAdmin(
-            @Valid @RequestBody PlayerChatRequest.OpenAdmin request
-    ) {
-        ChatResult.Channel channel = chatFacade.openAdmin(PlayerChatWebMapper.toCommand(request));
-        return ApiResponses.ok(PlayerChatWebMapper.toChannel(channel));
-    }
-
-    @Override
-    @GetMapping("/channels")
-    public ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels() {
-        ChatResult.ChannelGroup group = chatFacade.myChannels();
-        return ApiResponses.ok(PlayerChatWebMapper.toChannelGroup(group));
+        return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
@@ -84,8 +88,8 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     ) {
-        ChatResult.MessagePage page = chatFacade.messages(channelId, cursor, size);
-        return ApiResponses.ok(PlayerChatWebMapper.toMessagePage(page));
+        ChatResult.MessagePage result = chatFacade.messages(channelId, cursor, size);
+        return ApiResponses.ok(PlayerChatWebMapper.toMessagePage(result));
     }
 
     @Override
@@ -94,7 +98,11 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @PathVariable Long channelId,
             @Valid @RequestBody PlayerChatRequest.SendMessage request
     ) {
-        ChatResult.Message message = chatFacade.sendMessage(channelId, PlayerChatWebMapper.toCommand(request));
-        return ApiResponses.ok(PlayerChatWebMapper.toMessage(message));
+        ChatResult.Message result = chatFacade.sendMessage(
+                channelId,
+                PlayerChatWebMapper.toSendMessageCommand(request)
+        );
+
+        return ApiResponses.ok(PlayerChatWebMapper.toMessage(result));
     }
 }
