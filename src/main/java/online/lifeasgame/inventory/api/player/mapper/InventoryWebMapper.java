@@ -10,6 +10,22 @@ public class InventoryWebMapper {
     private InventoryWebMapper() {
     }
 
+    public static InventoryResponse.Entries toEntries(InventoryResult.Entries result) {
+        return new InventoryResponse.Entries(
+                result.entries().stream()
+                        .map(
+                                entry -> new InventoryResponse.Entry(
+                                        entry.slotIndex(),
+                                        entry.itemId(),
+                                        entry.rarity(),
+                                        entry.quantity(),
+                                        entry.bound()
+                                )
+                        )
+                        .toList()
+        );
+    }
+
     public static InventoryCommand.Add toAddCommand(InventoryRequest.Add request) {
         return new InventoryCommand.Add(
                 request.itemId(),
@@ -19,11 +35,8 @@ public class InventoryWebMapper {
         );
     }
 
-    public static InventoryCommand.Remove toRemoveCommand(InventoryRequest.Remove request) {
-        return new InventoryCommand.Remove(
-                request.slotIndex(),
-                request.quantity()
-        );
+    public static InventoryResponse.Slots toSlots(InventoryResult.Slots result) {
+        return new InventoryResponse.Slots(result.slots());
     }
 
     public static InventoryCommand.Move toMoveCommand(InventoryRequest.Move request) {
@@ -48,27 +61,14 @@ public class InventoryWebMapper {
         );
     }
 
-    public static InventoryResponse.Slots toSlots(InventoryResult.Slots result) {
-        return new InventoryResponse.Slots(result.slots());
-    }
-
     public static InventoryResponse.Slot toSlot(InventoryResult.Slot result) {
         return new InventoryResponse.Slot(result.slot());
     }
 
-    public static InventoryResponse.Entries toEntries(InventoryResult.Entries result) {
-        return new InventoryResponse.Entries(
-                result.entries().stream()
-                        .map(
-                                entry -> new InventoryResponse.Entry(
-                                        entry.slotIndex(),
-                                        entry.itemId(),
-                                        entry.rarity(),
-                                        entry.quantity(),
-                                        entry.bound()
-                                )
-                        )
-                        .toList()
+    public static InventoryCommand.Remove toRemoveCommand(InventoryRequest.Remove request) {
+        return new InventoryCommand.Remove(
+                request.slotIndex(),
+                request.quantity()
         );
     }
 }

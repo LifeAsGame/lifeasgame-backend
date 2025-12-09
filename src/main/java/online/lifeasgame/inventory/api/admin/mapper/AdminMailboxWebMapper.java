@@ -10,7 +10,7 @@ public final class AdminMailboxWebMapper {
     private AdminMailboxWebMapper() {
     }
 
-    public static MailboxCommand.Deliver toCommand(AdminMailboxRequest.Deliver request) {
+    public static MailboxCommand.Deliver toDeliverCommand(AdminMailboxRequest.Deliver request) {
         return new MailboxCommand.Deliver(
                 request.itemId(),
                 request.quantity(),

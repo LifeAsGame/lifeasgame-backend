@@ -27,13 +27,6 @@ public class InventoryController implements InventoryApiSpecV1 {
     private final InventoryFacade inventoryFacade;
 
     @Override
-    @PostMapping("/add")
-    public ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request) {
-        InventoryResult.Slots result = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
-        return ApiResponses.ok(InventoryWebMapper.toSlots(result));
-    }
-
-    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<InventoryResponse.Entries>> list() {
         InventoryResult.Entries result = inventoryFacade.list();
@@ -41,10 +34,10 @@ public class InventoryController implements InventoryApiSpecV1 {
     }
 
     @Override
-    @DeleteMapping("/remove")
-    public ResponseEntity<ApiResponse<Void>> remove(@Valid @RequestBody InventoryRequest.Remove request) {
-        inventoryFacade.remove(InventoryWebMapper.toRemoveCommand(request));
-        return ApiResponses.noContent();
+    @PostMapping("/add")
+    public ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request) {
+        InventoryResult.Slots result = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
+        return ApiResponses.ok(InventoryWebMapper.toSlots(result));
     }
 
     @Override
@@ -68,5 +61,12 @@ public class InventoryController implements InventoryApiSpecV1 {
     ) {
         InventoryResult.Slot result = inventoryFacade.split(InventoryWebMapper.toSplitCommand(request));
         return ApiResponses.ok(InventoryWebMapper.toSlot(result));
+    }
+
+    @Override
+    @DeleteMapping("/remove")
+    public ResponseEntity<ApiResponse<Void>> remove(@Valid @RequestBody InventoryRequest.Remove request) {
+        inventoryFacade.remove(InventoryWebMapper.toRemoveCommand(request));
+        return ApiResponses.noContent();
     }
 }

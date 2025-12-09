@@ -25,6 +25,13 @@ public class MailboxController implements MailboxApiSpecV1 {
     private final MailboxFacade mailboxFacade;
 
     @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
+        MailboxResult.Mails result = mailboxFacade.list();
+        return ApiResponses.ok(MailboxWebMapper.toMails(result));
+    }
+
+    @Override
     @PostMapping("/deliver")
     public ResponseEntity<ApiResponse<MailboxResponse.Slot>> deliver(
             @Valid @RequestBody MailboxRequest.Deliver request
@@ -38,12 +45,5 @@ public class MailboxController implements MailboxApiSpecV1 {
     public ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request) {
         mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));
         return ApiResponses.noContent();
-    }
-
-    @Override
-    @GetMapping
-    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
-        MailboxResult.Mails result = mailboxFacade.list();
-        return ApiResponses.ok(MailboxWebMapper.toLMails(result));
     }
 }

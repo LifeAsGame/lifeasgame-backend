@@ -9,6 +9,10 @@ public final class AdminItemWebMapper {
 
     private AdminItemWebMapper(){}
 
+    public static AdminItemResponse.Id toInfo(ItemResult.Id result){
+        return new AdminItemResponse.Id(result.id());
+    }
+
     public static ItemCommand.Create toCreateCommand(AdminItemRequest.Create request) {
         return new ItemCommand.Create(
                 request.name(),
@@ -34,10 +38,6 @@ public final class AdminItemWebMapper {
                 request.maxStack(),
                 request.maxDurability()
         );
-    }
-
-    public static AdminItemResponse.Id toInfo(ItemResult.Id result){
-        return new AdminItemResponse.Id(result.id());
     }
 
     public static AdminItemResponse.Deleted toDeleted(ItemResult.Deleted result){
