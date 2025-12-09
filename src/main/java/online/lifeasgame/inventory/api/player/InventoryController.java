@@ -29,15 +29,15 @@ public class InventoryController implements InventoryApiSpecV1 {
     @Override
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request) {
-        InventoryResult.Slots slots = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
-        return ApiResponses.ok(InventoryWebMapper.toSlots(slots));
+        InventoryResult.Slots result = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
+        return ApiResponses.ok(InventoryWebMapper.toSlots(result));
     }
 
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<InventoryResponse.Entries>> list() {
-        InventoryResult.Entries entries = inventoryFacade.list();
-        return ApiResponses.ok(InventoryWebMapper.toEntries(entries));
+        InventoryResult.Entries result = inventoryFacade.list();
+        return ApiResponses.ok(InventoryWebMapper.toEntries(result));
     }
 
     @Override
@@ -66,7 +66,7 @@ public class InventoryController implements InventoryApiSpecV1 {
     public ResponseEntity<ApiResponse<InventoryResponse.Slot>> split(
             @Valid @RequestBody InventoryRequest.Split request
     ) {
-        InventoryResult.Slot slot = inventoryFacade.split(InventoryWebMapper.toSplitCommand(request));
-        return ApiResponses.ok(InventoryWebMapper.toSlot(slot));
+        InventoryResult.Slot result = inventoryFacade.split(InventoryWebMapper.toSplitCommand(request));
+        return ApiResponses.ok(InventoryWebMapper.toSlot(result));
     }
 }

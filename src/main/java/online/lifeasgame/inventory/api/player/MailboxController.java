@@ -29,8 +29,8 @@ public class MailboxController implements MailboxApiSpecV1 {
     public ResponseEntity<ApiResponse<MailboxResponse.Slot>> deliver(
             @Valid @RequestBody MailboxRequest.Deliver request
     ) {
-        MailboxResult.Slot slot = mailboxFacade.deliver(MailboxWebMapper.toDeliverCommand(request));
-        return ApiResponses.ok(MailboxWebMapper.toSlot(slot));
+        MailboxResult.Slot result = mailboxFacade.deliver(MailboxWebMapper.toDeliverCommand(request));
+        return ApiResponses.ok(MailboxWebMapper.toSlot(result));
     }
 
     @Override
@@ -43,7 +43,7 @@ public class MailboxController implements MailboxApiSpecV1 {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
-        MailboxResult.Mails mails = mailboxFacade.list();
-        return ApiResponses.ok(MailboxWebMapper.toLMails(mails));
+        MailboxResult.Mails result = mailboxFacade.list();
+        return ApiResponses.ok(MailboxWebMapper.toLMails(result));
     }
 }
