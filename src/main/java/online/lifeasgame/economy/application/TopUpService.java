@@ -6,6 +6,7 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.port.PaymentGateway;
 import online.lifeasgame.economy.application.result.EconomyResult;
+import online.lifeasgame.economy.domain.Currency;
 import online.lifeasgame.economy.domain.Money;
 import online.lifeasgame.economy.domain.Wallet;
 import online.lifeasgame.economy.domain.error.EconomyError;
@@ -29,6 +30,7 @@ public class TopUpService {
 
     @Transactional
     public void topUp(Long ownerId, EconomyCommand.TopUp command) {
+        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
         if (!idempotencyKeyStore.acquire(command.idempotencyKey(), Duration.ofMinutes(10))) {
             throw new DomainException(EconomyError.DUPLICATE_REQUEST);
         }
@@ -37,7 +39,7 @@ public class TopUpService {
                 command.paymentKey(),
                 command.orderId(),
                 command.amount(),
-                command.currency()
+                currency
         );
 
         if (!ok) {
@@ -45,7 +47,7 @@ public class TopUpService {
         }
 
         var wallet = lockOrCreateWallet(ownerId);
-        walletWriter.deposit(wallet, Money.of(command.amount(), command.currency()));
+        walletWriter.deposit(wallet, Money.of(command.amount(), currency));
 
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.TOPUP_COMPLETED)
@@ -58,8 +60,9 @@ public class TopUpService {
 
     @Transactional
     public EconomyResult.WalletBalance adjust(EconomyCommand.AdjustWallet command) {
+        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
         var wallet = lockOrCreateWallet(command.playerId());
-        Money money = Money.of(command.amount(), command.currency());
+        Money money = Money.of(command.amount(), currency);
         if (command.debit()) {
             walletWriter.withdraw(wallet, money);
         } else {
@@ -73,7 +76,7 @@ public class TopUpService {
                         .occurredAt(java.time.Instant.now())
                         .build()
         );
-        var balance = wallet.getBalance(command.currency());
+        var balance = wallet.getBalance(currency);
         return EconomyResult.WalletBalance.of(balance.available(), balance.getCurrency().name());
     }
 

@@ -5,7 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public final class AdminEconomyRequest {
-    private AdminEconomyRequest() {}
+
+    private AdminEconomyRequest() {
+    }
 
     public record CreateShopItem(
             @NotNull Long itemId,
@@ -14,22 +16,26 @@ public final class AdminEconomyRequest {
             Integer globalLimit,
             Integer perPlayerLimit,
             Integer reservationTtlSeconds
-    ) {}
+    ) {
+    }
 
     public record ToggleShopItem(
             @NotNull Boolean enabled
-    ) {}
+    ) {
+    }
 
     public record UpdateShopItem(
             Integer globalLimit,
             Integer perPlayerLimit,
             Integer reservationTtlSeconds
-    ) {}
+    ) {
+    }
 
     public record AdjustWallet(
             @Min(1) long amount,
             @NotBlank String currency,
             boolean debit,
             String reason
-    ) {}
+    ) {
+    }
 }

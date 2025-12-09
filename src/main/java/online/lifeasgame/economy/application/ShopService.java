@@ -35,7 +35,8 @@ public class ShopService {
 
     @Transactional
     public EconomyResult.ShopItemView createItem(EconomyCommand.CreateShopItem command) {
-        Money price = Money.of(command.price(), command.currency());
+        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
+        Money price = Money.of(command.price(), currency);
         ShopItem saved = shopItemWriter.create(
                 command.itemId(),
                 price,

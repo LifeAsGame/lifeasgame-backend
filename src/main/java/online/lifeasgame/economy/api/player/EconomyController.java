@@ -27,12 +27,40 @@ public class EconomyController implements EconomyApiSpecV1 {
     private final EconomyFacade economyFacade;
 
     @Override
+    @GetMapping("/listings")
+    public ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings() {
+        EconomyResult.Listings listings = economyFacade.listOpenListings();
+        return ApiResponses.ok(EconomyWebMapper.toListings(listings));
+    }
+
+    @Override
+    @GetMapping("/listings/me")
+    public ResponseEntity<ApiResponse<EconomyResponse.PlayerListings>> myListings() {
+        EconomyResult.PlayerListings listings = economyFacade.myListings();
+        return ApiResponses.ok(EconomyWebMapper.toPlayerListings(listings));
+    }
+
+    @Override
+    @GetMapping("/listings/reservations")
+    public ResponseEntity<ApiResponse<EconomyResponse.PlayerReservations>> myReservations() {
+        EconomyResult.PlayerReservations reservations = economyFacade.myReservations();
+        return ApiResponses.ok(EconomyWebMapper.toPlayerReservations(reservations));
+    }
+
+    @Override
+    @GetMapping("/trades")
+    public ResponseEntity<ApiResponse<EconomyResponse.Trades>> myTrades() {
+        EconomyResult.Trades trades = economyFacade.myTrades();
+        return ApiResponses.ok(EconomyWebMapper.toTrades(trades));
+    }
+
+    @Override
     @PostMapping("/listings")
     public ResponseEntity<ApiResponse<EconomyResponse.ListingId>> openListing(
             @Valid @RequestBody EconomyRequest.OpenListing request
     ) {
-        EconomyResult.ListingId id = economyFacade.openListing(EconomyWebMapper.toCommand(request));
-        return ApiResponses.ok(EconomyWebMapper.toResponse(id));
+        EconomyResult.ListingId id = economyFacade.openListing(EconomyWebMapper.toOpenListingCommand(request));
+        return ApiResponses.ok(EconomyWebMapper.toListingId(id));
     }
 
     @Override
@@ -41,8 +69,8 @@ public class EconomyController implements EconomyApiSpecV1 {
             @PathVariable Long listingId,
             @Valid @RequestBody EconomyRequest.ReserveListing request
     ) {
-        EconomyResult.Reservation reservation = economyFacade.reserveListing(EconomyWebMapper.toCommand(listingId, request));
-        return ApiResponses.ok(EconomyWebMapper.toResponse(reservation));
+        EconomyResult.Reservation reservation = economyFacade.reserveListing(EconomyWebMapper.toReserveListingCommand(listingId, request));
+        return ApiResponses.ok(EconomyWebMapper.toReservation(reservation));
     }
 
     @Override
@@ -51,46 +79,14 @@ public class EconomyController implements EconomyApiSpecV1 {
             @PathVariable Long listingId,
             @Valid @RequestBody EconomyRequest.PurchaseListing request
     ) {
-        EconomyResult.TradeSummary trade = economyFacade.purchaseListing(EconomyWebMapper.toCommand(listingId, request));
+        EconomyResult.TradeSummary trade = economyFacade.purchaseListing(EconomyWebMapper.toPurchaseListingCommand(listingId, request));
         return ApiResponses.ok(EconomyWebMapper.toTrade(trade));
     }
 
     @Override
     @DeleteMapping("/listings/{listingId}")
     public ResponseEntity<ApiResponse<Void>> cancelListing(@PathVariable Long listingId) {
-        economyFacade.cancelListing(EconomyWebMapper.toCommand(listingId));
-        return ApiResponses.noContent();
-    }
-
-    @Override
-    @GetMapping("/listings")
-    public ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings() {
-        EconomyResult.Listings listings = economyFacade.listOpenListings();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(listings));
-    }
-
-    @Override
-    @PostMapping("/shop/purchase")
-    public ResponseEntity<ApiResponse<EconomyResponse.ShopPurchaseId>> purchaseShopItem(
-            @Valid @RequestBody EconomyRequest.PurchaseShopItem request
-    ) {
-        EconomyResult.ShopPurchaseId id = economyFacade.purchaseShopItem(EconomyWebMapper.toCommand(request));
-        return ApiResponses.ok(EconomyWebMapper.toResponse(id));
-    }
-
-    @Override
-    @PostMapping("/shop/reservations/confirm")
-    public ResponseEntity<ApiResponse<EconomyResponse.ShopReservation>> confirmShopReservation(
-            @Valid @RequestBody EconomyRequest.ConfirmShopReservation request
-    ) {
-        EconomyResult.ShopReservation reservation = economyFacade.confirmShopReservation(EconomyWebMapper.toCommand(request));
-        return ApiResponses.ok(EconomyWebMapper.toResponse(reservation));
-    }
-
-    @Override
-    @PostMapping("/top-up")
-    public ResponseEntity<ApiResponse<Void>> topUp(@Valid @RequestBody EconomyRequest.TopUp request) {
-        economyFacade.topUp(EconomyWebMapper.toCommand(request));
+        economyFacade.cancelListing(EconomyWebMapper.toCancelListingCommand(listingId));
         return ApiResponses.noContent();
     }
 
@@ -98,41 +94,45 @@ public class EconomyController implements EconomyApiSpecV1 {
     @GetMapping("/shop/items")
     public ResponseEntity<ApiResponse<EconomyResponse.ShopItems>> listShopItems() {
         EconomyResult.ShopItems items = economyFacade.listShopItems();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(items));
-    }
-
-    @Override
-    @GetMapping("/wallet")
-    public ResponseEntity<ApiResponse<EconomyResponse.WalletBalance>> wallet() {
-        EconomyResult.WalletBalance balance = economyFacade.walletBalance();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(balance));
-    }
-
-    @Override
-    @GetMapping("/listings/me")
-    public ResponseEntity<ApiResponse<EconomyResponse.PlayerListings>> myListings() {
-        EconomyResult.PlayerListings listings = economyFacade.myListings();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(listings));
-    }
-
-    @Override
-    @GetMapping("/listings/reservations")
-    public ResponseEntity<ApiResponse<EconomyResponse.PlayerReservations>> myReservations() {
-        EconomyResult.PlayerReservations reservations = economyFacade.myReservations();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(reservations));
+        return ApiResponses.ok(EconomyWebMapper.toShopItems(items));
     }
 
     @Override
     @GetMapping("/shop/purchases")
     public ResponseEntity<ApiResponse<EconomyResponse.ShopPurchases>> myShopPurchases() {
         EconomyResult.ShopPurchases purchases = economyFacade.myShopPurchases();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(purchases));
+        return ApiResponses.ok(EconomyWebMapper.toShopPurchases(purchases));
     }
 
     @Override
-    @GetMapping("/trades")
-    public ResponseEntity<ApiResponse<EconomyResponse.Trades>> myTrades() {
-        EconomyResult.Trades trades = economyFacade.myTrades();
-        return ApiResponses.ok(EconomyWebMapper.toResponse(trades));
+    @PostMapping("/shop/purchase")
+    public ResponseEntity<ApiResponse<EconomyResponse.ShopPurchaseId>> purchaseShopItem(
+            @Valid @RequestBody EconomyRequest.PurchaseShopItem request
+    ) {
+        EconomyResult.ShopPurchaseId id = economyFacade.purchaseShopItem(EconomyWebMapper.toPurchaseShopItemCommand(request));
+        return ApiResponses.ok(EconomyWebMapper.toShopPurchaseId(id));
+    }
+
+    @Override
+    @PostMapping("/shop/reservations/confirm")
+    public ResponseEntity<ApiResponse<EconomyResponse.ShopReservation>> confirmShopReservation(
+            @Valid @RequestBody EconomyRequest.ConfirmShopReservation request
+    ) {
+        EconomyResult.ShopReservation reservation = economyFacade.confirmShopReservation(EconomyWebMapper.toConfirmShopReservationCommand(request));
+        return ApiResponses.ok(EconomyWebMapper.toShopReservation(reservation));
+    }
+
+    @Override
+    @GetMapping("/wallet")
+    public ResponseEntity<ApiResponse<EconomyResponse.WalletBalance>> wallet() {
+        EconomyResult.WalletBalance balance = economyFacade.walletBalance();
+        return ApiResponses.ok(EconomyWebMapper.toWalletBalance(balance));
+    }
+
+    @Override
+    @PostMapping("/top-up")
+    public ResponseEntity<ApiResponse<Void>> topUp(@Valid @RequestBody EconomyRequest.TopUp request) {
+        economyFacade.topUp(EconomyWebMapper.toTopUpCommand(request));
+        return ApiResponses.noContent();
     }
 }

@@ -34,7 +34,8 @@ public class MarketplaceService {
 
     @Transactional
     public EconomyResult.ListingId open(Long sellerId, EconomyCommand.OpenListing command) {
-        Money price = Money.of(command.price(), command.currency());
+        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
+        Money price = Money.of(command.price(), currency);
         Listing saved = listingWriter.create(sellerId, command.itemInstanceId(), command.itemId(), price);
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.LISTING_OPENED)

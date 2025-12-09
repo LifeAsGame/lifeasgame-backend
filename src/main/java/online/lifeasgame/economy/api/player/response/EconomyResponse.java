@@ -1,43 +1,114 @@
 package online.lifeasgame.economy.api.player.response;
 
 import java.time.Instant;
+import java.util.List;
 
 public final class EconomyResponse {
-    private EconomyResponse() {}
 
-    public record ListingId(Long id) {}
+    private EconomyResponse() {
+    }
 
-    public record Reservation(String reservationToken, String holdId, Instant expiresAt) {}
+    public record ListingId(Long id) {
+    }
 
-    public record Trade(Long id, Long listingId, Long buyerId, Long sellerId, long price, String currency) {}
+    public record Reservation(
+            String reservationToken,
+            String holdId,
+            Instant expiresAt
+    ) {
+    }
 
-    public record ShopPurchaseId(Long id) {}
+    public record Trade(
+            Long id,
+            Long listingId,
+            Long buyerId,
+            Long sellerId,
+            long price,
+            String currency
+    ) {
+    }
 
-    public record ShopReservation(String reservationToken, Instant expiresAt) {}
+    public record ShopPurchaseId(Long id) {
+    }
 
-    public record ListingSummary(Long id, Long itemId, Long sellerId, long price, String currency, String status) {}
+    public record ShopReservation(
+            String reservationToken,
+            Instant expiresAt
+    ) {
+    }
 
-    public record ListingReservation(Long listingId, Long itemId, long price, String currency, Instant expiresAt) {}
+    public record ListingSummary(
+            Long id,
+            Long itemId,
+            Long sellerId,
+            long price,
+            String currency,
+            String status
+    ) {
+    }
 
-    public record Listings(java.util.List<ListingSummary> listings) {}
+    public record ListingReservation(
+            Long listingId,
+            Long itemId,
+            long price,
+            String currency,
+            Instant expiresAt
+    ) {
+    }
 
-    public record PlayerListings(java.util.List<ListingSummary> listings) {}
+    public record Listings(List<ListingSummary> listings) {
+    }
 
-    public record PlayerReservations(java.util.List<ListingReservation> reservations) {}
+    public record PlayerListings(List<ListingSummary> listings) {
+    }
 
-    public record ShopItem(Long id, Long itemId, long price, String currency, boolean available,
-                          Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {}
+    public record PlayerReservations(List<ListingReservation> reservations) {
+    }
 
-    public record ShopItems(java.util.List<ShopItem> items) {}
+    public record ShopItem(
+            Long id,
+            Long itemId,
+            long price,
+            String currency,
+            boolean available,
+            Integer globalStockLimit,
+            Integer perPlayerLimit,
+            Integer reservationTtlSec
+    ) {
+    }
 
-    public record ShopPurchaseSummary(Long id, Long shopItemId, Integer quantity, String status,
-                                      String reservationToken, Instant reservationExpiresAt) {}
+    public record ShopItems(List<ShopItem> items) {
+    }
 
-    public record ShopPurchases(java.util.List<ShopPurchaseSummary> purchases) {}
+    public record ShopPurchaseSummary(
+            Long id,
+            Long shopItemId,
+            Integer quantity,
+            String status,
+            String reservationToken,
+            Instant reservationExpiresAt
+    ) {
+    }
 
-    public record WalletBalance(long amount, String currency) {}
+    public record ShopPurchases(List<ShopPurchaseSummary> purchases) {
+    }
 
-    public record TradeSummary(Long id, Long listingId, Long buyerId, Long sellerId, long price, String currency) {}
+    public record WalletBalance(
+            long amount,
+            String currency
+    ) {
+    }
 
-    public record Trades(java.util.List<TradeSummary> trades) {}
+    public record TradeSummary(
+            Long id,
+            Long listingId,
+            Long buyerId,
+            Long sellerId,
+            long price,
+            String currency
+    ) {
+    }
+
+    public record Trades(List<TradeSummary> trades) {
+    }
 }

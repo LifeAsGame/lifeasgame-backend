@@ -4,142 +4,192 @@ import online.lifeasgame.economy.api.player.request.EconomyRequest;
 import online.lifeasgame.economy.api.player.response.EconomyResponse;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
-import online.lifeasgame.economy.domain.Currency;
 
 public final class EconomyWebMapper {
-    private EconomyWebMapper() {}
 
-    public static EconomyCommand.OpenListing toCommand(EconomyRequest.OpenListing request) {
-        Currency currency = Currency.parseOptional(request.currency(), Currency.GOLD);
-        return EconomyCommand.OpenListing.of(request.itemInstanceId(), request.itemId(), request.price(), currency);
+    private EconomyWebMapper() {
     }
 
-    public static EconomyCommand.ReserveListing toCommand(Long listingId, EconomyRequest.ReserveListing request) {
-        return EconomyCommand.ReserveListing.of(listingId, request.ttlSeconds());
+    public static EconomyResponse.Listings toListings(EconomyResult.Listings result) {
+        return new EconomyResponse.Listings(
+                result.listings().stream()
+                        .map(EconomyWebMapper::toListingSummary)
+                        .toList()
+        );
     }
 
-    public static EconomyCommand.PurchaseListing toCommand(Long listingId, EconomyRequest.PurchaseListing request) {
-        return EconomyCommand.PurchaseListing.of(listingId, request.reservationToken(), request.idempotencyKey());
+    public static EconomyResponse.PlayerListings toPlayerListings(EconomyResult.PlayerListings result) {
+        return new EconomyResponse.PlayerListings(
+                result.listings().stream().
+                        map(EconomyWebMapper::toListingSummary)
+                        .toList()
+        );
     }
 
-    public static EconomyCommand.CancelListing toCommand(Long listingId) {
-        return EconomyCommand.CancelListing.of(listingId);
+    public static EconomyResponse.ListingSummary toListingSummary(EconomyResult.ListingSummary result) {
+        return new EconomyResponse.ListingSummary(
+                result.id(),
+                result.itemId(),
+                result.sellerId(),
+                result.price(),
+                result.currency(),
+                result.status()
+        );
     }
 
-    public static EconomyCommand.PurchaseShopItem toCommand(EconomyRequest.PurchaseShopItem request) {
-        return EconomyCommand.PurchaseShopItem.of(request.shopItemId(), request.quantity(), request.reserveOnly(), request.idempotencyKey());
+    public static EconomyResponse.PlayerReservations toPlayerReservations(EconomyResult.PlayerReservations result) {
+        return new EconomyResponse.PlayerReservations(
+                result.reservations().stream()
+                        .map(EconomyWebMapper::toListingReservation)
+                        .toList()
+        );
     }
 
-    public static EconomyCommand.ConfirmShopReservation toCommand(EconomyRequest.ConfirmShopReservation request) {
-        return EconomyCommand.ConfirmShopReservation.of(request.reservationToken());
+    public static EconomyResponse.ListingReservation toListingReservation(EconomyResult.ListingReservation result) {
+        return new EconomyResponse.ListingReservation(
+                result.listingId(),
+                result.itemId(),
+                result.price(),
+                result.currency(),
+                result.expiresAt()
+        );
     }
 
-    public static EconomyCommand.TopUp toCommand(EconomyRequest.TopUp request) {
-        Currency currency = Currency.parseOptional(request.currency(), Currency.GOLD);
-        return EconomyCommand.TopUp.of(request.amount(), currency, request.paymentKey(), request.orderId(), request.idempotencyKey());
+    public static EconomyResponse.Trades toTrades(EconomyResult.Trades result) {
+        return new EconomyResponse.Trades(
+                result.trades().stream()
+                        .map(EconomyWebMapper::toTradeSummary)
+                        .toList()
+        );
     }
 
-    public static EconomyResponse.ListingId toResponse(EconomyResult.ListingId result) {
+    public static EconomyCommand.OpenListing toOpenListingCommand(EconomyRequest.OpenListing request) {
+        return new EconomyCommand.OpenListing(
+                request.itemInstanceId(),
+                request.itemId(),
+                request.price(),
+                request.currency()
+        );
+    }
+
+    public static EconomyResponse.ListingId toListingId(EconomyResult.ListingId result) {
         return new EconomyResponse.ListingId(result.id());
     }
 
-    public static EconomyResponse.Reservation toResponse(EconomyResult.Reservation reservation) {
-        return new EconomyResponse.Reservation(reservation.reservationToken(), reservation.holdId(), reservation.expiresAt());
+    public static EconomyCommand.ReserveListing toReserveListingCommand(Long listingId, EconomyRequest.ReserveListing request) {
+        return new EconomyCommand.ReserveListing(listingId, request.ttlSeconds());
     }
 
-    public static EconomyResponse.Trade toTrade(EconomyResult.TradeSummary trade) {
-        return new EconomyResponse.Trade(trade.id(), trade.listingId(), trade.buyerId(), trade.sellerId(), trade.price(), trade.currency());
+    public static EconomyResponse.Reservation toReservation(EconomyResult.Reservation result) {
+        return new EconomyResponse.Reservation(result.reservationToken(), result.holdId(), result.expiresAt());
     }
 
-    public static EconomyResponse.ShopPurchaseId toResponse(EconomyResult.ShopPurchaseId id) {
-        return new EconomyResponse.ShopPurchaseId(id.id());
-    }
-
-    public static EconomyResponse.ShopReservation toResponse(EconomyResult.ShopReservation reservation) {
-        return new EconomyResponse.ShopReservation(reservation.reservationToken(), reservation.expiresAt());
-    }
-
-    public static EconomyResponse.Listings toResponse(EconomyResult.Listings listings) {
-        return new EconomyResponse.Listings(listings.listings().stream().map(EconomyWebMapper::toResponse).toList());
-    }
-
-    public static EconomyResponse.PlayerListings toResponse(EconomyResult.PlayerListings listings) {
-        return new EconomyResponse.PlayerListings(listings.listings().stream().map(EconomyWebMapper::toResponse).toList());
-    }
-
-    public static EconomyResponse.PlayerReservations toResponse(EconomyResult.PlayerReservations reservations) {
-        return new EconomyResponse.PlayerReservations(reservations.reservations().stream().map(EconomyWebMapper::toResponse).toList());
-    }
-
-    public static EconomyResponse.ListingSummary toResponse(EconomyResult.ListingSummary summary) {
-        return new EconomyResponse.ListingSummary(
-                summary.id(),
-                summary.itemId(),
-                summary.sellerId(),
-                summary.price(),
-                summary.currency(),
-                summary.status()
+    public static EconomyCommand.PurchaseListing toPurchaseListingCommand(Long listingId, EconomyRequest.PurchaseListing request) {
+        return new EconomyCommand.PurchaseListing(
+                listingId,
+                request.reservationToken(),
+                request.idempotencyKey()
         );
     }
 
-    public static EconomyResponse.ListingReservation toResponse(EconomyResult.ListingReservation reservation) {
-        return new EconomyResponse.ListingReservation(
-                reservation.listingId(),
-                reservation.itemId(),
-                reservation.price(),
-                reservation.currency(),
-                reservation.expiresAt()
+    public static EconomyResponse.Trade toTrade(EconomyResult.TradeSummary result) {
+        return new EconomyResponse.Trade(
+                result.id(),
+                result.listingId(),
+                result.buyerId(),
+                result.sellerId(),
+                result.price(),
+                result.currency()
         );
     }
 
-    public static EconomyResponse.ShopItems toResponse(EconomyResult.ShopItems items) {
-        return new EconomyResponse.ShopItems(items.items().stream().map(EconomyWebMapper::toResponse).toList());
+    public static EconomyCommand.CancelListing toCancelListingCommand(Long listingId) {
+        return new EconomyCommand.CancelListing(listingId);
     }
 
-    public static EconomyResponse.ShopItem toResponse(EconomyResult.ShopItemView view) {
-        return new EconomyResponse.ShopItem(
-                view.id(),
-                view.itemId(),
-                view.price(),
-                view.currency(),
-                view.available(),
-                view.globalStockLimit(),
-                view.perPlayerLimit(),
-                view.reservationTtlSec()
-        );
-    }
-
-    public static EconomyResponse.ShopPurchases toResponse(EconomyResult.ShopPurchases purchases) {
-        return new EconomyResponse.ShopPurchases(purchases.purchases().stream().map(EconomyWebMapper::toResponse).toList());
-    }
-
-    public static EconomyResponse.ShopPurchaseSummary toResponse(EconomyResult.ShopPurchaseView view) {
-        return new EconomyResponse.ShopPurchaseSummary(
-                view.id(),
-                view.shopItemId(),
-                view.quantity(),
-                view.status(),
-                view.reservationToken(),
-                view.reservationExpiresAt()
-        );
-    }
-
-    public static EconomyResponse.Trades toResponse(EconomyResult.Trades trades) {
-        return new EconomyResponse.Trades(trades.trades().stream().map(EconomyWebMapper::toTradeSummary).toList());
-    }
-
-    public static EconomyResponse.TradeSummary toTradeSummary(EconomyResult.TradeSummary summary) {
+    public static EconomyResponse.TradeSummary toTradeSummary(EconomyResult.TradeSummary result) {
         return new EconomyResponse.TradeSummary(
-                summary.id(),
-                summary.listingId(),
-                summary.buyerId(),
-                summary.sellerId(),
-                summary.price(),
-                summary.currency()
+                result.id(),
+                result.listingId(),
+                result.buyerId(),
+                result.sellerId(),
+                result.price(),
+                result.currency()
         );
     }
 
-    public static EconomyResponse.WalletBalance toResponse(EconomyResult.WalletBalance balance) {
-        return new EconomyResponse.WalletBalance(balance.amount(), balance.currency());
+    public static EconomyCommand.PurchaseShopItem toPurchaseShopItemCommand(EconomyRequest.PurchaseShopItem request) {
+        return new EconomyCommand.PurchaseShopItem(
+                request.shopItemId(),
+                request.quantity(),
+                request.reserveOnly(),
+                request.idempotencyKey()
+        );
+    }
+
+    public static EconomyResponse.ShopItems toShopItems(EconomyResult.ShopItems result) {
+        return new EconomyResponse.ShopItems(
+                result.items().stream()
+                        .map(EconomyWebMapper::toShopItem)
+                        .toList()
+        );
+    }
+
+    public static EconomyResponse.ShopItem toShopItem(EconomyResult.ShopItemView result) {
+        return new EconomyResponse.ShopItem(
+                result.id(),
+                result.itemId(),
+                result.price(),
+                result.currency(),
+                result.available(),
+                result.globalStockLimit(),
+                result.perPlayerLimit(),
+                result.reservationTtlSec()
+        );
+    }
+
+    public static EconomyResponse.ShopPurchases toShopPurchases(EconomyResult.ShopPurchases result) {
+        return new EconomyResponse.ShopPurchases(
+                result.purchases().stream()
+                        .map(EconomyWebMapper::toShopPurchaseSummary)
+                        .toList()
+        );
+    }
+
+    public static EconomyResponse.ShopPurchaseSummary toShopPurchaseSummary(EconomyResult.ShopPurchaseView result) {
+        return new EconomyResponse.ShopPurchaseSummary(
+                result.id(),
+                result.shopItemId(),
+                result.quantity(),
+                result.status(),
+                result.reservationToken(),
+                result.reservationExpiresAt()
+        );
+    }
+
+    public static EconomyResponse.ShopPurchaseId toShopPurchaseId(EconomyResult.ShopPurchaseId result) {
+        return new EconomyResponse.ShopPurchaseId(result.id());
+    }
+
+    public static EconomyCommand.ConfirmShopReservation toConfirmShopReservationCommand(EconomyRequest.ConfirmShopReservation request) {
+        return new EconomyCommand.ConfirmShopReservation(request.reservationToken());
+    }
+
+    public static EconomyResponse.ShopReservation toShopReservation(EconomyResult.ShopReservation result) {
+        return new EconomyResponse.ShopReservation(result.reservationToken(), result.expiresAt());
+    }
+
+    public static EconomyResponse.WalletBalance toWalletBalance(EconomyResult.WalletBalance result) {
+        return new EconomyResponse.WalletBalance(result.amount(), result.currency());
+    }
+
+    public static EconomyCommand.TopUp toTopUpCommand(EconomyRequest.TopUp request) {
+        return new EconomyCommand.TopUp(
+                request.amount(),
+                request.currency(),
+                request.paymentKey(),
+                request.orderId(),
+                request.idempotencyKey()
+        );
     }
 }
