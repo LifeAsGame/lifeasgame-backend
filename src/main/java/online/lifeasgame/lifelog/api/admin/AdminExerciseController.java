@@ -24,39 +24,14 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
 
     private final ExerciseLogService exerciseLogService;
 
-    @PostMapping("/{playerId}/exercises")
-    @Override
-    public ResponseEntity<AdminExerciseResponse.Created> create(
-            @PathVariable Long playerId,
-            @Valid @RequestBody AdminExerciseRequest.Create request
-    ) {
-        ExerciseResult.Created created = exerciseLogService.create(playerId, AdminExerciseWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminExerciseWebMapper.toResponse(created));
-    }
-
-    @PostMapping("/{playerId}/exercises/{exerciseId}")
-    @Override
-    public ResponseEntity<AdminExerciseResponse.Info> update(
-            @PathVariable Long playerId,
-            @PathVariable Long exerciseId,
-            @Valid @RequestBody AdminExerciseRequest.Update request
-    ) {
-        ExerciseResult.Info info = exerciseLogService.update(
-                playerId,
-                exerciseId,
-                AdminExerciseWebMapper.toCommand(request)
-        );
-        return ResponseEntity.ok(AdminExerciseWebMapper.toResponse(info));
-    }
-
     @GetMapping("/{playerId}/exercises/recent")
     @Override
     public ResponseEntity<List<AdminExerciseResponse.Info>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<ExerciseResult.Info> infos = exerciseLogService.recent(playerId, limit);
-        return ResponseEntity.ok(AdminExerciseWebMapper.toResponseList(infos));
+        List<ExerciseResult.Info> results = exerciseLogService.recent(playerId, limit);
+        return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
     @GetMapping("/{playerId}/exercises/search")
@@ -68,16 +43,41 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<ExerciseResult.Info> infos = exerciseLogService.search(
+        List<ExerciseResult.Info> results = exerciseLogService.search(
                 playerId,
-                AdminExerciseWebMapper.toCommand(
-                        category,
-                        from,
-                        to,
-                        page,
-                        size
-                )
+                AdminExerciseWebMapper.toSearchCommand(category, from, to, page, size)
         );
-        return ResponseEntity.ok(AdminExerciseWebMapper.toResponseList(infos));
+
+        return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
+    }
+
+    @PostMapping("/{playerId}/exercises")
+    @Override
+    public ResponseEntity<AdminExerciseResponse.Created> create(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminExerciseRequest.Create request
+    ) {
+        ExerciseResult.Created result = exerciseLogService.create(
+                playerId,
+                AdminExerciseWebMapper.toCreateCommand(request)
+        );
+
+        return ResponseEntity.ok(AdminExerciseWebMapper.toCreated(result));
+    }
+
+    @PostMapping("/{playerId}/exercises/{exerciseId}")
+    @Override
+    public ResponseEntity<AdminExerciseResponse.Info> update(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId,
+            @Valid @RequestBody AdminExerciseRequest.Update request
+    ) {
+        ExerciseResult.Info result = exerciseLogService.update(
+                playerId,
+                exerciseId,
+                AdminExerciseWebMapper.toUpdateCommand(request)
+        );
+
+        return ResponseEntity.ok(AdminExerciseWebMapper.toInfo(result));
     }
 }

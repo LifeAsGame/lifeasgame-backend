@@ -5,10 +5,8 @@ import java.time.Instant;
 import java.util.Set;
 
 public final class AdminCollectionResponse {
-    private AdminCollectionResponse() {
-    }
 
-    public record Created(Long id) {
+    private AdminCollectionResponse() {
     }
 
     public record Info(
@@ -24,5 +22,8 @@ public final class AdminCollectionResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
+    }
+
+    public record Created(Long id) {
     }
 }

@@ -6,10 +6,8 @@ import java.time.LocalDate;
 import java.util.Set;
 
 public final class AdminMediaResponse {
-    private AdminMediaResponse() {
-    }
 
-    public record Created(Long id) {
+    private AdminMediaResponse() {
     }
 
     public record Info(
@@ -29,5 +27,8 @@ public final class AdminMediaResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
+    }
+
+    public record Created(Long id) {
     }
 }

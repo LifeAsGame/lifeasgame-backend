@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Set;
 
 public final class PlayerCollectionResponse {
+
     private PlayerCollectionResponse() {
     }
 

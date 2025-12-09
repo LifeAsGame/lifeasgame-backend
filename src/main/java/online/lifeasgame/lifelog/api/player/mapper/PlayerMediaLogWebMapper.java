@@ -8,10 +8,25 @@ import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import java.util.List;
 
 public final class PlayerMediaLogWebMapper {
+
     private PlayerMediaLogWebMapper() {
     }
 
-    public static MediaLogCommand.Create toCommand(PlayerMediaLogRequest.Create request) {
+    public static MediaLogCommand.Search toSearchCommand(
+            String category,
+            String status,
+            String titleLike,
+            int page,
+            int size
+    ) {
+        return new MediaLogCommand.Search(category, status, titleLike, page, size);
+    }
+
+    public static List<PlayerMediaLogResponse.Info> toInfos(List<MediaLogResult.Info> results) {
+        return results.stream().map(PlayerMediaLogWebMapper::toInfo).toList();
+    }
+
+    public static MediaLogCommand.Create toCreateCommand(PlayerMediaLogRequest.Create request) {
         return new MediaLogCommand.Create(
                 request.category(),
                 request.title(),
@@ -23,39 +38,23 @@ public final class PlayerMediaLogWebMapper {
         );
     }
 
-    public static MediaLogCommand.Rate toCommand(PlayerMediaLogRequest.Rate request) {
-        return new MediaLogCommand.Rate(request.score());
-    }
-
-    public static MediaLogCommand.Advance toCommand(PlayerMediaLogRequest.Advance request) {
-        return new MediaLogCommand.Advance(request.step());
-    }
-
-    public static MediaLogCommand.MarkStatus toCommand(PlayerMediaLogRequest.MarkStatus request) {
-        return new MediaLogCommand.MarkStatus(request.status());
-    }
-
-    public static MediaLogCommand.Search toCommand(
-            String category,
-            String status,
-            String titleLike,
-            int page,
-            int size
-    ) {
-        return new MediaLogCommand.Search(
-                category,
-                status,
-                titleLike,
-                page,
-                size
-        );
-    }
-
-    public static PlayerMediaLogResponse.Created toResponse(MediaLogResult.Created result) {
+    public static PlayerMediaLogResponse.Created toCreated(MediaLogResult.Created result) {
         return new PlayerMediaLogResponse.Created(result.id());
     }
 
-    public static PlayerMediaLogResponse.Info toResponse(MediaLogResult.Info result) {
+    public static MediaLogCommand.Rate toRateCommand(PlayerMediaLogRequest.Rate request) {
+        return new MediaLogCommand.Rate(request.score());
+    }
+
+    public static MediaLogCommand.Advance toAdvanceCommand(PlayerMediaLogRequest.Advance request) {
+        return new MediaLogCommand.Advance(request.step());
+    }
+
+    public static MediaLogCommand.MarkStatus toMarkStatusCommand(PlayerMediaLogRequest.MarkStatus request) {
+        return new MediaLogCommand.MarkStatus(request.status());
+    }
+
+    public static PlayerMediaLogResponse.Info toInfo(MediaLogResult.Info result) {
         return new PlayerMediaLogResponse.Info(
                 result.id(),
                 result.playerId(),
@@ -73,9 +72,5 @@ public final class PlayerMediaLogWebMapper {
                 result.createdAt(),
                 result.updatedAt()
         );
-    }
-
-    public static List<PlayerMediaLogResponse.Info> toResponseList(List<MediaLogResult.Info> results) {
-        return results.stream().map(PlayerMediaLogWebMapper::toResponse).toList();
     }
 }
