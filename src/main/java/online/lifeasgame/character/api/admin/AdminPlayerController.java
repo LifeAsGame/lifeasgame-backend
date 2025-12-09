@@ -90,10 +90,10 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.GrantStatusEffects request
     ) {
-        PlayerResult.StatusEffectsGranted result =
-                playerService.grantStatusEffects(
-                        AdminPlayerWebMapper.toGrantStatusEffectsCommand(playerId, request)
-                );
+        PlayerResult.StatusEffectsGranted result = playerService.grantStatusEffects(
+                AdminPlayerWebMapper.toGrantStatusEffectsCommand(playerId, request)
+        );
+
         return ApiResponses.ok(AdminPlayerWebMapper.toStatusEffectsGranted(result));
     }
 

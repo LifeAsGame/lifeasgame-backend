@@ -30,8 +30,7 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> create(
             @Valid @RequestBody AdminAchievementRequest.Create request
     ) {
-        AchievementResult.Info result =
-                achievementService.create(AdminAchievementWebMapper.toCreateCommand(request));
+        AchievementResult.Info result = achievementService.create(AdminAchievementWebMapper.toCreateCommand(request));
 
         return ApiResponses.created(
                 URI.create("/admin/v1/achievements/" + result.code()),

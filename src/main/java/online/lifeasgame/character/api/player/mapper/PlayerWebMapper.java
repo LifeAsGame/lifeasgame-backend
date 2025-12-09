@@ -5,7 +5,7 @@ import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.api.player.request.PlayerRequest;
 import online.lifeasgame.character.api.player.response.PlayerResponse;
 
-public class PlayerWebMapper {
+public final class PlayerWebMapper {
 
     private PlayerWebMapper() {
     }

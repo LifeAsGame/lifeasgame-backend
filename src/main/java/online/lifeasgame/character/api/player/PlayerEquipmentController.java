@@ -22,6 +22,13 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
     private final PlayerEquipmentFacade playerEquipmentFacade;
 
     @Override
+    @GetMapping("/equipment")
+    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Infos>> playerEquipmentInfos() {
+        List<PlayerEquipmentResult.Info> results = playerEquipmentFacade.getPlayerEquipmentInfos();
+        return ApiResponses.ok(PlayerEquipmentWebMapper.toInfos(results));
+    }
+
+    @Override
     @PutMapping("/equipment/{slotId}")
     public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Equipped>> equip(
             @PathVariable Long slotId,
@@ -32,13 +39,6 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
         );
 
         return ApiResponses.ok(PlayerEquipmentWebMapper.toEquipped(result));
-    }
-
-    @Override
-    @GetMapping("/equipment")
-    public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Infos>> playerEquipmentInfos() {
-        List<PlayerEquipmentResult.Info> results = playerEquipmentFacade.getPlayerEquipmentInfos();
-        return ApiResponses.ok(PlayerEquipmentWebMapper.toInfos(results));
     }
 
     @Override

@@ -7,7 +7,7 @@ import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 
 import java.util.List;
 
-public class PlayerEquipmentWebMapper {
+public final class PlayerEquipmentWebMapper {
 
     private PlayerEquipmentWebMapper() {}
 

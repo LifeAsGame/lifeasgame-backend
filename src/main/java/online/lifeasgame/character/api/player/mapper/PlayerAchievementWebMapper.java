@@ -5,7 +5,7 @@ import online.lifeasgame.character.application.result.PlayerAchievementResult;
 
 import java.util.List;
 
-public class PlayerAchievementWebMapper {
+public final class PlayerAchievementWebMapper {
 
     private PlayerAchievementWebMapper() {}
 

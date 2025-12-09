@@ -7,7 +7,7 @@ import online.lifeasgame.character.application.result.PlayerHobbyResult;
 
 import java.util.List;
 
-public class PlayerHobbyWebMapper {
+public final class PlayerHobbyWebMapper {
 
     private PlayerHobbyWebMapper() {}
 

@@ -5,7 +5,7 @@ import online.lifeasgame.character.application.result.EquipmentSlotResult;
 
 import java.util.List;
 
-public class EquipmentSlotWebMapper {
+public final class EquipmentSlotWebMapper {
 
     private EquipmentSlotWebMapper() {}
 

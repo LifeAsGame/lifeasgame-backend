@@ -5,7 +5,7 @@ import online.lifeasgame.character.application.result.TitleResult;
 
 import java.util.List;
 
-public class TitleWebMapper {
+public final class TitleWebMapper {
 
     private TitleWebMapper() {}
 

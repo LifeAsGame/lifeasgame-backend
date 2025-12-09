@@ -7,7 +7,7 @@ import online.lifeasgame.character.application.result.PlayerCertificationResult;
 
 import java.util.List;
 
-public class PlayerCertificationWebMapper {
+public final class PlayerCertificationWebMapper {
 
     private PlayerCertificationWebMapper() {}
 

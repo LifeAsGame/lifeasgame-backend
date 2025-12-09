@@ -23,6 +23,13 @@ public class PlayerController implements PlayerApiSpecV1 {
     private final PlayerFacade playerFacade;
 
     @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<PlayerResponse.Info>> playerInfo() {
+        PlayerResult.PlayerInfo result = playerFacade.getPlayerInfo();
+        return ApiResponses.ok(PlayerWebMapper.toPlayerInfo(result));
+    }
+
+    @Override
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<PlayerResponse.Created>> linkStart(
             @Valid @RequestBody PlayerRequest.Register request
@@ -32,13 +39,6 @@ public class PlayerController implements PlayerApiSpecV1 {
                 URI.create("/api/v1/players/" + result.id()),
                 PlayerWebMapper.toCreated(result)
         );
-    }
-
-    @Override
-    @GetMapping
-    public ResponseEntity<ApiResponse<PlayerResponse.Info>> playerInfo() {
-        PlayerResult.PlayerInfo result = playerFacade.getPlayerInfo();
-        return ApiResponses.ok(PlayerWebMapper.toPlayerInfo(result));
     }
 
     @Override
