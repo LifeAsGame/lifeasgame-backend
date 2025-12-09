@@ -76,7 +76,7 @@ public class QuestService {
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> questAcceptances(QuestCommand.Acceptances command) {
         Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
-        return questReader.findQuestAcceptances(quest.getId(), command.status()).stream()
+        return questReader.findQuestAcceptances(quest.getId(), QuestStatus.parse(command.status())).stream()
                 .map(acceptance -> QuestResult.Acceptance.from(acceptance, quest))
                 .toList();
     }
@@ -90,7 +90,7 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> playerQuests(Long playerId, QuestCommand.PlayerQuests command) {
-        List<QuestAcceptance> acceptances = questReader.findPlayerAcceptances(playerId, command.status());
+        List<QuestAcceptance> acceptances = questReader.findPlayerAcceptances(playerId, QuestStatus.parse(command.status()));
 
         return acceptances.stream()
                 .map(acceptance -> QuestResult.Acceptance.from(acceptance, questReader.getById(acceptance.getQuestId())))

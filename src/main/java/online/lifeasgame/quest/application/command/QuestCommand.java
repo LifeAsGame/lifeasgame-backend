@@ -1,7 +1,5 @@
 package online.lifeasgame.quest.application.command;
 
-import online.lifeasgame.quest.domain.QuestStatus;
-
 import java.time.Instant;
 import java.util.Map;
 
@@ -27,13 +25,13 @@ public final class QuestCommand {
     ) {
     }
 
-    public record Acceptances(String questCode, QuestStatus status) {
+    public record Acceptances(String questCode, String status) {
     }
 
     public record Acceptance(Long acceptanceId) {
     }
 
-    public record PlayerQuests(QuestStatus status) {
+    public record PlayerQuests(String status) {
     }
 
     public record PlayerQuest(String questCode) {

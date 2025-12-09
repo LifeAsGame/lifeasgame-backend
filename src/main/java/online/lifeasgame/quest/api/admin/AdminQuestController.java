@@ -7,16 +7,11 @@ import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import online.lifeasgame.quest.api.admin.spec.AdminQuestSpecV1;
 import online.lifeasgame.quest.application.QuestService;
-import online.lifeasgame.quest.domain.QuestStatus;
+import online.lifeasgame.quest.application.result.QuestResult;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,25 +23,31 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @Override
     @GetMapping("/catalog")
     public ResponseEntity<AdminQuestResponse.Blueprints> catalog() {
-        return ResponseEntity.ok(AdminQuestWebMapper.toBlueprints(questService.catalog()));
+        List<QuestResult.Blueprint> results = questService.catalog();
+        return ResponseEntity.ok(AdminQuestWebMapper.toBlueprints(results));
     }
 
     @Override
     @GetMapping("/definitions")
     public ResponseEntity<AdminQuestResponse.Definitions> definitions() {
-        return ResponseEntity.ok(AdminQuestWebMapper.toDefinitions(questService.definitions()));
+        List<QuestResult.Definition> results = questService.definitions();
+        return ResponseEntity.ok(AdminQuestWebMapper.toDefinitions(results));
     }
 
     @Override
     @PostMapping("/definitions")
-    public ResponseEntity<AdminQuestResponse.Definition> ensure(@Valid @RequestBody AdminQuestRequest.Ensure request) {
-        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(questService.ensureDefinition(AdminQuestWebMapper.toEnsureCommand(request.code()))));
+    public ResponseEntity<AdminQuestResponse.Definition> ensure(
+            @Valid @RequestBody AdminQuestRequest.Ensure request
+    ) {
+        QuestResult.Definition result = questService.ensureDefinition(AdminQuestWebMapper.toEnsureCommand(request.code()));
+        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(result));
     }
 
     @Override
     @GetMapping("/definitions/{questCode}")
     public ResponseEntity<AdminQuestResponse.Definition> definition(@PathVariable String questCode) {
-        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(questService.definition(AdminQuestWebMapper.toDefinitionCommand(questCode))));
+        QuestResult.Definition result = questService.definition(AdminQuestWebMapper.toDefinitionCommand(questCode));
+        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(result));
     }
 
     @Override
@@ -55,21 +56,33 @@ public class AdminQuestController implements AdminQuestSpecV1 {
             @PathVariable String questCode,
             @RequestBody AdminQuestRequest.Update request
     ) {
-        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(questService.updateDefinition(AdminQuestWebMapper.toUpdateCommand(questCode, request))));
+        QuestResult.Definition result = questService.updateDefinition(
+                AdminQuestWebMapper.toUpdateCommand(questCode, request)
+        );
+
+        return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(result));
     }
 
     @Override
     @GetMapping("/{questCode}/acceptances")
     public ResponseEntity<AdminQuestResponse.Acceptances> acceptances(
             @PathVariable String questCode,
-            @RequestParam(required = false) QuestStatus status
+            @RequestParam(required = false) String status
     ) {
-        return ResponseEntity.ok(AdminQuestWebMapper.toAcceptances(questService.questAcceptances(AdminQuestWebMapper.toAcceptancesCommand(questCode, status))));
+        List<QuestResult.Acceptance> results = questService.questAcceptances(
+                AdminQuestWebMapper.toAcceptancesCommand(questCode, status)
+        );
+
+        return ResponseEntity.ok(AdminQuestWebMapper.toAcceptances(results));
     }
 
     @Override
     @GetMapping("/acceptances/{acceptanceId}")
     public ResponseEntity<AdminQuestResponse.Acceptance> acceptance(@PathVariable Long acceptanceId) {
-        return ResponseEntity.ok(AdminQuestWebMapper.toAcceptance(questService.acceptance(AdminQuestWebMapper.toAcceptanceCommand(acceptanceId))));
+        QuestResult.Acceptance result = questService.acceptance(
+                AdminQuestWebMapper.toAcceptanceCommand(acceptanceId)
+        );
+
+        return ResponseEntity.ok(AdminQuestWebMapper.toAcceptance(result));
     }
 }
