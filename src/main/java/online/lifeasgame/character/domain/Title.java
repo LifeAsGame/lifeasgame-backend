@@ -45,7 +45,7 @@ public class Title extends AbstractTime {
         this.descMd = descMd;
     }
 
-    public static Title of(String code, String name, TitleCategory titleCategory, String descMd) {
+    public static Title create(String code, String name, TitleCategory titleCategory, String descMd) {
         return new Title(code, name, titleCategory, descMd);
     }
 }

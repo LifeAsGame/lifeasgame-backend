@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 class AchievementWriter {
 
-    private final AchievementRepository achievementRepository;
+    private final AchievementRepository repository;
 
     public Achievement create(Achievement achievement) {
-        return achievementRepository.save(achievement);
+        return repository.save(achievement);
     }
 }

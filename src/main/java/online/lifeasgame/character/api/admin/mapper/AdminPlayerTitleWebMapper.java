@@ -7,7 +7,7 @@ public final class AdminPlayerTitleWebMapper {
 
     private AdminPlayerTitleWebMapper() {}
 
-    public static AdminPlayerTitleResponse.Granted toGrantedTitle(PlayerTitleResult.Granted result) {
+    public static AdminPlayerTitleResponse.Granted toGrantedTitle(PlayerTitleResult.Created result) {
         return new AdminPlayerTitleResponse.Granted(
                 result.playerId(),
                 result.titleId(),

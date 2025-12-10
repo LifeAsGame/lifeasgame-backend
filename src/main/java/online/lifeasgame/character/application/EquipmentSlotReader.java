@@ -1,6 +1,5 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
@@ -10,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -17,7 +18,7 @@ class EquipmentSlotReader {
 
     private final EquipmentSlotRepository repository;
 
-    public List<EquipmentSlot> getEquipmentSlots(List<EquipmentSlotCategory> categories, List<EquipmentSlotRole> roles) {
+    public List<EquipmentSlot> getByCategoriesAndRoles(List<EquipmentSlotCategory> categories, List<EquipmentSlotRole> roles) {
         boolean catsEmpty = (categories == null || categories.isEmpty());
         boolean rolesEmpty = (roles == null || roles.isEmpty());
 

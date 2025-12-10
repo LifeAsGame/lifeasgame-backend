@@ -26,15 +26,4 @@ public final class PlayerHobbyCommand {
             LocalDate startedOn
     ) {
     }
-
-    public record Grant(
-            Long playerId,
-            Long hobbyId,
-            String customName,        // PlayerHobby.customName
-            String detail,
-            Integer proficiency,
-            String status,      // raw enum
-            LocalDate startedOn
-    ) {
-    }
 }

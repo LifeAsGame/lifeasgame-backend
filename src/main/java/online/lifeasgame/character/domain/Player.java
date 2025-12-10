@@ -7,9 +7,12 @@ import lombok.NoArgsConstructor;
 import online.lifeasgame.character.domain.converter.ExtraStatsConverter;
 import online.lifeasgame.character.domain.converter.GenderTypeConverter;
 import online.lifeasgame.character.domain.converter.StatusEffectsEnumConverter;
+import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.event.PlayerLeveledUp;
+import online.lifeasgame.character.domain.event.PlayerRegistered;
 import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
@@ -95,6 +98,13 @@ public class Player extends AbstractTime {
         return new Player(userId, name, gender);
     }
 
+    public void markRegistered() {
+        if (this.id == null) {
+            throw new IllegalStateException("Player must be persisted before marking as registered");
+        }
+        recordEvent(PlayerRegistered.of(this.id));
+    }
+
     public GainResult gainExp(long amount, LevelingPolicy leveling) {
         Guard.minValue(amount, 1, "exp delta");
         Guard.notNull(leveling, "leveling");
@@ -138,12 +148,36 @@ public class Player extends AbstractTime {
         this.health = this.health.damage(amount);
     }
 
+    public void adjustHp(int delta) {
+        if (delta >= 0) {
+            heal(delta);
+        } else {
+            try {
+                damage(Math.negateExact(delta));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_HP);
+            }
+        }
+    }
+
     public void increaseMaxHp(int amount) {
         this.health = this.health.increaseCap(amount);
     }
 
     public void decreaseMaxHp(int amount) {
         this.health = this.health.decreaseCap(amount);
+    }
+
+    public void adjustHpCapacity(int delta) {
+        if (delta >= 0) {
+            increaseMaxHp(delta);
+        } else {
+            try {
+                decreaseMaxHp(Math.negateExact(delta));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_HP_CAPACITY);
+            }
+        }
     }
 
     public void restoreMana(int amount) {
@@ -154,12 +188,36 @@ public class Player extends AbstractTime {
         this.mana = this.mana.spend(amount);
     }
 
+    public void adjustMana(int delta) {
+        if (delta >= 0) {
+            restoreMana(delta);
+        } else {
+            try {
+                spendMana(Math.negateExact(delta));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_MP);
+            }
+        }
+    }
+
     public void increaseMaxMp(int amount) {
         this.mana = this.mana.increaseCap(amount);
     }
 
     public void decreaseMaxMp(int amount) {
         this.mana = this.mana.decreaseCap(amount);
+    }
+
+    public void adjustManaCapacity(int delta) {
+        if (delta >= 0) {
+            increaseMaxMp(delta);
+        } else {
+            try {
+                decreaseMaxMp(Math.negateExact(delta));
+            } catch (ArithmeticException e) {
+                throw new DomainException(PlayerError.INVALID_MP_CAPACITY);
+            }
+        }
     }
 
     public void grantCoreStats(CoreStatDelta coreStatDelta) {

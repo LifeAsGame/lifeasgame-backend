@@ -1,6 +1,5 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Certification;
 import online.lifeasgame.character.domain.CertificationCategory;
@@ -11,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -18,15 +19,16 @@ class CertificationReader {
 
     private final CertificationRepository repository;
 
-    public List<Certification> getCertifications(List<CertificationCategory> categories) {
+    public List<Certification> getByCategories(List<CertificationCategory> categories) {
         if (categories == null || categories.isEmpty()) {
             return repository.findAll();
         }
+
         return repository.findByCategoryIn(categories);
     }
 
-    public Certification getCertification(Long CertificationId) {
-        return repository.findById(CertificationId)
+    public Certification getByIdOrThrow(Long certificationId) {
+        return repository.findById(certificationId)
                 .orElseThrow(() -> new DomainException(CertificationError.CERTIFICATION_NOT_FOUND));
     }
 }

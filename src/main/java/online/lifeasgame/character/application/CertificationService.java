@@ -18,21 +18,24 @@ public class CertificationService {
     private final CertificationWriter certificationWriter;
 
     public List<CertificationResult.Info> getCertifications(List<String> categories) {
-        List<Certification> Certifications = certificationReader.getCertifications(CertificationCategory.parse(categories));
-        return CertificationResult.Info.fromList(Certifications);
+        List<Certification> certifications = certificationReader.getByCategories(
+                CertificationCategory.parse(categories)
+        );
+
+        return CertificationResult.Info.fromList(certifications);
     }
 
     @Transactional
     public CertificationResult.Info create(CertificationCommand.Create command) {
         Certification certification = certificationWriter.create(
-                Certification.of(
+                Certification.create(
                         command.name(),
                         command.issuer(),
                         CertificationCategory.parse(command.category())
                 )
         );
 
-        return CertificationResult.Info.of(
+        return new CertificationResult.Info(
                 certification.getId(),
                 certification.getName(),
                 certification.getIssuer(),

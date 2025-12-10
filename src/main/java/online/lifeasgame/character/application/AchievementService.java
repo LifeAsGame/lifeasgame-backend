@@ -18,14 +18,14 @@ public class AchievementService {
     private final AchievementWriter achievementWriter;
 
     public List<AchievementResult.Info> getAchievements(List<String> categories) {
-        List<Achievement> achievements = achievementReader.getAchievements(AchievementCategory.parse(categories));
+        List<Achievement> achievements = achievementReader.getByCategories(AchievementCategory.parse(categories));
         return AchievementResult.Info.fromList(achievements);
     }
 
     @Transactional
     public AchievementResult.Info create(AchievementCommand.Create command) {
         Achievement achievement = achievementWriter.create(
-                Achievement.of(
+                Achievement.create(
                         command.code(),
                         command.name(),
                         AchievementCategory.parse(command.category()),
@@ -33,7 +33,7 @@ public class AchievementService {
                 )
         );
 
-        return AchievementResult.Info.of(
+        return new AchievementResult.Info(
                 achievement.getCode(),
                 achievement.getName(),
                 achievement.getCategory().name(),

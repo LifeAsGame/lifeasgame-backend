@@ -8,7 +8,7 @@ public final class PlayerEquipmentResult {
     }
 
     public record Equipped(Long slotId, Long itemInstanceId) {
-        public static Equipped of(PlayerEquipment playerEquipment) {
+        public static Equipped from(PlayerEquipment playerEquipment) {
             return new Equipped(
                     playerEquipment.getSlotId(),
                     playerEquipment.getItemInstanceId()

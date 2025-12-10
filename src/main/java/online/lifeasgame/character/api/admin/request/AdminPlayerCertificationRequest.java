@@ -6,7 +6,7 @@ public final class AdminPlayerCertificationRequest {
 
     private AdminPlayerCertificationRequest() {}
 
-    public record Grant(
+    public record Create(
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {

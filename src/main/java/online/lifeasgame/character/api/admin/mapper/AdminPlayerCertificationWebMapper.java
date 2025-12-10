@@ -9,13 +9,11 @@ public final class AdminPlayerCertificationWebMapper {
 
     private AdminPlayerCertificationWebMapper() {}
 
-    public static PlayerCertificationCommand.Grant toGrantCommand(
-            Long playerId,
+    public static PlayerCertificationCommand.Create toCreateCommand(
             Long certificationId,
-            AdminPlayerCertificationRequest.Grant request
+            AdminPlayerCertificationRequest.Create request
     ) {
-        return new PlayerCertificationCommand.Grant(
-                playerId,
+        return new PlayerCertificationCommand.Create(
                 certificationId,
                 request.acquiredDate(),
                 request.expiresDate()
@@ -23,7 +21,7 @@ public final class AdminPlayerCertificationWebMapper {
     }
 
     public static AdminPlayerCertificationResponse.Granted toGranted(
-            PlayerCertificationResult.Granted result
+            PlayerCertificationResult.Created result
     ) {
         return new AdminPlayerCertificationResponse.Granted(
                 result.playerId(),

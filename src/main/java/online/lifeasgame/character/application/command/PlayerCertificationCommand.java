@@ -20,12 +20,4 @@ public final class PlayerCertificationCommand {
             LocalDate expiresDate
     ) {
     }
-
-    public record Grant(
-            Long playerId,
-            Long certificationId,
-            LocalDate acquiredDate,
-            LocalDate expiresDate
-    ) {
-    }
 }

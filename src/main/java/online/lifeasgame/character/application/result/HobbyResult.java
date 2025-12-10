@@ -25,9 +25,5 @@ public final class HobbyResult {
         public static List<Info> fromList(List<Hobby> hobbies) {
             return hobbies.stream().map(Info::from).toList();
         }
-
-        public static Info of(Long hobbyId, String name, String category) {
-            return new Info(hobbyId, name, category);
-        }
     }
 }

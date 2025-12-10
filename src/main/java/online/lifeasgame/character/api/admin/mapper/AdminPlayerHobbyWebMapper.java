@@ -9,13 +9,11 @@ public final class AdminPlayerHobbyWebMapper {
 
     private AdminPlayerHobbyWebMapper() {}
 
-    public static PlayerHobbyCommand.Grant toGrantCommand(
-            Long playerId,
+    public static PlayerHobbyCommand.Create toCreatedCommand(
             Long hobbyId,
             AdminPlayerHobbyRequest.Grant request
     ) {
-        return new PlayerHobbyCommand.Grant(
-                playerId,
+        return new PlayerHobbyCommand.Create(
                 hobbyId,
                 request.customName(),
                 request.detail(),
@@ -25,7 +23,7 @@ public final class AdminPlayerHobbyWebMapper {
         );
     }
 
-    public static AdminPlayerHobbyResponse.Granted toGranted(PlayerHobbyResult.Granted result) {
+    public static AdminPlayerHobbyResponse.Granted toGranted(PlayerHobbyResult.Created result) {
         return new AdminPlayerHobbyResponse.Granted(
                 result.playerId(),
                 result.hobbyId(),

@@ -14,7 +14,7 @@ class PlayerAchievementWriter {
 
     private final PlayerAchievementRepository repository;
 
-    public PlayerAchievement grantAchievement(PlayerAchievement playerAchievement) {
+    public PlayerAchievement create(PlayerAchievement playerAchievement) {
         return repository.save(playerAchievement);
     }
 }

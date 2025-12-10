@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerAchievementController implements AdminPlayerAchievementApiSpecV1 {
 
-    private final PlayerAchievementService adminPlayerAchievementService;
+    private final PlayerAchievementService playerAchievementService;
 
     @Override
     @PostMapping("/{playerId}/achievements/{achievementId}")
@@ -27,7 +27,7 @@ public class AdminPlayerAchievementController implements AdminPlayerAchievementA
             @PathVariable Long playerId,
             @PathVariable Long achievementId
     ) {
-        PlayerAchievementResult.Granted result = adminPlayerAchievementService.grantAchievement(playerId, achievementId);
+        PlayerAchievementResult.Granted result = playerAchievementService.grantAchievement(playerId, achievementId);
         return ApiResponses.ok(AdminPlayerAchievementWebMapper.toGranted(result));
     }
 }

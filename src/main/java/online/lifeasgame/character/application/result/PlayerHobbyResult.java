@@ -1,6 +1,7 @@
 package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.application.view.PlayerHobbyView;
+import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.PlayerHobby;
 
 import java.time.LocalDate;
@@ -59,28 +60,6 @@ public final class PlayerHobbyResult {
     }
 
     public record Created(
-            Long hobbyId,
-            String customName,
-            String detail,
-            int proficiency,
-            String status,
-            LocalDate startedOn,
-            long xp
-    ) {
-        public static Created from(PlayerHobby playerHobby) {
-            return new Created(
-                    playerHobby.getHobbyId(),
-                    playerHobby.getCustomName(),
-                    playerHobby.getDetail(),
-                    playerHobby.getProficiency(),
-                    playerHobby.getStatus() != null ? playerHobby.getStatus().name() : null,
-                    playerHobby.getStartedOn(),
-                    playerHobby.getXp()
-            );
-        }
-    }
-
-    public record Granted(
             Long playerId,
             Long hobbyId,
             String name,
@@ -92,29 +71,21 @@ public final class PlayerHobbyResult {
             LocalDate startedOn,
             long xp
     ) {
-        public static Granted of(
-                Long playerId,
-                Long hobbyId,
-                String name,
-                String category,
-                String customName,
-                String detail,
-                int proficiency,
-                String status,
-                LocalDate startedOn,
-                long xp
+        public static Created from(
+                PlayerHobby playerHobby,
+                Hobby hobby
         ) {
-            return new Granted(
-                    playerId,
-                    hobbyId,
-                    name,
-                    category,
-                    customName,
-                    detail,
-                    proficiency,
-                    status,
-                    startedOn,
-                    xp
+            return new PlayerHobbyResult.Created(
+                    playerHobby.getPlayerId(),
+                    playerHobby.getHobbyId(),
+                    hobby.getName(),
+                    hobby.getCategory().name(),
+                    playerHobby.getCustomName(),
+                    playerHobby.getDetail(),
+                    playerHobby.getProficiency(),
+                    playerHobby.getStatus().name(),
+                    playerHobby.getStartedOn(),
+                    playerHobby.getXp()
             );
         }
     }

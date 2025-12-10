@@ -33,13 +33,13 @@ public class Certification extends AbstractTime {
     @Column(name = "category", nullable = false)
     private CertificationCategory category;
 
-    public Certification(String name, String issuer, CertificationCategory category) {
+    private Certification(String name, String issuer, CertificationCategory category) {
         this.name = name;
         this.issuer = issuer;
         this.category = category;
     }
 
-    public static Certification of(String name, String issuer, CertificationCategory category) {
+    public static Certification create(String name, String issuer, CertificationCategory category) {
         return new Certification(name, issuer, category);
     }
 

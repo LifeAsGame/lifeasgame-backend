@@ -23,14 +23,14 @@ import java.net.URI;
 @RequestMapping("/admin/v1/hobbies")
 public class AdminHobbyController implements AdminHobbyApiSpecV1 {
 
-    private final HobbyService adminHobbyService;
+    private final HobbyService hobbyService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> create(
             @Valid @RequestBody AdminHobbyRequest.Create request
     ) {
-        HobbyResult.Info result = adminHobbyService.create(AdminHobbyWebMapper.toCreateCommand(request));
+        HobbyResult.Info result = hobbyService.create(AdminHobbyWebMapper.toCreateCommand(request));
         return ApiResponses.created(
                 URI.create("/admin/v1/hobbies/"),
                 AdminHobbyWebMapper.toInfo(result)

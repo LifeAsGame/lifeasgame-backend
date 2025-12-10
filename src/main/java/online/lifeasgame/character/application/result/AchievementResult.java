@@ -27,9 +27,5 @@ public final class AchievementResult {
         public static List<Info> fromList(List<Achievement> achievements) {
             return achievements.stream().map(Info::from).toList();
         }
-
-        public static AchievementResult.Info of(String code, String name, String category, String descMd) {
-            return new AchievementResult.Info(code, name, category, descMd);
-        }
     }
 }

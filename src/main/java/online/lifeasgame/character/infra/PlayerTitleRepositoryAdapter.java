@@ -24,7 +24,7 @@ public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository, Play
     }
 
     @Override
-    public List<PlayerTitleView> findPlayerTitleInfos(Long playerId) {
+    public List<PlayerTitleView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerTitleViews(playerId);
     }
 }

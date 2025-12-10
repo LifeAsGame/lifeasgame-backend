@@ -37,7 +37,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @Valid @RequestBody AdminPlayerRequest.ChangeHp request
     ){
         PlayerResult.CurrentHp result =
-                playerService.changeHp(AdminPlayerWebMapper.toChangeHpCommand(playerId, request));
+                playerService.adjustHp(AdminPlayerWebMapper.toChangeHpCommand(playerId, request));
         return ApiResponses.ok(AdminPlayerWebMapper.toCurrentHp(result));
     }
 
@@ -48,7 +48,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
     ) {
         PlayerResult.HpCapacity result =
-                playerService.changeHpCapacity(AdminPlayerWebMapper.toChangeHpCapacityCommand(playerId, request));
+                playerService.adjustHpCapacity(AdminPlayerWebMapper.toChangeHpCapacityCommand(playerId, request));
         return ApiResponses.ok(AdminPlayerWebMapper.toHpCapacity(result));
     }
 
@@ -58,7 +58,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMp request
     ){
-        PlayerResult.CurrentMp result = playerService.changeMp(AdminPlayerWebMapper.toChangeMpCommand(playerId, request));
+        PlayerResult.CurrentMp result = playerService.adjustMp(AdminPlayerWebMapper.toChangeMpCommand(playerId, request));
         return ApiResponses.ok(AdminPlayerWebMapper.toCurrentMp(result));
     }
 
@@ -69,7 +69,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
             @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
     ) {
         PlayerResult.MpCapacity result =
-                playerService.changeMpCapacity(AdminPlayerWebMapper.toChangeMpCapacityCommand(playerId, request));
+                playerService.adjustMpCapacity(AdminPlayerWebMapper.toChangeMpCapacityCommand(playerId, request));
         return ApiResponses.ok(AdminPlayerWebMapper.toMpCapacity(result));
     }
 

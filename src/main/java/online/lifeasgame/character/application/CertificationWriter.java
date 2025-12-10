@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 class CertificationWriter {
 
-    private final CertificationRepository CertificationRepository;
+    private final CertificationRepository repository;
 
-    public Certification create(Certification Certification) {
-        return CertificationRepository.save(Certification);
+    public Certification create(Certification certification) {
+        return repository.save(certification);
     }
 }

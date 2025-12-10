@@ -1,11 +1,12 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerHobbyCommand;
 import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
