@@ -1,7 +1,9 @@
 package online.lifeasgame.inventory.application.query;
 
 public interface ItemStackPolicyQuery {
+
     long countInventoryStacksExceeding(Long itemId, int limit);
+
     long countMailboxStacksExceeding(Long itemId, int limit);
 
     default long countTotalStacksExceeding(Long itemId, int limit) {

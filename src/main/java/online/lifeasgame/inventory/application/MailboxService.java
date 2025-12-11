@@ -2,8 +2,6 @@ package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
-import online.lifeasgame.inventory.application.model.InventorySpec;
-import online.lifeasgame.inventory.application.model.MailboxSpec;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.domain.*;
 import org.springframework.stereotype.Service;
@@ -16,50 +14,53 @@ import java.util.List;
 public class MailboxService {
 
     private final MailboxReader mailboxReader;
-    private final MailboxWriter mailboxWriter;
-    private final InventoryWriter inventoryWriter;
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
 
     @Transactional
     public MailboxResult.Slot deliver(Long playerId, MailboxCommand.Deliver command) {
-        Item item = itemReader.getItem(command.itemId());
+        Item item = itemReader.getByIdOrThrow(command.itemId());
         ItemCarryPolicy policy = ItemCarryPolicy.from(item);
-        PlayerMailbox playerMailbox = mailboxReader.getPlayerMailbox(playerId);
 
-        SlotIndex slotIndex = mailboxWriter.deliver(playerMailbox, policy, MailboxSpec.Deliver.from(command));
-        return MailboxResult.Slot.of(slotIndex.value());
+        PlayerMailbox playerMailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
+        SlotIndex slotIndex = playerMailbox.deliver(
+                policy,
+                command.quantity(),
+                InstanceAttrs.of(command.instanceAttrs()),
+                command.bound()
+        );
+
+        return new MailboxResult.Slot(slotIndex.value());
     }
 
     @Transactional
     public void claim(Long playerId, MailboxCommand.Claim command) {
+        SlotIndex slotIndex = SlotIndex.of(command.slotIndex());
 
-        PlayerMailbox playerMailbox = mailboxReader.getPlayerMailbox(playerId);
-        MailboxEntry mailboxEntry = playerMailbox.getEntry(SlotIndex.of(command.slotIndex()));
-        Item item = itemReader.getItem(mailboxEntry.getItemId());
+        PlayerMailbox playerMailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
+        MailboxEntry mailboxEntry = playerMailbox.getEntry(slotIndex);
+
+        Item item = itemReader.getByIdOrThrow(mailboxEntry.getItemId());
         ItemCarryPolicy policy = ItemCarryPolicy.from(item);
 
-        var slice = mailboxWriter.claimSlice(
-                playerMailbox,
-                policy,
-                MailboxSpec.Claim.of(
-                        command.slotIndex(),
-                        command.quantity()
-                )
+        PlayerMailbox.ClaimedSlice slice = playerMailbox.claim(
+                SlotIndex.of(command.slotIndex()),
+                command.quantity(),
+                policy
         );
 
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
-
-        inventoryWriter.add(
-                playerInventory,
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        playerInventory.add(
                 policy,
-                InventorySpec.Add.of(slice.quantity(), slice.attrs(), slice.bound())
+                slice.quantity(),
+                slice.attrs(),
+                slice.bound()
         );
     }
 
     @Transactional(readOnly = true)
     public MailboxResult.Mails list(Long playerId) {
-        List<MailboxEntry> mailboxEntries = mailboxReader.getPlayerMailbox(playerId).getEntries();
+        List<MailboxEntry> mailboxEntries = mailboxReader.getByPlayerIdOrThrow(playerId).getEntries();
         return MailboxResult.Mails.from(mailboxEntries);
     }
 }

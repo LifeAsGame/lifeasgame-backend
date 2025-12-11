@@ -14,10 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class InventoryReader {
-    private final PlayerInventoryRepository inventoryRepository;
 
-    public PlayerInventory getPlayerInventory(Long playerId) {
-        return inventoryRepository.findByPlayerId(playerId)
+    private final PlayerInventoryRepository repository;
+
+    public PlayerInventory getByPlayerIdOrThrow(Long playerId) {
+        return repository.findByPlayerId(playerId)
                 .orElseThrow(() -> new DomainException(InventoryError.CONTAINER_NOT_FOUND));
     }
 }

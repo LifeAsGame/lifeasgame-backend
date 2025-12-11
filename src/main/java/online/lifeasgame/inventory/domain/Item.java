@@ -1,24 +1,15 @@
 package online.lifeasgame.inventory.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import java.util.Objects;
-import java.util.Optional;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.util.Objects;
+import java.util.Optional;
 
 @Getter
 @Entity
@@ -125,7 +116,7 @@ public class Item extends AbstractTime {
         return maxStack;
     }
 
-    public Optional<DurabilityPolicy> durabilityPolicy() {
-        return Optional.ofNullable(durabilityPolicy);
+    public Integer maxDurability() {
+        return this.durabilityPolicy.max();
     }
 }

@@ -72,7 +72,6 @@ public class PlayerMailbox extends AbstractTime {
         throw new DomainException(InventoryError.MAILBOX_FULL);
     }
 
-    /** 시스템/이벤트로 우편 지급 */
     public SlotIndex deliver(ItemCarryPolicy p, int quantity, InstanceAttrs attrs, boolean bound) {
         Guard.minValue(quantity, 1, "qty");
         InstanceAttrs safeAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;

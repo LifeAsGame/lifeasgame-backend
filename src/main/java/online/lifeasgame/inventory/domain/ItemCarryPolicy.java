@@ -22,9 +22,7 @@ public record ItemCarryPolicy(
                 item.getRarity(),
                 item.isStackable(),
                 item.maxStack(),
-                item.durabilityPolicy()
-                        .map(DurabilityPolicy::max)
-                        .orElse(null)
+                item.maxDurability()
         );
     }
 
