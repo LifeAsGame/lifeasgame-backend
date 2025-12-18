@@ -1,7 +1,6 @@
 package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.social.application.query.PartyQueryRepository;
 import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyVisibility;
 import online.lifeasgame.social.domain.repository.PartyRepository;
@@ -13,7 +12,7 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class PartyRepositoryAdapter implements PartyRepository, PartyQueryRepository {
+public class PartyRepositoryAdapter implements PartyRepository {
 
     private final PartyJpaRepository partyJpaRepository;
 

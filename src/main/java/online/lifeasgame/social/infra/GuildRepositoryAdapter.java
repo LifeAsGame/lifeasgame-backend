@@ -1,7 +1,6 @@
 package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.social.application.query.GuildQueryRepository;
 import online.lifeasgame.social.domain.Guild;
 import online.lifeasgame.social.domain.GuildVisibility;
 import online.lifeasgame.social.domain.repository.GuildRepository;
@@ -13,7 +12,7 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class GuildRepositoryAdapter implements GuildRepository, GuildQueryRepository {
+public class GuildRepositoryAdapter implements GuildRepository {
 
     private final GuildJpaRepository guildJpaRepository;
 

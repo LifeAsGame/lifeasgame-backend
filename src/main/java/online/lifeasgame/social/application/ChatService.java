@@ -51,7 +51,7 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openGuild(Long playerId, Long guildId) {
-        Guild guild = guildReader.get(guildId);
+        Guild guild = guildReader.getByIdOrThrow(guildId);
         guild.findMember(playerId).orElseThrow(() -> new DomainException(SocialError.NOT_MEMBER));
         ChatChannel channel = chatWriter.ensureGuildChannel(guildId, guild.getName().getOriginal());
         ChannelParticipant participant = chatWriter.join(channel, playerId, null);
@@ -60,7 +60,7 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openParty(Long playerId, Long partyId) {
-        Party party = partyReader.get(partyId);
+        Party party = partyReader.getById(partyId);
         party.findMember(playerId).orElseThrow(() -> new DomainException(SocialError.NOT_MEMBER));
         ChatChannel channel = chatWriter.ensurePartyChannel(partyId, party.getName().getOriginal());
         ChannelParticipant participant = chatWriter.join(channel, playerId, null);
@@ -69,9 +69,8 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openFriend(Long playerId, Long friendId, ChatCommand.OpenFriend command) {
-        if (!followReader.isFriend(friendId, playerId)) {
-            throw new DomainException(SocialError.NOT_FRIEND);
-        }
+        followReader.assertExistsFriend(playerId, friendId);
+
         ChatSpec.OpenFriend spec = ChatSpec.OpenFriend.from(playerId, friendId, command);
         ChatChannel channel = chatWriter.ensureFriendChannel(spec.playerId(), spec.friendId(), spec.name());
         ChannelParticipant participant = chatWriter.join(channel, playerId, null);

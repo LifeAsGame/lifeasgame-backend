@@ -16,15 +16,15 @@ public final class PartyResult {
             String status,
             int maxMembers
     ) {
-        public static Summary from(Party g) {
+        public static Summary from(Party party) {
             return new Summary(
-                    g.getId(),
-                    g.getName().getOriginal(),
-                    g.getCode().getValue(),
-                    g.getVisibility().name(),
-                    g.getJoinPolicy().name(),
-                    g.getStatus().name(),
-                    g.getMaxMembers()
+                    party.getId(),
+                    party.getName().getOriginal(),
+                    party.getCode().getValue(),
+                    party.getVisibility().name(),
+                    party.getJoinPolicy().name(),
+                    party.getStatus().name(),
+                    party.getMaxMembers()
             );
         }
     }
@@ -46,29 +46,40 @@ public final class PartyResult {
             Instant createdAt,
             Instant updatedAt
     ) {
-        public static Info from(Party g) {
+        public static Info from(Party party) {
             return new Info(
-                    g.getId(),
-                    g.getPlayerId(),
-                    g.getName().getOriginal(),
-                    g.getCode().getValue(),
-                    g.getVisibility().name(),
-                    g.getJoinPolicy().name(),
-                    g.getStatus().name(),
-                    g.getMaxMembers(),
-                    g.getTags().stream().toList(),
-                    g.getDescription() == null ? null : g.getDescription().getMd(),
-                    g.getBanner() == null ? null : g.getBanner().getImageUrl(),
-                    g.getBanner() == null ? null : g.getBanner().getBgColor(),
-                    g.getLeaderPlayerId(),
-                    g.getCreatedAt(),
-                    g.getUpdatedAt()
+                    party.getId(),
+                    party.getPlayerId(),
+                    party.getName().getOriginal(),
+                    party.getCode().getValue(),
+                    party.getVisibility().name(),
+                    party.getJoinPolicy().name(),
+                    party.getStatus().name(),
+                    party.getMaxMembers(),
+                    party.getTags().stream().toList(),
+                    party.getDescription() == null ? null : party.getDescription().getMd(),
+                    party.getBanner() == null ? null : party.getBanner().getImageUrl(),
+                    party.getBanner() == null ? null : party.getBanner().getBgColor(),
+                    party.getLeaderPlayerId(),
+                    party.getCreatedAt(),
+                    party.getUpdatedAt()
             );
         }
     }
     
-    public record Page<T>(List<T> contents, int page, int size, long totalElements, int totalPages) {
-        public static <T> Page<T> of(List<T> contents, int page, int size, long totalElements) {
+    public record Page<T>(
+            List<T> contents,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages
+    ) {
+        public static <T> Page<T> of(
+                List<T> contents,
+                int page,
+                int size,
+                long totalElements
+        ) {
             int totalPages = (int) Math.ceil(totalElements / (double) Math.max(size, 1));
             return new Page<>(contents, page, size, totalElements, totalPages);
         }
