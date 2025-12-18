@@ -20,12 +20,15 @@ public class CollectionTags {
     private Set<String> values = new LinkedHashSet<>();
 
     private CollectionTags(Set<String> values) {
-        if (values != null) {
-            this.values = values.stream()
-                    .filter(s -> s != null && !s.isBlank())
-                    .map(s -> s.trim().toLowerCase())
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (values == null || values.isEmpty()) {
+            this.values = new LinkedHashSet<>();
+            return;
         }
+
+        this.values = values.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(s -> s.trim().toLowerCase())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public static CollectionTags of(Set<String> values) {

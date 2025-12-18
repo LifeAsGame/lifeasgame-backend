@@ -3,9 +3,8 @@ package online.lifeasgame.lifelog.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
-import online.lifeasgame.lifelog.application.model.CollectionSpec;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
-import online.lifeasgame.lifelog.domain.CollectionLog;
+import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,7 +23,19 @@ public class CollectionLogService {
 
     @Transactional
     public CollectionResult.Created create(Long playerId, CollectionCommand.Create command) {
-        CollectionLog saved = collectionLogWriter.create(CollectionSpec.Create.from(playerId, command));
+        Title title = Title.of(command.title(), command.originalTitle());
+
+        CollectionLog saved = collectionLogWriter.create(
+                CollectionLog.create(
+                    playerId,
+                    CollectionCategory.parse(command.category()),
+                    title,
+                    Quantity.of(command.quantity()),
+                    command.conditionNote(),
+                    command.acquiredFrom(),
+                    CollectionTags.of(command.tags())
+                )
+        );
 
         domainEventPublisher.publish(
                 CollectionLogged.of(
@@ -35,24 +46,24 @@ public class CollectionLogService {
                 )
         );
 
-        return CollectionResult.Created.of(saved.getId());
+        return new CollectionResult.Created(saved.getId());
     }
 
     @Transactional
     public CollectionResult.Info update(Long playerId, Long collectionId, CollectionCommand.Update command) {
-        CollectionLog log = collectionLogReader.getCollectionLog(collectionId, playerId);
+        CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
 
         if (command.quantity() != null) {
-            collectionLogWriter.changeQuantity(log, command.quantity());
+            collectionLog.changeQuantity(command.quantity());
         }
         if (command.conditionNote() != null) {
-            collectionLogWriter.changeCondition(log, command.conditionNote());
+            collectionLog.changeCondition(command.conditionNote());
         }
         if (command.acquiredFrom() != null) {
-            collectionLogWriter.changeAcquiredFrom(log, command.acquiredFrom());
+            collectionLog.changeAcquiredFrom(command.acquiredFrom());
         }
 
-        return CollectionResult.Info.from(log);
+        return CollectionResult.Info.from(collectionLog);
     }
 
     public List<CollectionResult.Info> recent(Long playerId, int limit) {

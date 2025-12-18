@@ -1,7 +1,6 @@
 package online.lifeasgame.lifelog.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.lifelog.application.query.ExerciseLogQueryRepository;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.repository.ExerciseLogRepository;
@@ -16,7 +15,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository, ExerciseLogQueryRepository {
+public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository {
 
     private final ExerciseLogJpaRepository jpa;
 
@@ -36,7 +35,7 @@ public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository, Exer
     }
 
     @Override
-    public List<ExerciseLog> findByPlayer(Long playerId, int limit) {
+    public List<ExerciseLog> findByPlayerId(Long playerId, int limit) {
         return jpa.findByPlayerIdOrderByIdDesc(playerId, PageRequest.of(0, limit));
     }
 

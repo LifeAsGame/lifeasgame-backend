@@ -7,9 +7,12 @@ import java.time.LocalDate;
 import java.util.Set;
 
 public final class MediaLogResult {
-    private MediaLogResult(){}
 
-    public record Created(Long id) { public static Created of(Long id){ return new Created(id);} }
+    private MediaLogResult() {
+    }
+
+    public record Created(Long id) {
+    }
 
     public record Info(
             Long id,

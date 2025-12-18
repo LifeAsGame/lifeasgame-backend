@@ -3,10 +3,8 @@ package online.lifeasgame.lifelog.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
-import online.lifeasgame.lifelog.application.model.MediaSpec;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
-import online.lifeasgame.lifelog.domain.MediaLog;
-import online.lifeasgame.lifelog.domain.WatchStatus;
+import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,24 +24,32 @@ public class MediaLogService {
     @Transactional
     public MediaLogResult.Created create(Long playerId, MediaLogCommand.Create command) {
         MediaLog saved = mediaLogWriter.create(
-                MediaSpec.Create.from(playerId, command)
+                MediaLog.create(
+                        playerId,
+                        MediaCategory.parse(command.category()),
+                        Title.of(command.title(), command.originalTitle()),
+                        EpisodeProgress.of(command.currentEpisode(), command.totalEpisode()),
+                        WatchStatus.parse(command.status()),
+                        MediaTags.of(command.tags())
+                )
         );
-        return MediaLogResult.Created.of(saved.getId());
+
+        return new MediaLogResult.Created(saved.getId());
     }
 
     @Transactional
     public MediaLogResult.Info rate(Long playerId, Long mediaId, MediaLogCommand.Rate command) {
-        MediaLog mediaLog = mediaLogReader.getMediaLog(playerId, mediaId);
-        mediaLogWriter.rate(mediaLog, command.score());
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+        mediaLog.rate(command.score());
         return MediaLogResult.Info.from(mediaLog);
     }
 
     @Transactional
     public MediaLogResult.Info advance(Long playerId, Long mediaId, MediaLogCommand.Advance command) {
-        MediaLog mediaLog = mediaLogReader.getMediaLog(playerId, mediaId);
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
 
         int step = command.step() == null ? 1 : command.step();
-        mediaLogWriter.advance(mediaLog, step);
+        mediaLog.advanceEpisode(step);
 
         domainEventPublisher.publish(
                 MediaLogAdvanced.of(
@@ -60,15 +66,15 @@ public class MediaLogService {
 
     @Transactional
     public MediaLogResult.Info markStatus(Long playerId, Long mediaId, MediaLogCommand.MarkStatus command) {
-        MediaLog mediaLog = mediaLogReader.getMediaLog(playerId, mediaId);
-        mediaLogWriter.markStatus(mediaLog, WatchStatus.parse(command.status()));
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+        mediaLog.markStatus(WatchStatus.parse(command.status()));
         return MediaLogResult.Info.from(mediaLog);
     }
 
     @Transactional
     public MediaLogResult.Info rewatch(Long playerId, Long mediaId) {
-        MediaLog mediaLog = mediaLogReader.getMediaLog(playerId, mediaId);
-        mediaLogWriter.rewatch(mediaLog);
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+        mediaLog.rewatch();
         return MediaLogResult.Info.from(mediaLog);
     }
 

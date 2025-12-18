@@ -72,7 +72,6 @@ public class ExerciseLog extends AbstractTime {
         return new ExerciseLog(playerId, category, metrics, exercisedOn, memo);
     }
 
-    // 변경감지 행위
     public void changeMetrics(ExerciseMetrics metrics) {
         this.metrics = Guard.notNull(metrics, "metrics");
     }

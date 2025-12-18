@@ -98,7 +98,18 @@ public class MediaLog extends AbstractTime {
             WatchStatus status,
             MediaTags mediaTags
     ) {
-        return new MediaLog(playerId, category, title, progress, Rating.unrated(), status, mediaTags, 0, null, null);
+        return new MediaLog(
+                playerId,
+                category,
+                title,
+                progress,
+                Rating.unrated(),
+                status,
+                mediaTags,
+                0,
+                null,
+                null
+        );
     }
 
     public void rate(double score) {
@@ -106,8 +117,10 @@ public class MediaLog extends AbstractTime {
     }
 
     public void advanceEpisode(Integer step) {
-        Guard.notNull(step, "step");
-        this.progress = this.progress.advance(step);
+        int s = (step == null) ? 1 : step;
+        Guard.minValue(s, 1, "step");
+        this.progress = this.progress.advance(s);
+
         if (this.progress.completed()) {
             this.status = WatchStatus.COMPLETED;
             if (this.finishedOn == null) {
