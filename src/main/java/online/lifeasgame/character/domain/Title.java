@@ -16,7 +16,7 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Getter
 @Entity
-@Table(name="titles")
+@Table(name = "titles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Title extends AbstractTime {
 
@@ -38,14 +38,24 @@ public class Title extends AbstractTime {
     @Column(name = "desc_md")
     private String descMd;
 
-    public Title(String code, String name, TitleCategory category, String descMd) {
+    public Title(
+            String code,
+            String name,
+            TitleCategory category,
+            String descMd
+    ) {
         this.code = code;
         this.name = name;
         this.category = category;
         this.descMd = descMd;
     }
 
-    public static Title create(String code, String name, TitleCategory titleCategory, String descMd) {
+    public static Title create(
+            String code,
+            String name,
+            TitleCategory titleCategory,
+            String descMd
+    ) {
         return new Title(code, name, titleCategory, descMd);
     }
 }

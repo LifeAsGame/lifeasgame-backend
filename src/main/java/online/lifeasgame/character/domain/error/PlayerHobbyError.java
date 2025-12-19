@@ -5,7 +5,7 @@ import online.lifeasgame.core.error.ErrorCode;
 public enum PlayerHobbyError implements ErrorCode {
 
     PLAYER_HOBBY_NOT_FOUND("PLH-404-PLAYER_HOBBY-NOT_FOUND", "Player Hobby not found", 404),
-    INVALID_PLAYER_HOBBY_STATUS("PLH-400-INVALID-PLAYER_HOBBY-STATUS", "Invalid player hobby", 400),
+    INVALID_PLAYER_HOBBY_STATUS("PLH-400-INVALID-PLAYER_HOBBY-STATUS", "Invalid player hobby", 400)
     ;
 
     private final String code;

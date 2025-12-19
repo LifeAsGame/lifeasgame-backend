@@ -1,9 +1,10 @@
 package online.lifeasgame.character.domain;
 
-import java.util.List;
 import online.lifeasgame.character.domain.error.LevelingError;
 import online.lifeasgame.core.error.ConfigException;
 import online.lifeasgame.core.guard.Guard;
+
+import java.util.List;
 
 public record LevelingPolicyParameters(
         int maxLevel,
@@ -14,8 +15,8 @@ public record LevelingPolicyParameters(
         Guard.minValue(maxLevel, 1, "maxLevel");
         Guard.minValue(baseReqLv1, 1, "baseReqLv1");
         brackets = List.copyOf(Guard.notNull(brackets, "brackets"));
-        for (Bracket b : brackets) {
-            if (b.from() < 1 || b.to() < b.from() || b.to() > maxLevel) {
+        for (Bracket bracket : brackets) {
+            if (bracket.from() < 1 || bracket.to() < bracket.from() || bracket.to() > maxLevel) {
                 throw new ConfigException(LevelingError.INVALID_BRACKETS);
             }
         }

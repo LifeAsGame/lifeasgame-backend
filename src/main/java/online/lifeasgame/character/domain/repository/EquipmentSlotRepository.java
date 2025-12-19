@@ -1,9 +1,10 @@
 package online.lifeasgame.character.domain.repository;
 
-import java.util.List;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
 import online.lifeasgame.character.domain.EquipmentSlotRole;
+
+import java.util.List;
 
 public interface EquipmentSlotRepository {
 

@@ -2,11 +2,12 @@ package online.lifeasgame.character.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import online.lifeasgame.character.domain.error.PlayerError;
+import online.lifeasgame.core.error.DomainException;
+
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import online.lifeasgame.character.domain.error.PlayerError;
-import online.lifeasgame.core.error.DomainException;
 
 public enum GenderType {
     MALE,
@@ -32,8 +33,8 @@ public enum GenderType {
             throw new DomainException(PlayerError.INVALID_GENDER, "gender is blank");
         }
         String key = raw.trim().toUpperCase(Locale.ROOT);
-        GenderType g = ALIAS.getOrDefault(key, null);
-        if (g != null) return g;
+        GenderType genderType = ALIAS.getOrDefault(key, null);
+        if (genderType != null) return genderType;
 
         try {
             return GenderType.valueOf(key);
@@ -44,11 +45,11 @@ public enum GenderType {
     }
 
     public static GenderType parseStrict(String raw) {
-        GenderType g = parse(raw);
-        if (!STRICT_ALLOWED.contains(g)) {
+        GenderType genderType = parse(raw);
+        if (!STRICT_ALLOWED.contains(genderType)) {
             throw new DomainException(PlayerError.INVALID_GENDER, "gender=" + raw);
         }
-        return g;
+        return genderType;
     }
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)

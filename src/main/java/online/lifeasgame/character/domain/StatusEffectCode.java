@@ -1,6 +1,9 @@
 package online.lifeasgame.character.domain;
 
-import java.util.Locale;
+import online.lifeasgame.character.domain.error.PlayerError;
+import online.lifeasgame.core.lang.EnumParsers;
+
+import java.util.List;
 
 public enum StatusEffectCode {
     POISON(StatusEffectCategory.DEBUFF),
@@ -21,10 +24,20 @@ public enum StatusEffectCode {
     }
 
     public static StatusEffectCode parse(String raw) {
-        try {
-            return valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Unknown status effect code: " + raw);
-        }
+        return EnumParsers.parseStrict(
+                StatusEffectCode.class,
+                raw,
+                PlayerError.INVALID_STATUS_EFFECT_CODE,
+                "Status effect code"
+        );
+    }
+
+    public static List<StatusEffectCode> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                StatusEffectCode.class,
+                raw,
+                PlayerError.INVALID_STATUS_EFFECT_CODE,
+                "Status effect codes"
+        );
     }
 }

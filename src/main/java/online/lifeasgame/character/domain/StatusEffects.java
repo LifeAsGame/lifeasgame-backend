@@ -1,9 +1,10 @@
 package online.lifeasgame.character.domain;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
 public final class StatusEffects {
@@ -21,9 +22,12 @@ public final class StatusEffects {
     }
 
     public static StatusEffects of(Collection<StatusEffectCode> codes) {
-        return new StatusEffects(codes.isEmpty()
-                ? EnumSet.noneOf(StatusEffectCode.class)
-                : EnumSet.copyOf(codes instanceof EnumSet ? (EnumSet<StatusEffectCode>) codes : EnumSet.copyOf(codes)));
+        return new StatusEffects(
+                codes.isEmpty() ?
+                        EnumSet.noneOf(StatusEffectCode.class) : EnumSet.copyOf(
+                                codes instanceof EnumSet ? (EnumSet<StatusEffectCode>) codes : EnumSet.copyOf(codes)
+                )
+        );
     }
 
     public List<StatusEffectCode> asList() {
@@ -31,8 +35,8 @@ public final class StatusEffects {
     }
 
     public StatusEffects merged(StatusEffects delta) {
-        EnumSet<StatusEffectCode> m = EnumSet.copyOf(this.effects);
-        m.addAll(delta.effects);
-        return new StatusEffects(m);
+        EnumSet<StatusEffectCode> statusEffectCodes = EnumSet.copyOf(this.effects);
+        statusEffectCodes.addAll(delta.effects);
+        return new StatusEffects(statusEffectCodes);
     }
 }

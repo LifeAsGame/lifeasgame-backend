@@ -40,14 +40,24 @@ public class Achievement extends AbstractTime {
     @Column(name = "desc_md")
     private String descMd;
 
-    public Achievement(String code, String name, AchievementCategory category, String descMd) {
+    public Achievement(
+            String code,
+            String name,
+            AchievementCategory category,
+            String descMd
+    ) {
         this.code = code;
         this.name = name;
         this.category = category;
         this.descMd = descMd;
     }
 
-    public static Achievement create(String code, String name, AchievementCategory category, String descMd) {
+    public static Achievement create(
+            String code,
+            String name,
+            AchievementCategory category,
+            String descMd
+    ) {
         return new Achievement(code, name, category, descMd);
     }
 }

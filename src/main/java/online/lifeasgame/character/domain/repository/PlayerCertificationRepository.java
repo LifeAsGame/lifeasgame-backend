@@ -1,7 +1,8 @@
 package online.lifeasgame.character.domain.repository;
 
-import java.util.Optional;
 import online.lifeasgame.character.domain.PlayerCertification;
+
+import java.util.Optional;
 
 public interface PlayerCertificationRepository {
     PlayerCertification save(PlayerCertification playerCertification);

@@ -4,8 +4,7 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum CertificationError implements ErrorCode {
     INVALID_CERTIFICATION_CATEGORY("CER-400-INVALID-CERTIFICATION-CATEGORY", "Invalid Certification category", 400),
-    CERTIFICATION_NOT_FOUND("CER-404-NOT_FOUND", "Certification not found", 404)
-    ;
+    CERTIFICATION_NOT_FOUND("CER-404-NOT_FOUND", "Certification not found", 404);
 
     private final String code;
     private final String message;
