@@ -1,6 +1,10 @@
 package online.lifeasgame.quest.domain;
 
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.core.lang.EnumParsers;
+import online.lifeasgame.quest.domain.error.QuestError;
+
+import java.util.List;
 
 public enum QuestCode {
     PLAYER_WELCOME("quest:player:welcome"),
@@ -30,13 +34,29 @@ public enum QuestCode {
         return value;
     }
 
-    public static QuestCode fromValue(String value) {
-        Guard.notBlank(value, "questCode");
-        for (QuestCode code : values()) {
-            if (code.value.equals(value)) {
-                return code;
-            }
+    public static QuestCode parse(String raw) {
+        return EnumParsers.parseStrict(
+                QuestCode.class,
+                raw,
+                QuestError.INVALID_QUEST_CODE,
+                "Quest code"
+        );
+    }
+
+    public static QuestCode parseNullable(String raw) {
+        if (raw == null) {
+            return null;
         }
-        throw new IllegalArgumentException("Unknown quest code: " + value);
+
+        return parse(raw);
+    }
+
+    public static List<QuestCode> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                QuestCode.class,
+                raw,
+                QuestError.INVALID_QUEST_CODE,
+                "Quest codes"
+        );
     }
 }

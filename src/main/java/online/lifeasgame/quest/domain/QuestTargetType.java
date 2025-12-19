@@ -1,22 +1,36 @@
 package online.lifeasgame.quest.domain;
 
-import java.util.Locale;
+import online.lifeasgame.core.lang.EnumParsers;
+import online.lifeasgame.quest.domain.error.QuestError;
+
+import java.util.List;
 
 public enum QuestTargetType {
     MINUTES, COUNT, SCORE;
 
     public static QuestTargetType parse(String raw) {
-        if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("targetType is required");
-        }
-        try {
-            return QuestTargetType.valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid targetType: " + raw);
-        }
+        return EnumParsers.parseStrict(
+                QuestTargetType.class,
+                raw,
+                QuestError.INVALID_QUEST_TARGET_TYPE,
+                "Quest target type"
+        );
     }
 
     public static QuestTargetType parseNullable(String raw) {
-        return (raw == null || raw.isBlank()) ? null : parse(raw);
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
+    public static List<QuestTargetType> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                QuestTargetType.class,
+                raw,
+                QuestError.INVALID_QUEST_TARGET_TYPE,
+                "Quest target types"
+        );
     }
 }

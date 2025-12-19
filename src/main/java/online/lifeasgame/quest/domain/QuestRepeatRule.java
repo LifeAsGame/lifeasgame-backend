@@ -1,7 +1,10 @@
 package online.lifeasgame.quest.domain;
 
+import online.lifeasgame.core.lang.EnumParsers;
+import online.lifeasgame.quest.domain.error.QuestError;
+
 import java.time.Duration;
-import java.util.Locale;
+import java.util.List;
 
 public enum QuestRepeatRule {
     NONE,
@@ -10,18 +13,29 @@ public enum QuestRepeatRule {
     MONTHLY;
 
     public static QuestRepeatRule parse(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return NONE;
-        }
-        try {
-            return QuestRepeatRule.valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid repeatRule: " + raw);
-        }
+        return EnumParsers.parseStrict(
+                QuestRepeatRule.class,
+                raw,
+                QuestError.INVALID_QUEST_REPEATABLE_RULE,
+                "Quest repeatable rule"
+        );
     }
 
     public static QuestRepeatRule parseNullable(String raw) {
-        return (raw == null || raw.isBlank()) ? null : parse(raw);
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
+    public static List<QuestRepeatRule> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                QuestRepeatRule.class,
+                raw,
+                QuestError.INVALID_QUEST_REPEATABLE_RULE,
+                "Quest repeatable rules"
+        );
     }
 
     public Duration idempotencyTtl() {

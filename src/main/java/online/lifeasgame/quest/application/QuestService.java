@@ -26,7 +26,7 @@ public class QuestService {
 
     @Transactional
     public QuestResult.Definition ensureDefinition(QuestCommand.EnsureDefinition command) {
-        Quest quest = ensureQuest(QuestCode.fromValue(command.code()));
+        Quest quest = ensureQuest(QuestCode.parse(command.code()));
         return QuestResult.Definition.from(quest);
     }
 
@@ -46,13 +46,13 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public QuestResult.Definition getDefinition(QuestCommand.Definition command) {
-        Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
         return QuestResult.Definition.from(quest);
     }
 
     @Transactional
     public QuestResult.Definition updateDefinition(QuestCommand.UpdateDefinition command) {
-        Quest quest = ensureQuest(QuestCode.fromValue(command.questCode()));
+        Quest quest = ensureQuest(QuestCode.parse(command.questCode()));
 
         quest.updateDefinition(
                 targetOrNull(command),
@@ -84,7 +84,7 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> questAcceptances(QuestCommand.Acceptances command) {
-        Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
         return questReader.findQuestAcceptances(quest.getId(), QuestStatus.parse(command.status())).stream()
                 .map(acceptance -> QuestResult.Acceptance.from(acceptance, quest))
                 .toList();
@@ -121,7 +121,7 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public QuestResult.PlayerQuest playerQuest(Long playerId, QuestCommand.PlayerQuest command) {
-        Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
         QuestAcceptance latest = questReader.findLatest(quest.getId(), playerId);
         return QuestResult.PlayerQuest.from(quest, latest);
     }

@@ -4,7 +4,11 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum QuestError implements ErrorCode {
 
-    INVALID_QUEST_STATUS("QUE-400-INVALID-QUEST-STATUS", "Invalid Quest status", 400)
+    INVALID_QUEST_STATUS("QUE-400-INVALID-QUEST-STATUS", "Invalid Quest status", 400),
+    INVALID_QUEST_CATEGORY("QUE-400-INVALID-QUEST-CATEGORY", "Invalid Quest category", 400),
+    INVALID_QUEST_CODE("QUE-400-INVALID-QUEST-CODE", "Invalid Quest code", 400),
+    INVALID_QUEST_REPEATABLE_RULE("QUE-400-INVALID-QUEST-REPEATABLE-RULE", "Invalid Quest repeatable rule", 400),
+    INVALID_QUEST_TARGET_TYPE("QUE-400-INVALID-QUEST-TARGET-TYPE", "Invalid Quest target type", 400),
     ;
 
     private final String code;
