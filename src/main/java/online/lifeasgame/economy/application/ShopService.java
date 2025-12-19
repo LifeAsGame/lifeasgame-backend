@@ -35,23 +35,28 @@ public class ShopService {
 
     @Transactional
     public EconomyResult.ShopItemView createItem(EconomyCommand.CreateShopItem command) {
-        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
-        Money price = Money.of(command.price(), currency);
-        ShopItem saved = shopItemWriter.create(
-                command.itemId(),
-                price,
-                command.globalLimit(),
-                command.perPlayerLimit(),
-                command.reservationTtlSeconds()
+        ShopItem shopItem = shopItemWriter.create(
+                ShopItem.createLimited(
+                        command.itemId(),
+                        Money.of(
+                                command.price(),
+                                Currency.parseOptional(command.currency(), Currency.GOLD)
+                        ),
+                        command.globalLimit(),
+                        command.perPlayerLimit(),
+                        command.reservationTtlSeconds()
+                )
         );
+
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.SHOP_ITEM_CREATED)
-                        .shopItemId(saved.getId())
+                        .shopItemId(shopItem.getId())
                         .actorId(null)
                         .occurredAt(Instant.now())
                         .build()
         );
-        return EconomyResult.ShopItemView.from(saved);
+
+        return EconomyResult.ShopItemView.from(shopItem);
     }
 
     @Transactional
@@ -59,6 +64,7 @@ public class ShopService {
         if (!idempotencyKeyStore.acquire(command.idempotencyKey(), Duration.ofMinutes(5))) {
             throw new DomainException(EconomyError.DUPLICATE_REQUEST);
         }
+
         ShopItem item = shopItemReader.getForUpdate(command.shopItemId());
         if (!item.isAvailable()) {
             throw new DomainException(EconomyError.SHOP_ITEM_DISABLED);
@@ -70,6 +76,7 @@ public class ShopService {
         if (item.getGlobalStockLimit() != null && completedCount + reservedCount >= item.getGlobalStockLimit()) {
             throw new DomainException(EconomyError.SHOP_STOCK_EXHAUSTED);
         }
+
         long completedByPlayer = shopPurchaseReader.countCompletedByPlayer(item.getId(), playerId);
         if (item.getPerPlayerLimit() != null && completedByPlayer >= item.getPerPlayerLimit()) {
             throw new DomainException(EconomyError.SHOP_PER_PLAYER_LIMIT);
@@ -88,16 +95,29 @@ public class ShopService {
         }
 
         try {
-            var purchase = shopPurchaseWriter.request(item.getId(), playerId, command.quantity(), item.getPrice());
-            var wallet = lockOrCreateWallet(playerId);
+            ShopPurchase shopPurchase = shopPurchaseWriter.create(
+                    ShopPurchase.request(
+                            item.getId(),
+                            playerId,
+                            command.quantity(),
+                            item.getPrice()
+                    )
+            );
+
+            Wallet wallet = lockOrCreateWallet(playerId);
+
             int ttl = item.getReservationTtlSec();
+
             Money total = item.getPrice().multiply(command.quantity());
+
             if (command.reserveOnly() || ttl > 0) {
                 ttl = Math.max(ttl, 30);
-                String holdId = walletWriter.placeHold(wallet, total, "shop-reserve" + item.getId(), now, ttl);
+                String holdId = wallet.placeHold(total, "shop-reserve" + item.getId(), now, ttl);
+
                 ReservationToken token = ReservationToken.newToken();
-                purchase.reserve(token, now.plusSeconds(ttl), holdId);
-                ShopPurchase saved = shopPurchaseWriter.save(purchase);
+                shopPurchase.reserve(token, now.plusSeconds(ttl), holdId);
+                ShopPurchase saved = shopPurchaseWriter.create(shopPurchase);
+
                 domainEventPublisher.publish(
                         EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_RESERVED)
                                 .actorId(playerId)
@@ -107,11 +127,14 @@ public class ShopService {
                                 .occurredAt(now)
                                 .build()
                 );
-                return EconomyResult.ShopPurchaseId.of(saved.getId());
+
+                return new EconomyResult.ShopPurchaseId(saved.getId());
             } else {
-                walletWriter.withdraw(wallet, total);
-                purchase.completeImmediately();
-                ShopPurchase saved = shopPurchaseWriter.save(purchase);
+                wallet.withdraw(total);
+
+                shopPurchase.completeImmediately();
+                ShopPurchase saved = shopPurchaseWriter.create(shopPurchase);
+
                 domainEventPublisher.publish(
                         EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_COMPLETED)
                                 .actorId(playerId)
@@ -120,7 +143,8 @@ public class ShopService {
                                 .occurredAt(now)
                                 .build()
                 );
-                return EconomyResult.ShopPurchaseId.of(saved.getId());
+
+                return new EconomyResult.ShopPurchaseId(saved.getId());
             }
         } catch (RuntimeException ex) {
             shopReservationLimiter.release(item.getId(), playerId, command.quantity());
@@ -131,19 +155,24 @@ public class ShopService {
     @Transactional
     public EconomyResult.ShopReservation confirmReservation(Long playerId, EconomyCommand.ConfirmShopReservation command) {
         ShopPurchase purchase = shopPurchaseReader.getByReservationToken(command.reservationToken());
+
         if (!playerId.equals(purchase.getPlayerId())) {
             throw new DomainException(EconomyError.LISTING_RESERVED_OTHER);
         }
+
         Instant now = Instant.now();
         if (purchase.getReservationExpiresAt() != null && now.isAfter(purchase.getReservationExpiresAt())) {
             purchase.expire(now);
-            shopPurchaseWriter.save(purchase);
+            shopPurchaseWriter.create(purchase);
             throw new DomainException(EconomyError.LISTING_RESERVATION_EXPIRED);
         }
-        var wallet = lockOrCreateWallet(playerId);
-        walletWriter.commitHold(wallet, purchase.getWalletHoldId());
+
+        Wallet wallet = lockOrCreateWallet(playerId);
+        wallet.commitHold(purchase.getWalletHoldId());
+
         purchase.completeFromReservation(command.reservationToken());
-        shopPurchaseWriter.save(purchase);
+        shopPurchaseWriter.create(purchase);
+
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.SHOP_PURCHASE_COMPLETED)
                         .actorId(playerId)
@@ -153,6 +182,7 @@ public class ShopService {
                         .occurredAt(now)
                         .build()
         );
+
         return EconomyResult.ShopReservation.from(purchase);
     }
 
@@ -163,15 +193,18 @@ public class ShopService {
         for (ShopPurchase purchase : purchases) {
             purchase.expire(now);
             String holdId = purchase.getWalletHoldId();
+
             if (holdId != null) {
                 walletHoldReader.findByHoldId(holdId)
                         .ifPresent(hold -> {
-                            var wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
-                            walletWriter.expireHolds(wallet, now);
+                            Wallet wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
+                            wallet.expireHolds(now);
                         });
             }
-            shopPurchaseWriter.save(purchase);
+
+            shopPurchaseWriter.create(purchase);
             shopReservationLimiter.release(purchase.getShopItemId(), purchase.getPlayerId(), purchase.getQuantity());
+
             domainEventPublisher.publish(
                     EconomyEvent.builder(EconomyEventType.SHOP_RESERVATION_EXPIRED)
                             .actorId(purchase.getPlayerId())
@@ -192,7 +225,9 @@ public class ShopService {
         } else {
             item.disable();
         }
-        shopItemWriter.save(item);
+
+        shopItemWriter.create(item);
+
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.SHOP_ITEM_TOGGLED)
                         .shopItemId(item.getId())
@@ -205,46 +240,42 @@ public class ShopService {
 
     @Transactional
     public EconomyResult.ShopItemView updateLimits(EconomyCommand.UpdateShopItem command) {
-        ShopItem item = shopItemReader.getForUpdate(command.shopItemId());
-        item.changeLimits(command.globalLimit(), command.perPlayerLimit(), command.reservationTtlSeconds());
-        ShopItem saved = shopItemWriter.save(item);
-        return EconomyResult.ShopItemView.from(saved);
+        ShopItem shopItem = shopItemReader.getForUpdate(command.shopItemId());
+        shopItem.changeLimits(
+                command.globalLimit(),
+                command.perPlayerLimit(),
+                command.reservationTtlSeconds()
+        );
+
+        return EconomyResult.ShopItemView.from(shopItem);
     }
 
     @Transactional(readOnly = true)
     public EconomyResult.ShopItems listAvailableItems() {
-        var items = shopItemReader.listAvailable().stream()
-                .map(EconomyResult.ShopItemView::from)
-                .toList();
-        return new EconomyResult.ShopItems(items);
+        List<ShopItem> shopItems = shopItemReader.listAvailable();
+        return EconomyResult.ShopItems.fromList(shopItems);
     }
 
     @Transactional(readOnly = true)
     public EconomyResult.ShopItems listAllItems() {
-        var items = shopItemReader.listAll().stream()
-                .map(EconomyResult.ShopItemView::from)
-                .toList();
-        return new EconomyResult.ShopItems(items);
+        List<ShopItem> shopItems = shopItemReader.listAll();
+        return EconomyResult.ShopItems.fromList(shopItems);
     }
 
     @Transactional(readOnly = true)
     public EconomyResult.ShopPurchases listPurchases(Long playerId) {
-        var purchases = shopPurchaseReader.findByPlayer(playerId).stream()
-                .map(EconomyResult.ShopPurchaseView::from)
-                .toList();
-        return new EconomyResult.ShopPurchases(purchases);
+        List<ShopPurchase> shopPurchases = shopPurchaseReader.findByPlayer(playerId);
+        return EconomyResult.ShopPurchases.fromList(shopPurchases);
     }
 
     @Transactional(readOnly = true)
     public EconomyResult.ShopPurchases listAllPurchases() {
-        var purchases = shopPurchaseReader.findAll().stream()
-                .map(EconomyResult.ShopPurchaseView::from)
-                .toList();
-        return new EconomyResult.ShopPurchases(purchases);
+        List<ShopPurchase> shopPurchases = shopPurchaseReader.findAll();
+        return EconomyResult.ShopPurchases.fromList(shopPurchases);
     }
 
     private Wallet lockOrCreateWallet(Long ownerId) {
-        return walletReader.findForUpdate(ownerId)
+        return walletReader.getByOwnerIdForUpdate(ownerId)
                 .orElseGet(() -> walletWriter.save(Wallet.open(ownerId)));
     }
 }

@@ -10,7 +10,7 @@ public final class EconomyWebMapper {
     private EconomyWebMapper() {
     }
 
-    public static EconomyResponse.Listings toListings(EconomyResult.Listings result) {
+    public static EconomyResponse.Listings toListings(EconomyResult.ListingSummaries result) {
         return new EconomyResponse.Listings(
                 result.listings().stream()
                         .map(EconomyWebMapper::toListingSummary)

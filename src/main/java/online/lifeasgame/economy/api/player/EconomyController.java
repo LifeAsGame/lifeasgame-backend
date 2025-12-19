@@ -29,8 +29,8 @@ public class EconomyController implements EconomyApiSpecV1 {
     @Override
     @GetMapping("/listings")
     public ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings() {
-        EconomyResult.Listings listings = economyFacade.listOpenListings();
-        return ApiResponses.ok(EconomyWebMapper.toListings(listings));
+        EconomyResult.ListingSummaries listingSummaries = economyFacade.listOpenListings();
+        return ApiResponses.ok(EconomyWebMapper.toListings(listingSummaries));
     }
 
     @Override

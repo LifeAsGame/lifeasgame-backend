@@ -1,6 +1,5 @@
 package online.lifeasgame.economy.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.economy.domain.ShopItem;
@@ -10,23 +9,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class ShopItemReader {
 
-    private final ShopItemRepository shopItemRepository;
+    private final ShopItemRepository repository;
 
     public ShopItem getForUpdate(Long id) {
-        return shopItemRepository.findByIdForUpdate(id)
+        return repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new DomainException(EconomyError.SHOP_ITEM_NOT_FOUND));
     }
 
     public List<ShopItem> listAvailable() {
-        return shopItemRepository.findAvailable();
+        return repository.findAvailable();
     }
 
     public List<ShopItem> listAll() {
-        return shopItemRepository.findAll();
+        return repository.findAll();
     }
 }
