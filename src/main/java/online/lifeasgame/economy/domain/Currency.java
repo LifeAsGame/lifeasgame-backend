@@ -7,6 +7,7 @@ public enum Currency {
     GEM;
 
     public static Currency parseOptional(String raw, Currency fallback) {
-        return EnumParsers.parseOptional(Currency.class, raw).orElse(fallback);
+        return EnumParsers.parseOptional(Currency.class, raw)
+                .orElse(fallback);
     }
 }
