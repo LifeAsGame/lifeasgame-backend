@@ -21,7 +21,11 @@ public class ExerciseMetrics {
     @Column(name = "calories")
     private Integer calories;
 
-    private ExerciseMetrics(Integer durationMinutes, Double distanceKm, Integer calories) {
+    private ExerciseMetrics(
+            Integer durationMinutes,
+            Double distanceKm,
+            Integer calories
+    ) {
         Guard.notNull(durationMinutes, "durationMinutes");
         Guard.checkState(durationMinutes >= 1, "durationMinutes >= 1");
         if (distanceKm != null) {
@@ -35,7 +39,11 @@ public class ExerciseMetrics {
         this.calories = calories;
     }
 
-    public static ExerciseMetrics of(Integer durationMinutes, Double distanceKm, Integer calories) {
+    public static ExerciseMetrics of(
+            Integer durationMinutes,
+            Double distanceKm,
+            Integer calories
+    ) {
         return new ExerciseMetrics(durationMinutes, distanceKm, calories);
     }
 
