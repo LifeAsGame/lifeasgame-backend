@@ -58,41 +58,61 @@ public class MailboxEntry extends AbstractTime {
     InstanceAttrs instAttrs = InstanceAttrs.empty();
 
     private MailboxEntry(
-            PlayerMailbox box, SlotIndex slot, ItemCarryPolicy p,
-            Quantity qty, Durability dur, boolean bound, InstanceAttrs attrs
+            PlayerMailbox playerMailbox,
+            SlotIndex slotIndex,
+            ItemCarryPolicy itemCarryPolicy,
+            Quantity quantity,
+            Durability durability,
+            boolean bound,
+            InstanceAttrs attrs
     ) {
-        this.mailbox   = Guard.notNull(box, "mailbox");
-        this.slotIndex = Guard.notNull(slot, "slotIndex");
-        this.itemId    = Guard.notNull(p.itemId(), "itemId");
-        this.rarity    = p.rarity();
-        this.quantity  = Guard.notNull(qty, "quantity");
-        this.bound     = bound;
+        this.mailbox = Guard.notNull(playerMailbox, "mailbox");
+        this.slotIndex = Guard.notNull(slotIndex, "slotIndex");
+        this.itemId = Guard.notNull(itemCarryPolicy.itemId(), "itemId");
+        this.rarity = itemCarryPolicy.rarity();
+        this.quantity = Guard.notNull(quantity, "quantity");
+        this.bound = bound;
         this.instAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
 
-        p.assertValidInitialQuantity(qty.value());
-        Integer nd = p.normalizedDurability(dur == null ? null : dur.value());
+        itemCarryPolicy.assertValidInitialQuantity(quantity.value());
+        Integer nd = itemCarryPolicy.normalizedDurability(durability == null ? null : durability.value());
         this.durability = (nd == null) ? null : Durability.of(nd);
     }
 
     static MailboxEntry of(
-            PlayerMailbox box, SlotIndex slot, ItemCarryPolicy p,
-            Quantity qty, Durability dur, boolean bound, InstanceAttrs attrs
+            PlayerMailbox playerMailbox,
+            SlotIndex slotIndex,
+            ItemCarryPolicy itemCarryPolicy,
+            Quantity quantity,
+            Durability durability,
+            boolean bound,
+            InstanceAttrs attrs
     ) {
-        return new MailboxEntry(box, slot, p, qty, dur, bound, attrs);
-    }
-
-    boolean isSameStackKey(ItemCarryPolicy p, boolean boundB, InstanceAttrs attrsB) {
-        if (!Objects.equals(this.itemId, p.itemId())) {
-            return false;
-        }
-
-        return p.sameStackKey(
-                this.bound, safeAttrs(this.instAttrs),
-                boundB, safeAttrs(attrsB)
+        return new MailboxEntry(
+                playerMailbox,
+                slotIndex,
+                itemCarryPolicy,
+                quantity,
+                durability,
+                bound,
+                attrs
         );
     }
 
-    private Map<String,Object> safeAttrs(InstanceAttrs x) {
+    boolean isSameStackKey(ItemCarryPolicy itemCarryPolicy, boolean bound, InstanceAttrs attrs) {
+        if (!Objects.equals(this.itemId, itemCarryPolicy.itemId())) {
+            return false;
+        }
+
+        return itemCarryPolicy.sameStackKey(
+                this.bound,
+                safeAttrs(this.instAttrs),
+                bound,
+                safeAttrs(attrs)
+        );
+    }
+
+    private Map<String, Object> safeAttrs(InstanceAttrs x) {
         return (x == null) ? Map.of() : x.attrs();
     }
 
@@ -102,15 +122,18 @@ public class MailboxEntry extends AbstractTime {
         if (!p.stackable() || next > p.maxStack()) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
+
         this.quantity = Quantity.of(next);
     }
 
     void decreaseQuantity(int delta) {
         Guard.minValue(delta, 1, "delta");
         int next = quantity.value() - delta;
+
         if (next < 0) {
             throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
         }
+
         this.quantity = Quantity.of(next);
     }
 }

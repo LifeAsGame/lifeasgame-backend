@@ -78,20 +78,21 @@ public class InventoryEntry extends AbstractTime {
     }
 
     static InventoryEntry of(
-            PlayerInventory inv,
+            PlayerInventory playerInventory,
             SlotIndex slotIndex,
-            ItemCarryPolicy p,
+            ItemCarryPolicy itemCarryPolicy,
             Quantity quantity,
             Durability durability,
             boolean bound,
             InstanceAttrs instAttrs
     ) {
-        p.assertValidInitialQuantity(quantity.value());
-        Integer normalizedDurability = p.normalizedDurability(durability == null ? null : durability.value());
+        itemCarryPolicy.assertValidInitialQuantity(quantity.value());
+
+        Integer normalizedDurability = itemCarryPolicy.normalizedDurability(durability == null ? null : durability.value());
         return new InventoryEntry(
-                inv, slotIndex,
-                p.itemId(),
-                p.rarity(),
+                playerInventory, slotIndex,
+                itemCarryPolicy.itemId(),
+                itemCarryPolicy.rarity(),
                 quantity,
                 normalizedDurability == null ? null : Durability.of(normalizedDurability),
                 bound,
@@ -99,11 +100,11 @@ public class InventoryEntry extends AbstractTime {
         );
     }
 
-    public void increaseQuantity(int delta, ItemCarryPolicy p) {
+    public void increaseQuantity(int delta, ItemCarryPolicy itemCarryPolicy) {
         Guard.minValue(delta, 1, "delta");
 
-        int space = p.spaceInStack(quantity.value());
-        if (!p.stackable() || delta > space) {
+        int space = itemCarryPolicy.spaceInStack(quantity.value());
+        if (!itemCarryPolicy.stackable() || delta > space) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
 
@@ -114,7 +115,7 @@ public class InventoryEntry extends AbstractTime {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
 
-        if (next > p.maxStack()) {
+        if (next > itemCarryPolicy.maxStack()) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
 
@@ -137,8 +138,8 @@ public class InventoryEntry extends AbstractTime {
         this.quantity = Quantity.of(next);
     }
 
-    public boolean canMergeWith(InventoryEntry toEntry, ItemCarryPolicy policy) {
-        if (!policy.stackable()) {
+    public boolean canMergeWith(InventoryEntry toEntry, ItemCarryPolicy itemCarryPolicy) {
+        if (!itemCarryPolicy.stackable()) {
             return false;
         }
 
@@ -146,9 +147,11 @@ public class InventoryEntry extends AbstractTime {
             return false;
         }
 
-        return policy.sameStackKey(
-                this.bound, safeAttrs(this.instAttrs),
-                toEntry.bound, safeAttrs(toEntry.instAttrs)
+        return itemCarryPolicy.sameStackKey(
+                this.bound,
+                safeAttrs(this.instAttrs),
+                toEntry.bound,
+                safeAttrs(toEntry.instAttrs)
         );
     }
 
@@ -156,8 +159,8 @@ public class InventoryEntry extends AbstractTime {
         return (x == null) ? Map.of() : x.attrs();
     }
 
-    public InventoryEntry splitTo(PlayerInventory playerInventory, SlotIndex to, int quantity, ItemCarryPolicy policy) {
-        if (!policy.stackable()) {
+    public InventoryEntry splitTo(PlayerInventory playerInventory, SlotIndex to, int quantity, ItemCarryPolicy itemCarryPolicy) {
+        if (!itemCarryPolicy.stackable()) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
 
@@ -170,7 +173,7 @@ public class InventoryEntry extends AbstractTime {
         return InventoryEntry.of(
                 playerInventory,
                 to,
-                policy,
+                itemCarryPolicy,
                 Quantity.of(quantity),
                 this.durability,
                 this.bound,

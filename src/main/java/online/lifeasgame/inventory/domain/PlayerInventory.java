@@ -76,20 +76,17 @@ public class PlayerInventory extends AbstractTime {
         return capacitySlots - entries.size();
     }
 
-    /**
-     * 아이템 추가 (스택 규칙 준수)
-     */
-    public List<SlotIndex> add(ItemCarryPolicy policy, int quantity, InstanceAttrs attrs, boolean bound) {
+    public List<SlotIndex> add(ItemCarryPolicy itemCarryPolicy, int quantity, InstanceAttrs attrs, boolean bound) {
         Guard.minValue(quantity, 1, "qty");
         InstanceAttrs instanceAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
 
-        List<InventoryEntry> stacks = stacksOf(policy, bound, instanceAttrs);
+        List<InventoryEntry> stacks = stacksOf(itemCarryPolicy, bound, instanceAttrs);
 
         int capacityInExisting = stacks.stream()
-                .mapToInt(s -> policy.spaceInStack(s.getQuantity().value()))
+                .mapToInt(s -> itemCarryPolicy.spaceInStack(s.getQuantity().value()))
                 .sum();
         int remainingAfterExisting = Math.max(0, quantity - capacityInExisting);
-        int neededNew = policy.estimateNewStacksNeeded(remainingAfterExisting);
+        int neededNew = itemCarryPolicy.estimateNewStacksNeeded(remainingAfterExisting);
         if (neededNew > freeSlots()) {
             throw new DomainException(InventoryError.INVENTORY_FULL);
         }
@@ -100,10 +97,10 @@ public class PlayerInventory extends AbstractTime {
                 break;
             }
 
-            int add = policy.clampAddToLimit(s.getQuantity().value(), remaining);
+            int add = itemCarryPolicy.clampAddToLimit(s.getQuantity().value(), remaining);
 
             if (add > 0) {
-                s.increaseQuantity(add, policy);
+                s.increaseQuantity(add, itemCarryPolicy);
                 remaining -= add;
             }
         }
@@ -111,14 +108,14 @@ public class PlayerInventory extends AbstractTime {
         List<SlotIndex> placed = new ArrayList<>();
         while (remaining > 0) {
             SlotIndex slotIndex = nextFreeSlot();
-            int put = policy.stackable() ? Math.min(policy.maxStack(), remaining) : 1;
+            int put = itemCarryPolicy.stackable() ? Math.min(itemCarryPolicy.maxStack(), remaining) : 1;
 
             var e = InventoryEntry.of(
                     this,
                     slotIndex,
-                    policy,
+                    itemCarryPolicy,
                     Quantity.of(put),
-                    policy.maxDurability() == null ? null : Durability.of(policy.maxDurability()),
+                    itemCarryPolicy.maxDurability() == null ? null : Durability.of(itemCarryPolicy.maxDurability()),
                     bound,
                     instanceAttrs
             );
@@ -128,14 +125,16 @@ public class PlayerInventory extends AbstractTime {
             remaining -= put;
         }
 
-        recordEvent(InventoryItemAdded.of(
-                this.playerId,
-                policy.itemId(),
-                policy.rarity().name(),
-                policy.stackable(),
-                bound,
-                quantity
-        ));
+        recordEvent(
+                InventoryItemAdded.of(
+                    this.playerId,
+                    itemCarryPolicy.itemId(),
+                    itemCarryPolicy.rarity().name(),
+                    itemCarryPolicy.stackable(),
+                    bound,
+                    quantity
+                )
+        );
 
         return placed;
     }

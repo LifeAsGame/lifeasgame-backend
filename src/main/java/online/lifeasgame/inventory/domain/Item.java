@@ -16,8 +16,7 @@ import java.util.Optional;
 @AggregateRoot
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "items",
-        indexes = @Index(name = "idx_item_name", columnList = "name")
+        name = "items", indexes = @Index(name = "idx_item_name", columnList = "name")
 )
 public class Item extends AbstractTime {
 
@@ -84,23 +83,23 @@ public class Item extends AbstractTime {
             Integer maxDurabilityOrNull
     ) {
         int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
-        DurabilityPolicy dp = (maxDurabilityOrNull==null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
-        return new Item(name, category, type, rarity, baseAttrs, stackable, ms, dp);
+        DurabilityPolicy durabilityPolicy = (maxDurabilityOrNull == null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
+        return new Item(name, category, type, rarity, baseAttrs, stackable, ms, durabilityPolicy);
     }
 
     public void update(
-            ItemName name,
-            ItemCategory category,
-            ItemType type,
+            ItemName itemName,
+            ItemCategory itemCategory,
+            ItemType itemType,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
             Integer maxStack,
             Integer maxDurabilityOrNull
     ) {
-        this.name = Guard.notNull(name, "name");
-        this.category = Guard.notNull(category, "category");
-        this.type = Guard.notNull(type, "type");
+        this.name = Guard.notNull(itemName, "name");
+        this.category = Guard.notNull(itemCategory, "category");
+        this.type = Guard.notNull(itemType, "type");
         this.rarity = (rarity == null) ? Rarity.COMMON : rarity;
         this.baseAttrs = (baseAttrs == null) ? BaseAttrs.empty() : baseAttrs;
         this.stackable = stackable;
