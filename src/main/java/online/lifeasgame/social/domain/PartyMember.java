@@ -38,22 +38,33 @@ public class PartyMember extends AbstractTime {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    public PartyMember(
+            Party party,
+            Long playerId,
+            PartyMemberRole role,
+            LocalDateTime joinedAt
+    ) {
+        this.party = party;
+        this.playerId = playerId;
+        this.role = role;
+        this.joinedAt = joinedAt;
+    }
+
     public static PartyMember createLeader(Party party, Long playerId) {
-        PartyMember m = new PartyMember();
-        m.party = party;
-        m.playerId = playerId;
-        m.role = PartyMemberRole.LEADER;
-        m.joinedAt = LocalDateTime.now();
-        return m;
+        return create(party, playerId, PartyMemberRole.LEADER);
     }
 
     public static PartyMember createMember(Party party, Long playerId) {
-        PartyMember m = new PartyMember();
-        m.party = party;
-        m.playerId = playerId;
-        m.role = PartyMemberRole.MEMBER;
-        m.joinedAt = LocalDateTime.now();
-        return m;
+        return create(party, playerId, PartyMemberRole.MEMBER);
+    }
+
+    private static PartyMember create(Party party, Long playerId, PartyMemberRole role) {
+        return new PartyMember(
+                party,
+                playerId,
+                role,
+                LocalDateTime.now()
+        );
     }
 
     public void changeRole(PartyMemberRole role) {

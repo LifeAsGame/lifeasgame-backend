@@ -45,22 +45,33 @@ public class GuildMember extends AbstractTime {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    private GuildMember(
+            Guild guild,
+            Long playerId,
+            GuildMemberRole role,
+            LocalDateTime joinedAt
+    ) {
+        this.guild = guild;
+        this.playerId = playerId;
+        this.role = role;
+        this.joinedAt = joinedAt;
+    }
+
     public static GuildMember createLeader(Guild guild, Long playerId) {
-        GuildMember m = new GuildMember();
-        m.guild = guild;
-        m.playerId = playerId;
-        m.role = GuildMemberRole.LEADER;
-        m.joinedAt = LocalDateTime.now();
-        return m;
+        return create(guild, playerId, GuildMemberRole.LEADER);
     }
 
     public static GuildMember createMember(Guild guild, Long playerId) {
-        GuildMember m = new GuildMember();
-        m.guild = guild;
-        m.playerId = playerId;
-        m.role = GuildMemberRole.MEMBER;
-        m.joinedAt = LocalDateTime.now();
-        return m;
+        return create(guild, playerId, GuildMemberRole.MEMBER);
+    }
+
+    private static GuildMember create(Guild guild, Long playerId, GuildMemberRole role) {
+        return new GuildMember(
+                guild,
+                playerId,
+                role,
+                LocalDateTime.now()
+        );
     }
 
     public void changeRole(GuildMemberRole role) {

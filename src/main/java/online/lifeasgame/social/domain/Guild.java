@@ -73,6 +73,36 @@ public class Guild extends AbstractTime {
     @BatchSize(size = 100)
     private List<GuildWaitMember> waitMembers = new ArrayList<>();
 
+    private Guild(
+            Long playerId,
+            Long leaderPlayerId,
+            GuildName name,
+            GuildCode code,
+            GuildDescription description,
+            GuildEmblem emblem,
+            GuildVisibility visibility,
+            GuildJoinPolicy joinPolicy,
+            GuildStatus status,
+            int maxMembers,
+            Set<String> tags,
+            List<GuildMember> members,
+            List<GuildWaitMember> waitMembers
+    ) {
+        this.playerId = playerId;
+        this.leaderPlayerId = leaderPlayerId;
+        this.name = name;
+        this.code = code;
+        this.description = description;
+        this.emblem = emblem;
+        this.visibility = visibility;
+        this.joinPolicy = joinPolicy;
+        this.status = status;
+        this.maxMembers = maxMembers;
+        this.tags = tags;
+        this.members = members;
+        this.waitMembers = waitMembers;
+    }
+
     public static Guild create(
             Long playerId,
             String name,
@@ -91,41 +121,50 @@ public class Guild extends AbstractTime {
         Guard.notNull(visibility, "visibility");
         Guard.notNull(joinPolicy, "joinPolicy");
 
-        Guild g = new Guild();
-        g.playerId = playerId;
-        g.name = GuildName.of(name);
-        g.code = GuildCode.of(code);
-        g.description = GuildDescription.of(descriptionMd);
-        g.emblem = GuildEmblem.of(emblemImageUrl, emblemBgColor);
-        g.visibility = visibility;
-        g.joinPolicy = joinPolicy;
-        g.status = GuildStatus.ACTIVE;
-        g.maxMembers = maxMembers;
+        Guild guild = new Guild(
+                playerId,
+                playerId,
+                GuildName.of(name),
+                GuildCode.of(code),
+                GuildDescription.of(descriptionMd),
+                GuildEmblem.of(emblemImageUrl, emblemBgColor),
+                visibility,
+                joinPolicy,
+                GuildStatus.ACTIVE,
+                maxMembers,
+                null,
+                null,
+                null
+        );
 
-        GuildMember leader = GuildMember.createLeader(g, playerId);
-        g.members.add(leader);
-        g.leaderPlayerId = playerId;
+        GuildMember leader = GuildMember.createLeader(guild, playerId);
+        guild.members.add(leader);
 
-        return g;
+        return guild;
     }
 
-    // ===== 조회 유틸 =====
     public Optional<GuildMember> findMember(Long playerId) {
-        return members.stream().filter(m -> m.getPlayerId().equals(playerId)).findFirst();
+        return members.stream()
+                .filter(m -> m.getPlayerId().equals(playerId))
+                .findFirst();
     }
 
     public Optional<GuildWaitMember> findPendingJoin(Long playerId) {
-        return waitMembers.stream().filter(w -> w.getPlayerId().equals(playerId) &&
-                w.getType() == GuildWaitType.JOIN_REQUEST &&
-                w.getStatus() == GuildWaitStatus.PENDING).findFirst();
+        return waitMembers.stream().filter(
+                waitMember ->
+                        waitMember.getPlayerId().equals(playerId) &&
+                                waitMember.getType() == GuildWaitType.JOIN_REQUEST &&
+                                waitMember.getStatus() == GuildWaitStatus.PENDING
+                )
+                .findFirst();
     }
 
     public Optional<GuildWaitMember> findPendingInvite(Long playerId) {
         return waitMembers.stream()
                 .filter(
-                        w -> w.getPlayerId().equals(playerId) &&
-                                w.getType() == GuildWaitType.INVITATION &&
-                                w.getStatus() == GuildWaitStatus.PENDING
+                        waitMember -> waitMember.getPlayerId().equals(playerId) &&
+                                waitMember.getType() == GuildWaitType.INVITATION &&
+                                waitMember.getStatus() == GuildWaitStatus.PENDING
                 ).findFirst();
     }
 
@@ -133,7 +172,6 @@ public class Guild extends AbstractTime {
         return members.size();
     }
 
-    // ===== 기본 변경 =====
     public void rename(String newName) {
         Guard.notBlank(newName, "newName");
         this.name = GuildName.of(newName);
@@ -173,7 +211,6 @@ public class Guild extends AbstractTime {
         this.tags.remove(tag.trim());
     }
 
-    // ===== 가입/초대 =====
     public void requestJoin(Long applicantPlayerId, String message) {
         Guard.notNull(applicantPlayerId, "applicantPlayerId");
         Guard.checkState(status == GuildStatus.ACTIVE, "guild not active");
@@ -200,7 +237,9 @@ public class Guild extends AbstractTime {
                 .orElseThrow(() -> new IllegalStateException("join request not found"));
         wait.approve();
         Guard.check(findMember(applicantPlayerId).isEmpty(), "already member");
-        this.members.add(GuildMember.createMember(this, applicantPlayerId));
+
+        GuildMember guildMember = GuildMember.createMember(this, applicantPlayerId);
+        this.members.add(guildMember);
     }
 
     public void rejectJoin(Long applicantPlayerId) {
@@ -209,7 +248,12 @@ public class Guild extends AbstractTime {
         wait.reject();
     }
 
-    public void invite(Long inviterPlayerId, Long inviteePlayerId, String message, LocalDateTime expiresAt) {
+    public void invite(
+            Long inviterPlayerId,
+            Long inviteePlayerId,
+            String message,
+            LocalDateTime expiresAt
+    ) {
         Guard.notNull(inviterPlayerId, "inviterPlayerId");
         Guard.notNull(inviteePlayerId, "inviteePlayerId");
         Guard.checkState(status == GuildStatus.ACTIVE, "guild not active");
@@ -217,20 +261,24 @@ public class Guild extends AbstractTime {
         Guard.check(findMember(inviteePlayerId).isEmpty(), "invitee already member");
         Guard.check(findPendingInvite(inviteePlayerId).isEmpty(), "already invited");
 
-        GuildWaitMember inv = GuildWaitMember.invitation(this, inviteePlayerId, message, expiresAt);
-        this.waitMembers.add(inv);
+        GuildWaitMember waitMember = GuildWaitMember.invitation(this, inviteePlayerId, message, expiresAt);
+        this.waitMembers.add(waitMember);
     }
 
     public void acceptInvitation(Long playerId) {
         Guard.check(memberCount() < maxMembers, "capacity exceeded");
         GuildWaitMember inv = findPendingInvite(playerId)
                 .orElseThrow(() -> new IllegalStateException("invitation not found"));
+
         if (inv.getExpiresAt() != null) {
             Guard.checkState(!inv.isExpired(), "invitation expired");
         }
+
         inv.approve();
+
         Guard.check(findMember(playerId).isEmpty(), "already member");
-        this.members.add(GuildMember.createMember(this, playerId));
+        GuildMember guildMember = GuildMember.createMember(this, playerId);
+        this.members.add(guildMember);
     }
 
     public void declineInvitation(Long playerId) {
@@ -239,7 +287,6 @@ public class Guild extends AbstractTime {
         inv.reject();
     }
 
-    // ===== 멤버/권한 =====
     public void transferLeadership(Long fromLeaderPlayerId, Long toPlayerId) {
         Guard.notNull(fromLeaderPlayerId, "fromLeader");
         Guard.notNull(toPlayerId, "toPlayerId");
