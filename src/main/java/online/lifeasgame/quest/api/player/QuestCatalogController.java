@@ -23,7 +23,7 @@ public class QuestCatalogController implements QuestCatalogSpecV1 {
     @GetMapping("/catalog")
     @Override
     public ResponseEntity<QuestResponse.Blueprints> catalog() {
-        List<QuestResult.Blueprint> results = questService.catalog();
+        List<QuestResult.Blueprint> results = questService.getCatalog();
         return ResponseEntity.ok(QuestWebMapper.toBlueprints(results));
     }
 }

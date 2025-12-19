@@ -23,14 +23,14 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @Override
     @GetMapping("/catalog")
     public ResponseEntity<AdminQuestResponse.Blueprints> catalog() {
-        List<QuestResult.Blueprint> results = questService.catalog();
+        List<QuestResult.Blueprint> results = questService.getCatalog();
         return ResponseEntity.ok(AdminQuestWebMapper.toBlueprints(results));
     }
 
     @Override
     @GetMapping("/definitions")
     public ResponseEntity<AdminQuestResponse.Definitions> definitions() {
-        List<QuestResult.Definition> results = questService.definitions();
+        List<QuestResult.Definition> results = questService.getDefinitions();
         return ResponseEntity.ok(AdminQuestWebMapper.toDefinitions(results));
     }
 
@@ -46,7 +46,7 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @Override
     @GetMapping("/definitions/{questCode}")
     public ResponseEntity<AdminQuestResponse.Definition> definition(@PathVariable String questCode) {
-        QuestResult.Definition result = questService.definition(AdminQuestWebMapper.toDefinitionCommand(questCode));
+        QuestResult.Definition result = questService.getDefinition(AdminQuestWebMapper.toDefinitionCommand(questCode));
         return ResponseEntity.ok(AdminQuestWebMapper.toDefinition(result));
     }
 

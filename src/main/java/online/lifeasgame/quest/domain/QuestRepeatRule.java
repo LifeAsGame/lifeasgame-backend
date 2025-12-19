@@ -1,20 +1,35 @@
 package online.lifeasgame.quest.domain;
 
 import java.time.Duration;
+import java.util.Locale;
 
 public enum QuestRepeatRule {
-    NONE(Duration.ofDays(365)),
-    DAILY(Duration.ofDays(3)),
-    WEEKLY(Duration.ofDays(21)),
-    MONTHLY(Duration.ofDays(93));
+    NONE,
+    DAILY,
+    WEEKLY,
+    MONTHLY;
 
-    private final Duration idempotencyTtl;
+    public static QuestRepeatRule parse(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return NONE;
+        }
+        try {
+            return QuestRepeatRule.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid repeatRule: " + raw);
+        }
+    }
 
-    QuestRepeatRule(Duration idempotencyTtl) {
-        this.idempotencyTtl = idempotencyTtl;
+    public static QuestRepeatRule parseNullable(String raw) {
+        return (raw == null || raw.isBlank()) ? null : parse(raw);
     }
 
     public Duration idempotencyTtl() {
-        return idempotencyTtl;
+        return switch (this) {
+            case NONE -> Duration.ofDays(90);
+            case DAILY -> Duration.ofDays(7);
+            case WEEKLY -> Duration.ofDays(30);
+            case MONTHLY -> Duration.ofDays(120);
+        };
     }
 }

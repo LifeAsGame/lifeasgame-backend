@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +22,10 @@ class QuestReader {
 
     private final QuestRepository questRepository;
     private final QuestAcceptanceRepository questAcceptanceRepository;
+
+    Optional<Quest> findByCode(QuestCode code) {
+        return questRepository.findByCode(code.value());
+    }
 
     Quest getByCode(QuestCode code) {
         return questRepository.findByCode(code.value())
@@ -33,7 +38,7 @@ class QuestReader {
     }
 
     Collection<Quest> getByIds(Collection<Long> questIds) {
-        return questIds.stream().map(this::getById).toList();
+        return questRepository.findAllByIds(questIds);
     }
 
     List<Quest> findAll() {
