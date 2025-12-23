@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 @EnableConfigurationProperties(LevelCurveProperties.class)
 public class YamlLevelCurveParametersLoader implements LevelCurveParametersLoader {
 
-    private final LevelCurveProperties props;
+    private final LevelCurveProperties levelCurveProperties;
 
     @Override
     public LevelingPolicyParameters load() {
-        return props.toParams();
+        return levelCurveProperties.toParams();
     }
 }
