@@ -1,24 +1,15 @@
 package online.lifeasgame.economy.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import online.lifeasgame.core.annotation.AggregateRoot;
-import online.lifeasgame.platform.persistence.jpa.AbstractTime;
-import online.lifeasgame.core.guard.Guard;
 
 @Entity
 @AggregateRoot
@@ -65,11 +56,20 @@ public class Wallet extends AbstractTime {
         balance(amt.currency()).decrease(amt.amount());
     }
 
-    public String placeHold(Money amt, String reason, Instant now, int ttlSeconds) {
-        WalletBalance b = balance(amt.currency());
-        Guard.check(b.available() >= amt.amount(), "insufficient funds");
-        b.decrease(amt.amount());
-        WalletHold h = WalletHold.open(this, amt.currency(), amt.amount(), reason, now, ttlSeconds);
+    public String placeHold(Money amount, String reason, Instant now, int ttlSeconds) {
+        WalletBalance walletBalance = balance(amount.currency());
+        Guard.check(walletBalance.available() >= amount.amount(), "insufficient funds");
+        walletBalance.decrease(amount.amount());
+
+        WalletHold h = WalletHold.open(
+                this,
+                amount.currency(),
+                amount.amount(),
+                reason,
+                now,
+                ttlSeconds
+        );
+
         this.holds.add(h);
         return h.getHoldId();
     }
@@ -81,23 +81,26 @@ public class Wallet extends AbstractTime {
     }
 
     public void cancelHold(String holdId) {
-        WalletHold h = requireHold(holdId);
-        Guard.checkState(h.isOpen(), "hold not open");
-        balance(h.getCurrency()).increase(h.getAmount());
-        h.cancel();
+        WalletHold walletHold = requireHold(holdId);
+        Guard.checkState(walletHold.isOpen(), "hold not open");
+        balance(walletHold.getCurrency()).increase(walletHold.getAmount());
+        walletHold.cancel();
     }
 
     public void expireHolds(Instant now) {
-        for (WalletHold h : holds) {
-            if (h.isOpen() && now.isAfter(h.getExpiresAt())) {
-                balance(h.getCurrency()).increase(h.getAmount());
-                h.expire();
+        for (WalletHold walletHold : holds) {
+            if (walletHold.isOpen() && now.isAfter(walletHold.getExpiresAt())) {
+                balance(walletHold.getCurrency()).increase(walletHold.getAmount());
+                walletHold.expire();
             }
         }
     }
 
     private WalletHold requireHold(String holdId){
-        return holds.stream().filter(h -> Objects.equals(h.getHoldId(), holdId)).findFirst().orElseThrow();
+        return holds.stream()
+                .filter(h -> Objects.equals(h.getHoldId(), holdId))
+                .findFirst()
+                .orElseThrow();
     }
 
     private WalletBalance balance(Currency currency){

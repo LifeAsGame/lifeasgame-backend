@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 public class TradeWriter {
 
-    private final TradeRepository tradeRepository;
+    private final TradeRepository repository;
 
-    public Trade save(Trade trade) {
-        return tradeRepository.save(trade);
+    public Trade create(Trade trade) {
+        return repository.save(trade);
     }
 }

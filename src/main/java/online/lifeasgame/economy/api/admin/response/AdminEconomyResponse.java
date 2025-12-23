@@ -1,17 +1,42 @@
 package online.lifeasgame.economy.api.admin.response;
 
+import java.time.Instant;
+import java.util.List;
+
 public final class AdminEconomyResponse {
-    private AdminEconomyResponse() {}
 
-    public record ShopItem(Long id, Long itemId, long price, String currency, boolean available,
-                           Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {}
+    private AdminEconomyResponse() {
+    }
 
-    public record ShopItems(java.util.List<ShopItem> items) {}
+    public record ShopItem(
+            Long id,
+            Long itemId,
+            long price,
+            String currency,
+            boolean available,
+            Integer globalStockLimit,
+            Integer perPlayerLimit,
+            Integer reservationTtlSec
+    ) {
+    }
 
-    public record ShopPurchaseSummary(Long id, Long shopItemId, Long playerId, Integer quantity, String status,
-                                      String reservationToken, java.time.Instant reservationExpiresAt) {}
+    public record ShopItems(List<ShopItem> items) {
+    }
 
-    public record ShopPurchases(java.util.List<ShopPurchaseSummary> purchases) {}
+    public record ShopPurchaseSummary(
+            Long id,
+            Long shopItemId,
+            Long playerId,
+            Integer quantity,
+            String status,
+            String reservationToken,
+            Instant reservationExpiresAt
+    ) {
+    }
 
-    public record WalletBalance(long amount, String currency) {}
+    public record ShopPurchases(List<ShopPurchaseSummary> purchases) {
+    }
+
+    public record WalletBalance(long amount, String currency) {
+    }
 }

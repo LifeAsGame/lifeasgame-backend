@@ -77,7 +77,13 @@ public class Trade extends AbstractTime {
     }
 
 
-    static Trade of(Long listingId, Long buyerId, Long sellerId, Long itemInstId, Money price) {
+    static Trade of(
+            Long listingId,
+            Long buyerId,
+            Long sellerId,
+            Long itemInstId,
+            Money price
+    ) {
         return new Trade(listingId, buyerId, sellerId, itemInstId, price, 100);
     }
 

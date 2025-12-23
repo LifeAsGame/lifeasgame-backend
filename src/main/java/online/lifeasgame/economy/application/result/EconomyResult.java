@@ -1,28 +1,94 @@
 package online.lifeasgame.economy.application.result;
 
-import java.time.Instant;
 import online.lifeasgame.economy.domain.Listing;
+import online.lifeasgame.economy.domain.ShopItem;
 import online.lifeasgame.economy.domain.ShopPurchase;
 import online.lifeasgame.economy.domain.Trade;
 
-public final class EconomyResult {
-    private EconomyResult() {}
+import java.time.Instant;
+import java.util.List;
 
-    public record ListingId(Long id) { public static ListingId of(Long id) { return new ListingId(id); } }
-    public record Reservation(String reservationToken, String holdId, Instant expiresAt) {
-        public static Reservation of(String token, String holdId, Instant expiresAt) {
-            return new Reservation(token, holdId, expiresAt);
+public final class EconomyResult {
+    
+    private EconomyResult() {
+    }
+
+    public record ListingId(Long id) {
+    }
+
+    public record Reservation(
+            String reservationToken,
+            String holdId,
+            Instant expiresAt
+    ) {
+    }
+
+    public record ShopPurchaseId(Long id) {
+    }
+
+    public record WalletBalance(long amount, String currency) {
+    }
+
+    public record ShopItems(List<ShopItemView> items) {
+        public static ShopItems fromList(List<ShopItem> shopItems) {
+            return new ShopItems(
+                    shopItems.stream()
+                        .map(EconomyResult.ShopItemView::from)
+                        .toList()
+            );
         }
     }
-    public record TradeId(Long id) { public static TradeId of(Long id) { return new TradeId(id); } }
-    public record ShopPurchaseId(Long id) { public static ShopPurchaseId of(Long id) { return new ShopPurchaseId(id); } }
-    public record WalletBalance(long amount, String currency) { public static WalletBalance of(long amount, String currency) { return new WalletBalance(amount, currency); } }
-    public record ShopItems(java.util.List<ShopItemView> items) { }
-    public record Listings(java.util.List<ListingSummary> listings) { }
-    public record PlayerListings(java.util.List<ListingSummary> listings) { }
-    public record PlayerReservations(java.util.List<ListingReservation> reservations) { }
-    public record ShopPurchases(java.util.List<ShopPurchaseView> purchases) { }
-    public record Trades(java.util.List<TradeSummary> trades) { }
+
+    public record ListingSummaries(List<ListingSummary> listings) {
+        public static ListingSummaries fromList(List<Listing> listings) {
+            return new ListingSummaries (
+                    listings.stream()
+                    .map(ListingSummary::from)
+                    .toList()
+            );
+        }
+    }
+
+    public record PlayerListings(List<ListingSummary> listings) {
+        public static PlayerListings fromList(List<Listing> listings) {
+            return new PlayerListings (
+                    listings.stream()
+                            .map(ListingSummary::from)
+                            .toList()
+            );
+        }
+    }
+
+    public record PlayerReservations(List<ListingReservation> reservations) {
+        public static PlayerReservations fromList(List<Listing> listings) {
+            return new PlayerReservations (
+                    listings.stream()
+                            .map(ListingReservation::from)
+                            .toList()
+            );
+        }
+
+    }
+
+    public record ShopPurchases(List<ShopPurchaseView> purchases) {
+        public static ShopPurchases fromList(List<ShopPurchase> shopPurchases) {
+            return new ShopPurchases (
+                    shopPurchases.stream()
+                            .map(ShopPurchaseView::from)
+                            .toList()
+            );
+        }
+    }
+
+    public record Trades(List<TradeSummary> trades) {
+        public static Trades fromList(List<Trade> trades) {
+            return new Trades (
+                    trades.stream()
+                            .map(TradeSummary::from)
+                            .toList()
+            );
+        }
+    }
 
     public record ListingSummary(Long id, Long itemId, Long sellerId, long price, String currency, String status) {
         public static ListingSummary from(Listing listing) {
@@ -68,8 +134,16 @@ public final class EconomyResult {
         }
     }
 
-    public record ShopItemView(Long id, Long itemId, long price, String currency, boolean available,
-                               Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {
+    public record ShopItemView(
+            Long id,
+            Long itemId,
+            long price,
+            String currency,
+            boolean available,
+            Integer globalStockLimit,
+            Integer perPlayerLimit,
+            Integer reservationTtlSec
+    ) {
         public static ShopItemView from(online.lifeasgame.economy.domain.ShopItem shopItem) {
             return new ShopItemView(
                     shopItem.getId(),
@@ -84,8 +158,15 @@ public final class EconomyResult {
         }
     }
 
-    public record ShopPurchaseView(Long id, Long shopItemId, Long playerId, Integer quantity, String status,
-                                   String reservationToken, Instant reservationExpiresAt) {
+    public record ShopPurchaseView(
+            Long id,
+            Long shopItemId,
+            Long playerId,
+            Integer quantity,
+            String status,
+            String reservationToken,
+            Instant reservationExpiresAt
+    ) {
         public static ShopPurchaseView from(ShopPurchase purchase) {
             return new ShopPurchaseView(
                     purchase.getId(),
