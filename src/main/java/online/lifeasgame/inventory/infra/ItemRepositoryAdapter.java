@@ -16,36 +16,36 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ItemRepositoryAdapter implements ItemRepository {
 
-    private final JpaItemRepository jpa;
+    private final JpaItemRepository jpaRepository;
 
     @Override
     public Optional<Item> findById(Long id) {
-        return jpa.findById(id);
+        return jpaRepository.findById(id);
     }
 
     @Override
     public boolean existsById(Long id) {
-        return jpa.existsById(id);
+        return jpaRepository.existsById(id);
     }
 
     @Override
     public Item save(Item item) {
-        return jpa.save(item);
+        return jpaRepository.save(item);
     }
 
     @Override
     public boolean existsByName(String name) {
-        return jpa.existsByName(name);
+        return jpaRepository.existsByName(name);
     }
 
     @Override
-    public Page<Item> search(String q, ItemCategory category, ItemType type, Rarity rarity, Pageable pageable) {
-        var spec = ItemSpecifications.search(q, category, type, rarity);
-        return jpa.findAll(spec, pageable);
+    public Page<Item> search(String name, ItemCategory itemCategory, ItemType itemType, Rarity rarity, Pageable pageable) {
+        var spec = ItemSpecifications.search(name, itemCategory, itemType, rarity);
+        return jpaRepository.findAll(spec, pageable);
     }
 
     @Override
     public void delete(Item item) {
-        jpa.delete(item);
+        jpaRepository.delete(item);
     }
 }

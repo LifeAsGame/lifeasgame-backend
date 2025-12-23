@@ -14,8 +14,7 @@ public interface JpaInventoryRepository extends JpaRepository<PlayerInventory, L
             """
                 SELECT COUNT(e)
                 FROM InventoryEntry e
-                WHERE e.itemId = :itemId
-                AND e.quantity.value > :limit
+                WHERE e.itemId = :itemId AND e.quantity.value > :limit
             """
     )
     long countStacksExceeding(@Param("itemId") Long itemId, @Param("limit") int limit);

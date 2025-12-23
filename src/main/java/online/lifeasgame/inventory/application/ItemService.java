@@ -1,12 +1,9 @@
 package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.application.command.ItemCommand;
-import online.lifeasgame.inventory.application.query.ItemStackPolicyQuery;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.domain.*;
-import online.lifeasgame.inventory.domain.error.ItemError;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,7 +15,7 @@ public class ItemService {
 
     private final ItemReader itemReader;
     private final ItemWriter itemWriter;
-    private final ItemStackPolicyQuery itemStackPolicyQuery;
+    private final ItemStackPolicyChecker itemStackPolicyChecker;
 
     @Transactional
     public ItemResult.Id create(ItemCommand.Create command) {
@@ -39,28 +36,25 @@ public class ItemService {
     }
 
     @Transactional
-    public ItemResult.Id update(ItemCommand.Update cmd) {
-        Item item = itemReader.getByIdOrThrow(cmd.id());
+    public ItemResult.Id update(ItemCommand.Update command) {
+        Item item = itemReader.getByIdOrThrow(command.id());
 
-        if (!item.getName().value().equals(cmd.name())) {
-            itemReader.assertNameNotExists(cmd.name());
+        if (!item.getName().value().equals(command.name())) {
+            itemReader.assertNameNotExists(command.name());
         }
 
-        int newLimit = !cmd.stackable() ? 1 : (cmd.maxStack() == null ? 1 : cmd.maxStack());
-        long violating = itemStackPolicyQuery.countTotalStacksExceeding(item.getId(), newLimit);
-        if (violating > 0) {
-            throw new DomainException(ItemError.POLICY_CONFLICT);
-        }
+        int newLimit = !command.stackable() ? 1 : (command.maxStack() == null ? 1 : command.maxStack());
+        itemStackPolicyChecker.assertNoPolicyConflict(item.getId(), newLimit);
 
         item.update(
-                ItemName.of(cmd.name()),
-                ItemCategory.parse(cmd.category()),
-                ItemType.parse(cmd.type()),
-                Rarity.parse(cmd.rarity()),
-                BaseAttrs.of(cmd.baseAttrs()),
-                cmd.stackable(),
-                cmd.maxStack(),
-                cmd.maxDurability()
+                ItemName.of(command.name()),
+                ItemCategory.parse(command.category()),
+                ItemType.parse(command.type()),
+                Rarity.parse(command.rarity()),
+                BaseAttrs.of(command.baseAttrs()),
+                command.stackable(),
+                command.maxStack(),
+                command.maxDurability()
         );
 
         return new ItemResult.Id(item.getId());
