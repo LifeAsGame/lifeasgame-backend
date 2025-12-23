@@ -16,8 +16,8 @@ public class FollowRepositoryAdapter implements FollowRepository {
     private final FollowJpaRepository followJpaRepository;
 
     @Override
-    public Follow save(Follow f) {
-        return followJpaRepository.save(f);
+    public Follow save(Follow follow) {
+        return followJpaRepository.save(follow);
     }
 
     @Override
@@ -35,7 +35,6 @@ public class FollowRepositoryAdapter implements FollowRepository {
         return followJpaRepository.existsByPlayerIdAndTargetPlayerId(playerId, friendId);
     }
 
-    // QueryRepo — 2단계 로딩
     @Override
     public List<Follow> findFollowings(Long playerId, int page, int size) {
         Page<Long> idPage = followJpaRepository.findFollowingIds(

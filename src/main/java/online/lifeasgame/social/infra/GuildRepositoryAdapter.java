@@ -14,33 +14,33 @@ import java.util.*;
 @RequiredArgsConstructor
 public class GuildRepositoryAdapter implements GuildRepository {
 
-    private final GuildJpaRepository guildJpaRepository;
+    private final GuildJpaRepository jpaRepository;
 
     @Override
-    public Guild save(Guild g) {
-        return guildJpaRepository.save(g);
+    public Guild save(Guild guild) {
+        return jpaRepository.save(guild);
     }
 
     @Override
     public Optional<Guild> findById(Long id) {
-        return guildJpaRepository.findById(id);
+        return jpaRepository.findById(id);
     }
 
     @Override
     public Optional<Guild> findByIdAndPlayerId(Long id, Long playerId) {
-        return guildJpaRepository.findByIdAndPlayerId(id, playerId);
+        return jpaRepository.findByIdAndPlayerId(id, playerId);
     }
 
     @Override
     public List<Guild> search(String keyword, GuildVisibility visibility, int page, int size) {
-        Page<Long> idPage = guildJpaRepository.searchIds(
+        Page<Long> idPage = jpaRepository.searchIds(
                 keyword,
                 visibility,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
         );
         if (idPage.isEmpty()) return List.of();
         List<Long> ids = idPage.getContent();
-        List<Guild> list = guildJpaRepository.fetchWithTagsByIds(ids);
+        List<Guild> list = jpaRepository.fetchWithTagsByIds(ids);
 
         Map<Long, Integer> order = new HashMap<>();
         for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
@@ -50,12 +50,12 @@ public class GuildRepositoryAdapter implements GuildRepository {
 
     @Override
     public long countSearch(String keyword, GuildVisibility visibility) {
-        return guildJpaRepository.searchIds(keyword, visibility, PageRequest.of(0, 1)).getTotalElements();
+        return jpaRepository.searchIds(keyword, visibility, PageRequest.of(0, 1)).getTotalElements();
     }
 
     @Override
     public List<Guild> recent(int limit) {
-        List<Long> ids = guildJpaRepository.findRecent(limit);
-        return guildJpaRepository.findRecentWithTags(ids);
+        List<Long> ids = jpaRepository.findRecent(limit);
+        return jpaRepository.findRecentWithTags(ids);
     }
 }

@@ -14,33 +14,33 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PartyRepositoryAdapter implements PartyRepository {
 
-    private final PartyJpaRepository partyJpaRepository;
+    private final PartyJpaRepository jpaRepository;
 
     @Override
     public Party save(Party party) {
-        return partyJpaRepository.save(party);
+        return jpaRepository.save(party);
     }
 
     @Override
     public Optional<Party> findById(Long id) {
-        return partyJpaRepository.findById(id);
+        return jpaRepository.findById(id);
     }
 
     @Override
     public Optional<Party> findByIdAndPlayerId(Long id, Long playerId) {
-        return partyJpaRepository.findByIdAndPlayerId(id, playerId);
+        return jpaRepository.findByIdAndPlayerId(id, playerId);
     }
 
     @Override
     public List<Party> search(String keyword, PartyVisibility visibility, int page, int size) {
-        Page<Long> idPage = partyJpaRepository.searchIds(
+        Page<Long> idPage = jpaRepository.searchIds(
                 keyword,
                 visibility,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
         );
         if (idPage.isEmpty()) return List.of();
         List<Long> ids = idPage.getContent();
-        List<Party> list = partyJpaRepository.fetchWithTagsByIds(ids);
+        List<Party> list = jpaRepository.fetchWithTagsByIds(ids);
 
         Map<Long, Integer> order = new HashMap<>();
         for (int i = 0; i < ids.size(); i++) {
@@ -52,12 +52,12 @@ public class PartyRepositoryAdapter implements PartyRepository {
 
     @Override
     public long countSearch(String keyword, PartyVisibility visibility) {
-        return partyJpaRepository.searchIds(keyword, visibility, PageRequest.of(0, 1)).getTotalElements();
+        return jpaRepository.searchIds(keyword, visibility, PageRequest.of(0, 1)).getTotalElements();
     }
 
     @Override
     public List<Party> recent(int limit) {
-        List<Long> ids = partyJpaRepository.findRecent(limit);
-        return partyJpaRepository.findRecentWithTags(ids);
+        List<Long> ids = jpaRepository.findRecent(limit);
+        return jpaRepository.findRecentWithTags(ids);
     }
 }

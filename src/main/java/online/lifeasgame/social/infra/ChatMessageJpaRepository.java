@@ -14,10 +14,10 @@ public interface ChatMessageJpaRepository extends JpaRepository<ChatMessage, Lon
 
     @Query(
             """
-                select m
-                from ChatMessage m
-                where m.channel.id = :channelId and (:cursor is null or m.id < :cursor)
-                order by m.id desc
+                SELECT m
+                FROM ChatMessage m
+                WHERE m.channel.id = :channelId AND (:cursor IS NULL OR m.id < :cursor)
+                ORDER BY m.id DESC
             """
     )
     List<ChatMessage> findMessages(
