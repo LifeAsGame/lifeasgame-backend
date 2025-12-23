@@ -1,18 +1,6 @@
 package online.lifeasgame.inventory.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import java.util.Objects;
-import java.util.Optional;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,13 +8,15 @@ import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
+import java.util.Objects;
+import java.util.Optional;
+
 @Getter
 @Entity
 @AggregateRoot
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "items",
-        indexes = @Index(name = "idx_item_name", columnList = "name")
+        name = "items", indexes = @Index(name = "idx_item_name", columnList = "name")
 )
 public class Item extends AbstractTime {
 
@@ -93,23 +83,23 @@ public class Item extends AbstractTime {
             Integer maxDurabilityOrNull
     ) {
         int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
-        DurabilityPolicy dp = (maxDurabilityOrNull==null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
-        return new Item(name, category, type, rarity, baseAttrs, stackable, ms, dp);
+        DurabilityPolicy durabilityPolicy = (maxDurabilityOrNull == null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
+        return new Item(name, category, type, rarity, baseAttrs, stackable, ms, durabilityPolicy);
     }
 
     public void update(
-            ItemName name,
-            ItemCategory category,
-            ItemType type,
+            ItemName itemName,
+            ItemCategory itemCategory,
+            ItemType itemType,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
             Integer maxStack,
             Integer maxDurabilityOrNull
     ) {
-        this.name = Guard.notNull(name, "name");
-        this.category = Guard.notNull(category, "category");
-        this.type = Guard.notNull(type, "type");
+        this.name = Guard.notNull(itemName, "name");
+        this.category = Guard.notNull(itemCategory, "category");
+        this.type = Guard.notNull(itemType, "type");
         this.rarity = (rarity == null) ? Rarity.COMMON : rarity;
         this.baseAttrs = (baseAttrs == null) ? BaseAttrs.empty() : baseAttrs;
         this.stackable = stackable;
@@ -125,7 +115,7 @@ public class Item extends AbstractTime {
         return maxStack;
     }
 
-    public Optional<DurabilityPolicy> durabilityPolicy() {
-        return Optional.ofNullable(durabilityPolicy);
+    public Integer maxDurability() {
+        return this.durabilityPolicy.max();
     }
 }

@@ -10,57 +10,11 @@ public class InventoryWebMapper {
     private InventoryWebMapper() {
     }
 
-    public static InventoryCommand.Add toCommand(InventoryRequest.Add request) {
-        return InventoryCommand.Add.of(
-                request.itemId(),
-                request.quantity(),
-                request.instanceAttrs(),
-                request.bound()
-        );
-    }
-
-    public static InventoryCommand.Remove toCommand(InventoryRequest.Remove request) {
-        return InventoryCommand.Remove.of(
-                request.slotIndex(),
-                request.quantity()
-        );
-    }
-
-    public static InventoryCommand.Move toCommand(InventoryRequest.Move request) {
-        return InventoryCommand.Move.of(
-                request.from(),
-                request.to()
-        );
-    }
-
-    public static InventoryCommand.Merge toCommand(InventoryRequest.Merge request) {
-        return InventoryCommand.Merge.of(
-                request.from(),
-                request.to()
-        );
-    }
-
-    public static InventoryCommand.Split toCommand(InventoryRequest.Split request) {
-        return InventoryCommand.Split.of(
-                request.from(),
-                request.to(),
-                request.quantity()
-        );
-    }
-
-    public static InventoryResponse.Slots toSlots(InventoryResult.Slots result) {
-        return InventoryResponse.Slots.of(result.slots());
-    }
-
-    public static InventoryResponse.Slot toSlot(InventoryResult.Slot result) {
-        return InventoryResponse.Slot.of(result.slot());
-    }
-
     public static InventoryResponse.Entries toEntries(InventoryResult.Entries result) {
-        return InventoryResponse.Entries.of(
+        return new InventoryResponse.Entries(
                 result.entries().stream()
                         .map(
-                                entry -> InventoryResponse.Entry.of(
+                                entry -> new InventoryResponse.Entry(
                                         entry.slotIndex(),
                                         entry.itemId(),
                                         entry.rarity(),
@@ -69,6 +23,52 @@ public class InventoryWebMapper {
                                 )
                         )
                         .toList()
+        );
+    }
+
+    public static InventoryCommand.Add toAddCommand(InventoryRequest.Add request) {
+        return new InventoryCommand.Add(
+                request.itemId(),
+                request.quantity(),
+                request.instanceAttrs(),
+                request.bound()
+        );
+    }
+
+    public static InventoryResponse.Slots toSlots(InventoryResult.Slots result) {
+        return new InventoryResponse.Slots(result.slots());
+    }
+
+    public static InventoryCommand.Move toMoveCommand(InventoryRequest.Move request) {
+        return new InventoryCommand.Move(
+                request.from(),
+                request.to()
+        );
+    }
+
+    public static InventoryCommand.Merge toMergeCommand(InventoryRequest.Merge request) {
+        return new InventoryCommand.Merge(
+                request.from(),
+                request.to()
+        );
+    }
+
+    public static InventoryCommand.Split toSplitCommand(InventoryRequest.Split request) {
+        return new InventoryCommand.Split(
+                request.from(),
+                request.to(),
+                request.quantity()
+        );
+    }
+
+    public static InventoryResponse.Slot toSlot(InventoryResult.Slot result) {
+        return new InventoryResponse.Slot(result.slot());
+    }
+
+    public static InventoryCommand.Remove toRemoveCommand(InventoryRequest.Remove request) {
+        return new InventoryCommand.Remove(
+                request.slotIndex(),
+                request.quantity()
         );
     }
 }

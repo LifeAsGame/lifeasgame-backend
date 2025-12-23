@@ -3,7 +3,6 @@ package online.lifeasgame.inventory.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.inventory.application.command.InventoryCommand;
-import online.lifeasgame.inventory.application.model.InventorySpec;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.domain.*;
 import org.springframework.stereotype.Service;
@@ -23,13 +22,14 @@ public class InventoryService {
 
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
-        Item item = itemReader.getItem(command.itemId());
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
+        Item item = itemReader.getByIdOrThrow(command.itemId());
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
 
-        List<SlotIndex> slotIndexes = inventoryWriter.add(
-                playerInventory,
+        List<SlotIndex> slotIndexes = playerInventory.add(
                 ItemCarryPolicy.from(item),
-                InventorySpec.Add.from(command)
+                command.quantity(),
+                InstanceAttrs.of(command.instanceAttrs()),
+                command.bound()
         );
 
         domainEventPublisher.publishAll(playerInventory.pullEvents());
@@ -37,22 +37,27 @@ public class InventoryService {
         return InventoryResult.Slots.fromList(slotIndexes);
     }
 
-    @Transactional(readOnly = true)
     public InventoryResult.Entries list(Long playerId) {
-        List<InventoryEntry> entries = inventoryReader.getPlayerInventory(playerId).getEntries();
+        List<InventoryEntry> entries = inventoryReader.getByPlayerIdOrThrow(playerId).getEntries();
         return InventoryResult.Entries.fromList(entries);
     }
 
     @Transactional
     public void remove(Long playerId, InventoryCommand.Remove command) {
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
-        inventoryWriter.remove(playerInventory, SlotIndex.of(command.slotIndex()), command.quantity());
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        playerInventory.remove(
+                SlotIndex.of(command.slotIndex()),
+                command.quantity()
+        );
     }
 
     @Transactional
     public void move(Long playerId, InventoryCommand.Move command) {
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
-        inventoryWriter.move(playerInventory, SlotIndex.of(command.from()), SlotIndex.of(command.to()));
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        playerInventory.moveWithin(
+                SlotIndex.of(command.from()),
+                SlotIndex.of(command.to())
+        );
     }
 
     @Transactional
@@ -60,36 +65,30 @@ public class InventoryService {
         SlotIndex from = SlotIndex.of(command.from());
         SlotIndex to = SlotIndex.of(command.to());
 
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
         InventoryEntry fromEntry = playerInventory.getEntry(from);
 
-        Item item = itemReader.getItem(fromEntry.getItemId());
+        Item item = itemReader.getByIdOrThrow(fromEntry.getItemId());
         ItemCarryPolicy fromItemCarryPolicy = ItemCarryPolicy.from(item);
 
-        inventoryWriter.merge(
-                playerInventory,
-                fromItemCarryPolicy,
-                from,
-                to
-        );
+        playerInventory.merge(from, to, fromItemCarryPolicy);
     }
 
     @Transactional
     public InventoryResult.Slot split(Long playerId, InventoryCommand.Split command) {
-        PlayerInventory playerInventory = inventoryReader.getPlayerInventory(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
         InventoryEntry inventoryEntry = playerInventory.getEntry(SlotIndex.of(command.from()));
 
-        Item item = itemReader.getItem(inventoryEntry.getItemId());
+        Item item = itemReader.getByIdOrThrow(inventoryEntry.getItemId());
         ItemCarryPolicy itemCarryPolicy = ItemCarryPolicy.from(item);
 
-        SlotIndex slotIndex = inventoryWriter.split(
-                playerInventory,
-                itemCarryPolicy,
+        SlotIndex slotIndex = playerInventory.split(
                 SlotIndex.of(command.from()),
                 SlotIndex.ofNullable(command.to()),
-                command.quantity()
+                command.quantity(),
+                itemCarryPolicy
         );
 
-        return InventoryResult.Slot.of(slotIndex.value());
+        return new InventoryResult.Slot(slotIndex.value());
     }
 }

@@ -11,33 +11,36 @@ public final class InventoryResult {
 
     public record Slots(List<Integer> slots) {
         public static Slots fromList(List<SlotIndex> slots) {
-            return new Slots(slots.stream().map(SlotIndex::value).toList());
+            return new Slots(
+                    slots.stream()
+                            .map(SlotIndex::value)
+                            .toList()
+            );
         }
     }
 
     public record Slot(int slot) {
-        public static Slot of(int s) {
-            return new Slot(s);
-        }
     }
 
-    public record Entry(int slotIndex, Long itemId, String rarity, int quantity, boolean bound) {
-        public static Entry from(InventoryEntry e) {
+    public record Entry(
+            int slotIndex,
+            Long itemId,
+            String rarity,
+            int quantity,
+            boolean bound
+    ) {
+        public static Entry from(InventoryEntry inventoryEntry) {
             return new Entry(
-                    e.getSlotIndex().value(),
-                    e.getItemId(),
-                    e.getRarity().name(),
-                    e.getQuantity().value(),
-                    e.isBound()
+                    inventoryEntry.getSlotIndex().value(),
+                    inventoryEntry.getItemId(),
+                    inventoryEntry.getRarity().name(),
+                    inventoryEntry.getQuantity().value(),
+                    inventoryEntry.isBound()
             );
         }
     }
 
     public record Entries(List<Entry> entries) {
-        public static Entries of(List<Entry> list) {
-            return new Entries(list);
-        }
-
         public static Entries fromList(List<InventoryEntry> entries) {
             return new Entries(
                     entries.stream()

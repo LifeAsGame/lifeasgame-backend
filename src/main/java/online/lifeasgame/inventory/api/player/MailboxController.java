@@ -25,25 +25,25 @@ public class MailboxController implements MailboxApiSpecV1 {
     private final MailboxFacade mailboxFacade;
 
     @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
+        MailboxResult.Mails result = mailboxFacade.list();
+        return ApiResponses.ok(MailboxWebMapper.toMails(result));
+    }
+
+    @Override
     @PostMapping("/deliver")
     public ResponseEntity<ApiResponse<MailboxResponse.Slot>> deliver(
             @Valid @RequestBody MailboxRequest.Deliver request
     ) {
-        MailboxResult.Slot slot = mailboxFacade.deliver(MailboxWebMapper.toCommand(request));
-        return ApiResponses.ok(MailboxResponse.Slot.of(slot.slot()));
+        MailboxResult.Slot result = mailboxFacade.deliver(MailboxWebMapper.toDeliverCommand(request));
+        return ApiResponses.ok(MailboxWebMapper.toSlot(result));
     }
 
     @Override
     @PostMapping("/claim")
     public ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request) {
-        mailboxFacade.claim(MailboxWebMapper.toCommand(request));
+        mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));
         return ApiResponses.noContent();
-    }
-
-    @Override
-    @GetMapping
-    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
-        MailboxResult.Mails mails = mailboxFacade.list();
-        return ApiResponses.ok(MailboxWebMapper.toLMails(mails));
     }
 }

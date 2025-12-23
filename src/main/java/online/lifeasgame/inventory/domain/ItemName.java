@@ -27,13 +27,6 @@ public class ItemName {
         return new ItemName(raw);
     }
 
-    public static ItemName ofNullable(String raw) {
-        if (raw == null) {
-            return null;
-        }
-        return new ItemName(raw);
-    }
-
     public String value() {
         return value;
     }

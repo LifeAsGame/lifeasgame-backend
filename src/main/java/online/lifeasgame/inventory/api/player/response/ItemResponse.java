@@ -10,9 +10,6 @@ public final class ItemResponse {
     }
 
     public record Id(Long id) {
-        public static Id of(Long id) {
-            return new Id(id);
-        }
     }
 
     public record Summary(
@@ -24,25 +21,6 @@ public final class ItemResponse {
             boolean stackable,
             int maxStack
     ) {
-        public static Summary of(
-                Long id,
-                String name,
-                String category,
-                String type,
-                String rarity,
-                boolean stackable,
-                int maxStack
-        ) {
-            return new Summary(
-                    id,
-                    name,
-                    category,
-                    type,
-                    rarity,
-                    stackable,
-                    maxStack
-            );
-        }
     }
 
     public record Detail(

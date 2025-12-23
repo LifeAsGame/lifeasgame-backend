@@ -12,7 +12,7 @@ public record ItemCarryPolicy(
         Rarity rarity,
         boolean stackable,
         int maxStack,
-        Integer maxDurability // nullable
+        Integer maxDurability
 ) {
 
     public static ItemCarryPolicy from(Item item) {
@@ -22,15 +22,10 @@ public record ItemCarryPolicy(
                 item.getRarity(),
                 item.isStackable(),
                 item.maxStack(),
-                item.durabilityPolicy()
-                        .map(DurabilityPolicy::max)
-                        .orElse(null)
+                item.maxDurability()
         );
     }
 
-    /**
-     * 초기 수량 유효성 (신규 스택 생성 시)
-     */
     public void assertValidInitialQuantity(int quantity) {
         if (!stackable) {
             if (quantity != 1) {

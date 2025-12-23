@@ -1,19 +1,13 @@
 package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.application.command.ItemCommand;
-import online.lifeasgame.inventory.application.model.ItemSpec;
-import online.lifeasgame.inventory.application.query.ItemStackPolicyQuery;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.domain.*;
-import online.lifeasgame.inventory.domain.error.ItemError;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -21,67 +15,62 @@ public class ItemService {
 
     private final ItemReader itemReader;
     private final ItemWriter itemWriter;
-    private final ItemStackPolicyQuery itemStackPolicyQuery;
+    private final ItemStackPolicyChecker itemStackPolicyChecker;
 
     @Transactional
-    public ItemResult.Id create(ItemCommand.Create cmd) {
-        if (itemReader.existsByName(cmd.name())) {
-            throw new DomainException(ItemError.ITEM_NAME_DUP);
-        }
+    public ItemResult.Id create(ItemCommand.Create command) {
+        Item saved = itemWriter.create(
+                Item.create(
+                        ItemName.of(command.name()),
+                        ItemCategory.parse(command.category()),
+                        ItemType.parse(command.type()),
+                        Rarity.parse(command.rarity()),
+                        BaseAttrs.of(command.baseAttrs()),
+                        command.stackable(),
+                        command.maxStack(),
+                        command.maxDurability()
+                )
+        );
 
-        Item saved = itemWriter.create(ItemSpec.Create.from(cmd));
-        return ItemResult.Id.of(saved.getId());
+        return new ItemResult.Id(saved.getId());
     }
 
     @Transactional
-    public ItemResult.Id update(ItemCommand.Update cmd) {
-        Item item = itemReader.getItem(cmd.id());
+    public ItemResult.Id update(ItemCommand.Update command) {
+        Item item = itemReader.getByIdOrThrow(command.id());
 
-        if (!item.getName().value().equals(cmd.name()) && itemReader.existsByName(cmd.name())) {
-            throw new DomainException(ItemError.ITEM_NAME_DUP);
+        if (!item.getName().value().equals(command.name())) {
+            itemReader.assertNameNotExists(command.name());
         }
 
-        boolean turnOffStack = !cmd.stackable();
-        int newLimit = turnOffStack ? 1 : (cmd.maxStack() == null ? 1 : cmd.maxStack());
+        int newLimit = !command.stackable() ? 1 : (command.maxStack() == null ? 1 : command.maxStack());
+        itemStackPolicyChecker.assertNoPolicyConflict(item.getId(), newLimit);
 
-        long violating = itemStackPolicyQuery.countTotalStacksExceeding(item.getId(), newLimit);
-        if (violating > 0) {
-            throw new DomainException(ItemError.POLICY_CONFLICT);
-        }
+        item.update(
+                ItemName.of(command.name()),
+                ItemCategory.parse(command.category()),
+                ItemType.parse(command.type()),
+                Rarity.parse(command.rarity()),
+                BaseAttrs.of(command.baseAttrs()),
+                command.stackable(),
+                command.maxStack(),
+                command.maxDurability()
+        );
 
-        Item updated = itemWriter.update(item, ItemSpec.Update.from(cmd));
-        return ItemResult.Id.of(updated.getId());
+        return new ItemResult.Id(item.getId());
     }
 
     @Transactional
     public ItemResult.Deleted delete(Long id) {
-        Item item = itemReader.getItem(id);
-
+        Item item = itemReader.getByIdOrThrow(id);
         itemWriter.delete(item);
-
-        return ItemResult.Deleted.of(item.getId());
+        return new ItemResult.Deleted(item.getId());
     }
 
     @Transactional(readOnly = true)
     public ItemResult.Detail getItem(Long id) {
-        Item item = itemReader.getItem(id);
-
-        Integer maxDurability = item.durabilityPolicy()
-                .map(DurabilityPolicy::max)
-                .orElse(null);
-
-        Map<String, Integer> attrs = item.getBaseAttrs().attrs();
-        return ItemResult.Detail.of(
-                item.getId(),
-                item.getName().value(),
-                item.getCategory().name(),
-                item.getType().name(),
-                item.getRarity().name(),
-                item.isStackable(),
-                item.maxStack(),
-                maxDurability,
-                attrs
-        );
+        Item item = itemReader.getByIdOrThrow(id);
+        return ItemResult.Detail.from(item);
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +81,7 @@ public class ItemService {
             String rarity,
             Pageable pageable
     ) {
-        Page<ItemResult.Summary> page = itemReader.search(
+        Page<ItemResult.Summary> result = itemReader.search(
                 name,
                 ItemCategory.parseNullable(category),
                 ItemType.parseNullable(type),
@@ -100,6 +89,6 @@ public class ItemService {
                 pageable
         ).map(ItemResult.Summary::from);
 
-        return ItemResult.Page.of(page);
+        return ItemResult.Page.from(result);
     }
 }
