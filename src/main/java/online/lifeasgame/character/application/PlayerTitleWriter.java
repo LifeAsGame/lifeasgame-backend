@@ -14,7 +14,7 @@ class PlayerTitleWriter {
 
     private final PlayerTitleRepository repository;
 
-    public PlayerTitle grantTitle(PlayerTitle playerTitle) {
+    public PlayerTitle create(PlayerTitle playerTitle) {
         return repository.save(playerTitle);
     }
 }

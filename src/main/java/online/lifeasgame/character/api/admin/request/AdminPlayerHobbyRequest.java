@@ -4,8 +4,7 @@ import java.time.LocalDate;
 
 public final class AdminPlayerHobbyRequest {
 
-    private AdminPlayerHobbyRequest() {
-    }
+    private AdminPlayerHobbyRequest() {}
 
     public record Grant(
             String customName,
@@ -14,14 +13,5 @@ public final class AdminPlayerHobbyRequest {
             String status,
             LocalDate startedOn
     ) {
-        public static Grant of(
-                String customName,
-                String detail,
-                Integer proficiency,
-                String status,
-                LocalDate startedOn
-        ) {
-            return new Grant(customName, detail, proficiency, status, startedOn);
-        }
     }
 }

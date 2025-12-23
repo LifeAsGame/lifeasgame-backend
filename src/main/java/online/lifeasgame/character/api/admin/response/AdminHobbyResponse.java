@@ -10,8 +10,5 @@ public final class AdminHobbyResponse {
             String name,
             String category
     ) {
-        public static Info of(Long hobbyId, String name, String category) {
-            return new Info(hobbyId, name, category);
-        }
     }
 }

@@ -1,11 +1,12 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerCertificationCommand;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class PlayerCertificationFacade {
     public PlayerCertificationResult.Created createPlayerCertification(
             PlayerCertificationCommand.Create command
     ) {
-        return playerCertificationService.createPlayerCertification(getPlayerId(), command);
+        return playerCertificationService.createCertification(getPlayerId(), command);
     }
 
     public void deletePlayerCertification(Long certificationId) {

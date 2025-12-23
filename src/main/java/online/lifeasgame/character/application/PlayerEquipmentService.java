@@ -1,14 +1,13 @@
 package online.lifeasgame.character.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand.Equip;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.domain.PlayerEquipment;
-import online.lifeasgame.character.domain.error.PlayerEquipmentError;
-import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +18,15 @@ public class PlayerEquipmentService {
 
     @Transactional
     public PlayerEquipmentResult.Equipped equip(Long playerId, Equip command) {
-        if (playerEquipmentReader.existsItemInstance(command.itemInstanceId())) {
-            throw new DomainException(PlayerEquipmentError.ALREADY_EQUIPPED_ITEM);
-        }
+        playerEquipmentReader.assertNotExistsByItemInstanceId(command.itemInstanceId());
 
-        return PlayerEquipmentResult.Equipped.of(
-                playerEquipmentWriter.equip(playerId, command.slotId(), command.itemInstanceId())
+        PlayerEquipment playerEquipment = playerEquipmentWriter.equip(
+                playerId,
+                command.slotId(),
+                command.itemInstanceId()
         );
+
+        return PlayerEquipmentResult.Equipped.from(playerEquipment);
     }
 
     @Transactional
@@ -34,7 +35,7 @@ public class PlayerEquipmentService {
     }
 
     public List<PlayerEquipmentResult.Info> getPlayerEquipmentInfos(Long playerId) {
-        List<PlayerEquipment> playerEquipmentInfos = playerEquipmentReader.getPlayerEquipmentInfos(playerId);
+        List<PlayerEquipment> playerEquipmentInfos = playerEquipmentReader.getByPlayerId(playerId);
         return playerEquipmentInfos.stream()
                 .map(PlayerEquipmentResult.Info::from)
                 .toList();

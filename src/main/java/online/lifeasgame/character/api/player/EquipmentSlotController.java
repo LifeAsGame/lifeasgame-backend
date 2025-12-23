@@ -1,12 +1,11 @@
 package online.lifeasgame.character.api.player;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.EquipmentSlotService;
-import online.lifeasgame.character.application.result.EquipmentSlotResult;
 import online.lifeasgame.character.api.player.mapper.EquipmentSlotWebMapper;
 import online.lifeasgame.character.api.player.response.EquipmentSlotResponse;
 import online.lifeasgame.character.api.player.spec.EquipmentSlotApiSpecV1;
+import online.lifeasgame.character.application.EquipmentSlotService;
+import online.lifeasgame.character.application.result.EquipmentSlotResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,9 +29,7 @@ public class EquipmentSlotController implements EquipmentSlotApiSpecV1 {
             @RequestParam(name = "category", required = false) List<String> categories,
             @RequestParam(name = "role", required = false) List<String> roles
     ) {
-        List<EquipmentSlotResult.Info> infos = equipmentSlotService.getEquipmentSlots(categories, roles);
-        return ApiResponses.ok(
-                EquipmentSlotWebMapper.toEquipmentSlotInfos(infos)
-        );
+        List<EquipmentSlotResult.Info> results = equipmentSlotService.getEquipmentSlots(categories, roles);
+        return ApiResponses.ok(EquipmentSlotWebMapper.toInfos(results));
     }
 }

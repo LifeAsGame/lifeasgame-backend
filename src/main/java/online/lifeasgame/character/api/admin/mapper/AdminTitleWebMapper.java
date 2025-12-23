@@ -5,12 +5,12 @@ import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
 import online.lifeasgame.character.application.command.TitleCommand;
 import online.lifeasgame.character.application.result.TitleResult;
 
-public class AdminTitleWebMapper {
+public final class AdminTitleWebMapper {
 
     private AdminTitleWebMapper() {}
 
-    public static TitleCommand.Create toCommand(AdminTitleRequest.Create request) {
-        return TitleCommand.Create.of(
+    public static TitleCommand.Create toCreateCommand(AdminTitleRequest.Create request) {
+        return new TitleCommand.Create(
                 request.code(),
                 request.name(),
                 request.category(),
@@ -18,8 +18,8 @@ public class AdminTitleWebMapper {
         );
     }
 
-    public static AdminTitleResponse.Info toTitleInfo(TitleResult.Info result) {
-        return AdminTitleResponse.Info.of(
+    public static AdminTitleResponse.Info toInfo(TitleResult.Info result) {
+        return new AdminTitleResponse.Info(
                 result.code(),
                 result.name(),
                 result.category(),

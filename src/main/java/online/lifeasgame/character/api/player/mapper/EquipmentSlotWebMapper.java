@@ -1,23 +1,24 @@
 package online.lifeasgame.character.api.player.mapper;
 
-import java.util.List;
-import online.lifeasgame.character.application.result.EquipmentSlotResult;
 import online.lifeasgame.character.api.player.response.EquipmentSlotResponse;
+import online.lifeasgame.character.application.result.EquipmentSlotResult;
 
-public class EquipmentSlotWebMapper {
+import java.util.List;
+
+public final class EquipmentSlotWebMapper {
 
     private EquipmentSlotWebMapper() {}
 
-    public static EquipmentSlotResponse.Infos toEquipmentSlotInfos(List<EquipmentSlotResult.Info> infos) {
-        return EquipmentSlotResponse.Infos.of(
-                infos.stream()
+    public static EquipmentSlotResponse.Infos toInfos(List<EquipmentSlotResult.Info> results) {
+        return new EquipmentSlotResponse.Infos(
+                results.stream()
                         .map(
-                                info ->
-                                        EquipmentSlotResponse.Info.of(
-                                                info.code(),
-                                                info.name(),
-                                                info.category(),
-                                                info.role()
+                                result ->
+                                        new EquipmentSlotResponse.Info(
+                                                result.code(),
+                                                result.name(),
+                                                result.category(),
+                                                result.role()
                                         )
                         )
                         .toList()

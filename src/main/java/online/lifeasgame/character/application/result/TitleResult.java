@@ -28,9 +28,5 @@ public final class TitleResult {
         public static List<Info> fromList(List<Title> titles) {
             return titles.stream().map(Info::from).collect(Collectors.toList());
         }
-
-        public static Info of(String code, String name, String category, String descMd) {
-            return new Info(code, name, category, descMd);
-        }
     }
 }

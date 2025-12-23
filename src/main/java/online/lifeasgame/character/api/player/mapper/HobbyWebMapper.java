@@ -1,22 +1,23 @@
 package online.lifeasgame.character.api.player.mapper;
 
-import java.util.List;
-import online.lifeasgame.character.application.result.HobbyResult;
 import online.lifeasgame.character.api.player.response.HobbyResponse;
+import online.lifeasgame.character.application.result.HobbyResult;
 
-public class HobbyWebMapper {
+import java.util.List;
+
+public final class HobbyWebMapper {
 
     private HobbyWebMapper() {}
 
-    public static HobbyResponse.Infos toHobbyInfos(List<HobbyResult.Info> infos) {
-        return HobbyResponse.Infos.of(
-                infos.stream()
+    public static HobbyResponse.Infos toInfos(List<HobbyResult.Info> results) {
+        return new HobbyResponse.Infos(
+                results.stream()
                         .map(
-                                hobbyInfo ->
-                                        HobbyResponse.Info.of(
-                                                hobbyInfo.hobbyId(),
-                                                hobbyInfo.name(),
-                                                hobbyInfo.category()
+                                result ->
+                                        new HobbyResponse.Info(
+                                                result.hobbyId(),
+                                                result.name(),
+                                                result.category()
                                         )
                         )
                         .toList()

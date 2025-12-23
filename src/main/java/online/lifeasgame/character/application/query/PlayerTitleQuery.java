@@ -1,8 +1,9 @@
 package online.lifeasgame.character.application.query;
 
-import java.util.List;
 import online.lifeasgame.character.application.view.PlayerTitleView;
 
+import java.util.List;
+
 public interface PlayerTitleQuery {
-    List<PlayerTitleView> findPlayerTitleInfos(Long playerId);
+    List<PlayerTitleView> findViewsByPlayerId(Long playerId);
 }

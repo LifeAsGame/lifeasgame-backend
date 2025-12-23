@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
 
-    private final PlayerHobbyService adminPlayerHobbyService;
+    private final PlayerHobbyService playerHobbyService;
 
     @Override
     @PostMapping("/{playerId}/hobbies/{hobbyId}")
@@ -27,12 +27,11 @@ public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody AdminPlayerHobbyRequest.Grant request
     ) {
-        PlayerHobbyResult.Granted granted = adminPlayerHobbyService.grantHobby(
-                AdminPlayerHobbyWebMapper.toCommand(playerId, hobbyId, request)
+        PlayerHobbyResult.Created result = playerHobbyService.createPlayerHobby(
+                playerId,
+                AdminPlayerHobbyWebMapper.toCreatedCommand(hobbyId, request)
         );
 
-        return ApiResponses.ok(
-                AdminPlayerHobbyWebMapper.toGrantedHobby(granted)
-        );
+        return ApiResponses.ok(AdminPlayerHobbyWebMapper.toGranted(result));
     }
 }

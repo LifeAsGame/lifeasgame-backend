@@ -1,9 +1,10 @@
 package online.lifeasgame.character.domain.repository;
 
-import java.util.List;
-import java.util.Optional;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface AchievementRepository {
     Achievement save(Achievement achievement);

@@ -24,12 +24,8 @@ public final class CertificationResult {
             );
         }
 
-        public static List<Info> fromList(List<Certification> Certifications) {
-            return Certifications.stream().map(Info::from).toList();
-        }
-
-        public static Info of(Long certificationId, String name, String issuer, String category) {
-            return new Info(certificationId, name, issuer, category);
+        public static List<Info> fromList(List<Certification> certifications) {
+            return certifications.stream().map(Info::from).toList();
         }
     }
 }

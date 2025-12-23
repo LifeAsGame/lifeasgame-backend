@@ -65,8 +65,13 @@ public class Health {
         return new Health(next, cap);
     }
 
-    public int current() { return current; }
-    public int cap() { return cap; }
+    public int current() {
+        return current;
+    }
+
+    public int cap() {
+        return cap;
+    }
 
     private static int clamp(int cur, int cap) {
         return Math.max(0, Math.min(cur, cap));

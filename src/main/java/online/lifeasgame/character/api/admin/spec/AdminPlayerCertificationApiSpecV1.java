@@ -15,6 +15,6 @@ public interface AdminPlayerCertificationApiSpecV1 {
     ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Granted>> grantCertification(
             @PathVariable Long playerId,
             @PathVariable Long certificationId,
-            @Valid @RequestBody AdminPlayerCertificationRequest.Grant request
+            @Valid @RequestBody AdminPlayerCertificationRequest.Create request
     );
 }

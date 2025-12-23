@@ -11,8 +11,5 @@ public final class TitleCommand {
             String category,
             String descMd
     ) {
-        public static Create of(String code, String name, String category, String descMd) {
-            return new Create(code, name, category, descMd);
-        }
     }
 }

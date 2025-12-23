@@ -14,15 +14,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 class PlayerReader {
 
-    private final PlayerRepository playerRepository;
+    private final PlayerRepository repository;
 
-    public Player getPlayer(Long playerId) {
-        return playerRepository.findById(playerId).orElseThrow(
-                () -> new DomainException(PlayerError.PLAYER_NOT_FOUND)
-        );
+    public Player getByIdOrThrow(Long playerId) {
+        return repository.findById(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
     }
 
-    public boolean notExists(Long playerId) {
-        return !playerRepository.existsById(playerId);
+    public void assertExistsById(Long playerId) {
+        if (!repository.existsById(playerId)) {
+            throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
+        }
+    }
+
+    public void assertNotExistsByUserId(Long userId) {
+        if (repository.existsByUserId(userId)) {
+            throw new DomainException(PlayerError.PLAYER_ALREADY_EXISTS);
+        }
     }
 }

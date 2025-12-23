@@ -1,13 +1,12 @@
 package online.lifeasgame.character.domain.repository;
 
-import java.util.List;
-import java.util.Optional;
 import online.lifeasgame.character.domain.PlayerEquipment;
 
-public interface PlayerEquipmentRepository {
-    Optional<PlayerEquipment> findByPlayerIdAndSlotId(Long playerId, Long slotId);
+import java.util.List;
+import java.util.Optional;
 
-    Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId);    // write
+public interface PlayerEquipmentRepository {
+    Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId);
 
     boolean existsByItemInstanceId(Long itemInstanceId);
 

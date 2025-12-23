@@ -14,9 +14,6 @@ public final class PlayerResult {
     }
 
     public record Created(Long id) {
-        public static Created of(Long id) {
-            return new Created(id);
-        }
     }
 
     public record PlayerInfo(
@@ -57,9 +54,6 @@ public final class PlayerResult {
     }
 
     public record UpdatedTitle(Long titleId) {
-        public static UpdatedTitle of(Long titleId) {
-            return new UpdatedTitle(titleId);
-        }
     }
 
     public record ExpGranted(
@@ -74,7 +68,7 @@ public final class PlayerResult {
             long capForLevel,
             double progressRatio
     ) {
-        public static ExpGranted of(Long id, Player.GainResult gainResult) {
+        public static ExpGranted from(Long id, Player.GainResult gainResult) {
             return new ExpGranted(
                     id,
                     gainResult.requestedExp(),
@@ -91,33 +85,25 @@ public final class PlayerResult {
     }
 
 
-    public record CurrentHp(
-            int value
-    ) {
+    public record CurrentHp(int value) {
         public static CurrentHp from(Player player) {
             return new CurrentHp(player.getHealth().current());
         }
     }
 
-    public record HpCapacity(
-            int cap
-    ) {
+    public record HpCapacity(int cap) {
         public static HpCapacity from(Player player) {
             return new HpCapacity(player.getHealth().cap());
         }
     }
 
-    public record CurrentMp(
-            int value
-    ) {
+    public record CurrentMp(int value) {
         public static CurrentMp from(Player player) {
             return new CurrentMp(player.getMana().current());
         }
     }
 
-    public record MpCapacity(
-            int cap
-    ) {
+    public record MpCapacity(int cap) {
         public static MpCapacity from(Player player) {
             return new MpCapacity(player.getMana().cap());
         }
@@ -132,7 +118,7 @@ public final class PlayerResult {
             int vit,
             int luc
     ) {
-        public static CoreStatsGranted of(Long playerId, CoreStats coreStats) {
+        public static CoreStatsGranted from(Long playerId, CoreStats coreStats) {
             return new CoreStatsGranted(
                     playerId,
                     coreStats.str(),

@@ -10,8 +10,5 @@ public final class HobbyCommand {
             String name,
             String category
     ) {
-        public static Create of(String name, String category) {
-            return new Create(name, category);
-        }
     }
 }

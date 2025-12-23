@@ -1,15 +1,15 @@
 package online.lifeasgame.character.api.player.request;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
 public final class PlayerEquipmentRequest {
 
     private PlayerEquipmentRequest() {
     }
 
     public record Equip(
-            Long itemInstanceId
+            @NotNull @Min(1) Long itemInstanceId
     ) {
-        public static Equip of(Long itemInstanceId) {
-            return new Equip(itemInstanceId);
-        }
     }
 }

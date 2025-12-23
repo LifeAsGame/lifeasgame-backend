@@ -36,7 +36,7 @@ public class PlayerCertificationRepositoryAdapter implements PlayerCertification
     }
 
     @Override
-    public List<PlayerCertificationView> findPlayerCertificationInfos(Long playerId) {
+    public List<PlayerCertificationView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerCertificationViews(playerId);
     }
 }
