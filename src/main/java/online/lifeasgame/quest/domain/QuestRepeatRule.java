@@ -1,20 +1,49 @@
 package online.lifeasgame.quest.domain;
 
+import online.lifeasgame.core.lang.EnumParsers;
+import online.lifeasgame.quest.domain.error.QuestError;
+
 import java.time.Duration;
+import java.util.List;
 
 public enum QuestRepeatRule {
-    NONE(Duration.ofDays(365)),
-    DAILY(Duration.ofDays(3)),
-    WEEKLY(Duration.ofDays(21)),
-    MONTHLY(Duration.ofDays(93));
+    NONE,
+    DAILY,
+    WEEKLY,
+    MONTHLY;
 
-    private final Duration idempotencyTtl;
+    public static QuestRepeatRule parse(String raw) {
+        return EnumParsers.parseStrict(
+                QuestRepeatRule.class,
+                raw,
+                QuestError.INVALID_QUEST_REPEATABLE_RULE,
+                "Quest repeatable rule"
+        );
+    }
 
-    QuestRepeatRule(Duration idempotencyTtl) {
-        this.idempotencyTtl = idempotencyTtl;
+    public static QuestRepeatRule parseNullable(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        return parse(raw);
+    }
+
+    public static List<QuestRepeatRule> parse(List<String> raw) {
+        return EnumParsers.parseListStrict(
+                QuestRepeatRule.class,
+                raw,
+                QuestError.INVALID_QUEST_REPEATABLE_RULE,
+                "Quest repeatable rules"
+        );
     }
 
     public Duration idempotencyTtl() {
-        return idempotencyTtl;
+        return switch (this) {
+            case NONE -> Duration.ofDays(90);
+            case DAILY -> Duration.ofDays(7);
+            case WEEKLY -> Duration.ofDays(30);
+            case MONTHLY -> Duration.ofDays(120);
+        };
     }
 }

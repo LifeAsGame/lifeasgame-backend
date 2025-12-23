@@ -11,5 +11,5 @@ public class QuestEventProperties {
 
     private boolean enabled = false;
 
-    private String topic = "quest.events";
+    private String channel = "quest.events";
 }

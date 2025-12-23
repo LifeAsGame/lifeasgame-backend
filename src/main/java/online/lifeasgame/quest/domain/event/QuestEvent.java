@@ -2,6 +2,7 @@ package online.lifeasgame.quest.domain.event;
 
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.quest.domain.Quest;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -43,6 +44,23 @@ public record QuestEvent(
             return "questId:" + questId;
         }
         return type.name();
+    }
+
+    public static QuestEvent snapshot(QuestEventType type, Quest quest, String correlationId) {
+        return QuestEvent.builder(type)
+                .questId(quest.getId())
+                .questCode(quest.getCode())
+                .attribute("title", quest.getTitle().value())
+                .attribute("category", quest.getCategory().name())
+                .attribute("targetType", quest.target().type().name())
+                .attribute("targetValue", quest.target().value())
+                .attribute("repeatRule", quest.getRepeatRule().name())
+                .attribute("rewardExp", quest.getReward().exp())
+                .attribute("rewardStats", quest.getReward().stats().stats())
+                .attribute("dueAt", quest.getDueAt())
+                .occurredAt(Instant.now())
+                .correlationId(correlationId)
+                .build();
     }
 
     public static final class Builder {

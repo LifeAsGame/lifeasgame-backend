@@ -190,7 +190,7 @@ public class QuestAutomationService {
 
     private String correlation(QuestSignal signal, String suffix) {
         if (signal.correlationId() != null && !signal.correlationId().isBlank()) {
-            return signal.correlationId();
+            return signal.correlationId() + ":" + suffix;
         }
         return "%s:%s:%s".formatted(signal.questCode().value(), signal.playerId(), suffix);
     }

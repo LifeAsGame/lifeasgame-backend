@@ -42,27 +42,4 @@ class QuestWriter {
 
         return saved;
     }
-
-    public Quest update(Quest quest) {
-        Quest saved = questRepository.save(quest);
-
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_UPDATED)
-                        .questCode(saved.getCode())
-                        .questId(saved.getId())
-                        .attribute("title", saved.getTitle().value())
-                        .attribute("category", saved.getCategory().name())
-                        .attribute("targetType", saved.target().type().name())
-                        .attribute("targetValue", saved.target().value())
-                        .attribute("repeatRule", saved.getRepeatRule().name())
-                        .attribute("rewardExp", saved.getReward().exp())
-                        .attribute("rewardStats", saved.getReward().stats().stats())
-                        .attribute("dueAt", saved.getDueAt())
-                        .occurredAt(Instant.now())
-                        .correlationId("quest:" + saved.getCode() + ":updated")
-                        .build()
-        );
-
-        return saved;
-    }
 }
