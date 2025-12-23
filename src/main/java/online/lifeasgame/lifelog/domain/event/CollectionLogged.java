@@ -17,7 +17,12 @@ public record CollectionLogged(
         }
     }
 
-    public static CollectionLogged of(Long playerId, Long collectionLogId, String category, int quantity) {
+    public static CollectionLogged of(
+            Long playerId,
+            Long collectionLogId,
+            String category,
+            int quantity
+    ) {
         return new CollectionLogged(playerId, collectionLogId, category, quantity, Instant.now());
     }
 }

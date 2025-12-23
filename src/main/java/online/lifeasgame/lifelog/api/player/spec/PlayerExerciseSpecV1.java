@@ -16,16 +16,6 @@ import java.util.List;
 
 @Tag(name = "LifeLog Exercise API V1 (Player)")
 public interface PlayerExerciseSpecV1 {
-    @Operation(summary = "운동 등록")
-    ResponseEntity<PlayerExerciseResponse.Created> create(
-            @Valid @RequestBody PlayerExerciseRequest.Create request
-    );
-
-    @Operation(summary = "운동 수정")
-    ResponseEntity<PlayerExerciseResponse.Info> update(
-            @PathVariable Long exerciseId,
-            @Valid @RequestBody PlayerExerciseRequest.Update request
-    );
 
     @Operation(summary = "최근 조회")
     ResponseEntity<List<PlayerExerciseResponse.Info>> recent(
@@ -39,5 +29,16 @@ public interface PlayerExerciseSpecV1 {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(summary = "운동 등록")
+    ResponseEntity<PlayerExerciseResponse.Created> create(
+            @Valid @RequestBody PlayerExerciseRequest.Create request
+    );
+
+    @Operation(summary = "운동 수정")
+    ResponseEntity<PlayerExerciseResponse.Info> update(
+            @PathVariable Long exerciseId,
+            @Valid @RequestBody PlayerExerciseRequest.Update request
     );
 }

@@ -13,10 +13,6 @@ import java.util.List;
 @Tag(name = "LifeLog Media API V1 (Admin)")
 public interface AdminMediaSpecV1 {
 
-    // --- Player-scoped ---
-    @Operation(summary = "미디어 생성(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminMediaResponse.Created> create(Long playerId, AdminMediaRequest.Create request);
-
     @Operation(summary = "최근 조회(관리자, 플레이어 스코프)")
     ResponseEntity<List<AdminMediaResponse.Info>> recent(Long playerId, Integer limit);
 
@@ -29,6 +25,9 @@ public interface AdminMediaSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     );
+
+    @Operation(summary = "미디어 생성(관리자, 플레이어 스코프)")
+    ResponseEntity<AdminMediaResponse.Created> create(Long playerId, AdminMediaRequest.Create request);
 
     // --- MediaId-scoped ---
     @Operation(summary = "평점 반영(관리자)")

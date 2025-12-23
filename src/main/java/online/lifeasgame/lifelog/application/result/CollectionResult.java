@@ -6,13 +6,11 @@ import java.time.Instant;
 import java.util.Set;
 
 public final class CollectionResult {
+
     private CollectionResult() {
     }
 
     public record Created(Long id) {
-        public static Created of(Long id) {
-            return new Created(id);
-        }
     }
 
     public record Info(

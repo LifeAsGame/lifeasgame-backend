@@ -9,10 +9,25 @@ import java.time.LocalDate;
 import java.util.List;
 
 public final class AdminExerciseWebMapper {
+
     private AdminExerciseWebMapper() {
     }
 
-    public static ExerciseCommand.Create toCommand(AdminExerciseRequest.Create request) {
+    public static ExerciseCommand.Search toSearchCommand(
+            String category,
+            LocalDate from,
+            LocalDate to,
+            int page,
+            int size
+    ) {
+        return new ExerciseCommand.Search(category, from, to, page, size);
+    }
+
+    public static List<AdminExerciseResponse.Info> toInfos(List<ExerciseResult.Info> results) {
+        return results.stream().map(AdminExerciseWebMapper::toInfo).toList();
+    }
+
+    public static ExerciseCommand.Create toCreateCommand(AdminExerciseRequest.Create request) {
         return new ExerciseCommand.Create(
                 request.category(),
                 request.durationMinutes(),
@@ -23,7 +38,11 @@ public final class AdminExerciseWebMapper {
         );
     }
 
-    public static ExerciseCommand.Update toCommand(AdminExerciseRequest.Update request) {
+    public static AdminExerciseResponse.Created toCreated(ExerciseResult.Created result) {
+        return new AdminExerciseResponse.Created(result.id());
+    }
+
+    public static ExerciseCommand.Update toUpdateCommand(AdminExerciseRequest.Update request) {
         return new ExerciseCommand.Update(
                 request.category(),
                 request.durationMinutes(),
@@ -34,21 +53,7 @@ public final class AdminExerciseWebMapper {
         );
     }
 
-    public static ExerciseCommand.Search toCommand(AdminExerciseRequest.Search request) {
-        return new ExerciseCommand.Search(
-                request.category(),
-                request.from(),
-                request.to(),
-                request.page(),
-                request.size()
-        );
-    }
-
-    public static AdminExerciseResponse.Created toResponse(ExerciseResult.Created result) {
-        return new AdminExerciseResponse.Created(result.id());
-    }
-
-    public static AdminExerciseResponse.Info toResponse(ExerciseResult.Info result) {
+    public static AdminExerciseResponse.Info toInfo(ExerciseResult.Info result) {
         return new AdminExerciseResponse.Info(
                 result.id(),
                 result.playerId(),
@@ -60,20 +65,6 @@ public final class AdminExerciseWebMapper {
                 result.memo(),
                 result.createdAt(),
                 result.updatedAt()
-        );
-    }
-
-    public static List<AdminExerciseResponse.Info> toResponseList(List<ExerciseResult.Info> results) {
-        return results.stream().map(AdminExerciseWebMapper::toResponse).toList();
-    }
-
-    public static ExerciseCommand.Search toCommand(String category, LocalDate from, LocalDate to, int page, int size) {
-        return new ExerciseCommand.Search(
-                category,
-                from,
-                to,
-                page,
-                size
         );
     }
 }

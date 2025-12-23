@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import java.util.Set;
 
 public final class PlayerMediaLogRequest {
+
     private PlayerMediaLogRequest() {
     }
 

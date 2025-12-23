@@ -20,25 +20,14 @@ public class AdminMediaController implements AdminMediaSpecV1 {
 
     private final MediaLogService mediaLogService;
 
-    // Player-scoped
-    @PostMapping("/{playerId}/media")
-    @Override
-    public ResponseEntity<AdminMediaResponse.Created> create(
-            @PathVariable Long playerId,
-            @Valid @RequestBody AdminMediaRequest.Create request
-    ) {
-        MediaLogResult.Created created = mediaLogService.create(playerId, AdminMediaWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponse(created));
-    }
-
     @Override
     @GetMapping("/{playerId}/media/recent")
     public ResponseEntity<List<AdminMediaResponse.Info>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") Integer limit
     ) {
-        List<MediaLogResult.Info> infos = mediaLogService.recent(playerId, limit);
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponseList(infos));
+        List<MediaLogResult.Info> results = mediaLogService.recent(playerId, limit);
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfos(results));
     }
 
     @Override
@@ -51,20 +40,24 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<MediaLogResult.Info> infos = mediaLogService.search(
+        List<MediaLogResult.Info> results = mediaLogService.search(
                 playerId,
-                AdminMediaWebMapper.toCommand(
-                        category,
-                        status,
-                        titleLike,
-                        page,
-                        size
-                )
+                AdminMediaWebMapper.toSearchCommand(category, status, titleLike, page, size)
         );
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponseList(infos));
+
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfos(results));
     }
 
-    // MediaId-scoped
+    @PostMapping("/{playerId}/media")
+    @Override
+    public ResponseEntity<AdminMediaResponse.Created> create(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminMediaRequest.Create request
+    ) {
+        MediaLogResult.Created result = mediaLogService.create(playerId, AdminMediaWebMapper.toCreateCommand(request));
+        return ResponseEntity.ok(AdminMediaWebMapper.toCreated(result));
+    }
+
     @Override
     @PostMapping("/{playerId}/media/{mediaId}/rate")
     public ResponseEntity<AdminMediaResponse.Info> rate(
@@ -72,8 +65,8 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody AdminMediaRequest.Rate request
     ) {
-        MediaLogResult.Info info = mediaLogService.rate(playerId, mediaId, AdminMediaWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponse(info));
+        MediaLogResult.Info result = mediaLogService.rate(playerId, mediaId, AdminMediaWebMapper.toRateCommand(request));
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfo(result));
     }
 
     @Override
@@ -83,8 +76,8 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody AdminMediaRequest.Advance request
     ) {
-        MediaLogResult.Info info = mediaLogService.advance(playerId, mediaId, AdminMediaWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponse(info));
+        MediaLogResult.Info result = mediaLogService.advance(playerId, mediaId, AdminMediaWebMapper.toAdvanceCommand(request));
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfo(result));
     }
 
     @Override
@@ -94,8 +87,13 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody AdminMediaRequest.MarkStatus request
     ) {
-        MediaLogResult.Info info = mediaLogService.markStatus(playerId, mediaId, AdminMediaWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponse(info));
+        MediaLogResult.Info result = mediaLogService.markStatus(
+                playerId,
+                mediaId,
+                AdminMediaWebMapper.toMarkStatusCommand(request)
+        );
+
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfo(result));
     }
 
     @Override
@@ -104,7 +102,7 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long mediaId
     ) {
-        MediaLogResult.Info info = mediaLogService.rewatch(playerId, mediaId);
-        return ResponseEntity.ok(AdminMediaWebMapper.toResponse(info));
+        MediaLogResult.Info result = mediaLogService.rewatch(playerId, mediaId);
+        return ResponseEntity.ok(AdminMediaWebMapper.toInfo(result));
     }
 }

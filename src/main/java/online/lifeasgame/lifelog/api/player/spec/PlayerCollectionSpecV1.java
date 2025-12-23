@@ -16,16 +16,6 @@ import java.util.List;
 
 @Tag(name = "LifeLog Collection API V1 (Player)")
 public interface PlayerCollectionSpecV1 {
-    @Operation(summary = "컬렉션 등록")
-    ResponseEntity<PlayerCollectionResponse.Created> create(
-            @Valid @RequestBody PlayerCollectionRequest.Create request
-    );
-
-    @Operation(summary = "컬렉션 수정")
-    ResponseEntity<PlayerCollectionResponse.Info> update(
-            @PathVariable Long collectionId,
-            @Valid @RequestBody PlayerCollectionRequest.Update request
-    );
 
     @Operation(summary = "최근 조회")
     ResponseEntity<List<PlayerCollectionResponse.Info>> recent(
@@ -38,5 +28,16 @@ public interface PlayerCollectionSpecV1 {
             @RequestParam(required = false, name = "titleLike") String titleLike,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(summary = "컬렉션 등록")
+    ResponseEntity<PlayerCollectionResponse.Created> create(
+            @Valid @RequestBody PlayerCollectionRequest.Create request
+    );
+
+    @Operation(summary = "컬렉션 수정")
+    ResponseEntity<PlayerCollectionResponse.Info> update(
+            @PathVariable Long collectionId,
+            @Valid @RequestBody PlayerCollectionRequest.Update request
     );
 }

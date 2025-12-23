@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.application.command;
 import java.util.Set;
 
 public final class CollectionCommand {
+
     private CollectionCommand() {
     }
 
@@ -17,9 +18,18 @@ public final class CollectionCommand {
     ) {
     }
 
-    public record Update(Integer quantity, String conditionNote, String acquiredFrom) {
+    public record Update(
+            Integer quantity,
+            String conditionNote,
+            String acquiredFrom
+    ) {
     }
 
-    public record Search(String category, String titleLike, int page, int size) {
+    public record Search(
+            String category,
+            String titleLike,
+            int page,
+            int size
+    ) {
     }
 }

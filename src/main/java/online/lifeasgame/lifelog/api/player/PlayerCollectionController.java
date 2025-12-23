@@ -23,34 +23,12 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     private final CollectionLogFacade collectionLogFacade;
 
     @Override
-    @PostMapping
-    public ResponseEntity<PlayerCollectionResponse.Created> create(
-            @Valid @RequestBody PlayerCollectionRequest.Create request
-    ) {
-        CollectionResult.Created result = collectionLogFacade.create(PlayerCollectionWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerCollectionWebMapper.toResponse(result));
-    }
-
-    @Override
-    @PostMapping("/{collectionId}")
-    public ResponseEntity<PlayerCollectionResponse.Info> update(
-            @PathVariable Long collectionId,
-            @Valid @RequestBody PlayerCollectionRequest.Update request
-    ) {
-        CollectionResult.Info info = collectionLogFacade.update(
-                collectionId,
-                PlayerCollectionWebMapper.toCommand(request)
-        );
-        return ResponseEntity.ok(PlayerCollectionWebMapper.toResponse(info));
-    }
-
-    @Override
     @GetMapping("/recent")
     public ResponseEntity<List<PlayerCollectionResponse.Info>> recent(
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<CollectionResult.Info> infos = collectionLogFacade.recent(limit);
-        return ResponseEntity.ok(PlayerCollectionWebMapper.toResponseList(infos));
+        List<CollectionResult.Info> results = collectionLogFacade.recent(limit);
+        return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
     }
 
     @Override
@@ -61,14 +39,29 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        List<CollectionResult.Info> infos = collectionLogFacade.search(
-                PlayerCollectionWebMapper.toCommand(
-                        category,
-                        titleLike,
-                        page,
-                        size
-                )
+        List<CollectionResult.Info> results = collectionLogFacade.search(
+                PlayerCollectionWebMapper.toSearchCommand(category, titleLike, page, size)
         );
-        return ResponseEntity.ok(PlayerCollectionWebMapper.toResponseList(infos));
+
+        return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
+    }
+
+    @Override
+    @PostMapping
+    public ResponseEntity<PlayerCollectionResponse.Created> create(
+            @Valid @RequestBody PlayerCollectionRequest.Create request
+    ) {
+        CollectionResult.Created result = collectionLogFacade.create(PlayerCollectionWebMapper.toCreateCommand(request));
+        return ResponseEntity.ok(PlayerCollectionWebMapper.toCreated(result));
+    }
+
+    @Override
+    @PostMapping("/{collectionId}")
+    public ResponseEntity<PlayerCollectionResponse.Info> update(
+            @PathVariable Long collectionId,
+            @Valid @RequestBody PlayerCollectionRequest.Update request
+    ) {
+        CollectionResult.Info result = collectionLogFacade.update(collectionId, PlayerCollectionWebMapper.toUpdateCommand(request));
+        return ResponseEntity.ok(PlayerCollectionWebMapper.toInfo(result));
     }
 }

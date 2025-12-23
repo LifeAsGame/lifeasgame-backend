@@ -13,7 +13,7 @@ import online.lifeasgame.core.guard.Guard;
 public class Rating {
 
     @Column(name = "rating_score", nullable = false)
-    private Double score; // 0.0 ~ 5.0
+    private Double score;
 
     private Rating(Double score) {
         Guard.notNull(score, "score");

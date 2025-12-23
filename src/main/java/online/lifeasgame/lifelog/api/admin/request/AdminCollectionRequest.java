@@ -7,7 +7,16 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 
 public final class AdminCollectionRequest {
+
     private AdminCollectionRequest() {
+    }
+
+    public record Search(
+            String category,
+            String titleLike,
+            @Min(0) int page,
+            @Min(1) int size
+    ) {
     }
 
     public record Create(
@@ -21,9 +30,10 @@ public final class AdminCollectionRequest {
     ) {
     }
 
-    public record Update(@Min(1) Integer quantity, String conditionNote, String acquiredFrom) {
-    }
-
-    public record Search(String category, String titleLike, @Min(0) int page, @Min(1) int size) {
+    public record Update(
+            @Min(1) Integer quantity,
+            String conditionNote,
+            String acquiredFrom
+    ) {
     }
 }

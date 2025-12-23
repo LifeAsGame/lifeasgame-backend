@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public final class PlayerExerciseRequest {
+
     private PlayerExerciseRequest(){}
 
     public record Create(
