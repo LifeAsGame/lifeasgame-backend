@@ -19,6 +19,25 @@ import java.util.List;
 @Tag(name = "Social Party API V1 (Player)")
 public interface PlayerPartyApiSpecV1 {
 
+    @Operation(summary = "파티 검색")
+    ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Summary>>> search(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String visibility,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+    );
+
+    @Operation(summary = "최근 파티 조회")
+    ResponseEntity<ApiResponse<List<PlayerPartyResponse.Summary>>> recent(
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
+    );
+
+
+    @Operation(summary = "파티 상세 조회")
+    ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> getPartyInfo(
+            @PathVariable Long partyId
+    );
+
     @Operation(summary = "파티 생성")
     ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> create(@Valid @RequestBody PlayerPartyRequest.Create request);
 
@@ -61,12 +80,14 @@ public interface PlayerPartyApiSpecV1 {
             @Valid @RequestBody PlayerPartyRequest.TagOp request
     );
 
-    // 가입/권한
     @Operation(summary = "가입 요청")
     ResponseEntity<ApiResponse<Void>> requestJoin(
             @PathVariable Long partyId,
             @Valid @RequestBody PlayerPartyRequest.RequestJoin request
     );
+
+    @Operation(summary = "가입 요청 취소(본인)")
+    ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long partyId);
 
     @Operation(summary = "가입 승인(리더)")
     ResponseEntity<ApiResponse<Void>> approveJoin(
@@ -80,8 +101,17 @@ public interface PlayerPartyApiSpecV1 {
             @Valid @RequestBody PlayerPartyRequest.Reject request
     );
 
-    @Operation(summary = "가입 요청 취소(본인)")
-    ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long partyId);
+    @Operation(summary = "파티 초대(오피서/리더)")
+    ResponseEntity<ApiResponse<Void>> invite(
+            @PathVariable Long partyId,
+            @Valid @RequestBody PlayerPartyRequest.Invite request
+    );
+
+    @Operation(summary = "초대 수락")
+    ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long partyId);
+
+    @Operation(summary = "초대 거절")
+    ResponseEntity<ApiResponse<Void>> declineInvitation(@PathVariable Long partyId);
 
     @Operation(summary = "리더 위임")
     ResponseEntity<ApiResponse<Void>> transferLeader(
@@ -112,37 +142,4 @@ public interface PlayerPartyApiSpecV1 {
 
     @Operation(summary = "파티 해산(리더)")
     ResponseEntity<ApiResponse<Void>> disband(@PathVariable Long partyId);
-
-    // 초대
-    @Operation(summary = "파티 초대(오피서/리더)")
-    ResponseEntity<ApiResponse<Void>> invite(
-            @PathVariable Long partyId,
-            @Valid @RequestBody PlayerPartyRequest.Invite request
-    );
-
-    @Operation(summary = "초대 수락")
-    ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long partyId);
-
-    @Operation(summary = "초대 거절")
-    ResponseEntity<ApiResponse<Void>> declineInvitation(@PathVariable Long partyId);
-
-    // 조회
-    @Operation(summary = "최근 파티 조회")
-    ResponseEntity<ApiResponse<List<PlayerPartyResponse.Summary>>> recent(
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
-    );
-
-    @Operation(summary = "파티 검색")
-    ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Summary>>> search(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String visibility,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
-
-
-    @Operation(summary = "파티 상세 조회")
-    ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> getPartyInfo(
-            @PathVariable Long partyId
-    );
 }

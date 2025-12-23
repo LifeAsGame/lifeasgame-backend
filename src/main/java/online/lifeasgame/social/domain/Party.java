@@ -74,7 +74,36 @@ public class Party extends AbstractTime {
     @BatchSize(size = 100)
     private List<PartyWaitMember> waitMembers = new ArrayList<>();
 
-    // 생성 팩토리
+    public Party(
+            Long playerId,
+            Long leaderPlayerId,
+            PartyName name,
+            PartyCode code,
+            PartyDescription description,
+            PartyBanner banner,
+            PartyVisibility visibility,
+            PartyJoinPolicy joinPolicy,
+            PartyStatus status,
+            int maxMembers,
+            Set<String> tags,
+            List<PartyMember> members,
+            List<PartyWaitMember> waitMembers
+    ) {
+        this.playerId = playerId;
+        this.leaderPlayerId = leaderPlayerId;
+        this.name = name;
+        this.code = code;
+        this.description = description;
+        this.banner = banner;
+        this.visibility = visibility;
+        this.joinPolicy = joinPolicy;
+        this.status = status;
+        this.maxMembers = maxMembers;
+        this.tags = tags;
+        this.members = members;
+        this.waitMembers = waitMembers;
+    }
+
     public static Party create(
             Long playerId,
             String name,
@@ -93,58 +122,67 @@ public class Party extends AbstractTime {
         Guard.notNull(visibility, "visibility");
         Guard.notNull(joinPolicy, "joinPolicy");
 
-        Party p = new Party();
-        p.playerId = playerId;
-        p.name = PartyName.of(name);
-        p.code = PartyCode.of(code);
-        p.description = PartyDescription.of(descriptionMd);
-        p.banner = PartyBanner.of(bannerImageUrl, bannerBgColor);
-        p.visibility = visibility;
-        p.joinPolicy = joinPolicy;
-        p.status = PartyStatus.ACTIVE;
-        p.maxMembers = maxMembers;
+        Party party = new Party(
+                playerId,
+                playerId,
+                PartyName.of(name),
+                PartyCode.of(code),
+                PartyDescription.of(descriptionMd),
+                PartyBanner.of(bannerImageUrl, bannerBgColor),
+                visibility ,
+                joinPolicy,
+                PartyStatus.ACTIVE,
+                maxMembers,
+                null,
+                null,
+                null
+        );
 
-        PartyMember leader = PartyMember.createLeader(p, playerId);
-        p.members.add(leader);
-        p.leaderPlayerId = playerId;
-        return p;
+        PartyMember leader = PartyMember.createLeader(party, playerId);
+        party.members.add(leader);
+
+        return party;
     }
 
-    // ===== 조회 유틸 =====
     public Optional<PartyMember> findMember(Long playerId) {
-        return members.stream().filter(m -> m.getPlayerId().equals(playerId)).findFirst();
+        return members.stream()
+                .filter(m -> m.getPlayerId().equals(playerId))
+                .findFirst();
     }
 
     public Optional<PartyWaitMember> findPendingJoin(Long playerId) {
-        return waitMembers.stream().filter(w -> w.getPlayerId().equals(playerId) &&
-                w.getType() == PartyWaitType.JOIN_REQUEST &&
-                w.getStatus() == PartyWaitStatus.PENDING).findFirst();
+        return waitMembers.stream().filter(
+                w -> w.getPlayerId().equals(playerId) &&
+                        w.getType() == PartyWaitType.JOIN_REQUEST &&
+                        w.getStatus() == PartyWaitStatus.PENDING
+        ).findFirst();
     }
 
     public Optional<PartyWaitMember> findPendingInvite(Long playerId) {
-        return waitMembers.stream().filter(w -> w.getPlayerId().equals(playerId) &&
-                w.getType() == PartyWaitType.INVITATION &&
-                w.getStatus() == PartyWaitStatus.PENDING).findFirst();
+        return waitMembers.stream()
+                .filter(w -> w.getPlayerId().equals(playerId) &&
+                        w.getType() == PartyWaitType.INVITATION &&
+                        w.getStatus() == PartyWaitStatus.PENDING
+                ).findFirst();
     }
 
     public int memberCount() {
         return (int) members.stream().count();
     }
 
-    // ===== 기본 변경 =====
     public void rename(String newName) {
         Guard.notBlank(newName, "newName");
         this.name = PartyName.of(newName);
     }
 
-    public void changeVisibility(PartyVisibility v) {
-        Guard.notNull(v, "visibility");
-        this.visibility = v;
+    public void changeVisibility(PartyVisibility partyVisibility) {
+        Guard.notNull(partyVisibility, "visibility");
+        this.visibility = partyVisibility;
     }
 
-    public void changeJoinPolicy(PartyJoinPolicy p) {
-        Guard.notNull(p, "joinPolicy");
-        this.joinPolicy = p;
+    public void changeJoinPolicy(PartyJoinPolicy partyJoinPolicy) {
+        Guard.notNull(partyJoinPolicy, "joinPolicy");
+        this.joinPolicy = partyJoinPolicy;
     }
 
     public void changeMaxMembers(int max) {
@@ -171,7 +209,6 @@ public class Party extends AbstractTime {
         tags.remove(tag.trim());
     }
 
-    // ===== 가입/초대 =====
     public void requestJoin(Long applicantPlayerId, String message) {
         Guard.notNull(applicantPlayerId, "applicantPlayerId");
         Guard.checkState(status == PartyStatus.ACTIVE, "party not active");
@@ -181,27 +218,31 @@ public class Party extends AbstractTime {
 
         PartyWaitMember wait = PartyWaitMember.joinRequest(this, applicantPlayerId, message);
         waitMembers.add(wait);
-        if (joinPolicy == PartyJoinPolicy.OPEN) approveJoin(applicantPlayerId);
+        if (joinPolicy == PartyJoinPolicy.OPEN) {
+            approveJoin(applicantPlayerId);
+        }
     }
 
     public void cancelJoinRequest(Long playerId) {
-        PartyWaitMember wait = findPendingJoin(playerId).orElseThrow(() -> new IllegalStateException(
-                "join request not found"));
+        PartyWaitMember wait = findPendingJoin(playerId)
+                .orElseThrow(() -> new IllegalStateException("join request not found"));
         wait.cancel();
     }
 
     public void approveJoin(Long applicantPlayerId) {
         Guard.check(memberCount() < maxMembers, "capacity exceeded");
-        PartyWaitMember wait = findPendingJoin(applicantPlayerId).orElseThrow(() -> new IllegalStateException(
-                "join request not found"));
+        PartyWaitMember wait = findPendingJoin(applicantPlayerId)
+                .orElseThrow(() -> new IllegalStateException("join request not found"));
         wait.approve();
         Guard.check(findMember(applicantPlayerId).isEmpty(), "already member");
-        members.add(PartyMember.createMember(this, applicantPlayerId));
+
+        PartyMember partyMember = PartyMember.createMember(this, applicantPlayerId);
+        members.add(partyMember);
     }
 
     public void rejectJoin(Long applicantPlayerId) {
-        PartyWaitMember wait = findPendingJoin(applicantPlayerId).orElseThrow(() -> new IllegalStateException(
-                "join request not found"));
+        PartyWaitMember wait = findPendingJoin(applicantPlayerId)
+                .orElseThrow(() -> new IllegalStateException("join request not found"));
         wait.reject();
     }
 
@@ -213,35 +254,39 @@ public class Party extends AbstractTime {
         Guard.check(findMember(inviteePlayerId).isEmpty(), "invitee already member");
         Guard.check(findPendingInvite(inviteePlayerId).isEmpty(), "already invited");
 
-        waitMembers.add(PartyWaitMember.invitation(this, inviteePlayerId, message, expiresAt));
+        PartyWaitMember invitation = PartyWaitMember.invitation(this, inviteePlayerId, message, expiresAt);
+        waitMembers.add(invitation);
     }
 
     public void acceptInvitation(Long playerId) {
         Guard.check(memberCount() < maxMembers, "capacity exceeded");
-        PartyWaitMember inv = findPendingInvite(playerId).orElseThrow(() -> new IllegalStateException(
-                "invitation not found"));
+        PartyWaitMember inv = findPendingInvite(playerId)
+                .orElseThrow(() -> new IllegalStateException("invitation not found"));
+
         if (inv.getExpiresAt() != null) {
             Guard.checkState(!inv.isExpired(), "invitation expired");
         }
         inv.approve();
+
         Guard.check(findMember(playerId).isEmpty(), "already member");
-        members.add(PartyMember.createMember(this, playerId));
+        PartyMember partyMember = PartyMember.createMember(this, playerId);
+        members.add(partyMember);
     }
 
     public void declineInvitation(Long playerId) {
-        PartyWaitMember inv = findPendingInvite(playerId).orElseThrow(() -> new IllegalStateException(
-                "invitation not found"));
+        PartyWaitMember inv = findPendingInvite(playerId)
+                .orElseThrow(() -> new IllegalStateException("invitation not found"));
         inv.reject();
     }
 
-    // ===== 멤버/권한 =====
     public void transferLeadership(Long fromLeaderPlayerId, Long toPlayerId) {
         Guard.notNull(fromLeaderPlayerId, "fromLeader");
         Guard.notNull(toPlayerId, "toPlayerId");
         Guard.check(fromLeaderPlayerId.equals(leaderPlayerId), "only current leader can transfer");
 
         PartyMember from = findMember(fromLeaderPlayerId).orElseThrow();
-        PartyMember to = findMember(toPlayerId).orElseThrow(() -> new IllegalStateException("target not member"));
+        PartyMember to = findMember(toPlayerId)
+                .orElseThrow(() -> new IllegalStateException("target not member"));
 
         from.changeRole(PartyMemberRole.MEMBER);
         to.changeRole(PartyMemberRole.LEADER);
@@ -282,7 +327,8 @@ public class Party extends AbstractTime {
     }
 
     private void ensureLeaderOrOfficer(Long actorId) {
-        PartyMember me = findMember(actorId).orElseThrow(() -> new IllegalStateException("not member"));
+        PartyMember me = findMember(actorId)
+                .orElseThrow(() -> new IllegalStateException("not member"));
         Guard.checkState(
                 me.getRole() == PartyMemberRole.LEADER || me.getRole() == PartyMemberRole.OFFICER,
                 "officer or leader only"

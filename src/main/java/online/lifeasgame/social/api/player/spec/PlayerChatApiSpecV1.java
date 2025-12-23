@@ -10,6 +10,10 @@ import org.springframework.http.ResponseEntity;
 
 public interface PlayerChatApiSpecV1 {
 
+    ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels();
+
+    ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openAdmin(@Valid PlayerChatRequest.OpenAdmin request);
+
     ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGlobal(@Valid PlayerChatRequest.OpenGlobal request);
 
     ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGuild(Long guildId);
@@ -20,10 +24,6 @@ public interface PlayerChatApiSpecV1 {
             Long friendId,
             @Valid PlayerChatRequest.OpenFriend request
     );
-
-    ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openAdmin(@Valid PlayerChatRequest.OpenAdmin request);
-
-    ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels();
 
     ResponseEntity<ApiResponse<PlayerChatResponse.MessagePage>> messages(
             Long channelId,

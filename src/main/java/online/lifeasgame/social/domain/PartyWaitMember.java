@@ -48,27 +48,51 @@ public class PartyWaitMember extends AbstractTime {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    public static PartyWaitMember joinRequest(Party party, Long playerId, String message) {
-        PartyWaitMember w = new PartyWaitMember();
-        w.party = party;
-        w.playerId = playerId;
-        w.type = PartyWaitType.JOIN_REQUEST;
-        w.status = PartyWaitStatus.PENDING;
-        w.message = message;
-        w.requestedAt = LocalDateTime.now();
-        return w;
+    public PartyWaitMember(
+            Party party,
+            Long playerId,
+            PartyWaitType type,
+            PartyWaitStatus status,
+            String message,
+            LocalDateTime requestedAt,
+            LocalDateTime expiresAt
+    ) {
+        this.party = party;
+        this.playerId = playerId;
+        this.type = type;
+        this.status = status;
+        this.message = message;
+        this.requestedAt = requestedAt;
+        this.expiresAt = expiresAt;
     }
 
-    public static PartyWaitMember invitation(Party party, Long invitee, String message, LocalDateTime expiresAt) {
-        PartyWaitMember w = new PartyWaitMember();
-        w.party = party;
-        w.playerId = invitee;
-        w.type = PartyWaitType.INVITATION;
-        w.status = PartyWaitStatus.PENDING;
-        w.message = message;
-        w.requestedAt = LocalDateTime.now();
-        w.expiresAt = expiresAt;
-        return w;
+    public static PartyWaitMember joinRequest(Party party, Long playerId, String message) {
+        return new PartyWaitMember(
+                party,
+                playerId,
+                PartyWaitType.JOIN_REQUEST,
+                PartyWaitStatus.PENDING,
+                message,
+                LocalDateTime.now(),
+                null
+        );
+    }
+
+    public static PartyWaitMember invitation(
+            Party party,
+            Long invitee,
+            String message,
+            LocalDateTime expiresAt
+    ) {
+        return new PartyWaitMember(
+                party,
+                invitee,
+                PartyWaitType.INVITATION,
+                PartyWaitStatus.PENDING,
+                message,
+                LocalDateTime.now(),
+                expiresAt
+        );
     }
 
     public void approve() {

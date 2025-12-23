@@ -53,27 +53,46 @@ public class GuildWaitMember extends AbstractTime {
     @Column(name = "version", nullable = false)
     private Long version;
 
+    public GuildWaitMember(
+            Guild guild,
+            Long playerId,
+            GuildWaitType type,
+            GuildWaitStatus status,
+            String message,
+            LocalDateTime requestedAt,
+            LocalDateTime expiresAt
+    ) {
+        this.guild = guild;
+        this.playerId = playerId;
+        this.type = type;
+        this.status = status;
+        this.message = message;
+        this.requestedAt = requestedAt;
+        this.expiresAt = expiresAt;
+    }
+
     public static GuildWaitMember joinRequest(Guild guild, Long playerId, String message) {
-        GuildWaitMember w = new GuildWaitMember();
-        w.guild = guild;
-        w.playerId = playerId;
-        w.type = GuildWaitType.JOIN_REQUEST;
-        w.status = GuildWaitStatus.PENDING;
-        w.message = message;
-        w.requestedAt = LocalDateTime.now();
-        return w;
+        return new GuildWaitMember(
+                guild,
+                playerId,
+                GuildWaitType.JOIN_REQUEST,
+                GuildWaitStatus.PENDING,
+                message,
+                LocalDateTime.now(),
+                null
+        );
     }
 
     public static GuildWaitMember invitation(Guild guild, Long invitee, String message, LocalDateTime expiresAt) {
-        GuildWaitMember w = new GuildWaitMember();
-        w.guild = guild;
-        w.playerId = invitee;
-        w.type = GuildWaitType.INVITATION;
-        w.status = GuildWaitStatus.PENDING;
-        w.message = message;
-        w.requestedAt = LocalDateTime.now();
-        w.expiresAt = expiresAt;
-        return w;
+        return new GuildWaitMember(
+                guild,
+                invitee,
+                GuildWaitType.INVITATION,
+                GuildWaitStatus.PENDING,
+                message,
+                LocalDateTime.now(),
+                expiresAt
+        );
     }
 
     public void approve() {

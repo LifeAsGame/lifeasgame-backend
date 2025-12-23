@@ -20,64 +20,64 @@ public class GuildFacade {
         return currentPlayerAccessor.currentPlayerIdOrThrow();
     }
 
-    public GuildResult.Info create(GuildCommand.Create c) {
-        return guildService.create(player(), c);
+    public GuildResult.Info create(GuildCommand.Create command) {
+        return guildService.create(player(), command);
     }
 
-    public GuildResult.Info rename(Long guildId, GuildCommand.Rename c) {
-        return guildService.rename(player(), guildId, c);
+    public GuildResult.Info rename(Long guildId, GuildCommand.Rename command) {
+        return guildService.rename(player(), guildId, command);
     }
 
-    public GuildResult.Info changePolicy(Long guildId, GuildCommand.ChangePolicy c) {
-        return guildService.changePolicy(player(), guildId, c);
+    public GuildResult.Info changePolicy(Long guildId, GuildCommand.ChangePolicy command) {
+        return guildService.changePolicy(player(), guildId, command);
     }
 
-    public GuildResult.Info changeDescription(Long guildId, GuildCommand.ChangeDescription c) {
-        return guildService.changeDescription(player(), guildId, c);
+    public GuildResult.Info changeDescription(Long guildId, GuildCommand.ChangeDescription command) {
+        return guildService.changeDescription(player(), guildId, command);
     }
 
-    public GuildResult.Info changeEmblem(Long guildId, GuildCommand.ChangeEmblem c) {
-        return guildService.changeEmblem(player(), guildId, c);
+    public GuildResult.Info changeEmblem(Long guildId, GuildCommand.ChangeEmblem command) {
+        return guildService.changeEmblem(player(), guildId, command);
     }
 
-    public GuildResult.Info addTag(Long guildId, GuildCommand.TagOp c) {
-        return guildService.addTag(player(), guildId, c);
+    public GuildResult.Info addTag(Long guildId, GuildCommand.TagOp command) {
+        return guildService.addTag(player(), guildId, command);
     }
 
-    public GuildResult.Info removeTag(Long guildId, GuildCommand.TagOp c) {
-        return guildService.removeTag(player(), guildId, c);
+    public GuildResult.Info removeTag(Long guildId, GuildCommand.TagOp command) {
+        return guildService.removeTag(player(), guildId, command);
     }
 
-    public void requestJoin(Long guildId, GuildCommand.RequestJoin c) {
-        guildService.requestJoin(player(), guildId, c);
+    public void requestJoin(Long guildId, GuildCommand.RequestJoin command) {
+        guildService.requestJoin(player(), guildId, command);
     }
 
-    public void approveJoin(Long guildId, GuildCommand.Approve c) {
-        guildService.approveJoin(player(), guildId, c);
+    public void approveJoin(Long guildId, GuildCommand.Approve command) {
+        guildService.approveJoin(player(), guildId, command);
     }
 
-    public void rejectJoin(Long guildId, GuildCommand.Reject c) {
-        guildService.rejectJoin(player(), guildId, c);
+    public void rejectJoin(Long guildId, GuildCommand.Reject command) {
+        guildService.rejectJoin(player(), guildId, command);
     }
 
     public void cancelJoin(Long guildId) {
         guildService.cancelJoin(player(), guildId);
     }
 
-    public void transferLeader(Long guildId, GuildCommand.TransferLeader c) {
-        guildService.transferLeader(player(), guildId, c);
+    public void transferLeader(Long guildId, GuildCommand.TransferLeader command) {
+        guildService.transferLeader(player(), guildId, command);
     }
 
-    public void kick(Long guildId, GuildCommand.Kick c) {
-        guildService.kick(player(), guildId, c);
+    public void kick(Long guildId, GuildCommand.Kick command) {
+        guildService.kick(player(), guildId, command);
     }
 
-    public void promote(Long guildId, GuildCommand.Promote c) {
-        guildService.promote(player(), guildId, c);
+    public void promote(Long guildId, GuildCommand.Promote command) {
+        guildService.promote(player(), guildId, command);
     }
 
-    public void demote(Long guildId, GuildCommand.Demote c) {
-        guildService.demote(player(), guildId, c);
+    public void demote(Long guildId, GuildCommand.Demote command) {
+        guildService.demote(player(), guildId, command);
     }
 
     public void leave(Long guildId) {
@@ -88,8 +88,8 @@ public class GuildFacade {
         guildService.disbandByLeader(player(), guildId);
     }
 
-    public void invite(Long guildId, GuildCommand.Invite c) {
-        guildService.invite(player(), guildId, c);
+    public void invite(Long guildId, GuildCommand.Invite command) {
+        guildService.invite(player(), guildId, command);
     }
 
     public void acceptInvitation(Long guildId) {
@@ -100,7 +100,12 @@ public class GuildFacade {
         guildService.declineInvitation(player(), guildId);
     }
 
-    public GuildResult.Page<GuildResult.Summary> search(String keyword, String visibility, int page, int size) {
+    public GuildResult.Page<GuildResult.Summary> search(
+            String keyword,
+            String visibility,
+            int page,
+            int size
+    ) {
         return guildService.search(keyword, visibility, page, size);
     }
 

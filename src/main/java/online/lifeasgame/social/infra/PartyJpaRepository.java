@@ -18,14 +18,14 @@ public interface PartyJpaRepository extends JpaRepository<Party, Long> {
     Optional<Party> findByIdAndPlayerId(Long id, Long playerId);
 
     @Query(
-            """
-                        select p.id
-                        from Party p
-                        where (:keyword is null or :keyword='' or lower(p.name.value) like lower(concat('%',:keyword,'%'))
-                               or lower(p.code.value) like lower(concat('%',:keyword,'%')))
-                          and (:visibility is null or p.visibility = :visibility)
-                        order by p.id desc
-                    """
+        """
+            SELECT p.id
+            FROM Party p
+            WHERE (:keyword IS NULL OR :keyword='' OR LOWER(p.name.value) LIKE LOWER(CONCAT('%',:keyword,'%') )
+                OR LOWER(p.code.value) LIKE LOWER(CONCAT('%',:keyword,'%') ) )
+                AND (:visibility IS NULL OR p.visibility = :visibility)
+            ORDER BY p.id DESC
+        """
     )
     Page<Long> searchIds(
             @Param("keyword") String keyword,
@@ -34,31 +34,32 @@ public interface PartyJpaRepository extends JpaRepository<Party, Long> {
     );
 
     @Query(
-            """
-                        select distinct p
-                        from Party p
-                        left join fetch p.tags t
-                        where p.id in :ids
-                    """
+        """
+            SELECT DISTINCT p
+            FROM Party p
+            LEFT JOIN FETCH p.tags t
+            WHERE p.id IN :ids
+        """
     )
     List<Party> fetchWithTagsByIds(@Param("ids") List<Long> ids);
 
     @Query(
-            """
-                        select distinct p
-                        from Party p
-                        left join fetch p.tags t
-                        where p.id in :ids
-                    """
+        """
+            SELECT DISTINCT p
+            FROM Party p
+            LEFT JOIN FETCH p.tags t
+            WHERE p.id IN :ids
+        """
     )
     List<Party> findRecentWithTags(@Param("ids") List<Long> ids);
 
     @Query(
-            """
-                SELECT p.id
-                FROM Party p
-                ORDER BY p.createdAt
-                LIMIT :limits
-            """)
+        """
+            SELECT p.id
+            FROM Party p
+            ORDER BY p.createdAt
+            LIMIT :limits
+        """
+    )
     List<Long> findRecent(@Param("limits") Integer limits);
 }

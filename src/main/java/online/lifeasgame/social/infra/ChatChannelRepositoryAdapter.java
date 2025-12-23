@@ -12,30 +12,30 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatChannelRepositoryAdapter implements ChatChannelRepository {
 
-    private final ChatChannelJpaRepository chatChannelJpaRepository;
+    private final ChatChannelJpaRepository jpaRepository;
 
     @Override
     public ChatChannel save(ChatChannel channel) {
-        return chatChannelJpaRepository.save(channel);
+        return jpaRepository.save(channel);
     }
 
     @Override
     public Optional<ChatChannel> findById(Long id) {
-        return chatChannelJpaRepository.findById(id);
+        return jpaRepository.findById(id);
     }
 
     @Override
     public Optional<ChatChannel> findByContext(ChatChannelType type, Long contextId) {
-        return chatChannelJpaRepository.findByTypeAndContextId(type, contextId);
+        return jpaRepository.findByTypeAndContextId(type, contextId);
     }
 
     @Override
     public Optional<ChatChannel> findByTypeAndName(ChatChannelType type, String name) {
-        return chatChannelJpaRepository.findByTypeAndNameValue(type, name);
+        return jpaRepository.findByTypeAndNameValue(type, name);
     }
 
     @Override
     public Optional<ChatChannel> findFriendChannel(Long playerId, Long targetId) {
-        return chatChannelJpaRepository.findFriendChannel(ChatChannelType.FRIEND, playerId, targetId);
+        return jpaRepository.findFriendChannel(ChatChannelType.FRIEND, playerId, targetId);
     }
 }

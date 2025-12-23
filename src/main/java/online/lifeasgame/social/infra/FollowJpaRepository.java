@@ -16,53 +16,52 @@ public interface FollowJpaRepository extends JpaRepository<Follow, Long> {
 
     Optional<Follow> findByIdAndPlayerId(Long id, Long playerId);
 
-    // 내가 팔로우하는 사람들의 follow id (2단계 로딩)
     @Query(
-            """
-                        select f.id
-                        from Follow f
-                        where f.playerId = :playerId
-                        order by f.id desc
-                    """
+        """
+            SELECT f.id
+            FROM Follow f
+            WHERE f.playerId = :playerId
+            ORDER BY f.id DESC
+        """
     )
     Page<Long> findFollowingIds(@Param("playerId") Long playerId, Pageable pageable);
 
-    // 나를 팔로우하는 사람들의 follow id (2단계 로딩)
     @Query(
-            """
-                        select f.id
-                        from Follow f
-                        where f.targetPlayerId = :playerId
-                        order by f.id desc
-                    """
+        """
+            SELECT f.id
+            FROM Follow f
+            WHERE f.targetPlayerId = :playerId
+            ORDER BY f.id DESC
+        """
     )
     Page<Long> findFollowerIds(@Param("playerId") Long playerId, Pageable pageable);
 
-    // id 집합으로 엔티티 조회
     @Query(
-            """
-                        select f from Follow f
-                        where f.id in :ids
-                    """
+        """
+            SELECT f
+            FROM Follow f
+            WHERE f.id IN :ids
+        """
     )
     List<Follow> findAllByIdIn(@Param("ids") List<Long> ids);
 
-    // 최근
     @Query(
-            """
-                        select f from Follow f
-                        where f.playerId = :playerId
-                        order by f.id desc
-                    """
+        """
+            SELECT f
+            FROM Follow f
+            WHERE f.playerId = :playerId
+            ORDER BY f.id DESC
+        """
     )
     List<Follow> findRecentFollowings(@Param("playerId") Long playerId, Pageable pageable);
 
     @Query(
-            """
-                        select f from Follow f
-                        where f.targetPlayerId = :playerId
-                        order by f.id desc
-                    """
+        """
+            SELECT f
+            FROM Follow f
+            WHERE f.targetPlayerId = :playerId
+            ORDER BY f.id DESC
+        """
     )
     List<Follow> findRecentFollowers(@Param("playerId") Long playerId, Pageable pageable);
 
