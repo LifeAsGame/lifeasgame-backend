@@ -8,10 +8,24 @@ import online.lifeasgame.lifelog.application.result.CollectionResult;
 import java.util.List;
 
 public final class PlayerCollectionWebMapper {
+
     private PlayerCollectionWebMapper() {
     }
 
-    public static CollectionCommand.Create toCommand(PlayerCollectionRequest.Create request) {
+    public static CollectionCommand.Search toSearchCommand(
+            String category,
+            String titleLike,
+            int page,
+            int size
+    ) {
+        return new CollectionCommand.Search(category, titleLike, page, size);
+    }
+
+    public static List<PlayerCollectionResponse.Info> toInfos(List<CollectionResult.Info> results) {
+        return results.stream().map(PlayerCollectionWebMapper::toInfo).toList();
+    }
+
+    public static CollectionCommand.Create toCreateCommand(PlayerCollectionRequest.Create request) {
         return new CollectionCommand.Create(
                 request.category(),
                 request.title(),
@@ -23,19 +37,15 @@ public final class PlayerCollectionWebMapper {
         );
     }
 
-    public static CollectionCommand.Update toCommand(PlayerCollectionRequest.Update request) {
-        return new CollectionCommand.Update(request.quantity(), request.conditionNote(), request.acquiredFrom());
-    }
-
-    public static CollectionCommand.Search toCommand(PlayerCollectionRequest.Search request) {
-        return new CollectionCommand.Search(request.category(), request.titleLike(), request.page(), request.size());
-    }
-
-    public static PlayerCollectionResponse.Created toResponse(CollectionResult.Created result) {
+    public static PlayerCollectionResponse.Created toCreated(CollectionResult.Created result) {
         return new PlayerCollectionResponse.Created(result.id());
     }
 
-    public static PlayerCollectionResponse.Info toResponse(CollectionResult.Info result) {
+    public static CollectionCommand.Update toUpdateCommand(PlayerCollectionRequest.Update request) {
+        return new CollectionCommand.Update(request.quantity(), request.conditionNote(), request.acquiredFrom());
+    }
+
+    public static PlayerCollectionResponse.Info toInfo(CollectionResult.Info result) {
         return new PlayerCollectionResponse.Info(
                 result.id(),
                 result.playerId(),
@@ -49,13 +59,5 @@ public final class PlayerCollectionWebMapper {
                 result.createdAt(),
                 result.updatedAt()
         );
-    }
-
-    public static List<PlayerCollectionResponse.Info> toResponseList(List<CollectionResult.Info> results) {
-        return results.stream().map(PlayerCollectionWebMapper::toResponse).toList();
-    }
-
-    public static CollectionCommand.Search toCommand(String category, String titleLike, int page, int size) {
-        return new CollectionCommand.Search(category, titleLike, page, size);
     }
 }

@@ -5,10 +5,15 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.quest.domain.event.QuestEvent;
+import online.lifeasgame.quest.domain.event.QuestEventType;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -48,6 +53,9 @@ public class Quest extends AbstractTime {
     @Column(name = "due_at")
     private Instant dueAt;
 
+    @Transient
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+
     private Quest(
             String code,
             QuestCategory category,
@@ -79,6 +87,48 @@ public class Quest extends AbstractTime {
             Instant dueAt
     ) {
         return new Quest(code, category, title, descriptionMd, target, reward, repeatRule, dueAt);
+    }
+
+    public void updateDefinition(
+            QuestTarget questTarget,
+            QuestReward questReward,
+            QuestRepeatRule questRepeatRule,
+            Instant dueAt
+    ) {
+        boolean changed = false;
+
+        if (questTarget != null) {
+            changeTarget(questTarget);
+            changed = true;
+        }
+        if (questReward != null) {
+            changeReward(questReward);
+            changed = true;
+        }
+        if (questRepeatRule != null) {
+            changeRepeatRule(questRepeatRule);
+            changed = true;
+        }
+        if (dueAt != null) {
+            reschedule(dueAt);
+            changed = true;
+        }
+
+        if (changed) recordUpdatedEvent();
+    }
+
+    private void recordUpdatedEvent() {
+        recordEvent(QuestEvent.snapshot(QuestEventType.QUEST_UPDATED, this, "quest:" + code + ":updated"));
+    }
+
+    public List<DomainEvent> pullEvents() {
+        var copy = List.copyOf(domainEvents);
+        domainEvents.clear();
+        return copy;
+    }
+
+    private void recordEvent(DomainEvent event) {
+        if (event != null) domainEvents.add(event);
     }
 
     public void changeTarget(QuestTarget target) {

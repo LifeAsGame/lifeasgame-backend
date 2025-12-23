@@ -10,8 +10,8 @@ public final class AdminInventoryWebMapper {
     private AdminInventoryWebMapper() {
     }
 
-    public static InventoryCommand.Add toCommand(AdminInventoryRequest.Add request) {
-        return InventoryCommand.Add.of(
+    public static InventoryCommand.Add toAddCommand(AdminInventoryRequest.Add request) {
+        return new InventoryCommand.Add(
                 request.itemId(),
                 request.quantity(),
                 request.instanceAttrs(),
@@ -19,7 +19,7 @@ public final class AdminInventoryWebMapper {
         );
     }
 
-    public static AdminInventoryResponse.Slots toSlots(InventoryResult.Slots r) {
-        return AdminInventoryResponse.Slots.of(r.slots());
+    public static AdminInventoryResponse.Slots toSlots(InventoryResult.Slots result) {
+        return new AdminInventoryResponse.Slots(result.slots());
     }
 }

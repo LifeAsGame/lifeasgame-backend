@@ -4,73 +4,97 @@ import online.lifeasgame.economy.api.admin.request.AdminEconomyRequest;
 import online.lifeasgame.economy.api.admin.response.AdminEconomyResponse;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
-import online.lifeasgame.economy.domain.Currency;
 
 public final class AdminEconomyWebMapper {
-    private AdminEconomyWebMapper() {}
 
-    public static EconomyCommand.CreateShopItem toCommand(AdminEconomyRequest.CreateShopItem request) {
-        Currency currency = Currency.parseOptional(request.currency(), Currency.GOLD);
-        return EconomyCommand.CreateShopItem.of(
+    private AdminEconomyWebMapper() {
+    }
+
+    public static AdminEconomyResponse.ShopItems toShopItems(EconomyResult.ShopItems result) {
+        return new AdminEconomyResponse.ShopItems(
+                result.items().stream()
+                        .map(AdminEconomyWebMapper::toShopItem)
+                        .toList()
+        );
+    }
+
+    public static EconomyCommand.CreateShopItem toCreateShopItemCommand(AdminEconomyRequest.CreateShopItem request) {
+        return new EconomyCommand.CreateShopItem(
                 request.itemId(),
                 request.price(),
-                currency,
+                request.currency(),
                 request.globalLimit(),
                 request.perPlayerLimit(),
                 request.reservationTtlSeconds()
         );
     }
 
-    public static EconomyCommand.ToggleShopItem toCommand(Long shopItemId, AdminEconomyRequest.ToggleShopItem request) {
-        return EconomyCommand.ToggleShopItem.of(shopItemId, request.enabled());
+    public static EconomyCommand.UpdateShopItem toUpdateShopItemCommand(
+            Long shopItemId,
+            AdminEconomyRequest.UpdateShopItem request
+    ) {
+        return new EconomyCommand.UpdateShopItem(
+                shopItemId,
+                request.globalLimit(),
+                request.perPlayerLimit(),
+                request.reservationTtlSeconds()
+        );
     }
 
-    public static EconomyCommand.UpdateShopItem toCommand(Long shopItemId, AdminEconomyRequest.UpdateShopItem request) {
-        return EconomyCommand.UpdateShopItem.of(shopItemId, request.globalLimit(), request.perPlayerLimit(), request.reservationTtlSeconds());
-    }
-
-    public static EconomyCommand.AdjustWallet toCommand(Long playerId, AdminEconomyRequest.AdjustWallet request) {
-        Currency currency = Currency.parseOptional(request.currency(), Currency.GOLD);
-        return EconomyCommand.AdjustWallet.of(playerId, request.amount(), currency, request.debit(), request.reason());
-    }
-
-    public static AdminEconomyResponse.ShopItem toResponse(EconomyResult.ShopItemView view) {
+    public static AdminEconomyResponse.ShopItem toShopItem(EconomyResult.ShopItemView result) {
         return new AdminEconomyResponse.ShopItem(
-                view.id(),
-                view.itemId(),
-                view.price(),
-                view.currency(),
-                view.available(),
-                view.globalStockLimit(),
-                view.perPlayerLimit(),
-                view.reservationTtlSec()
+                result.id(),
+                result.itemId(),
+                result.price(),
+                result.currency(),
+                result.available(),
+                result.globalStockLimit(),
+                result.perPlayerLimit(),
+                result.reservationTtlSec()
         );
     }
 
-    public static AdminEconomyResponse.ShopItems toResponse(EconomyResult.ShopItems items) {
-        return new AdminEconomyResponse.ShopItems(items.items().stream().map(AdminEconomyWebMapper::toResponse).toList());
+    public static EconomyCommand.ToggleShopItem toToggleShopItemCommand(
+            Long shopItemId,
+            AdminEconomyRequest.ToggleShopItem request
+    ) {
+        return new EconomyCommand.ToggleShopItem(shopItemId, request.enabled());
     }
 
-    public static AdminEconomyResponse.ShopPurchaseSummary toResponse(EconomyResult.ShopPurchaseView view) {
+    public static AdminEconomyResponse.ShopPurchases toShopPurchases(EconomyResult.ShopPurchases result) {
+        return new AdminEconomyResponse.ShopPurchases(
+                result.purchases().stream()
+                        .map(AdminEconomyWebMapper::toShopPurchaseSummary)
+                        .toList()
+        );
+    }
+
+    public static AdminEconomyResponse.ShopPurchaseSummary toShopPurchaseSummary(EconomyResult.ShopPurchaseView result) {
         return new AdminEconomyResponse.ShopPurchaseSummary(
-                view.id(),
-                view.shopItemId(),
-                view.playerId(),
-                view.quantity(),
-                view.status(),
-                view.reservationToken(),
-                view.reservationExpiresAt()
+                result.id(),
+                result.shopItemId(),
+                result.playerId(),
+                result.quantity(),
+                result.status(),
+                result.reservationToken(),
+                result.reservationExpiresAt()
         );
     }
 
-    public static AdminEconomyResponse.ShopPurchases toResponse(EconomyResult.ShopPurchases purchases) {
-        return new AdminEconomyResponse.ShopPurchases(purchases.purchases().stream()
-                .map(AdminEconomyWebMapper::toResponse)
-                .toList()
+    public static EconomyCommand.AdjustWallet toAdjustWalletCommand(
+            Long playerId,
+            AdminEconomyRequest.AdjustWallet request
+    ) {
+        return new EconomyCommand.AdjustWallet(
+                playerId,
+                request.amount(),
+                request.currency(),
+                request.debit(),
+                request.reason()
         );
     }
 
-    public static AdminEconomyResponse.WalletBalance toResponse(EconomyResult.WalletBalance balance) {
-        return new AdminEconomyResponse.WalletBalance(balance.amount(), balance.currency());
+    public static AdminEconomyResponse.WalletBalance toWalletBalance(EconomyResult.WalletBalance result) {
+        return new AdminEconomyResponse.WalletBalance(result.amount(), result.currency());
     }
 }

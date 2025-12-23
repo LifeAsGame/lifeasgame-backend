@@ -10,9 +10,6 @@ public final class PlayerCertificationResponse {
     }
 
     public record Infos(List<Info> infos) {
-        public static Infos of(List<Info> infos) {
-            return new Infos(infos);
-        }
     }
 
     public record Info(
@@ -24,25 +21,6 @@ public final class PlayerCertificationResponse {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static Info of(
-                Long certificationId,
-                String name,
-                String issuer,
-                String category,
-                LocalDate acquiredDate,
-                LocalDate expiresDate,
-                Instant grantedAt
-        ) {
-            return new Info(
-                    certificationId,
-                    name,
-                    issuer,
-                    category,
-                    acquiredDate,
-                    expiresDate,
-                    grantedAt
-            );
-        }
     }
 
     public record Changed(
@@ -50,17 +28,6 @@ public final class PlayerCertificationResponse {
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static Changed of(
-                Long certificationId,
-                LocalDate acquiredDate,
-                LocalDate expiresDate
-        ) {
-            return new Changed(
-                    certificationId,
-                    acquiredDate,
-                    expiresDate
-            );
-        }
     }
 
     public record Created(
@@ -68,16 +35,5 @@ public final class PlayerCertificationResponse {
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
-        public static Created of(
-                Long certificationId,
-                LocalDate acquiredDate,
-                LocalDate expiresDate
-        ) {
-            return new Created(
-                    certificationId,
-                    acquiredDate,
-                    expiresDate
-            );
-        }
     }
 }

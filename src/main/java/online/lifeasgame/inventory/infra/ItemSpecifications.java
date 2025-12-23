@@ -11,10 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ItemSpecifications {
+
     private ItemSpecifications() {
     }
 
-    static Specification<Item> search(String name, ItemCategory category, ItemType type, Rarity rarity) {
+    static Specification<Item> search(String name, ItemCategory itemCategory, ItemType itemType, Rarity rarity) {
         return (root, cq, cb) -> {
             List<Predicate> ps = new ArrayList<>();
 
@@ -25,8 +26,8 @@ final class ItemSpecifications {
                         .replace("_", "\\_");
                 ps.add(cb.like(cb.lower(root.get("name").get("value")), "%" + escaped + "%", '\\'));
             }
-            if (category != null) ps.add(cb.equal(root.get("category"), category));
-            if (type != null) ps.add(cb.equal(root.get("type"), type));
+            if (itemCategory != null) ps.add(cb.equal(root.get("category"), itemCategory));
+            if (itemType != null) ps.add(cb.equal(root.get("type"), itemType));
             if (rarity != null) ps.add(cb.equal(root.get("rarity"), rarity));
 
             return cb.and(ps.toArray(new Predicate[0]));

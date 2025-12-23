@@ -17,12 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class ItemReader {
+class ItemReader {
 
-    private final ItemRepository itemRepository;
+    private final ItemRepository repository;
 
-    public Item getItem(Long id) {
-        return itemRepository.findById(id)
+    public Item getByIdOrThrow(Long id) {
+        return repository.findById(id)
                 .orElseThrow(() -> new DomainException(ItemError.ITEM_NOT_FOUND));
     }
 
@@ -33,15 +33,12 @@ public class ItemReader {
             Rarity rarity,
             Pageable pageable
     ) {
-        return itemRepository.search(name, category, type, rarity, pageable);
+        return repository.search(name, category, type, rarity, pageable);
     }
 
-    public boolean existsByName(String name) {
-        if(name==null) return false;
-        return itemRepository.existsByName(name.trim());
-    }
-
-    public boolean existsById(Long id) {
-        return itemRepository.existsById(id);
+    public void assertNameNotExists(String name) {
+        if (repository.existsByName(name)) {
+            throw new DomainException(ItemError.ITEM_NAME_DUP);
+        }
     }
 }

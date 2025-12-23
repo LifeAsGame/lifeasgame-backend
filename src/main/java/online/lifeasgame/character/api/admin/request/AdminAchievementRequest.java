@@ -4,8 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public final class AdminAchievementRequest {
 
-    private AdminAchievementRequest() {
-    }
+    private AdminAchievementRequest() {}
 
     public record Create(
             @NotBlank String code,
@@ -13,8 +12,5 @@ public final class AdminAchievementRequest {
             @NotBlank String category,
             @NotBlank String descMd
     ) {
-        public static Create of(String code, String name, String category, String descMd) {
-            return new Create(code, name, category, descMd);
-        }
     }
 }

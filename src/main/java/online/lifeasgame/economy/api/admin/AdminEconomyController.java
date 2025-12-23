@@ -29,22 +29,22 @@ public class AdminEconomyController implements AdminEconomyApiSpecV1 {
     private final TopUpService topUpService;
 
     @Override
+    @GetMapping("/shop/items")
+    public ResponseEntity<ApiResponse<AdminEconomyResponse.ShopItems>> listShopItems() {
+        EconomyResult.ShopItems result = shopService.listAllItems();
+        return ApiResponses.ok(AdminEconomyWebMapper.toShopItems(result));
+    }
+
+    @Override
     @PostMapping("/shop/items")
     public ResponseEntity<ApiResponse<AdminEconomyResponse.ShopItem>> createShopItem(
             @Valid @RequestBody AdminEconomyRequest.CreateShopItem request
     ) {
-        EconomyResult.ShopItemView view = shopService.createItem(AdminEconomyWebMapper.toCommand(request));
-        return ApiResponses.ok(AdminEconomyWebMapper.toResponse(view));
-    }
+        EconomyResult.ShopItemView result = shopService.createItem(
+                AdminEconomyWebMapper.toCreateShopItemCommand(request)
+        );
 
-    @Override
-    @PatchMapping("/shop/items/{shopItemId}/availability")
-    public ResponseEntity<ApiResponse<Void>> toggleShopItem(
-            @PathVariable Long shopItemId,
-            @Valid @RequestBody AdminEconomyRequest.ToggleShopItem request
-    ) {
-        shopService.toggleAvailability(AdminEconomyWebMapper.toCommand(shopItemId, request));
-        return ApiResponses.noContent();
+        return ApiResponses.ok(AdminEconomyWebMapper.toShopItem(result));
     }
 
     @Override
@@ -53,22 +53,28 @@ public class AdminEconomyController implements AdminEconomyApiSpecV1 {
             @PathVariable Long shopItemId,
             @Valid @RequestBody AdminEconomyRequest.UpdateShopItem request
     ) {
-        EconomyResult.ShopItemView view = shopService.updateLimits(AdminEconomyWebMapper.toCommand(shopItemId, request));
-        return ApiResponses.ok(AdminEconomyWebMapper.toResponse(view));
+        EconomyResult.ShopItemView result = shopService.updateLimits(
+                AdminEconomyWebMapper.toUpdateShopItemCommand(shopItemId, request)
+        );
+
+        return ApiResponses.ok(AdminEconomyWebMapper.toShopItem(result));
     }
 
     @Override
-    @GetMapping("/shop/items")
-    public ResponseEntity<ApiResponse<AdminEconomyResponse.ShopItems>> listShopItems() {
-        EconomyResult.ShopItems items = shopService.listAllItems();
-        return ApiResponses.ok(AdminEconomyWebMapper.toResponse(items));
+    @PatchMapping("/shop/items/{shopItemId}/availability")
+    public ResponseEntity<ApiResponse<Void>> toggleShopItem(
+            @PathVariable Long shopItemId,
+            @Valid @RequestBody AdminEconomyRequest.ToggleShopItem request
+    ) {
+        shopService.toggleAvailability(AdminEconomyWebMapper.toToggleShopItemCommand(shopItemId, request));
+        return ApiResponses.noContent();
     }
 
     @Override
     @GetMapping("/shop/purchases")
     public ResponseEntity<ApiResponse<AdminEconomyResponse.ShopPurchases>> listShopPurchases() {
-        EconomyResult.ShopPurchases purchases = shopService.listAllPurchases();
-        return ApiResponses.ok(AdminEconomyWebMapper.toResponse(purchases));
+        EconomyResult.ShopPurchases result = shopService.listAllPurchases();
+        return ApiResponses.ok(AdminEconomyWebMapper.toShopPurchases(result));
     }
 
     @Override
@@ -77,7 +83,10 @@ public class AdminEconomyController implements AdminEconomyApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminEconomyRequest.AdjustWallet request
     ) {
-        EconomyResult.WalletBalance balance = topUpService.adjust(AdminEconomyWebMapper.toCommand(playerId, request));
-        return ApiResponses.ok(AdminEconomyWebMapper.toResponse(balance));
+        EconomyResult.WalletBalance result = topUpService.adjust(
+                AdminEconomyWebMapper.toAdjustWalletCommand(playerId, request)
+        );
+
+        return ApiResponses.ok(AdminEconomyWebMapper.toWalletBalance(result));
     }
 }

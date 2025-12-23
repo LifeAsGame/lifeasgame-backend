@@ -11,8 +11,5 @@ public final class CertificationCommand {
             String issuer,
             String category
     ) {
-        public static Create of(String name, String issuer, String category) {
-            return new Create(name, issuer, category);
-        }
     }
 }

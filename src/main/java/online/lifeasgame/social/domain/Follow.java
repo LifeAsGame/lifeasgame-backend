@@ -27,15 +27,9 @@ public class Follow extends AbstractTime {
     @Column(name = "follow_id")
     private Long id;
 
-    /**
-     * 소유자(간접참조): 팔로우를 거는 주체
-     */
     @Column(name = "player_id", nullable = false)
     private Long playerId;
 
-    /**
-     * 대상(간접참조): 팔로우를 당하는 주체
-     */
     @Column(name = "target_player_id", nullable = false)
     private Long targetPlayerId;
 
@@ -49,21 +43,34 @@ public class Follow extends AbstractTime {
     @Column(name = "blocked", nullable = false)
     private boolean blocked;
 
+    private Follow(
+            Long playerId,
+            Long targetPlayerId,
+            FollowState state,
+            boolean muted,
+            boolean blocked
+    ) {
+        this.playerId = playerId;
+        this.targetPlayerId = targetPlayerId;
+        this.state = state;
+        this.muted = muted;
+        this.blocked = blocked;
+    }
+
     public static Follow create(Long playerId, Long targetPlayerId) {
         Guard.notNull(playerId, "playerId");
         Guard.notNull(targetPlayerId, "targetPlayerId");
         Guard.check(!playerId.equals(targetPlayerId), "cannot follow self");
 
-        Follow f = new Follow();
-        f.playerId = playerId;
-        f.targetPlayerId = targetPlayerId;
-        f.state = FollowState.FOLLOWING;
-        f.muted = false;
-        f.blocked = false;
-        return f;
+        return new Follow(
+                playerId,
+                targetPlayerId,
+                FollowState.FOLLOWING,
+                false,
+                false
+        );
     }
 
-    // ===== 도메인 행위 =====
     public void unfollow() {
         Guard.checkState(this.state == FollowState.FOLLOWING, "not following");
         this.state = FollowState.STOPPED;
@@ -81,7 +88,6 @@ public class Follow extends AbstractTime {
 
     public void block() {
         this.blocked = true;
-        // Block 시에도 레코드는 유지하되, 상호작용은 상위 계층 정책으로 제한
     }
 
     public void unblock() {

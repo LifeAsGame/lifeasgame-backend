@@ -23,17 +23,18 @@ import java.net.URI;
 @RequestMapping("/admin/v1/achievements")
 public class AdminAchievementController implements AdminAchievementApiSpecV1 {
 
-    private final AchievementService adminAchievementService;
+    private final AchievementService achievementService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> create(
             @Valid @RequestBody AdminAchievementRequest.Create request
     ) {
-        AchievementResult.Info info = adminAchievementService.create(AdminAchievementWebMapper.toCommand(request));
+        AchievementResult.Info result = achievementService.create(AdminAchievementWebMapper.toCreateCommand(request));
+
         return ApiResponses.created(
-                URI.create("/admin/v1/achievements/" + info.code()),
-                AdminAchievementWebMapper.toAchievementInfo(info)
+                URI.create("/admin/v1/achievements/" + result.code()),
+                AdminAchievementWebMapper.toInfo(result)
         );
     }
 }

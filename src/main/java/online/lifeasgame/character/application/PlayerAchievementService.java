@@ -6,8 +6,6 @@ import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.character.application.view.PlayerAchievementView;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.PlayerAchievement;
-import online.lifeasgame.character.domain.error.PlayerError;
-import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +17,12 @@ import java.util.List;
 public class PlayerAchievementService {
 
     private final PlayerAchievementReader playerAchievementReader;
-    private final AchievementReader achievementReader;
     private final PlayerAchievementWriter playerAchievementWriter;
+    private final AchievementReader achievementReader;
     private final PlayerReader playerReader;
 
     public List<PlayerAchievementResult.Info> getPlayerAchievementInfos(Long playerId) {
-        List<PlayerAchievementView> playerAchievementViews = playerAchievementReader.getPlayerAchievementInfos(playerId);
+        List<PlayerAchievementView> playerAchievementViews = playerAchievementReader.getViewsByPlayerId(playerId);
         return playerAchievementViews.stream()
                 .map(PlayerAchievementResult.Info::from)
                 .toList();
@@ -32,26 +30,21 @@ public class PlayerAchievementService {
 
     @Transactional
     public PlayerAchievementResult.Granted grantAchievement(Long playerId, Long achievementId) {
-        if (playerReader.notExists(playerId)) {
-            throw new DomainException(PlayerError.PLAYER_NOT_FOUND);
-        }
+        playerReader.assertExistsById(playerId);
 
-        Achievement achievement = achievementReader.getAchievement(achievementId);
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
 
-        PlayerAchievement saved = playerAchievementWriter.grantAchievement(
-                PlayerAchievement.create(
-                        playerId,
-                        achievementId
-                )
+        PlayerAchievement playerAchievement = playerAchievementWriter.create(
+                PlayerAchievement.create(playerId, achievementId)
         );
 
-        return PlayerAchievementResult.Granted.of(
-                saved.getPlayerId(),
-                saved.getAchievementId(),
+        return new PlayerAchievementResult.Granted(
+                playerAchievement.getPlayerId(),
+                playerAchievement.getAchievementId(),
                 achievement.getCode(),
                 achievement.getName(),
                 achievement.getCategory().name(),
-                saved.getAcquiredAt()
+                playerAchievement.getAcquiredAt()
         );
     }
 }

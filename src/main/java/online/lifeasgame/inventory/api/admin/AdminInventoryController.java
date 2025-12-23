@@ -26,7 +26,7 @@ public class AdminInventoryController implements AdminInventoryApiSpecV1 {
             @PathVariable Long playerId,
             @Valid @RequestBody AdminInventoryRequest.Add request
     ) {
-        InventoryResult.Slots slots = inventoryService.add(playerId, AdminInventoryWebMapper.toCommand(request));
-        return ApiResponses.ok(AdminInventoryWebMapper.toSlots(slots));
+        InventoryResult.Slots result = inventoryService.add(playerId, AdminInventoryWebMapper.toAddCommand(request));
+        return ApiResponses.ok(AdminInventoryWebMapper.toSlots(result));
     }
 }

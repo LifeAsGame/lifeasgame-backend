@@ -1,7 +1,6 @@
 package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.social.application.query.FollowQueryRepository;
 import online.lifeasgame.social.domain.Follow;
 import online.lifeasgame.social.domain.repository.FollowRepository;
 import org.springframework.data.domain.Page;
@@ -12,14 +11,13 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class FollowRepositoryAdapter implements FollowRepository, FollowQueryRepository {
+public class FollowRepositoryAdapter implements FollowRepository {
 
     private final FollowJpaRepository followJpaRepository;
 
-    // DomainRepo
     @Override
-    public Follow save(Follow f) {
-        return followJpaRepository.save(f);
+    public Follow save(Follow follow) {
+        return followJpaRepository.save(follow);
     }
 
     @Override
@@ -37,7 +35,6 @@ public class FollowRepositoryAdapter implements FollowRepository, FollowQueryRep
         return followJpaRepository.existsByPlayerIdAndTargetPlayerId(playerId, friendId);
     }
 
-    // QueryRepo — 2단계 로딩
     @Override
     public List<Follow> findFollowings(Long playerId, int page, int size) {
         Page<Long> idPage = followJpaRepository.findFollowingIds(

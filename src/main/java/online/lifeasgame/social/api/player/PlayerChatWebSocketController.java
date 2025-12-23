@@ -22,6 +22,6 @@ public class PlayerChatWebSocketController {
             @DestinationVariable Long channelId,
             @Valid PlayerChatSocketRequest.SendMessage request
     ) {
-        chatFacade.sendMessage(channelId, PlayerChatWebMapper.toCommand(request));
+        chatFacade.sendMessage(channelId, PlayerChatWebMapper.toSendMessageCommand(request));
     }
 }

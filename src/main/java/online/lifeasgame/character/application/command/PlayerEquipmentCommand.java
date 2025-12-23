@@ -6,8 +6,5 @@ public final class PlayerEquipmentCommand {
     }
 
     public record Equip(Long slotId, Long itemInstanceId) {
-        public static Equip of(Long slotId, Long itemInstanceId) {
-            return new Equip(slotId, itemInstanceId);
-        }
     }
 }

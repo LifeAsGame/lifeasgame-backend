@@ -1,6 +1,7 @@
 package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.application.view.PlayerCertificationView;
+import online.lifeasgame.character.domain.Certification;
 import online.lifeasgame.character.domain.PlayerCertification;
 
 import java.time.Instant;
@@ -48,20 +49,6 @@ public final class PlayerCertificationResult {
     }
 
     public record Created(
-            Long certificationId,
-            LocalDate acquiredDate,
-            LocalDate expiresDate
-    ) {
-        public static Created from(PlayerCertification playerCertification) {
-            return new Created(
-                    playerCertification.getCertificationId(),
-                    playerCertification.getAcquiredDate(),
-                    playerCertification.getExpiresDate()
-            );
-        }
-    }
-
-    public record Granted(
             Long playerId,
             Long certificationId,
             String name,
@@ -71,25 +58,16 @@ public final class PlayerCertificationResult {
             LocalDate expiresDate,
             Instant grantedAt
     ) {
-        public static Granted of(
-                Long playerId,
-                Long certificationId,
-                String name,
-                String issuer,
-                String category,
-                LocalDate acquiredDate,
-                LocalDate expiresDate,
-                Instant grantedAt
-        ) {
-            return new Granted(
-                    playerId,
-                    certificationId,
-                    name,
-                    issuer,
-                    category,
-                    acquiredDate,
-                    expiresDate,
-                    grantedAt
+        public static Created from(PlayerCertification playerCertification, Certification certification) {
+            return new PlayerCertificationResult.Created(
+                    playerCertification.getPlayerId(),
+                    playerCertification.getCertificationId(),
+                    certification.getName(),
+                    certification.getIssuer(),
+                    certification.getCategory().name(),
+                    playerCertification.getAcquiredDate(),
+                    playerCertification.getExpiresDate(),
+                    playerCertification.getGrantedAt()
             );
         }
     }

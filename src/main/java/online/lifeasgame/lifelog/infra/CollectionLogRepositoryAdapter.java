@@ -1,7 +1,6 @@
 package online.lifeasgame.lifelog.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.lifelog.application.query.CollectionLogQueryRepository;
 import online.lifeasgame.lifelog.domain.CollectionCategory;
 import online.lifeasgame.lifelog.domain.CollectionLog;
 import online.lifeasgame.lifelog.domain.repository.CollectionLogRepository;
@@ -15,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class CollectionLogRepositoryAdapter implements CollectionLogRepository, CollectionLogQueryRepository {
+public class CollectionLogRepositoryAdapter implements CollectionLogRepository {
 
     private final CollectionLogJpaRepository jpa;
 
@@ -35,7 +34,7 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository, 
     }
 
     @Override
-    public List<CollectionLog> findByPlayer(Long playerId, int limit) {
+    public List<CollectionLog> findByPlayerId(Long playerId, int limit) {
         return jpa.findRecentWithTags(playerId, PageRequest.of(0, limit));
     }
 

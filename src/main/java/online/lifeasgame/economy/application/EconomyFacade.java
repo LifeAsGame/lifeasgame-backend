@@ -50,7 +50,7 @@ public class EconomyFacade {
         topUpService.topUp(playerId, command);
     }
 
-    public EconomyResult.Listings listOpenListings() {
+    public EconomyResult.ListingSummaries listOpenListings() {
         return marketplaceService.listOpen();
     }
 

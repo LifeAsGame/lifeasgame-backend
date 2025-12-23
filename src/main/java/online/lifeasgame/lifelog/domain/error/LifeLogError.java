@@ -12,17 +12,16 @@ public enum LifeLogError implements ErrorCode {
     INVALID_MEDIA_CATEGORY("LIF-400-INVALID-MEDIA-CATEGORY", "Invalid Media Category", 400),
     INVALID_COLLECTION_CATEGORY("LIF-400-INVALID-COLLECTION-CATEGORY", "Invalid Collection Category", 400),
     INVALID_WATCH_STATUS("LIF-400-INVALID-WATCH-STATUS", "Invalid Watch Status", 400),
-    INVALID_EXERCISE_CATEGORY("LIF-400-INVALID-EXERCISE-CATEGORY", "Invalid Exercise Category", 400)
-    ;
+    INVALID_EXERCISE_CATEGORY("LIF-400-INVALID-EXERCISE-CATEGORY", "Invalid Exercise Category", 400);
 
     private final String code;
     private final String message;
     private final int status;
 
-    LifeLogError(String c, String m, int s) {
-        this.code = c;
-        this.message = m;
-        this.status = s;
+    LifeLogError(String code, String message, int status) {
+        this.code = code;
+        this.message = message;
+        this.status = status;
     }
 
     @Override

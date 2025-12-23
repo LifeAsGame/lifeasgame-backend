@@ -5,6 +5,7 @@ import online.lifeasgame.quest.domain.Quest;
 import online.lifeasgame.quest.domain.repository.QuestRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,5 +33,10 @@ public class QuestRepositoryAdapter implements QuestRepository {
     @Override
     public List<Quest> findAll() {
         return jpaQuestRepository.findAll();
+    }
+
+    @Override
+    public Collection<Quest> findAllByIds(Collection<Long> questIds) {
+        return jpaQuestRepository.findAllById(questIds);
     }
 }

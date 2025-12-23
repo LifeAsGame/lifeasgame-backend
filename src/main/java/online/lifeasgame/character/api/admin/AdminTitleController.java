@@ -21,16 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/titles")
 public class AdminTitleController implements AdminTitleApiSpecV1 {
 
-    private final TitleService adminTitleService;
+    private final TitleService titleService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> create(
             @Valid @RequestBody AdminTitleRequest.Create request
     ) {
-        TitleResult.Info info = adminTitleService.create(AdminTitleWebMapper.toCommand(request));
-        return ApiResponses.ok(
-                AdminTitleWebMapper.toTitleInfo(info)
-        );
+        TitleResult.Info result = titleService.create(AdminTitleWebMapper.toCreateCommand(request));
+        return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
     }
 }

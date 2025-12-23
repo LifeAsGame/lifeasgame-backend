@@ -16,27 +16,6 @@ public final class ItemCommand {
             Integer maxStack,
             Integer maxDurability
     ) {
-        public static Create of(
-                String name,
-                String category,
-                String type,
-                String rarity,
-                Map<String, Integer> baseAttrs,
-                boolean stackable,
-                Integer maxStack,
-                Integer maxDurability
-        ) {
-            return new Create(
-                    name,
-                    category,
-                    type,
-                    rarity,
-                    baseAttrs,
-                    stackable,
-                    maxStack,
-                    maxDurability
-            );
-        }
     }
 
     public record Update(
@@ -50,28 +29,5 @@ public final class ItemCommand {
             Integer maxStack,
             Integer maxDurability
     ) {
-        public static Update of(
-                Long id,
-                String name,
-                String category,
-                String type,
-                String rarity,
-                Map<String, Integer> baseAttrs,
-                boolean stackable,
-                Integer maxStack,
-                Integer maxDurability
-        ) {
-            return new Update(
-                    id,
-                    name,
-                    category,
-                    type,
-                    rarity,
-                    baseAttrs,
-                    stackable,
-                    maxStack,
-                    maxDurability
-            );
-        }
     }
 }

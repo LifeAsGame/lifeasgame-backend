@@ -1,6 +1,8 @@
 package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.application.view.PlayerTitleView;
+import online.lifeasgame.character.domain.PlayerTitle;
+import online.lifeasgame.character.domain.Title;
 
 import java.time.Instant;
 
@@ -29,7 +31,7 @@ public final class PlayerTitleResult {
         }
     }
 
-    public record Granted(
+    public record Created(
             Long playerId,
             Long titleId,
             String code,
@@ -37,21 +39,14 @@ public final class PlayerTitleResult {
             String category,
             Instant acquiredAt
     ) {
-        public static Granted of(
-                Long playerId,
-                Long titleId,
-                String code,
-                String name,
-                String category,
-                Instant acquiredAt
-        ) {
-            return new Granted(
-                    playerId,
-                    titleId,
-                    code,
-                    name,
-                    category,
-                    acquiredAt
+        public static Created from(PlayerTitle playerTitle, Title title) {
+            return new Created(
+                    playerTitle.getPlayerId(),
+                    playerTitle.getTitleId(),
+                    title.getCode(),
+                    title.getName(),
+                    title.getCategory().name(),
+                    playerTitle.getAcquiredAt()
             );
         }
     }

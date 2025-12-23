@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 class TitleWriter {
 
-    private final TitleRepository titleRepository;
+    private final TitleRepository repository;
 
     public Title create(Title title) {
-        return titleRepository.save(title);
+        return repository.save(title);
     }
 }

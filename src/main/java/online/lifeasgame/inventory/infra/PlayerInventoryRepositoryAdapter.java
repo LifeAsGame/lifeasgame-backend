@@ -1,6 +1,7 @@
 package online.lifeasgame.inventory.infra;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.inventory.application.query.InventoryStackQuery;
 import online.lifeasgame.inventory.domain.PlayerInventory;
 import online.lifeasgame.inventory.domain.repository.PlayerInventoryRepository;
 import org.springframework.stereotype.Repository;
@@ -9,17 +10,22 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class PlayerItemStackPolicyRepositoryAdapter implements PlayerInventoryRepository {
+public class PlayerInventoryRepositoryAdapter implements PlayerInventoryRepository, InventoryStackQuery {
 
-    private final JpaInventoryRepository jpa;
+    private final JpaInventoryRepository jpaRepository;
 
     @Override
     public Optional<PlayerInventory> findByPlayerId(Long playerId) {
-        return jpa.findByPlayerId(playerId);
+        return jpaRepository.findByPlayerId(playerId);
     }
 
     @Override
     public PlayerInventory save(PlayerInventory inv) {
-        return jpa.save(inv);
+        return jpaRepository.save(inv);
+    }
+
+    @Override
+    public long countStacksExceeding(Long itemId, int limit) {
+        return jpaRepository.countStacksExceeding(itemId, limit);
     }
 }

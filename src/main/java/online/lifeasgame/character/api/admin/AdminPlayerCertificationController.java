@@ -18,21 +18,20 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerCertificationController implements AdminPlayerCertificationApiSpecV1 {
 
-    private final PlayerCertificationService adminPlayerCertificationService;
+    private final PlayerCertificationService playerCertificationService;
 
     @Override
     @PostMapping("/{playerId}/certifications/{certificationId}")
     public ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Granted>> grantCertification(
             @PathVariable Long playerId,
             @PathVariable Long certificationId,
-            @Valid @RequestBody AdminPlayerCertificationRequest.Grant request
+            @Valid @RequestBody AdminPlayerCertificationRequest.Create request
     ) {
-        PlayerCertificationResult.Granted granted = adminPlayerCertificationService.grantCertification(
-                AdminPlayerCertificationWebMapper.toCommand(playerId, certificationId, request)
+        PlayerCertificationResult.Created result = playerCertificationService.createCertification(
+                playerId,
+                AdminPlayerCertificationWebMapper.toCreateCommand(certificationId, request)
         );
 
-        return ApiResponses.ok(
-                AdminPlayerCertificationWebMapper.toGrantedCertification(granted)
-        );
+        return ApiResponses.ok(AdminPlayerCertificationWebMapper.toGranted(result));
     }
 }

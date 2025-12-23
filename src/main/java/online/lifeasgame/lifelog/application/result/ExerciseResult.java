@@ -6,13 +6,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 public final class ExerciseResult {
+
     private ExerciseResult() {
     }
 
     public record Created(Long id) {
-        public static Created of(Long id) {
-            return new Created(id);
-        }
     }
 
     public record Info(

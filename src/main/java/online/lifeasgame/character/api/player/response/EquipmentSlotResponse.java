@@ -10,9 +10,6 @@ public final class EquipmentSlotResponse {
     public record Infos(
             List<Info> infos
     ) {
-        public static Infos of(List<Info> infos) {
-            return new Infos(infos);
-        }
     }
 
     public record Info(
@@ -21,8 +18,5 @@ public final class EquipmentSlotResponse {
             String category,
             String role
     ) {
-        public static Info of(String code, String name, String category, String role) {
-            return new Info(code, name, category, role);
-        }
     }
 }

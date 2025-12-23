@@ -3,7 +3,6 @@ package online.lifeasgame.lifelog.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
-import online.lifeasgame.lifelog.application.model.ExerciseSpec;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
@@ -26,7 +25,15 @@ public class ExerciseLogService {
 
     @Transactional
     public ExerciseResult.Created create(Long playerId, ExerciseCommand.Create command) {
-        ExerciseLog saved = exerciseLogWriter.create(ExerciseSpec.Create.from(playerId, command));
+        ExerciseLog saved = exerciseLogWriter.create(
+                ExerciseLog.create(
+                        playerId,
+                        ExerciseCategory.parse(command.category()),
+                        ExerciseMetrics.of(command.durationMinutes(), command.distanceKm(), command.calories()),
+                        command.exercisedOn(),
+                        command.memo()
+                )
+        );
 
         domainEventPublisher.publish(
                 ExerciseLogged.of(
@@ -39,32 +46,30 @@ public class ExerciseLogService {
                 )
         );
 
-        return ExerciseResult.Created.of(saved.getId());
+        return new ExerciseResult.Created(saved.getId());
     }
 
     @Transactional
     public ExerciseResult.Info update(Long playerId, Long exerciseId, ExerciseCommand.Update command) {
-        ExerciseLog exerciseLog = exerciseLogReader.getExerciseLog(exerciseId, playerId);
-        exerciseLogWriter.update(
-                exerciseLog,
-                new ExerciseSpec.Create(
-                        playerId,
-                        ExerciseCategory.parse(command.category() == null ? exerciseLog.getCategory().name() : command.category()),
-                        ExerciseMetrics.of(
-                                command.durationMinutes() == null ? exerciseLog.getMetrics().durationMinutes() : command.durationMinutes(),
-                                command.distanceKm() == null ? exerciseLog.getMetrics().distanceKm() : command.distanceKm(),
-                                command.calories() == null ? exerciseLog.getMetrics().calories() : command.calories()
-                        ),
-                        command.exercisedOn() == null ? exerciseLog.getExercisedOn() : command.exercisedOn(),
-                        command.memo() == null ? exerciseLog.getMemo() : command.memo()
+        ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
+
+        exerciseLog.changeMetrics(
+                ExerciseMetrics.of(
+                        command.durationMinutes(),
+                        command.distanceKm(),
+                        command.calories()
                 )
         );
+        exerciseLog.changeExercisedOn(command.exercisedOn());
+        exerciseLog.changeMemo(command.memo());
 
-        return ExerciseResult.Info.from(exerciseLogReader.getExerciseLog(exerciseId, playerId));
+        return ExerciseResult.Info.from(exerciseLog);
     }
 
     public List<ExerciseResult.Info> recent(Long playerId, int limit) {
-        return exerciseLogReader.recent(playerId, limit).stream().map(ExerciseResult.Info::from).toList();
+        return exerciseLogReader.recent(playerId, limit).stream()
+                .map(ExerciseResult.Info::from)
+                .toList();
     }
 
     public List<ExerciseResult.Info> search(Long playerId, ExerciseCommand.Search command) {

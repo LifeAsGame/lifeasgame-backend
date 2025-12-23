@@ -19,7 +19,24 @@ import java.util.List;
 @Tag(name = "Social Guild API V1 (Player)")
 public interface PlayerGuildApiSpecV1 {
 
-    // 생성/기본 변경
+    @Operation(summary = "길드 검색")
+    ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String visibility,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(summary = "최근 길드 조회")
+    ResponseEntity<ApiResponse<List<PlayerGuildResponse.Summary>>> recent(
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
+    );
+
+    @Operation(summary = "길드 상세 조회")
+    ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> getGuildInfo(
+            @PathVariable Long guildId
+    );
+
     @Operation(summary = "길드 생성")
     ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> create(@Valid @RequestBody PlayerGuildRequest.Create request);
 
@@ -62,12 +79,14 @@ public interface PlayerGuildApiSpecV1 {
             @Valid @RequestBody PlayerGuildRequest.TagOp request
     );
 
-    // 가입/권한
     @Operation(summary = "가입 요청")
     ResponseEntity<ApiResponse<Void>> requestJoin(
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.RequestJoin request
     );
+
+    @Operation(summary = "가입 요청 취소(본인)")
+    ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long guildId);
 
     @Operation(summary = "가입 승인(리더)")
     ResponseEntity<ApiResponse<Void>> approveJoin(
@@ -81,8 +100,17 @@ public interface PlayerGuildApiSpecV1 {
             @Valid @RequestBody PlayerGuildRequest.Reject request
     );
 
-    @Operation(summary = "가입 요청 취소(본인)")
-    ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long guildId);
+    @Operation(summary = "길드 초대(오피서/리더)")
+    ResponseEntity<ApiResponse<Void>> invite(
+            @PathVariable Long guildId,
+            @Valid @RequestBody PlayerGuildRequest.Invite request
+    );
+
+    @Operation(summary = "초대 수락")
+    ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long guildId);
+
+    @Operation(summary = "초대 거절")
+    ResponseEntity<ApiResponse<Void>> declineInvitation(@PathVariable Long guildId);
 
     @Operation(summary = "리더 위임")
     ResponseEntity<ApiResponse<Void>> transferLeader(
@@ -113,36 +141,4 @@ public interface PlayerGuildApiSpecV1 {
 
     @Operation(summary = "길드 해산(리더)")
     ResponseEntity<ApiResponse<Void>> disband(@PathVariable Long guildId);
-
-    // 초대
-    @Operation(summary = "길드 초대(오피서/리더)")
-    ResponseEntity<ApiResponse<Void>> invite(
-            @PathVariable Long guildId,
-            @Valid @RequestBody PlayerGuildRequest.Invite request
-    );
-
-    @Operation(summary = "초대 수락")
-    ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long guildId);
-
-    @Operation(summary = "초대 거절")
-    ResponseEntity<ApiResponse<Void>> declineInvitation(@PathVariable Long guildId);
-
-    // 조회
-    @Operation(summary = "최근 길드 조회")
-    ResponseEntity<ApiResponse<List<PlayerGuildResponse.Summary>>> recent(
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
-    );
-
-    @Operation(summary = "길드 상세 조회")
-    ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> getGuildInfo(
-            @PathVariable Long guildId
-    );
-
-    @Operation(summary = "길드 검색")
-    ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String visibility,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    );
 }

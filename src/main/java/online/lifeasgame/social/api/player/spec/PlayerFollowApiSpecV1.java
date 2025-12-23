@@ -18,13 +18,33 @@ import java.util.List;
 @Tag(name = "Social Follow API V1 (Player)")
 public interface PlayerFollowApiSpecV1 {
 
-    // 생성
+    @Operation(summary = "내가 팔로우하는 목록")
+    ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(
+                    defaultValue = "20"
+            ) int size
+    );
+
+    @Operation(summary = "나를 팔로우하는 목록")
+    ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(
+                    defaultValue = "20"
+            ) int size
+    );
+
+    @Operation(summary = "최근 팔로우(내가 팔로우 / 나를 팔로우)")
+    ResponseEntity<ApiResponse<List<PlayerFollowResponse.Summary>>> recent(
+            @RequestParam(defaultValue = "followings") String type,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
+    );
+
     @Operation(summary = "팔로우 생성")
     ResponseEntity<ApiResponse<PlayerFollowResponse.Info>> follow(
             @Valid @RequestBody PlayerFollowRequest.Create request
     );
 
-    // 상태 변경
     @Operation(summary = "언팔로우")
     ResponseEntity<ApiResponse<Void>> unfollow(
             @PathVariable Long followId
@@ -48,29 +68,6 @@ public interface PlayerFollowApiSpecV1 {
     @Operation(summary = "차단 해제")
     ResponseEntity<ApiResponse<Void>> unblock(
             @PathVariable Long followId
-    );
-
-    // 조회
-    @Operation(summary = "내가 팔로우하는 목록")
-    ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followings(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(
-                    defaultValue = "20"
-            ) int size
-    );
-
-    @Operation(summary = "나를 팔로우하는 목록")
-    ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(
-                    defaultValue = "20"
-            ) int size
-    );
-
-    @Operation(summary = "최근 팔로우(내가 팔로우 / 나를 팔로우)")
-    ResponseEntity<ApiResponse<List<PlayerFollowResponse.Summary>>> recent(
-            @RequestParam(defaultValue = "followings") String type, // followings | followers
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 }
 

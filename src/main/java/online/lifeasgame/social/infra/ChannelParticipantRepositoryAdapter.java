@@ -12,25 +12,25 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChannelParticipantRepositoryAdapter implements ChannelParticipantRepository {
 
-    private final ChannelParticipantJpaRepository channelParticipantJpaRepository;
+    private final ChannelParticipantJpaRepository jpaRepository;
 
     @Override
     public ChannelParticipant save(ChannelParticipant participant) {
-        return channelParticipantJpaRepository.save(participant);
+        return jpaRepository.save(participant);
     }
 
     @Override
     public Optional<ChannelParticipant> findByChannelIdAndUserId(Long channelId, Long userId) {
-        return channelParticipantJpaRepository.findByChannelIdAndUserId(channelId, userId);
+        return jpaRepository.findByChannelIdAndUserId(channelId, userId);
     }
 
     @Override
     public List<ChannelParticipant> findAllByUserId(Long userId) {
-        return channelParticipantJpaRepository.findAllWithChannelByUserId(userId);
+        return jpaRepository.findAllWithChannelByUserId(userId);
     }
 
     @Override
     public boolean existsByChannelId(Long channelId) {
-        return channelParticipantJpaRepository.existsByChannelId(channelId);
+        return jpaRepository.existsByChannelId(channelId);
     }
 }

@@ -22,39 +22,14 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
 
     private final CollectionLogService collectionLogService;
 
-    @PostMapping("/{playerId}/collections")
-    @Override
-    public ResponseEntity<AdminCollectionResponse.Created> create(
-            @PathVariable Long playerId,
-            @Valid @RequestBody AdminCollectionRequest.Create request
-    ) {
-        CollectionResult.Created created = collectionLogService.create(playerId, AdminCollectionWebMapper.toCommand(request));
-        return ResponseEntity.ok(AdminCollectionWebMapper.toResponse(created));
-    }
-
-    @PostMapping("/{playerId}/collections/{collectionId}")
-    @Override
-    public ResponseEntity<AdminCollectionResponse.Info> update(
-            @PathVariable Long playerId,
-            @PathVariable Long collectionId,
-            @Valid @RequestBody AdminCollectionRequest.Update request
-    ) {
-        CollectionResult.Info info = collectionLogService.update(
-                playerId,
-                collectionId,
-                AdminCollectionWebMapper.toCommand(request)
-        );
-        return ResponseEntity.ok(AdminCollectionWebMapper.toResponse(info));
-    }
-
     @GetMapping("/{playerId}/collections/recent")
     @Override
     public ResponseEntity<List<AdminCollectionResponse.Info>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<CollectionResult.Info> infos = collectionLogService.recent(playerId, limit);
-        return ResponseEntity.ok(AdminCollectionWebMapper.toResponseList(infos));
+        List<CollectionResult.Info> results = collectionLogService.recent(playerId, limit);
+        return ResponseEntity.ok(AdminCollectionWebMapper.toInfos(results));
     }
 
     @Override
@@ -66,19 +41,41 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        List<CollectionResult.Info> infos = collectionLogService.search(
+        List<CollectionResult.Info> results = collectionLogService.search(
                 playerId,
-                AdminCollectionWebMapper.toCommand(
-                        category,
-                        titleLike,
-                        page,
-                        size
-                )
+                AdminCollectionWebMapper.toSearchCommand(category, titleLike, page, size)
         );
-        return ResponseEntity.ok(
-                AdminCollectionWebMapper.toResponseList(
-                        infos
-                )
+
+        return ResponseEntity.ok(AdminCollectionWebMapper.toInfos(results));
+    }
+
+    @PostMapping("/{playerId}/collections")
+    @Override
+    public ResponseEntity<AdminCollectionResponse.Created> create(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminCollectionRequest.Create request
+    ) {
+        CollectionResult.Created result = collectionLogService.create(
+                playerId,
+                AdminCollectionWebMapper.toCreateCommand(request)
         );
+
+        return ResponseEntity.ok(AdminCollectionWebMapper.toCreated(result));
+    }
+
+    @PostMapping("/{playerId}/collections/{collectionId}")
+    @Override
+    public ResponseEntity<AdminCollectionResponse.Info> update(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId,
+            @Valid @RequestBody AdminCollectionRequest.Update request
+    ) {
+        CollectionResult.Info result = collectionLogService.update(
+                playerId,
+                collectionId,
+                AdminCollectionWebMapper.toUpdateCommand(request)
+        );
+
+        return ResponseEntity.ok(AdminCollectionWebMapper.toInfo(result));
     }
 }

@@ -1,34 +1,27 @@
 package online.lifeasgame.economy.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
 import java.time.Instant;
 import java.util.UUID;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import online.lifeasgame.platform.persistence.jpa.AbstractTime;
-import online.lifeasgame.core.guard.Guard;
 
 @Entity
-@Table(name = "wallet_holds", indexes = {
+@Table(
+        name = "wallet_holds", indexes = {
         @Index(name = "idx_hold_wallet", columnList = "wallet_id"),
         @Index(name = "idx_hold_expires", columnList = "expires_at")
-})
+}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WalletHold extends AbstractTime {
 
-    public enum Status {OPEN, COMMITTED, CANCELED, EXPIRED}
+    public enum Status {
+        OPEN, COMMITTED, CANCELED, EXPIRED
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,8 +51,14 @@ public class WalletHold extends AbstractTime {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    public WalletHold(Wallet wallet, String holdId, Currency currency, Long amount, String reason,
-                      Instant expiresAt) {
+    public WalletHold(
+            Wallet wallet,
+            String holdId,
+            Currency currency,
+            Long amount,
+            String reason,
+            Instant expiresAt
+    ) {
         this.wallet = wallet;
         this.holdId = holdId;
         this.currency = currency;
@@ -68,12 +67,25 @@ public class WalletHold extends AbstractTime {
         this.expiresAt = expiresAt;
     }
 
-    static WalletHold open(Wallet wallet, Currency currency, long amount, String reason, Instant now, int ttlSeconds) {
+    static WalletHold open(
+            Wallet wallet,
+            Currency currency,
+            long amount,
+            String reason,
+            Instant now,
+            int ttlSeconds
+    ) {
         Guard.minValue(amount, 1, "amount");
         Guard.notNull(now, "now");
         Guard.minValue(ttlSeconds, 1, "ttlSeconds");
-        return new WalletHold(wallet, UUID.randomUUID().toString(), currency, amount, reason,
-                now.plusSeconds(ttlSeconds));
+        return new WalletHold(
+                wallet,
+                UUID.randomUUID().toString(),
+                currency,
+                amount,
+                reason,
+                now.plusSeconds(ttlSeconds)
+        );
     }
 
     void commit() {

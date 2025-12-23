@@ -1,23 +1,24 @@
 package online.lifeasgame.character.api.player.mapper;
 
-import java.util.List;
-import online.lifeasgame.character.application.result.CertificationResult;
 import online.lifeasgame.character.api.player.response.CertificationResponse;
+import online.lifeasgame.character.application.result.CertificationResult;
 
-public class CertificationWebMapper {
+import java.util.List;
+
+public final class CertificationWebMapper {
 
     private CertificationWebMapper() {}
 
-    public static CertificationResponse.Infos toCertificationInfos(List<CertificationResult.Info> infos) {
-        return CertificationResponse.Infos.of(
-                infos.stream()
+    public static CertificationResponse.Infos toInfos(List<CertificationResult.Info> results) {
+        return new CertificationResponse.Infos(
+                results.stream()
                         .map(
-                                certificationInfo ->
-                                        CertificationResponse.Info.of(
-                                                certificationInfo.certificationId(),
-                                                certificationInfo.name(),
-                                                certificationInfo.issuer(),
-                                                certificationInfo.category()
+                                result ->
+                                        new CertificationResponse.Info(
+                                                result.certificationId(),
+                                                result.name(),
+                                                result.issuer(),
+                                                result.category()
                                         )
                         )
                         .toList()

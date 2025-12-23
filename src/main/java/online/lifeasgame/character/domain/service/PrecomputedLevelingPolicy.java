@@ -1,10 +1,11 @@
 package online.lifeasgame.character.domain.service;
 
-import java.util.List;
 import online.lifeasgame.character.domain.LevelingPolicyParameters;
 import online.lifeasgame.character.domain.LevelingPolicyParameters.Bracket;
 import online.lifeasgame.character.domain.error.LevelingError;
 import online.lifeasgame.core.error.ConfigException;
+
+import java.util.List;
 
 public final class PrecomputedLevelingPolicy implements LevelingPolicy {
 
@@ -12,17 +13,17 @@ public final class PrecomputedLevelingPolicy implements LevelingPolicy {
     private final long[] req;
     private final long[] start;
 
-    public PrecomputedLevelingPolicy(LevelingPolicyParameters p) {
-        this.max = p.maxLevel();
+    public PrecomputedLevelingPolicy(LevelingPolicyParameters parameters) {
+        this.max = parameters.maxLevel();
         this.req = new long[max + 1];
         this.start = new long[max + 2];
 
-        req[1] = p.baseReqLv1();
+        req[1] = parameters.baseReqLv1();
         start[1] = 0L;
 
         for (int l = 1; l <= max; l++) {
             if (l > 1) {
-                var b = findBracket(p.brackets(), l);
+                var b = findBracket(parameters.brackets(), l);
                 long candidate = (long) Math.floor(req[l - 1] * b.mul()) + b.add();
                 req[l] = Math.max(candidate, req[l - 1] + 1);
             }
@@ -40,7 +41,7 @@ public final class PrecomputedLevelingPolicy implements LevelingPolicy {
                 return b;
             }
         }
-        return bs.get(bs.size() - 1);
+        return bs.getLast();
     }
 
     @Override
@@ -63,7 +64,9 @@ public final class PrecomputedLevelingPolicy implements LevelingPolicy {
         if (totalXp <= 0) {
             return 1;
         }
+
         int lo = 1, hi = max;
+
         while (lo <= hi) {
             int mid = (lo + hi) >>> 1;
             if (totalXp < start[mid + 1]) {

@@ -29,9 +29,13 @@ public class TimePeriod {
         this.end = e;
     }
 
-    public static TimePeriod of(LocalDate s, LocalDate e) { return new TimePeriod(s, e); }
+    public static TimePeriod of(LocalDate s, LocalDate e) {
+        return new TimePeriod(s, e);
+    }
 
-    public static TimePeriod daily(LocalDate day){ return new TimePeriod(day, day); }
+    public static TimePeriod daily(LocalDate day) {
+        return new TimePeriod(day, day);
+    }
 
     public static TimePeriod weekly(LocalDate anyDay) {
         return weekly(anyDay, DayOfWeek.MONDAY);
@@ -41,7 +45,7 @@ public class TimePeriod {
         Guard.notNull(anyDay, "anyDay");
         Guard.notNull(firstDayOfWeek, "firstDayOfWeek");
         LocalDate start = anyDay.with(TemporalAdjusters.previousOrSame(firstDayOfWeek));
-        LocalDate end   = start.plusDays(6);
+        LocalDate end = start.plusDays(6);
         return new TimePeriod(start, end);
     }
 
@@ -60,11 +64,16 @@ public class TimePeriod {
         return new TimePeriod(LocalDate.of(1970, 1, 1), LocalDate.of(9999, 12, 31));
     }
 
-    public boolean contains(LocalDate d){
+    public boolean contains(LocalDate d) {
         Guard.notNull(d, "date");
         return (d.equals(start) || d.isAfter(start)) && (d.equals(end) || d.isBefore(end));
     }
 
-    public LocalDate start(){ return start; }
-    public LocalDate end(){ return end; }
+    public LocalDate start() {
+        return start;
+    }
+
+    public LocalDate end() {
+        return end;
+    }
 }

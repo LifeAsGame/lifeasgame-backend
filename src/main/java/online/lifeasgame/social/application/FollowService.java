@@ -2,7 +2,6 @@ package online.lifeasgame.social.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.application.command.FollowCommand;
-import online.lifeasgame.social.application.model.FollowSpec;
 import online.lifeasgame.social.application.result.FollowResult;
 import online.lifeasgame.social.domain.Follow;
 import org.springframework.stereotype.Service;
@@ -21,51 +20,57 @@ public class FollowService {
 
     @Transactional
     public FollowResult.Info follow(Long playerId, FollowCommand.Create command) {
-        Follow saved = followWriter.create(FollowSpec.Create.from(playerId, command));
-        return FollowResult.Info.from(saved);
+        Follow follow = followWriter.create(
+                Follow.create(
+                        playerId,
+                        command.targetPlayerId()
+                )
+        );
+        
+        return FollowResult.Info.from(follow);
     }
 
     @Transactional
     public void unfollow(Long playerId, Long followId) {
-        Follow f = followReader.get(followId, playerId);
-        followWriter.unfollow(f);
+        Follow follow = followReader.getByFollowIdAndPlayerId(followId, playerId);
+        follow.unfollow();
     }
 
     @Transactional
     public void mute(Long playerId, Long followId) {
-        Follow f = followReader.get(followId, playerId);
-        followWriter.mute(f);
+        Follow follow = followReader.getByFollowIdAndPlayerId(followId, playerId);
+        follow.mute();
     }
 
     @Transactional
     public void unmute(Long playerId, Long followId) {
-        Follow f = followReader.get(followId, playerId);
-        followWriter.unmute(f);
+        Follow follow = followReader.getByFollowIdAndPlayerId(followId, playerId);
+        follow.unmute();
     }
 
     @Transactional
     public void block(Long playerId, Long followId) {
-        Follow f = followReader.get(followId, playerId);
-        followWriter.block(f);
+        Follow follow = followReader.getByFollowIdAndPlayerId(followId, playerId);
+        follow.block();
     }
 
     @Transactional
     public void unblock(Long playerId, Long followId) {
-        Follow f = followReader.get(followId, playerId);
-        followWriter.unblock(f);
+        Follow follow = followReader.getByFollowIdAndPlayerId(followId, playerId);
+        follow.unblock();
     }
 
     public FollowResult.Page<FollowResult.Summary> listFollowings(Long playerId, int page, int size) {
-        List<Follow> domains = followReader.followings(playerId, page, size);
+        List<Follow> followings = followReader.getFollowingsByPlayerId(playerId, page, size);
         long total = followReader.countFollowings(playerId);
-        List<FollowResult.Summary> contents = domains.stream().map(FollowResult.Summary::from).toList();
+        List<FollowResult.Summary> contents = followings.stream().map(FollowResult.Summary::from).toList();
         return FollowResult.Page.of(contents, page, size, total);
     }
 
     public FollowResult.Page<FollowResult.Summary> listFollowers(Long playerId, int page, int size) {
-        List<Follow> domains = followReader.followers(playerId, page, size);
+        List<Follow> followers = followReader.getFollowersByPlayerId(playerId, page, size);
         long total = followReader.countFollowers(playerId);
-        List<FollowResult.Summary> contents = domains.stream().map(FollowResult.Summary::from).toList();
+        List<FollowResult.Summary> contents = followers.stream().map(FollowResult.Summary::from).toList();
         return FollowResult.Page.of(contents, page, size, total);
     }
 

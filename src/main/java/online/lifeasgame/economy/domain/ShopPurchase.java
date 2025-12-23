@@ -1,24 +1,13 @@
 package online.lifeasgame.economy.domain;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.time.Instant;
 
 @Entity
 @AggregateRoot
@@ -31,10 +20,12 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
                 @Index(name = "idx_shop_status", columnList = "status")
         }
 )
-@AttributeOverrides({
-        @AttributeOverride(name = "totalPrice.amount", column = @Column(name = "total_price")),
-        @AttributeOverride(name = "totalPrice.currency", column = @Column(name = "currency", length = 10))
-})
+@AttributeOverrides(
+        {
+                @AttributeOverride(name = "totalPrice.amount", column = @Column(name = "total_price")),
+                @AttributeOverride(name = "totalPrice.currency", column = @Column(name = "currency", length = 10))
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ShopPurchase extends AbstractTime {
 
@@ -69,16 +60,31 @@ public class ShopPurchase extends AbstractTime {
     @Column(name = "wallet_hold_id", length = 36)
     private String walletHoldId;
 
-    private ShopPurchase(Long shopItemId, Long playerId, Integer quantity, Money totalPrice) {
+    private ShopPurchase(
+            Long shopItemId,
+            Long playerId,
+            Integer quantity,
+            Money totalPrice
+    ) {
         this.shopItemId = Guard.notNull(shopItemId, "shopItemId");
         this.playerId = Guard.notNull(playerId, "playerId");
         this.quantity = Guard.notNull(quantity, "quantity");
         this.totalPrice = Guard.notNull(totalPrice, "totalPrice");
     }
 
-    public static ShopPurchase request(Long shopItemId, Long playerId, int quantity, Money unitPrice) {
+    public static ShopPurchase request(
+            Long shopItemId,
+            Long playerId,
+            int quantity,
+            Money unitPrice
+    ) {
         Guard.minValue(quantity, 1, "quantity");
-        return new ShopPurchase(shopItemId, playerId, quantity, unitPrice.multiply(quantity));
+        return new ShopPurchase(
+                shopItemId,
+                playerId,
+                quantity,
+                unitPrice.multiply(quantity)
+        );
     }
 
     public void reserve(ReservationToken token, Instant expiresAt, String walletHoldId) {
@@ -125,13 +131,39 @@ public class ShopPurchase extends AbstractTime {
         this.walletHoldId = null;
     }
 
-    public Long getId() { return id; }
-    public Long getShopItemId() { return shopItemId; }
-    public Long getPlayerId() { return playerId; }
-    public Integer getQuantity() { return quantity; }
-    public Status getStatus() { return status; }
-    public Money getTotalPrice() { return totalPrice; }
-    public String getReservationToken() { return reservationToken; }
-    public Instant getReservationExpiresAt() { return reservationExpiresAt; }
-    public String getWalletHoldId() { return walletHoldId; }
+    public Long getId() {
+        return id;
+    }
+
+    public Long getShopItemId() {
+        return shopItemId;
+    }
+
+    public Long getPlayerId() {
+        return playerId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public Money getTotalPrice() {
+        return totalPrice;
+    }
+
+    public String getReservationToken() {
+        return reservationToken;
+    }
+
+    public Instant getReservationExpiresAt() {
+        return reservationExpiresAt;
+    }
+
+    public String getWalletHoldId() {
+        return walletHoldId;
+    }
 }

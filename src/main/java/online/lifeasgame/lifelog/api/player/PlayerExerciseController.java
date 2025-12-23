@@ -22,30 +22,11 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
 
     private final ExerciseLogFacade exerciseLogFacade;
 
-    @PostMapping
-    @Override
-    public ResponseEntity<PlayerExerciseResponse.Created> create(
-            @Valid @RequestBody PlayerExerciseRequest.Create request
-    ) {
-        ExerciseResult.Created result = exerciseLogFacade.create(PlayerExerciseWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerExerciseWebMapper.toResponse(result));
-    }
-
-    @PostMapping("/{exerciseId}")
-    @Override
-    public ResponseEntity<PlayerExerciseResponse.Info> update(
-            @PathVariable Long exerciseId,
-            @Valid @RequestBody PlayerExerciseRequest.Update request
-    ) {
-        ExerciseResult.Info info = exerciseLogFacade.update(exerciseId, PlayerExerciseWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerExerciseWebMapper.toResponse(info));
-    }
-
     @GetMapping("/recent")
     @Override
     public ResponseEntity<List<PlayerExerciseResponse.Info>> recent(@RequestParam(defaultValue = "20") Integer limit) {
-        List<ExerciseResult.Info> infos = exerciseLogFacade.recent(limit);
-        return ResponseEntity.ok(PlayerExerciseWebMapper.toResponseList(infos));
+        List<ExerciseResult.Info> results = exerciseLogFacade.recent(limit);
+        return ResponseEntity.ok(PlayerExerciseWebMapper.toInfos(results));
     }
 
     @GetMapping("/search")
@@ -56,17 +37,28 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<ExerciseResult.Info> infos = exerciseLogFacade.search(
-                PlayerExerciseWebMapper.toCommand(
-                        category,
-                        from,
-                        to,
-                        page,
-                        size
-                )
+        List<ExerciseResult.Info> results = exerciseLogFacade.search(
+                PlayerExerciseWebMapper.toSearchCommand(category, from, to, page, size)
         );
-        return ResponseEntity.ok(
-                PlayerExerciseWebMapper.toResponseList(infos)
-        );
+        return ResponseEntity.ok(PlayerExerciseWebMapper.toInfos(results));
+    }
+
+    @PostMapping
+    @Override
+    public ResponseEntity<PlayerExerciseResponse.Created> create(
+            @Valid @RequestBody PlayerExerciseRequest.Create request
+    ) {
+        ExerciseResult.Created result = exerciseLogFacade.create(PlayerExerciseWebMapper.toCreateCommand(request));
+        return ResponseEntity.ok(PlayerExerciseWebMapper.toCreated(result));
+    }
+
+    @PostMapping("/{exerciseId}")
+    @Override
+    public ResponseEntity<PlayerExerciseResponse.Info> update(
+            @PathVariable Long exerciseId,
+            @Valid @RequestBody PlayerExerciseRequest.Update request
+    ) {
+        ExerciseResult.Info result = exerciseLogFacade.update(exerciseId, PlayerExerciseWebMapper.toUpdateCommand(request));
+        return ResponseEntity.ok(PlayerExerciseWebMapper.toInfo(result));
     }
 }

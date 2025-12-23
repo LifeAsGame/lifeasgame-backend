@@ -18,20 +18,20 @@ public class HobbyService {
     private final HobbyWriter hobbyWriter;
 
     public List<HobbyResult.Info> getHobbies(List<String> categories) {
-        List<Hobby> hobbies = hobbyReader.getHobbies(HobbyCategory.parse(categories));
+        List<Hobby> hobbies = hobbyReader.getByCategories(HobbyCategory.parse(categories));
         return HobbyResult.Info.fromList(hobbies);
     }
 
     @Transactional
     public HobbyResult.Info create(HobbyCommand.Create command) {
         Hobby hobby = hobbyWriter.create(
-                Hobby.of(
+                Hobby.create(
                         command.name(),
                         HobbyCategory.parse(command.category())
                 )
         );
 
-        return HobbyResult.Info.of(
+        return new HobbyResult.Info(
                 hobby.getId(),
                 hobby.getName(),
                 hobby.getCategory().name()

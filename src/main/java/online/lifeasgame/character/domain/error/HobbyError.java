@@ -4,8 +4,7 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum HobbyError implements ErrorCode {
     INVALID_HOBBY_CATEGORY("HOB-400-INVALID-HOBBY-CATEGORY", "Invalid hobby category", 400),
-    HOBBY_NOT_FOUND("HOB-404-NOT_FOUND", "Hobby not found", 404)
-    ;
+    HOBBY_NOT_FOUND("HOB-404-NOT_FOUND", "Hobby not found", 404);
 
     private final String code;
     private final String message;

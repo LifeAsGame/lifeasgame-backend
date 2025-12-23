@@ -37,7 +37,7 @@ public class Hobby extends AbstractTime {
         this.category = category;
     }
 
-    public static Hobby of(String name, HobbyCategory category) {
+    public static Hobby create(String name, HobbyCategory category) {
         return new Hobby(name, category);
     }
 }

@@ -1,20 +1,22 @@
 package online.lifeasgame.economy.application;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.economy.domain.Trade;
 import online.lifeasgame.economy.domain.repository.TradeRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class TradeReader {
 
-    private final TradeRepository tradeRepository;
+    private final TradeRepository repository;
 
-    @Transactional(readOnly = true)
     public List<Trade> findByPlayer(Long playerId) {
-        return tradeRepository.findByBuyerPlayerIdOrSellerPlayerId(playerId, playerId);
+        return repository.findByBuyerPlayerIdOrSellerPlayerId(playerId, playerId);
     }
 }

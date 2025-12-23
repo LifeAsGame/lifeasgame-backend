@@ -36,7 +36,7 @@ public class PlayerHobbyRepositoryAdapter implements PlayerHobbyRepository, Play
     }
 
     @Override
-    public List<PlayerHobbyView> findPlayerHobbyInfos(Long playerId) {
+    public List<PlayerHobbyView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerHobbyViews(playerId);
     }
 }

@@ -1,25 +1,13 @@
 package online.lifeasgame.economy.domain;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
-import java.time.Instant;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
-import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.time.Instant;
 
 @Entity
 @AggregateRoot
@@ -137,10 +125,8 @@ public class Listing extends AbstractTime {
             Guard.checkState(!sellerPlayerId.equals(buyerPlayerId), "seller cannot buy own listing");
         } else {
             Guard.checkState(status == ListingStatus.RESERVED, "listing not available");
-            Guard.checkState(this.reservedBy != null && this.reservedBy.equals(buyerPlayerId),
-                    "reserved by other buyer");
-            Guard.checkState(this.reservationToken != null && this.reservationToken.value().equals(token),
-                    "invalid token");
+            Guard.checkState(this.reservedBy != null && this.reservedBy.equals(buyerPlayerId), "reserved by other buyer");
+            Guard.checkState(this.reservationToken != null && this.reservationToken.value().equals(token), "invalid token");
             Guard.notBlank(this.reservedHoldId, "reservedHoldId");
         }
         this.status = ListingStatus.SOLD;

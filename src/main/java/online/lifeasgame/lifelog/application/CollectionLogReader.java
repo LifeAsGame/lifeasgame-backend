@@ -1,7 +1,6 @@
 package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.lifelog.application.query.CollectionLogQueryRepository;
 import online.lifeasgame.lifelog.domain.CollectionCategory;
 import online.lifeasgame.lifelog.domain.CollectionLog;
 import online.lifeasgame.lifelog.domain.repository.CollectionLogRepository;
@@ -17,19 +16,24 @@ import java.util.List;
 public class CollectionLogReader {
 
     private final CollectionLogRepository repository;
-    private final CollectionLogQueryRepository queryRepository;
 
-    public CollectionLog getCollectionLog(Long id, Long playerId) {
+    public CollectionLog getByIdAndPlayerIdOrThrow(Long id, Long playerId) {
         return repository.findByIdAndPlayerId(id, playerId)
                 .orElseThrow(() -> new IllegalArgumentException("COLLECTION_NOT_FOUND"));
     }
 
     public List<CollectionLog> recent(Long playerId, int limit) {
-        return queryRepository.findByPlayer(playerId, limit);
+        return repository.findByPlayerId(playerId, limit);
     }
 
-    public List<CollectionLog> search(Long playerId, String category, String titleLike, int page, int size) {
-        CollectionCategory c = CollectionCategory.parseNullable(category);
-        return queryRepository.search(playerId, c, titleLike, page, size);
+    public List<CollectionLog> search(
+            Long playerId,
+            String category,
+            String titleLike,
+            int page,
+            int size
+    ) {
+        CollectionCategory collectionCategory = CollectionCategory.parseNullable(category);
+        return repository.search(playerId, collectionCategory, titleLike, page, size);
     }
 }

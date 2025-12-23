@@ -23,25 +23,26 @@ public class AdminChatController implements AdminChatApiSpecV1 {
     private final ChatService chatService;
 
     @Override
+    @GetMapping("/channels")
+    public ResponseEntity<ApiResponse<AdminChatResponse.ChannelGroup>> channels(@PathVariable Long operatorId) {
+        ChatResult.ChannelGroup result = chatService.myChannels(operatorId);
+        return ApiResponses.ok(AdminChatWebMapper.toChannelGroup(result));
+    }
+
+    @Override
     @PostMapping("/channels/player/{playerId}")
     public ResponseEntity<ApiResponse<AdminChatResponse.Channel>> openAdmin(
             @PathVariable Long operatorId,
             @PathVariable Long playerId,
             @Valid @RequestBody AdminChatRequest.OpenAdmin request
     ) {
-        ChatResult.Channel channel = chatService.openAdminForOperator(
+        ChatResult.Channel result = chatService.openAdminForOperator(
                 operatorId,
                 playerId,
-                AdminChatWebMapper.toCommand(request)
+                AdminChatWebMapper.toOpenAdminCommand(request)
         );
-        return ApiResponses.ok(AdminChatWebMapper.toChannel(channel));
-    }
 
-    @Override
-    @GetMapping("/channels")
-    public ResponseEntity<ApiResponse<AdminChatResponse.ChannelGroup>> channels(@PathVariable Long operatorId) {
-        ChatResult.ChannelGroup group = chatService.myChannels(operatorId);
-        return ApiResponses.ok(AdminChatWebMapper.toChannelGroup(group));
+        return ApiResponses.ok(AdminChatWebMapper.toChannel(result));
     }
 
     @Override
@@ -52,8 +53,8 @@ public class AdminChatController implements AdminChatApiSpecV1 {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     ) {
-        ChatResult.MessagePage page = chatService.messages(operatorId, channelId, cursor, size);
-        return ApiResponses.ok(AdminChatWebMapper.toMessagePage(page));
+        ChatResult.MessagePage result = chatService.messages(operatorId, channelId, cursor, size);
+        return ApiResponses.ok(AdminChatWebMapper.toMessagePage(result));
     }
 
     @Override
@@ -63,11 +64,12 @@ public class AdminChatController implements AdminChatApiSpecV1 {
             @PathVariable Long channelId,
             @Valid @RequestBody AdminChatRequest.SendMessage request
     ) {
-        ChatResult.Message message = chatService.sendMessage(
+        ChatResult.Message result = chatService.sendMessage(
                 operatorId,
                 channelId,
-                AdminChatWebMapper.toCommand(request)
+                AdminChatWebMapper.toSendMessageCommand(request)
         );
-        return ApiResponses.ok(AdminChatWebMapper.toMessage(message));
+
+        return ApiResponses.ok(AdminChatWebMapper.toMessage(result));
     }
 }

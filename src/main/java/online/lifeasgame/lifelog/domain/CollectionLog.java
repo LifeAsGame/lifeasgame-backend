@@ -81,7 +81,6 @@ public class CollectionLog extends AbstractTime {
         return new CollectionLog(playerId, category, title, quantity, conditionNote, acquiredFrom, tags);
     }
 
-    // 변경감지 행위
     public void changeQuantity(Integer value) {
         this.quantity = Quantity.of(value);
     }

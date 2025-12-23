@@ -5,20 +5,20 @@ import online.lifeasgame.character.api.admin.response.AdminCertificationResponse
 import online.lifeasgame.character.application.command.CertificationCommand;
 import online.lifeasgame.character.application.result.CertificationResult;
 
-public class AdminCertificationWebMapper {
+public final class AdminCertificationWebMapper {
 
-    public static CertificationCommand.Create toCommand(AdminCertificationRequest.Create request) {
-        return CertificationCommand.Create.of(
+    private AdminCertificationWebMapper() {}
+
+    public static CertificationCommand.Create toCreateCommand(AdminCertificationRequest.Create request) {
+        return new CertificationCommand.Create(
                 request.name(),
                 request.issuer(),
                 request.category()
         );
     }
 
-    public static AdminCertificationResponse.Info toCertificationInfo(
-            CertificationResult.Info result
-    ) {
-        return AdminCertificationResponse.Info.of(
+    public static AdminCertificationResponse.Info toInfo(CertificationResult.Info result) {
+        return new AdminCertificationResponse.Info(
                 result.name(),
                 result.issuer(),
                 result.category()

@@ -8,7 +8,17 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public final class AdminExerciseRequest {
+
     private AdminExerciseRequest() {
+    }
+
+    public record Search(
+            String category,
+            LocalDate from,
+            LocalDate to,
+            @Min(0) int page,
+            @Min(1) int size
+    ) {
     }
 
     public record Create(
@@ -29,8 +39,5 @@ public final class AdminExerciseRequest {
             LocalDate exercisedOn,
             String memo
     ) {
-    }
-
-    public record Search(String category, LocalDate from, LocalDate to, @Min(0) int page, @Min(1) int size) {
     }
 }

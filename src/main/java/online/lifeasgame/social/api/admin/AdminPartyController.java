@@ -23,17 +23,6 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
     private final PartyService partyService;
 
     @Override
-    @GetMapping("/players/{playerId}/parties/{partyId}")
-    public ResponseEntity<ApiResponse<AdminPartyResponse.Info>> getPartyInfo(
-            @PathVariable Long playerId,
-            @PathVariable Long partyId
-    ) {
-        var info = partyService.getParty(playerId, partyId);
-        return ApiResponses.ok(AdminPartyWebMapper.toInfo(info));
-    }
-
-    // ===== 일반 조회 =====
-    @Override
     @GetMapping("/parties/search")
     public ResponseEntity<ApiResponse<AdminPartyResponse.Page<AdminPartyResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,
@@ -41,13 +30,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        PartyResult.Page<PartyResult.Summary> pages = partyService.search(
+        PartyResult.Page<PartyResult.Summary> result = partyService.search(
                 keyword,
                 visibility,
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), 100)
         );
-        return ApiResponses.ok(AdminPartyWebMapper.toSummaryPage(pages));
+        return ApiResponses.ok(AdminPartyWebMapper.toSummaryPage(result));
     }
 
     @Override
@@ -55,24 +44,30 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
     public ResponseEntity<ApiResponse<List<AdminPartyResponse.Summary>>> recent(
             @RequestParam(defaultValue="10") Integer limit
     ) {
-        var infos = partyService.recent(Math.min(Math.max(limit, 1), 100));
-        return ApiResponses.ok(AdminPartyWebMapper.toSummaries(infos));
+        List<PartyResult.Summary> results = partyService.recent(Math.min(Math.max(limit, 1), 100));
+        return ApiResponses.ok(AdminPartyWebMapper.toSummaries(results));
     }
 
-    // ===== 플레이어 스코프(acting as playerId) =====
+    @Override
+    @GetMapping("/players/{playerId}/parties/{partyId}")
+    public ResponseEntity<ApiResponse<AdminPartyResponse.Info>> getPartyInfo(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId
+    ) {
+        PartyResult.Info result = partyService.getParty(playerId, partyId);
+        return ApiResponses.ok(AdminPartyWebMapper.toInfo(result));
+    }
 
-    // 생성
     @Override
     @PostMapping("/players/{playerId}/parties")
     public ResponseEntity<ApiResponse<AdminPartyResponse.Detail>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPartyRequest.Create body
     ) {
-        var info = partyService.create(playerId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.create(playerId, AdminPartyWebMapper.toCreateCommand(body));
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
-    // 기본 변경
     @Override
     @PostMapping("/players/{playerId}/parties/{partyId}/rename")
     public ResponseEntity<ApiResponse<AdminPartyResponse.Detail>> rename(
@@ -80,8 +75,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.Rename body
     ) {
-        var info = partyService.rename(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.rename(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toRenameCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
     @Override
@@ -91,8 +91,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.ChangePolicy body
     ) {
-        var info = partyService.changePolicy(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.changePolicy(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toChangePolicyCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
     @Override
@@ -102,8 +107,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.ChangeDescription body
     ) {
-        var info = partyService.changeDescription(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.changeDescription(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toChangeDescriptionCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
     @Override
@@ -113,8 +123,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.ChangeEmblem body
     ) {
-        var info = partyService.changeBanner(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.changeBanner(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toChangeEmblemCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
     @Override
@@ -124,8 +139,13 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.TagOp body
     ) {
-        var info = partyService.addTag(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.addTag(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toTagOpCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
     @Override
@@ -135,11 +155,15 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.TagOp body
     ) {
-        var info = partyService.removeTag(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(AdminPartyWebMapper.toDetail(info));
+        PartyResult.Info result = partyService.removeTag(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toTagOpCommand(body)
+        );
+
+        return ApiResponses.ok(AdminPartyWebMapper.toDetail(result));
     }
 
-    // 가입/권한
     @Override
     @PostMapping("/players/{playerId}/parties/{partyId}/request-join")
     public ResponseEntity<ApiResponse<Void>> requestJoin(
@@ -147,7 +171,22 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.RequestJoin body
     ) {
-        partyService.requestJoin(playerId, partyId, AdminPartyWebMapper.toCommand(body));
+        partyService.requestJoin(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toRequestJoinCommand(body)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/cancel-join")
+    public ResponseEntity<ApiResponse<Void>> cancelJoin(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId
+    ) {
+        partyService.cancelJoin(playerId, partyId);
         return ApiResponses.ok(null);
     }
 
@@ -158,7 +197,12 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.Approve body
     ) {
-        partyService.approveJoin(playerId, partyId, AdminPartyWebMapper.toCommand(body));
+        partyService.approveJoin(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toApproveCommand(body)
+        );
+
         return ApiResponses.ok(null);
     }
 
@@ -169,76 +213,15 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.Reject body
     ) {
-        partyService.rejectJoin(playerId, partyId, AdminPartyWebMapper.toCommand(body));
+        partyService.rejectJoin(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toRejectCommand(body)
+        );
+
         return ApiResponses.ok(null);
     }
 
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/cancel-join")
-    public ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long playerId, @PathVariable Long partyId) {
-        partyService.cancelJoin(playerId, partyId);
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/transfer-leader")
-    public ResponseEntity<ApiResponse<Void>> transferLeader(
-            @PathVariable Long playerId,
-            @PathVariable Long partyId,
-            @Valid @RequestBody AdminPartyRequest.TransferLeader body
-    ) {
-        partyService.transferLeader(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/kick")
-    public ResponseEntity<ApiResponse<Void>> kick(
-            @PathVariable Long playerId,
-            @PathVariable Long partyId,
-            @Valid @RequestBody AdminPartyRequest.Kick body
-    ) {
-        partyService.kick(playerId, partyId, AdminPartyWebMapper.toCommand(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/promote")
-    public ResponseEntity<ApiResponse<Void>> promote(
-            @PathVariable Long playerId,
-            @PathVariable Long partyId,
-            @Valid @RequestBody AdminPartyRequest.MemberOp body
-    ) {
-        partyService.promote(playerId, partyId, AdminPartyWebMapper.toCommandPromote(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/demote")
-    public ResponseEntity<ApiResponse<Void>> demote(
-            @PathVariable Long playerId,
-            @PathVariable Long partyId,
-            @Valid @RequestBody AdminPartyRequest.MemberOp body
-    ) {
-        partyService.demote(playerId, partyId, AdminPartyWebMapper.toCommandDemote(body));
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/leave")
-    public ResponseEntity<ApiResponse<Void>> leave(@PathVariable Long playerId, @PathVariable Long partyId) {
-        partyService.leave(playerId, partyId);
-        return ApiResponses.ok(null);
-    }
-
-    @Override
-    @PostMapping("/players/{playerId}/parties/{partyId}/disband")
-    public ResponseEntity<ApiResponse<Void>> disband(@PathVariable Long playerId, @PathVariable Long partyId) {
-        partyService.disbandByLeader(playerId, partyId);
-        return ApiResponses.ok(null);
-    }
-
-    // 초대
     @Override
     @PostMapping("/players/{playerId}/parties/{partyId}/invite")
     public ResponseEntity<ApiResponse<Void>> invite(
@@ -246,13 +229,21 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId,
             @Valid @RequestBody AdminPartyRequest.Invite body
     ) {
-        partyService.invite(playerId, partyId, AdminPartyWebMapper.toCommand(body));
+        partyService.invite(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toInviteCommand(body)
+        );
+
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/players/{playerId}/parties/{partyId}/accept-invitation")
-    public ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long playerId, @PathVariable Long partyId) {
+    public ResponseEntity<ApiResponse<Void>> acceptInvitation(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId
+    ) {
         partyService.acceptInvitation(playerId, partyId);
         return ApiResponses.ok(null);
     }
@@ -264,6 +255,90 @@ public class AdminPartyController implements AdminPartyApiSpecV1 {
             @PathVariable Long partyId
     ) {
         partyService.declineInvitation(playerId, partyId);
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/transfer-leader")
+    public ResponseEntity<ApiResponse<Void>> transferLeader(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId,
+            @Valid @RequestBody AdminPartyRequest.TransferLeader body
+    ) {
+        partyService.transferLeader(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toTransferLeaderCommand(body)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/kick")
+    public ResponseEntity<ApiResponse<Void>> kick(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId,
+            @Valid @RequestBody AdminPartyRequest.Kick body
+    ) {
+        partyService.kick(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toKickCommand(body)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/promote")
+    public ResponseEntity<ApiResponse<Void>> promote(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId,
+            @Valid @RequestBody AdminPartyRequest.MemberOp body
+    ) {
+        partyService.promote(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toPromoteCommand(body)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/demote")
+    public ResponseEntity<ApiResponse<Void>> demote(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId,
+            @Valid @RequestBody AdminPartyRequest.MemberOp body
+    ) {
+        partyService.demote(
+                playerId,
+                partyId,
+                AdminPartyWebMapper.toDemoteCommand(body)
+        );
+
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/leave")
+    public ResponseEntity<ApiResponse<Void>> leave(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId
+    ) {
+        partyService.leave(playerId, partyId);
+        return ApiResponses.ok(null);
+    }
+
+    @Override
+    @PostMapping("/players/{playerId}/parties/{partyId}/disband")
+    public ResponseEntity<ApiResponse<Void>> disband(
+            @PathVariable Long playerId,
+            @PathVariable Long partyId
+    ) {
+        partyService.disbandByLeader(playerId, partyId);
         return ApiResponses.ok(null);
     }
 }

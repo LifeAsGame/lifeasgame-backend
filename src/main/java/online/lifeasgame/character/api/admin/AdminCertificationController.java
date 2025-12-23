@@ -23,17 +23,17 @@ import java.net.URI;
 @RequestMapping("/admin/v1/certifications")
 public class AdminCertificationController implements AdminCertificationApiSpecV1 {
 
-    private final CertificationService adminCertificationService;
+    private final CertificationService certificationService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> create(
             @Valid @RequestBody AdminCertificationRequest.Create request
     ) {
-        CertificationResult.Info Info = adminCertificationService.create(AdminCertificationWebMapper.toCommand(request));
+        CertificationResult.Info result = certificationService.create(AdminCertificationWebMapper.toCreateCommand(request));
         return ApiResponses.created(
                 URI.create("/admin/v1/certifications/"),
-                AdminCertificationWebMapper.toCertificationInfo(Info)
+                AdminCertificationWebMapper.toInfo(result)
         );
     }
 }

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
 
-    private final PlayerTitleService adminPlayerTitleService;
+    private final PlayerTitleService playerTitleService;
 
     @Override
     @PostMapping("/{playerId}/titles/{titleId}")
@@ -27,10 +27,7 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     ) {
-        PlayerTitleResult.Granted granted = adminPlayerTitleService.grantTitle(playerId, titleId);
-
-        return ApiResponses.ok(
-                AdminPlayerTitleWebMapper.toGrantedTitle(granted)
-        );
+        PlayerTitleResult.Created result = playerTitleService.createTitle(playerId, titleId);
+        return ApiResponses.ok(AdminPlayerTitleWebMapper.toGrantedTitle(result));
     }
 }

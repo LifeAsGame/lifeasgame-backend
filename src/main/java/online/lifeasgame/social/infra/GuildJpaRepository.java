@@ -18,14 +18,14 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 
     @Query(
-            """
-                        select g.id
-                        from Guild g
-                        where (:keyword is null or :keyword='' or lower(g.name.value) like lower(concat('%',:keyword,'%'))
-                               or lower(g.code.value) like lower(concat('%',:keyword,'%')))
-                          and (:visibility is null or g.visibility = :visibility)
-                        order by g.id desc
-                    """
+        """
+            SELECT g.id
+            FROM Guild g
+            WHERE (:keyword IS NULL OR :keyword='' OR LOWER(g.name.value) LIKE LOWER(CONCAT('%',:keyword,'%') )
+                OR LOWER(g.code.value) LIKE LOWER(CONCAT('%',:keyword,'%') ) )
+                AND (:visibility IS NULL OR g.visibility = :visibility)
+            ORDER BY g.id DESC
+        """
     )
     Page<Long> searchIds(
             @Param("keyword") String keyword,
@@ -34,32 +34,33 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
     );
 
     @Query(
-            """
-                        select distinct g
-                        from Guild g
-                        left join fetch g.tags t
-                        where g.id in :ids
-                    """
+        """
+            SELECT DISTINCT g
+            FROM Guild g
+            LEFT JOIN FETCH g.tags t
+            WHERE g.id IN :ids
+        """
     )
     List<Guild> fetchWithTagsByIds(@Param("ids") List<Long> ids);
 
     @Query(
-            """
-                        select distinct g
-                        from Guild g
-                        left join fetch g.tags t
-                        where g.id in :ids
-                    """
+        """
+            SELECT DISTINCT g
+            FROM Guild g
+            LEFT JOIN FETCH g.tags t
+            WHERE g.id IN :ids
+        """
     )
     List<Guild> findRecentWithTags(List<Long> ids);
 
     @Query(
-            value = """
-                SELECT g.id
-                FROM Guild g
-                ORDER BY g.createdAt
-                LIMIT :limits
-            """
+            value =
+                """
+                    SELECT g.id
+                    FROM Guild g
+                    ORDER BY g.createdAt
+                    LIMIT :limits
+                """
             , nativeQuery = true
     )
     List<Long> findRecent(@Param("limits") Integer limits);

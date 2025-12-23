@@ -12,26 +12,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectionLogFacade {
 
-    private final CollectionLogService service;
-    private final CurrentPlayerAccessor current;
+    private final CollectionLogService collectionLogService;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     public CollectionResult.Created create(CollectionCommand.Create command) {
-        Long playerId = current.currentPlayerIdOrThrow();
-        return service.create(playerId, command);
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return collectionLogService.create(playerId, command);
     }
 
     public CollectionResult.Info update(Long collectionId, CollectionCommand.Update command) {
-        Long playerId = current.currentPlayerIdOrThrow();
-        return service.update(playerId, collectionId, command);
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return collectionLogService.update(playerId, collectionId, command);
     }
 
     public List<CollectionResult.Info> recent(int limit) {
-        Long playerId = current.currentPlayerIdOrThrow();
-        return service.recent(playerId, limit);
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return collectionLogService.recent(playerId, limit);
     }
 
     public List<CollectionResult.Info> search(CollectionCommand.Search command) {
-        Long playerId = current.currentPlayerIdOrThrow();
-        return service.search(playerId, command);
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return collectionLogService.search(playerId, command);
     }
 }

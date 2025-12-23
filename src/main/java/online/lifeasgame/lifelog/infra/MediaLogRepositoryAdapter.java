@@ -1,7 +1,6 @@
 package online.lifeasgame.lifelog.infra;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.lifelog.application.query.MediaLogQueryRepository;
 import online.lifeasgame.lifelog.domain.MediaCategory;
 import online.lifeasgame.lifelog.domain.MediaLog;
 import online.lifeasgame.lifelog.domain.WatchStatus;
@@ -16,7 +15,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class MediaLogRepositoryAdapter implements MediaLogRepository, MediaLogQueryRepository {
+public class MediaLogRepositoryAdapter implements MediaLogRepository {
 
     private final MediaLogJpaRepository jpa;
 

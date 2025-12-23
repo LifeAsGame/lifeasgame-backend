@@ -21,58 +21,12 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
     private final MediaLogFacade mediaLogFacade;
 
     @Override
-    @PostMapping
-    public ResponseEntity<PlayerMediaLogResponse.Created> create(
-            @Valid @RequestBody PlayerMediaLogRequest.Create request
-    ) {
-        MediaLogResult.Created result = mediaLogFacade.create(PlayerMediaLogWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponse(result));
-    }
-
-    @Override
-    @PostMapping("/{mediaId}/rate")
-    public ResponseEntity<PlayerMediaLogResponse.Info> rate(
-            @PathVariable Long mediaId,
-            @Valid @RequestBody PlayerMediaLogRequest.Rate request
-    ) {
-        MediaLogResult.Info result = mediaLogFacade.rate(mediaId, PlayerMediaLogWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponse(result));
-    }
-
-    @Override
-    @PostMapping("/{mediaId}/advance")
-    public ResponseEntity<PlayerMediaLogResponse.Info> advance(
-            @PathVariable Long mediaId,
-            @Valid @RequestBody PlayerMediaLogRequest.Advance request
-    ) {
-        MediaLogResult.Info result = mediaLogFacade.advance(mediaId, PlayerMediaLogWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponse(result));
-    }
-
-    @Override
-    @PostMapping("/{mediaId}/status")
-    public ResponseEntity<PlayerMediaLogResponse.Info> markStatus(
-            @PathVariable Long mediaId,
-            @Valid @RequestBody PlayerMediaLogRequest.MarkStatus request
-    ) {
-        MediaLogResult.Info result = mediaLogFacade.markStatus(mediaId, PlayerMediaLogWebMapper.toCommand(request));
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponse(result));
-    }
-
-    @Override
-    @PostMapping("/{mediaId}/rewatch")
-    public ResponseEntity<PlayerMediaLogResponse.Info> rewatch(@PathVariable Long mediaId) {
-        MediaLogResult.Info result = mediaLogFacade.rewatch(mediaId);
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponse(result));
-    }
-
-    @Override
     @GetMapping("/recent")
     public ResponseEntity<List<PlayerMediaLogResponse.Info>> recent(
             @RequestParam(defaultValue = "20") Integer limit
     ) {
         List<MediaLogResult.Info> infos = mediaLogFacade.recent(limit);
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponseList(infos));
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfos(infos));
     }
 
     @Override
@@ -85,14 +39,55 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @RequestParam(defaultValue = "20") int size
     ) {
         List<MediaLogResult.Info> infos = mediaLogFacade.search(
-                PlayerMediaLogWebMapper.toCommand(
-                        category,
-                        status,
-                        titleLike,
-                        page,
-                        size
-                )
+                PlayerMediaLogWebMapper.toSearchCommand(category, status, titleLike, page, size)
         );
-        return ResponseEntity.ok(PlayerMediaLogWebMapper.toResponseList(infos));
+
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfos(infos));
+    }
+
+    @Override
+    @PostMapping
+    public ResponseEntity<PlayerMediaLogResponse.Created> create(
+            @Valid @RequestBody PlayerMediaLogRequest.Create request
+    ) {
+        MediaLogResult.Created result = mediaLogFacade.create(PlayerMediaLogWebMapper.toCreateCommand(request));
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toCreated(result));
+    }
+
+    @Override
+    @PostMapping("/{mediaId}/rate")
+    public ResponseEntity<PlayerMediaLogResponse.Info> rate(
+            @PathVariable Long mediaId,
+            @Valid @RequestBody PlayerMediaLogRequest.Rate request
+    ) {
+        MediaLogResult.Info result = mediaLogFacade.rate(mediaId, PlayerMediaLogWebMapper.toRateCommand(request));
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PostMapping("/{mediaId}/advance")
+    public ResponseEntity<PlayerMediaLogResponse.Info> advance(
+            @PathVariable Long mediaId,
+            @Valid @RequestBody PlayerMediaLogRequest.Advance request
+    ) {
+        MediaLogResult.Info result = mediaLogFacade.advance(mediaId, PlayerMediaLogWebMapper.toAdvanceCommand(request));
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PostMapping("/{mediaId}/status")
+    public ResponseEntity<PlayerMediaLogResponse.Info> markStatus(
+            @PathVariable Long mediaId,
+            @Valid @RequestBody PlayerMediaLogRequest.MarkStatus request
+    ) {
+        MediaLogResult.Info result = mediaLogFacade.markStatus(mediaId, PlayerMediaLogWebMapper.toMarkStatusCommand(request));
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PostMapping("/{mediaId}/rewatch")
+    public ResponseEntity<PlayerMediaLogResponse.Info> rewatch(@PathVariable Long mediaId) {
+        MediaLogResult.Info result = mediaLogFacade.rewatch(mediaId);
+        return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 }

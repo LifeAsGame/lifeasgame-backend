@@ -1,82 +1,91 @@
 package online.lifeasgame.quest.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
-import online.lifeasgame.quest.domain.repository.QuestRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class QuestService {
 
-    private final QuestRepository questRepository;
     private final QuestBlueprintCatalog questBlueprintCatalog;
     private final QuestReader questReader;
     private final QuestWriter questWriter;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public QuestResult.Definition ensureDefinition(QuestCommand.EnsureDefinition command) {
-        return QuestResult.Definition.from(ensureQuest(QuestCode.fromValue(command.code())));
+        Quest quest = ensureQuest(QuestCode.parse(command.code()));
+        return QuestResult.Definition.from(quest);
     }
 
     @Transactional(readOnly = true)
-    public List<QuestResult.Definition> definitions() {
+    public List<QuestResult.Definition> getDefinitions() {
         return questReader.findAll().stream()
                 .map(QuestResult.Definition::from)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<QuestResult.Blueprint> catalog() {
+    public List<QuestResult.Blueprint> getCatalog() {
         return questBlueprintCatalog.all().stream()
                 .map(QuestResult.Blueprint::from)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public QuestResult.Definition definition(QuestCommand.Definition command) {
-        return QuestResult.Definition.from(questReader.getByCode(QuestCode.fromValue(command.questCode())));
+    public QuestResult.Definition getDefinition(QuestCommand.Definition command) {
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
+        return QuestResult.Definition.from(quest);
     }
 
     @Transactional
     public QuestResult.Definition updateDefinition(QuestCommand.UpdateDefinition command) {
-        Quest quest = ensureQuest(QuestCode.fromValue(command.questCode()));
+        Quest quest = ensureQuest(QuestCode.parse(command.questCode()));
 
-        if (command.targetType() != null || command.targetValue() != null) {
-            Guard.notNull(command.targetType(), "targetType");
-            Guard.notNull(command.targetValue(), "targetValue");
-            quest.changeTarget(QuestTarget.of(QuestTargetType.valueOf(command.targetType().toUpperCase(Locale.ROOT)), command.targetValue()));
-        }
+        quest.updateDefinition(
+                targetOrNull(command),
+                rewardOrNull(command, quest),
+                QuestRepeatRule.parseNullable(command.repeatRule()),
+                command.dueAt()
+        );
 
-        if (command.rewardExp() != null || command.rewardStats() != null) {
-            int exp = command.rewardExp() == null ? quest.getReward().exp() : command.rewardExp();
-            RewardStats stats = command.rewardStats() == null ? quest.getReward().stats() : new RewardStats(command.rewardStats());
-            quest.changeReward(QuestReward.of(exp, stats));
-        }
+        domainEventPublisher.publishAll(quest.pullEvents());
 
-        if (command.repeatRule() != null) {
-            quest.changeRepeatRule(QuestRepeatRule.valueOf(command.repeatRule().toUpperCase(Locale.ROOT)));
-        }
-
-        if (command.dueAt() != null) {
-            quest.reschedule(command.dueAt());
-        }
-
-        questWriter.update(quest);
         return QuestResult.Definition.from(quest);
+    }
+
+    private QuestTarget targetOrNull(QuestCommand.UpdateDefinition command) {
+        if (command.targetType() == null && command.targetValue() == null) return null;
+        if (command.targetType() == null || command.targetValue() == null) {
+            throw new IllegalArgumentException("targetType and targetValue must be provided together.");
+        }
+        return QuestTarget.of(QuestTargetType.parse(command.targetType()), command.targetValue());
+    }
+
+    private QuestReward rewardOrNull(QuestCommand.UpdateDefinition c, Quest quest) {
+        if (c.rewardExp() == null && c.rewardStats() == null) return null;
+
+        int exp = (c.rewardExp() != null) ? c.rewardExp() : quest.getReward().exp();
+        RewardStats stats = (c.rewardStats() != null) ? new RewardStats(c.rewardStats()) : quest.getReward().stats();
+        return QuestReward.of(exp, stats);
     }
 
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> questAcceptances(QuestCommand.Acceptances command) {
-        Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
-        return questReader.findQuestAcceptances(quest.getId(), command.status()).stream()
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
+        return questReader.findQuestAcceptances(quest.getId(), QuestStatus.parse(command.status())).stream()
                 .map(acceptance -> QuestResult.Acceptance.from(acceptance, quest))
                 .toList();
     }
@@ -90,23 +99,36 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> playerQuests(Long playerId, QuestCommand.PlayerQuests command) {
-        List<QuestAcceptance> acceptances = questReader.findPlayerAcceptances(playerId, command.status());
+        List<QuestAcceptance> acceptances =
+                questReader.findPlayerAcceptances(playerId, QuestStatus.parse(command.status()));
+
+        if (acceptances.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> questIds = acceptances.stream()
+                .map(QuestAcceptance::getQuestId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, Quest> questMap = questReader.getByIds(questIds).stream()
+                .collect(Collectors.toMap(Quest::getId, Function.identity()));
 
         return acceptances.stream()
-                .map(acceptance -> QuestResult.Acceptance.from(acceptance, questReader.getById(acceptance.getQuestId())))
+                .map(acc -> QuestResult.Acceptance.from(acc, questMap.get(acc.getQuestId())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public QuestResult.PlayerQuest playerQuest(Long playerId, QuestCommand.PlayerQuest command) {
-        Quest quest = questReader.getByCode(QuestCode.fromValue(command.questCode()));
+        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
         QuestAcceptance latest = questReader.findLatest(quest.getId(), playerId);
         return QuestResult.PlayerQuest.from(quest, latest);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Quest ensureQuest(QuestCode code) {
-        return questRepository.findByCode(code.value())
+        return questReader.findByCode(code)
                 .orElseGet(() -> questWriter.create(questBlueprintCatalog.require(code).instantiate()));
     }
 }

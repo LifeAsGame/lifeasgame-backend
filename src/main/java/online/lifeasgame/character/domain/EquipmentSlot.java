@@ -39,18 +39,32 @@ public class EquipmentSlot extends AbstractTime {
     @Column(length = 20, nullable = false)
     private EquipmentSlotRole role;
 
-    private EquipmentSlot(String code, String name, EquipmentSlotCategory category, EquipmentSlotRole role) {
+    private EquipmentSlot(
+            String code,
+            String name,
+            EquipmentSlotCategory category,
+            EquipmentSlotRole role
+    ) {
         this.code = code;
         this.name = name;
         this.category = category;
         this.role = role;
     }
 
-    public static EquipmentSlot of(String code, String name, EquipmentSlotCategory category) {
+    public static EquipmentSlot of(
+            String code,
+            String name,
+            EquipmentSlotCategory category
+    ) {
         return new EquipmentSlot(code, name, category, EquipmentSlotRole.SINGLE);
     }
 
-    public static EquipmentSlot of(String code, String name, EquipmentSlotCategory category, EquipmentSlotRole role) {
+    public static EquipmentSlot of(
+            String code,
+            String name,
+            EquipmentSlotCategory category,
+            EquipmentSlotRole role
+    ) {
         return new EquipmentSlot(code, name, category, role);
     }
 }

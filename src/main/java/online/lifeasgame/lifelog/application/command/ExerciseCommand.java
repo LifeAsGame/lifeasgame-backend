@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.application.command;
 import java.time.LocalDate;
 
 public final class ExerciseCommand {
+
     private ExerciseCommand() {
     }
 

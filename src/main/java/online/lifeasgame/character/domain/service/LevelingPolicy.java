@@ -2,7 +2,9 @@ package online.lifeasgame.character.domain.service;
 
 public interface LevelingPolicy {
     int maxLevel();
+
     long requiredExpFor(int level);
+
     long totalXpAtLevelStart(int level);
 
     default int levelFor(long totalXp) {

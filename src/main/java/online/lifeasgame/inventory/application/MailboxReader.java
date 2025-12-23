@@ -12,11 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class MailboxReader {
-    private final PlayerMailboxRepository mailboxRepository;
+class MailboxReader {
 
-    public PlayerMailbox getPlayerMailbox(Long playerId) {
-        return mailboxRepository.findByPlayerId(playerId)
+    private final PlayerMailboxRepository repository;
+
+    public PlayerMailbox getByPlayerIdOrThrow(Long playerId) {
+        return repository.findByPlayerId(playerId)
                 .orElseThrow(() -> new DomainException(InventoryError.CONTAINER_NOT_FOUND));
     }
 }

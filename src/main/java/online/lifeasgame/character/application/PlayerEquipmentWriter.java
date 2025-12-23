@@ -14,31 +14,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.MANDATORY)
 class PlayerEquipmentWriter {
 
-    private final PlayerEquipmentRepository playerEquipmentRepository;
+    private final PlayerEquipmentRepository repository;
 
     public PlayerEquipment equip(Long playerId, Long slotId, Long itemInstanceId) {
-        if (itemInstanceId == null) {
-            throw new DomainException(PlayerEquipmentError.INVALID_ITEM_INSTANCE_ID);
-        }
-
-        PlayerEquipment playerEquipment = getPlayerEquipmentForUpdate(playerId, slotId);
+        PlayerEquipment playerEquipment = getByPlayerIdAndSlotIdForUpdate(playerId, slotId);
         playerEquipment.equip(itemInstanceId);
         return playerEquipment;
     }
 
-    public PlayerEquipment unEquip(Long playerId, Long slotId) {
-        PlayerEquipment playerEquipment = getPlayerEquipmentForUpdate(playerId, slotId);
+    public void unEquip(Long playerId, Long slotId) {
+        PlayerEquipment playerEquipment = getByPlayerIdAndSlotIdForUpdate(playerId, slotId);
         playerEquipment.unEquip();
-        return playerEquipment;
     }
 
-    private PlayerEquipment getPlayerEquipment(Long playerId, Long slotId) {
-        return playerEquipmentRepository.findByPlayerIdAndSlotId(playerId, slotId)
-                .orElseThrow(() -> new DomainException(PlayerEquipmentError.PLAYER_EQUIPMENT_NOT_FOUND));
-    }
-
-    private PlayerEquipment getPlayerEquipmentForUpdate(Long playerId, Long slotId) {
-        return playerEquipmentRepository.findByPlayerIdAndSlotIdForUpdate(playerId, slotId)
+    private PlayerEquipment getByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId) {
+        return repository.findByPlayerIdAndSlotIdForUpdate(playerId, slotId)
                 .orElseThrow(() -> new DomainException(PlayerEquipmentError.PLAYER_EQUIPMENT_NOT_FOUND));
     }
 }

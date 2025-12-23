@@ -22,11 +22,11 @@ public interface ChatChannelJpaRepository extends JpaRepository<ChatChannel, Lon
 
     @Query(
             """
-                    select distinct c
-                    from ChatChannel c
-                    join ChannelParticipant p1 on p1.channel = c and p1.userId = :playerId
-                    join ChannelParticipant p2 on p2.channel = c and p2.userId = :targetId
-                    where c.type = :type
+                SELECT DISTINCT c
+                FROM ChatChannel c
+                JOIN ChannelParticipant p1 ON p1.channel = c AND p1.userId = :playerId
+                JOIN ChannelParticipant p2 ON p2.channel = c AND p2.userId = :targetId
+                WHERE c.type = :type
             """
     )
     Optional<ChatChannel> findFriendChannel(

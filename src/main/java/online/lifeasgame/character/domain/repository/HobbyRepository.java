@@ -1,9 +1,10 @@
 package online.lifeasgame.character.domain.repository;
 
-import java.util.List;
-import java.util.Optional;
 import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.HobbyCategory;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface HobbyRepository {
     Hobby save(Hobby hobby);

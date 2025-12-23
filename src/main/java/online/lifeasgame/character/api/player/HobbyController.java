@@ -1,12 +1,11 @@
 package online.lifeasgame.character.api.player;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.application.HobbyService;
-import online.lifeasgame.character.application.result.HobbyResult.Info;
 import online.lifeasgame.character.api.player.mapper.HobbyWebMapper;
 import online.lifeasgame.character.api.player.response.HobbyResponse;
 import online.lifeasgame.character.api.player.spec.HobbyApiSpecV1;
+import online.lifeasgame.character.application.HobbyService;
+import online.lifeasgame.character.application.result.HobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,9 +28,7 @@ public class HobbyController implements HobbyApiSpecV1 {
     public ResponseEntity<ApiResponse<HobbyResponse.Infos>> HobbyInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
-        List<Info> infos = hobbyService.getHobbies(categories);
-        return ApiResponses.ok(
-                HobbyWebMapper.toHobbyInfos(infos)
-        );
+        List<HobbyResult.Info> results = hobbyService.getHobbies(categories);
+        return ApiResponses.ok(HobbyWebMapper.toInfos(results));
     }
 }

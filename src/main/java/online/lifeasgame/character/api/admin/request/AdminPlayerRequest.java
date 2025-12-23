@@ -8,8 +8,7 @@ import java.util.List;
 
 public final class AdminPlayerRequest {
 
-    private AdminPlayerRequest() {
-    }
+    private AdminPlayerRequest() {}
 
     public record GrantExp(
             @NotNull @Positive Long expDelta

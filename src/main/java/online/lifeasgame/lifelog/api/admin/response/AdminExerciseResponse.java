@@ -4,10 +4,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 public final class AdminExerciseResponse {
-    private AdminExerciseResponse() {
-    }
 
-    public record Created(Long id) {
+    private AdminExerciseResponse() {
     }
 
     public record Info(
@@ -22,5 +20,8 @@ public final class AdminExerciseResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
+    }
+
+    public record Created(Long id) {
     }
 }

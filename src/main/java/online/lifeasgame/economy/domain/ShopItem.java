@@ -23,10 +23,12 @@ import online.lifeasgame.core.guard.Guard;
         name = "shop_items",
         uniqueConstraints = @UniqueConstraint(name = "uq_shop_item", columnNames = {"item_id", "currency"})
 )
-@AttributeOverrides({
-        @AttributeOverride(name = "price.amount", column = @Column(name = "price")),
-        @AttributeOverride(name = "price.currency", column = @Column(name = "currency", length = 10))
-})
+@AttributeOverrides(
+        {
+                @AttributeOverride(name = "price.amount", column = @Column(name = "price")),
+                @AttributeOverride(name = "price.currency", column = @Column(name = "currency", length = 10))
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ShopItem extends AbstractTime {
 
@@ -55,7 +57,13 @@ public class ShopItem extends AbstractTime {
     @Version
     private Long version;
 
-    private ShopItem(Long itemId, Money price, Integer globalStockLimit, Integer perPlayerLimit, Integer reservationTtlSec) {
+    private ShopItem(
+            Long itemId,
+            Money price,
+            Integer globalStockLimit,
+            Integer perPlayerLimit,
+            Integer reservationTtlSec
+    ) {
         this.itemId = Guard.notNull(itemId, "itemId");
         this.price = Guard.notNull(price, "price");
         this.globalStockLimit = globalStockLimit;
@@ -67,8 +75,10 @@ public class ShopItem extends AbstractTime {
         return new ShopItem(itemId, price, null, null, 0);
     }
 
-    public static ShopItem createLimited(Long itemId, Money price, Integer globalStockLimit, Integer perPlayerLimit,
-                                         Integer reservationTtlSec) {
+    public static ShopItem createLimited(
+            Long itemId, Money price, Integer globalStockLimit, Integer perPlayerLimit,
+            Integer reservationTtlSec
+    ) {
         return new ShopItem(itemId, price, globalStockLimit, perPlayerLimit, reservationTtlSec);
     }
 
