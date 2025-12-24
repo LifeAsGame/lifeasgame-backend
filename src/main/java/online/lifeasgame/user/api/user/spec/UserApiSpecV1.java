@@ -1,11 +1,12 @@
-package online.lifeasgame.user.presentation.spec;
+package online.lifeasgame.user.api.user.spec;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.user.presentation.request.UserRequest;
-import online.lifeasgame.user.presentation.response.UserResponse.Created;
+import online.lifeasgame.user.api.user.request.UserRequest;
+import online.lifeasgame.user.api.user.response.UserResponse;
+import online.lifeasgame.user.api.user.response.UserResponse.Created;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -14,4 +15,7 @@ public interface UserApiSpecV1 {
 
     @Operation(summary = "User 생성", description = "신규 유저를 등록합니다.")
     ResponseEntity<ApiResponse<Created>> register(@Valid @RequestBody UserRequest.Register registerRequest);
+
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 유저의 계정 정보(+텍스트 UI를 위한 상태 정보)를 조회합니다.")
+    ResponseEntity<ApiResponse<UserResponse.UserInfo>> me();
 }
