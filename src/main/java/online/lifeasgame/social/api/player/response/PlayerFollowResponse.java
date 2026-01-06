@@ -30,6 +30,15 @@ public final class PlayerFollowResponse {
     ) {
     }
 
+    public record Relationship(
+            Long followId,
+            Long playerId,
+            Long targetPlayerId,
+            String state,
+            boolean muted,
+            boolean blocked
+    ) {}
+
     public record Page<T>(
             List<T> contents,
             int page,
