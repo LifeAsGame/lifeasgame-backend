@@ -19,4 +19,6 @@ public final class AdminPlayerCertificationResponse {
             Instant grantedAt
     ) {
     }
+
+    public record Revoked(Long playerId, Long certificationId) {}
 }

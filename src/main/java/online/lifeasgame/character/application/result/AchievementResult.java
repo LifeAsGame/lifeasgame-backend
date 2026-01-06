@@ -10,6 +10,7 @@ public final class AchievementResult {
     }
 
     public record Info(
+            Long achievementId,
             String code,
             String name,
             String category,
@@ -17,6 +18,7 @@ public final class AchievementResult {
     ) {
         public static Info from(Achievement achievement) {
             return new Info(
+                    achievement.getId(),
                     achievement.getCode(),
                     achievement.getName(),
                     achievement.getCategory().name(),

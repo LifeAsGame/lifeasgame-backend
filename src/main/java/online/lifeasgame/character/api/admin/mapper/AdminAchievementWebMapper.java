@@ -20,6 +20,7 @@ public final class AdminAchievementWebMapper {
 
     public static AdminAchievementResponse.Info toInfo(AchievementResult.Info result) {
         return new AdminAchievementResponse.Info(
+                result.achievementId(),
                 result.code(),
                 result.name(),
                 result.category(),

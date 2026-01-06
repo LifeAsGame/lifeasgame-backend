@@ -15,6 +15,7 @@ public final class EquipmentSlotWebMapper {
                         .map(
                                 result ->
                                         new EquipmentSlotResponse.Info(
+                                                result.equipmentSlotId(),
                                                 result.code(),
                                                 result.name(),
                                                 result.category(),

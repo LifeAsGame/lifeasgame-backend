@@ -13,6 +13,7 @@ public final class TitleResponse {
     }
 
     public record Info(
+            Long titleId,
             String code,
             String name,
             String category,

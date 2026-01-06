@@ -34,6 +34,7 @@ public class AchievementService {
         );
 
         return new AchievementResult.Info(
+                achievement.getId(),
                 achievement.getCode(),
                 achievement.getName(),
                 achievement.getCategory().name(),

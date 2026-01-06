@@ -19,6 +19,7 @@ public final class AdminCertificationWebMapper {
 
     public static AdminCertificationResponse.Info toInfo(CertificationResult.Info result) {
         return new AdminCertificationResponse.Info(
+                result.certificationId(),
                 result.name(),
                 result.issuer(),
                 result.category()

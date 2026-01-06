@@ -15,6 +15,7 @@ public final class TitleWebMapper {
                         .map(
                                 result ->
                                         new TitleResponse.Info(
+                                                result.titleId(),
                                                 result.code(),
                                                 result.name(),
                                                 result.category(),

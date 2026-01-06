@@ -1,0 +1,37 @@
+package online.lifeasgame.character.api.admin.spec.draft;
+
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import online.lifeasgame.character.api.admin.request.AdminAchievementRequest;
+import online.lifeasgame.character.api.admin.response.AdminAchievementResponse;
+import online.lifeasgame.core.response.ApiResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+public interface AdminAchievementApiDraftSpecV1 {
+
+    @Operation(summary = "Achievement 목록 조회", description = "Achievement 목록을 조회합니다. category 필터 가능")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    );
+
+    @Operation(summary = "Achievement 단건 조회", description = "Achievement 단건을 조회합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> get(
+            @PathVariable Long achievementId
+    );
+
+    @Operation(summary = "Achievement 수정", description = "Achievement를 수정합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> update(
+            @PathVariable Long achievementId,
+            @Valid @RequestBody AdminAchievementRequest.Update request
+    );
+
+    @Operation(summary = "Achievement 삭제", description = "Achievement를 삭제합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Deleted>> delete(
+            @PathVariable Long achievementId
+    );
+}

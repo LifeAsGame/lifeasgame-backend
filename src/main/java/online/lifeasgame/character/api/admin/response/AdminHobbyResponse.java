@@ -1,5 +1,7 @@
 package online.lifeasgame.character.api.admin.response;
 
+import java.util.List;
+
 public final class AdminHobbyResponse {
 
     private AdminHobbyResponse() {
@@ -10,5 +12,10 @@ public final class AdminHobbyResponse {
             String name,
             String category
     ) {
+    }
+
+    public record Deleted(Long hobbyId) {}
+
+    public record Infos(List<Info> infos) {
     }
 }

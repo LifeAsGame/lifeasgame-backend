@@ -11,6 +11,7 @@ public final class TitleResult {
     }
 
     public record Info(
+            Long titleId,
             String code,
             String name,
             String category,
@@ -18,6 +19,7 @@ public final class TitleResult {
     ) {
         public static Info from(Title title) {
             return new Info(
+                    title.getId(),
                     title.getCode(),
                     title.getName(),
                     title.getCategory().name(),

@@ -20,6 +20,7 @@ public final class AdminTitleWebMapper {
 
     public static AdminTitleResponse.Info toInfo(TitleResult.Info result) {
         return new AdminTitleResponse.Info(
+                result.titleId(),
                 result.code(),
                 result.name(),
                 result.category(),

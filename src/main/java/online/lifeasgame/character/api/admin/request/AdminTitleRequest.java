@@ -14,4 +14,11 @@ public final class AdminTitleRequest {
             @NotBlank String descMd
     ) {
     }
+
+    public record Update(
+            String code,
+            String name,
+            String category,
+            String descMd
+    ) {}
 }

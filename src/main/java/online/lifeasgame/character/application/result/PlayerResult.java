@@ -17,6 +17,7 @@ public final class PlayerResult {
     }
 
     public record PlayerInfo(
+            Long playerId,
             String name,
             String gender,
             String job,
@@ -28,10 +29,12 @@ public final class PlayerResult {
             int manaCapacity,
             int str, int agi, int dex, int intel, int vit, int luc,
             Map<String, Integer> extraStats,
-            List<StatusEffectCode> effects
+            List<StatusEffectCode> effects,
+            Long representativeTitleId
     ) {
         public static PlayerInfo from(Player player) {
             return new PlayerInfo(
+                    player.getId(),
                     player.getName().value(),
                     player.getGender().name(),
                     player.getJob(),
@@ -48,7 +51,8 @@ public final class PlayerResult {
                     player.getStats().vit(),
                     player.getStats().luc(),
                     player.getExtraStats().asMap(),
-                    player.getStatusEffects().asList()
+                    player.getStatusEffects().asList(),
+                    player.getTitleId()
             );
         }
     }

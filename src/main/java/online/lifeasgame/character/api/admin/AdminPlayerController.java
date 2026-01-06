@@ -32,7 +32,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/health/current")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> updateCurrentHp(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> setCurrentHp(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHp request
     ){
@@ -43,7 +43,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/health/capacity")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> updateHpCapacity(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> setHpCapacity(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
     ) {
@@ -54,7 +54,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/mana/current")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> updateCurrentMp(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> setCurrentMp(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMp request
     ){
@@ -64,7 +64,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/mana/capacity")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> updateMpCapacity(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> setMpCapacity(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
     ) {

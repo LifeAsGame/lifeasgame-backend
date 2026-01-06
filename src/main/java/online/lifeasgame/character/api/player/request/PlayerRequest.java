@@ -9,7 +9,7 @@ public final class PlayerRequest {
     }
 
     public record Register(
-            @NotBlank @Size(min = 1, max = 20) String name,
+            @NotBlank @Size(min = 1, max = 40) String name,
             @NotBlank String gender
     ) {
     }

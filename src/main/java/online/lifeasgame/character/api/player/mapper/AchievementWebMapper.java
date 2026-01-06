@@ -15,6 +15,7 @@ public final class AchievementWebMapper {
                         .map(
                                 result ->
                                         new AchievementResponse.Info(
+                                                result.achievementId(),
                                                 result.code(),
                                                 result.name(),
                                                 result.category(),

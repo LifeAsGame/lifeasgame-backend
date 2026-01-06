@@ -25,7 +25,7 @@ public class HobbyController implements HobbyApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<HobbyResponse.Infos>> HobbyInfos(
+    public ResponseEntity<ApiResponse<HobbyResponse.Infos>> hobbyInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
         List<HobbyResult.Info> results = hobbyService.getHobbies(categories);
