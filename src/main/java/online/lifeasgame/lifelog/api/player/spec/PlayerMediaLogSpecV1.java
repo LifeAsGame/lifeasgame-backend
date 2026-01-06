@@ -16,7 +16,7 @@ public interface PlayerMediaLogSpecV1 {
     @Operation(summary = "최근 항목 조회(플레이어)")
     ResponseEntity<List<PlayerMediaLogResponse.Info>> recent(Integer limit);
 
-    @Operation(summary = "검색(플레이어)")
+    @Operation(summary = "검색(플레이어)", description = "page/size 기반 검색. UI 페이징을 위해 Page 응답을 권장합니다.")
     ResponseEntity<List<PlayerMediaLogResponse.Info>> search(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,

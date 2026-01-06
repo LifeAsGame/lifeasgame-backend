@@ -29,7 +29,6 @@ public interface AdminMediaSpecV1 {
     @Operation(summary = "미디어 생성(관리자, 플레이어 스코프)")
     ResponseEntity<AdminMediaResponse.Created> create(Long playerId, AdminMediaRequest.Create request);
 
-    // --- MediaId-scoped ---
     @Operation(summary = "평점 반영(관리자)")
     ResponseEntity<AdminMediaResponse.Info> rate(Long playerId, Long mediaId, AdminMediaRequest.Rate request);
 

@@ -22,7 +22,7 @@ public interface PlayerCollectionSpecV1 {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
-    @Operation(summary = "검색")
+    @Operation(summary = "검색", description = "page/size 기반 검색. UI 페이징을 위해 Page 응답을 권장합니다.")
     ResponseEntity<List<PlayerCollectionResponse.Info>> search(
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
