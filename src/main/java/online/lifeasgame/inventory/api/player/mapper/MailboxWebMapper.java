@@ -1,27 +1,38 @@
 package online.lifeasgame.inventory.api.player.mapper;
 
-import online.lifeasgame.inventory.application.command.MailboxCommand;
-import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.api.player.request.MailboxRequest;
 import online.lifeasgame.inventory.api.player.response.MailboxResponse;
+import online.lifeasgame.inventory.application.command.MailboxCommand;
+import online.lifeasgame.inventory.application.result.MailboxResult;
 
 public final class MailboxWebMapper {
 
     private MailboxWebMapper() {
     }
 
-    public static MailboxResponse.Mails toMails(MailboxResult.Mails result) {
-        return new MailboxResponse.Mails(
-                result.mails().stream()
-                        .map(
-                                m -> new MailboxResponse.Mail(
-                                        m.slotIndex(),
-                                        m.itemId(),
-                                        m.rarity(),
-                                        m.quantity(),
-                                        m.bound()
-                                )
-                        ).toList()
+    public static MailboxResponse.Entries toMails(MailboxResult.Entries result) {
+        return new MailboxResponse.Entries(
+                result.entries().stream()
+                        .map(MailboxWebMapper::toEntry)
+                        .toList()
+        );
+    }
+
+    private static MailboxResponse.Entry toEntry(MailboxResult.Entry e) {
+        return new MailboxResponse.Entry(
+                e.mailId(),
+                e.slotIndex(),
+                e.itemId(),
+                e.itemName(),
+                e.category(),
+                e.type(),
+                e.rarity(),
+                e.stackable(),
+                e.maxStack(),
+                e.quantity(),
+                e.bound(),
+                e.durability(),
+                e.instanceAttrs()
         );
     }
 

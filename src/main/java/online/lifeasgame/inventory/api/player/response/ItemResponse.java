@@ -44,4 +44,10 @@ public final class ItemResponse {
             int totalPages
     ) {
     }
+
+    public record Meta(
+            List<String> categories,
+            List<String> types,
+            List<String> rarities
+    ) {}
 }

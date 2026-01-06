@@ -3,6 +3,7 @@ package online.lifeasgame.inventory.api.player.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public final class MailboxRequest {
@@ -23,4 +24,14 @@ public final class MailboxRequest {
             @Min(1) int quantity
     ) {
     }
+
+    public record ClaimAll(
+            @NotNull List<Integer> slotIndexes,
+            String idempotencyKey
+    ) {}
+
+    public record Delete(
+            @Min(0) int slotIndex,
+            String idempotencyKey
+    ) {}
 }

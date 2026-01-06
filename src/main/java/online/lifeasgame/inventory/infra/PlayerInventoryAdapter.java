@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class PlayerInventoryRepositoryAdapter implements PlayerInventoryRepository, InventoryStackQuery {
+public class PlayerInventoryAdapter implements PlayerInventoryRepository, InventoryStackQuery {
 
     private final JpaInventoryRepository jpaRepository;
 

@@ -23,7 +23,7 @@ public class MailboxFacade {
         mailboxService.claim(playerId, cmd);
     }
 
-    public MailboxResult.Mails list() {
+    public MailboxResult.Entries list() {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         return mailboxService.list(playerId);
     }

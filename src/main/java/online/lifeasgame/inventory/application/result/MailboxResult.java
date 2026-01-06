@@ -1,8 +1,9 @@
 package online.lifeasgame.inventory.application.result;
 
-import online.lifeasgame.inventory.domain.MailboxEntry;
+import online.lifeasgame.inventory.application.query.MailboxEntryView;
 
 import java.util.List;
+import java.util.Map;
 
 public final class MailboxResult {
 
@@ -11,29 +12,45 @@ public final class MailboxResult {
     public record Slot(int slot) {
     }
 
-    public record Mail(
+    public record Entry(
+            Long mailId,
             int slotIndex,
             Long itemId,
+            String itemName,
+            String category,
+            String type,
             String rarity,
+            boolean stackable,
+            int maxStack,
             int quantity,
-            boolean bound
+            boolean bound,
+            Integer durability,
+            Map<String, Object> instanceAttrs
     ) {
-        public static Mail from(MailboxEntry mailboxEntry) {
-            return new Mail(
-                    mailboxEntry.getSlotIndex().value(),
-                    mailboxEntry.getItemId(),
-                    mailboxEntry.getRarity().name(),
-                    mailboxEntry.getQuantity().value(),
-                    mailboxEntry.isBound()
+        public static Entry fromView(MailboxEntryView entryView) {
+            return new Entry(
+                    entryView.mailId(),
+                    entryView.slotIndex(),
+                    entryView.itemId(),
+                    entryView.itemName(),
+                    entryView.category().name(),
+                    entryView.type().name(),
+                    entryView.rarity().name(),
+                    entryView.stackable(),
+                    entryView.maxStack(),
+                    entryView.quantity(),
+                    entryView.bound(),
+                    entryView.durability(),
+                    entryView.instanceAttrs() == null ? Map.of() : entryView.instanceAttrs().attrs()
             );
         }
     }
 
-    public record Mails(List<Mail> mails) {
-        public static Mails from(List<MailboxEntry> entries) {
-            return new Mails(
-                    entries.stream()
-                            .map(Mail::from)
+    public record Entries(List<Entry> entries) {
+        public static Entries fromViews(List<MailboxEntryView> entryViews) {
+            return new Entries(
+                    entryViews.stream()
+                            .map(Entry::fromView)
                             .toList()
             );
         }

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Inventory API V1")
 public interface InventoryApiSpecV1 {
 
-    @Operation(summary = "인벤토리 목록 조회", description = "인벤토리 슬롯 목록을 조회합니다.")
+    @Operation(summary = "인벤토리 목록 조회", description = "인벤토리 슬롯 목록(간단)을 조회합니다.")
     ResponseEntity<ApiResponse<Entries>> list();
 
     @Operation(summary = "인벤토리 아이템 추가", description = "아이템을 인벤토리에 추가합니다.")

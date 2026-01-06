@@ -26,8 +26,8 @@ public class MailboxController implements MailboxApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
-        MailboxResult.Mails result = mailboxFacade.list();
+    public ResponseEntity<ApiResponse<MailboxResponse.Entries>> list() {
+        MailboxResult.Entries result = mailboxFacade.list();
         return ApiResponses.ok(MailboxWebMapper.toMails(result));
     }
 

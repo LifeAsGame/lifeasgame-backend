@@ -2,6 +2,7 @@ package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
+import online.lifeasgame.inventory.application.query.MailboxEntryView;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.domain.*;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class MailboxService {
     private final MailboxReader mailboxReader;
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
+    private final MailBoxQueryReader mailBoxQueryReader;
 
     @Transactional
     public MailboxResult.Slot deliver(Long playerId, MailboxCommand.Deliver command) {
@@ -59,8 +61,8 @@ public class MailboxService {
     }
 
     @Transactional(readOnly = true)
-    public MailboxResult.Mails list(Long playerId) {
-        List<MailboxEntry> mailboxEntries = mailboxReader.getByPlayerIdOrThrow(playerId).getEntries();
-        return MailboxResult.Mails.from(mailboxEntries);
+    public MailboxResult.Entries list(Long playerId) {
+        List<MailboxEntryView> entryViews = mailBoxQueryReader.list(playerId);
+        return MailboxResult.Entries.fromViews(entryViews);
     }
 }
