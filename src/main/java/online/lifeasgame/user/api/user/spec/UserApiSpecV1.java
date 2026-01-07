@@ -29,4 +29,9 @@ public interface UserApiSpecV1 {
     ResponseEntity<ApiResponse<UserResponse.Availability>> checkNicknameAvailability(
             @RequestParam String nickname
     );
+
+    @Operation(summary = "닉네임 변경", description = "현재 로그인한 유저의 닉네임을 변경합니다.")
+    ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
+            @Valid @RequestBody UserRequest.ChangeNickname request
+    );
 }

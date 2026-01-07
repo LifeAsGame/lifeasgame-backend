@@ -35,7 +35,7 @@ public final class UserResponse {
 
     public record Availability(boolean available, String reason) {}
 
-    public record NicknameChanged(Long userId, String nickname, Instant changedAt) {}
+    public record NicknameChanged(Long userId, String nickname) {}
 
     public record PasswordChanged(Long userId, Instant changedAt) {}
 

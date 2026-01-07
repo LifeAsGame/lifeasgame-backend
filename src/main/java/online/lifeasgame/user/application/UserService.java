@@ -44,4 +44,10 @@ public class UserService {
         boolean isAvailable = userReader.existsByNickname(Nickname.of(nickname));
         return new UserResult.Availability(isAvailable, UserError.NICKNAME_DUPLICATE.message());
     }
+
+    public UserResult.NicknameChanged changeNickname(Long userId, String nickname) {
+        User user = userReader.findByIdOrElseThrow(userId);
+        user.changeNickname(Nickname.of(nickname));
+        return new UserResult.NicknameChanged(user.getId(), user.getNickname().getValue());
+    }
 }

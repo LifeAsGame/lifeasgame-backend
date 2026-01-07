@@ -58,4 +58,11 @@ public class UserController implements UserApiSpecV1 {
         UserResult.Availability availability = userService.checkNicknameAvailability(nickname);
         return ApiResponses.ok(UserWebMapper.toAvailability(availability));
     }
+
+    @Override
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(UserRequest.ChangeNickname request) {
+        UserResult.NicknameChanged nicknameChanged = userFacade.changeNickname(request.nickname());
+        return ApiResponses.ok(UserWebMapper.toNicknameChanged(nicknameChanged));
+    }
 }

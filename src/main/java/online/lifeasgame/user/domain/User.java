@@ -1,23 +1,15 @@
 package online.lifeasgame.user.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -65,4 +57,8 @@ public class User extends AbstractTime {
     }
 
     public void recordEvent(DomainEvent e) { domainEvents.add(e); }
+
+    public void changeNickname(Nickname nickname) {
+        this.nickname = nickname;
+    }
 }

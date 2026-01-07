@@ -15,4 +15,8 @@ public class UserFacade {
     public UserResult.UserInfo getUserInfo() {
         return userService.getUserInfo(currentUser.currentUserIdOrThrow());
     }
+
+    public UserResult.NicknameChanged changeNickname(String nickname) {
+        return userService.changeNickname(currentUser.currentUserIdOrThrow(), nickname);
+    }
 }
