@@ -2,7 +2,11 @@ package online.lifeasgame.user.application.result;
 
 import online.lifeasgame.user.domain.User;
 
-public class UserResult {
+public final class UserResult {
+
+    private UserResult() {
+    }
+
     public record Created(Long id) {
         public static Created of(Long id) {
             return new Created(id);
@@ -13,5 +17,8 @@ public class UserResult {
         public static UserInfo from(User user) {
             return new UserInfo(user.getEmail().getValue(), user.getNickname().getValue());
         }
+    }
+
+    public record Availability(boolean isAvailable, String reason) {
     }
 }

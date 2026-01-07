@@ -6,6 +6,8 @@ import online.lifeasgame.user.application.model.RawPassword;
 import online.lifeasgame.user.application.result.UserResult;
 import online.lifeasgame.user.domain.Email;
 import online.lifeasgame.user.domain.Nickname;
+import online.lifeasgame.user.domain.User;
+import online.lifeasgame.user.domain.error.UserError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,16 +21,22 @@ public class UserService {
 
     @Transactional
     public UserResult.Created register(UserCommand.Register register) {
-        return UserResult.Created.of(
-                userWriter.register(
-                    Email.of(register.email()),
-                    passwordHasher.hash(RawPassword.of(register.password())),
-                    Nickname.of(register.nickname())
-                )
+        Long userId = userWriter.register(
+                Email.of(register.email()),
+                passwordHasher.hash(RawPassword.of(register.password())),
+                Nickname.of(register.nickname())
         );
+
+        return new UserResult.Created(userId);
     }
 
     public UserResult.UserInfo getUserInfo(Long userId) {
-        return UserResult.UserInfo.from(userReader.findById(userId));
+        User user = userReader.findByIdOrElseThrow(userId);
+        return UserResult.UserInfo.from(user);
+    }
+
+    public UserResult.Availability checkEmailAvailability(String email) {
+        boolean isAvailable = userReader.existsByEmail(Email.of(email));
+        return new UserResult.Availability(isAvailable, UserError.EMAIL_DUPLICATE.message());
     }
 }

@@ -24,6 +24,7 @@ public class UserController implements UserApiSpecV1 {
     private final UserService userService;
     private final UserFacade userFacade;
 
+    @Override
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse.Created>> register(@Valid @RequestBody UserRequest.Register request) {
         UserResult.Created userResult = userService.register(UserWebMapper.toRegisterCommand(request));
@@ -33,9 +34,19 @@ public class UserController implements UserApiSpecV1 {
         );
     }
 
+    @Override
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse.UserInfo>> me() {
         UserResult.UserInfo userInfo = userFacade.getUserInfo();
         return ApiResponses.ok(UserWebMapper.toUserInfo(userInfo));
+    }
+
+    @Override
+    @GetMapping("/availability/email")
+    public ResponseEntity<ApiResponse<UserResponse.Availability>> checkEmailAvailability(
+            @RequestParam String email
+    ) {
+        UserResult.Availability availability = userService.checkEmailAvailability(email);
+        return ApiResponses.ok(UserWebMapper.toAvailability(availability));
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "Admin User API V2")
+@Tag(name = "Admin User API V1")
 public interface AdminUserApiDraftSpecV1 {
 
     @Operation(summary = "유저 검색", description = "이메일/닉네임/상태로 유저 목록을 조회합니다.")

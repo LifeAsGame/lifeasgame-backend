@@ -24,4 +24,8 @@ public final class UserWebMapper {
                 null
         );
     }
+
+    public static UserResponse.Availability toAvailability(UserResult.Availability result) {
+        return new UserResponse.Availability(result.isAvailable(), result.reason());
+    }
 }

@@ -13,11 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "User API V2")
 public interface UserApiDraftSpecV1 {
 
-    @Operation(summary = "이메일 사용 가능 여부", description = "회원가입 전 이메일 중복 여부를 확인합니다.")
-    ResponseEntity<ApiResponse<UserResponse.Availability>> checkEmailAvailability(
-            @RequestParam String email
-    );
-
     @Operation(summary = "닉네임 사용 가능 여부", description = "닉네임 중복 여부를 확인합니다.")
     ResponseEntity<ApiResponse<UserResponse.Availability>> checkNicknameAvailability(
             @RequestParam String nickname
