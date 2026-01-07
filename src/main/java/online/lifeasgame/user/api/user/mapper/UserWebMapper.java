@@ -40,4 +40,8 @@ public final class UserWebMapper {
     public static UserResponse.PasswordChanged toPasswordChanged(UserResult.PasswordChanged result) {
         return new UserResponse.PasswordChanged(result.userId());
     }
+
+    public static UserResponse.Deleted toDeleted(UserResult.Deleted result) {
+        return new UserResponse.Deleted(result.userId(), result.status());
+    }
 }

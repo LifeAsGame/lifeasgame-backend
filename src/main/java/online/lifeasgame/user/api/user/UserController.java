@@ -26,7 +26,9 @@ public class UserController implements UserApiSpecV1 {
 
     @Override
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse.Created>> register(@Valid @RequestBody UserRequest.Register request) {
+    public ResponseEntity<ApiResponse<UserResponse.Created>> register(
+            @Valid @RequestBody UserRequest.Register request
+    ) {
         UserResult.Created userResult = userService.register(UserWebMapper.toRegisterCommand(request));
         return ApiResponses.created(
                 URI.create("/api/v1/users/" + userResult.id()),
@@ -61,15 +63,28 @@ public class UserController implements UserApiSpecV1 {
 
     @Override
     @PatchMapping("/me/nickname")
-    public ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(UserRequest.ChangeNickname request) {
+    public ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
+            @Valid @RequestBody UserRequest.ChangeNickname request
+    ) {
         UserResult.NicknameChanged nicknameChanged = userFacade.changeNickname(request.nickname());
         return ApiResponses.ok(UserWebMapper.toNicknameChanged(nicknameChanged));
     }
 
     @Override
     @PatchMapping("/me/password")
-    public ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(UserRequest.ChangePassword request) {
+    public ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(
+            @Valid @RequestBody UserRequest.ChangePassword request
+    ) {
         UserResult.PasswordChanged passwordChanged = userFacade.changePassword(UserWebMapper.toChangePasswordCommand(request));
         return ApiResponses.ok(UserWebMapper.toPasswordChanged(passwordChanged));
+    }
+
+    @Override
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse.Deleted>> deleteMe(
+            @Valid @RequestBody UserRequest.Delete request
+    ) {
+        UserResult.Deleted deleted = userFacade.delete(request.password());
+        return ApiResponses.deleted(UserWebMapper.toDeleted(deleted));
     }
 }

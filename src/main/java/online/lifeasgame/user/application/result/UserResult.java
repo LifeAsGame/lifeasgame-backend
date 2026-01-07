@@ -27,4 +27,7 @@ public final class UserResult {
 
     public record PasswordChanged(Long userId) {
     }
+
+    public record Deleted(Long userId, String status) {
+    }
 }

@@ -74,4 +74,10 @@ public class User extends AbstractTime {
             throw new DomainException(UserError.INCORRECT_PASSWORD);
         }
     }
+
+    public void delete(HashedPassword password) {
+        if (this.passwordHash.equals(password)) {
+            this.status = UserStatus.DELETED;
+        }
+    }
 }

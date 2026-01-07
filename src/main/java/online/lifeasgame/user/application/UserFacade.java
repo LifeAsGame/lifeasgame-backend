@@ -24,4 +24,8 @@ public class UserFacade {
     public UserResult.PasswordChanged changePassword(UserCommand.ChangePassword command) {
         return userService.changePassword(currentUser.currentUserIdOrThrow(), command);
     }
+
+    public UserResult.Deleted delete(String password) {
+        return userService.delete(currentUser.currentUserIdOrThrow(), password);
+    }
 }

@@ -39,7 +39,7 @@ public final class UserResponse {
 
     public record PasswordChanged(Long userId) {}
 
-    public record Deleted(Long userId, String status, Instant changedAt) {}
+    public record Deleted(Long userId, String status) {}
 
     public record Settings(
             Long userId,

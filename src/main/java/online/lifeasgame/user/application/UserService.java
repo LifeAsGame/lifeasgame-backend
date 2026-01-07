@@ -60,4 +60,10 @@ public class UserService {
 
         return new UserResult.PasswordChanged(user.getId());
     }
+
+    public UserResult.Deleted delete(Long userId, String password) {
+        User user = userReader.findByIdOrElseThrow(userId);
+        user.delete(passwordHasher.hash(RawPassword.of(password)));
+        return new UserResult.Deleted(user.getId(), user.getStatus().name());
+    }
 }

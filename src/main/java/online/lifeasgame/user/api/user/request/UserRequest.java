@@ -32,4 +32,8 @@ public final class UserRequest {
     ) {
     }
 
+    public record Delete(
+            @NotBlank @Size(min = 8, max = 72) String password
+    ) {
+    }
 }
