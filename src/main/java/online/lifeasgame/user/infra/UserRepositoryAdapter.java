@@ -2,6 +2,7 @@ package online.lifeasgame.user.infra;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.user.domain.Email;
+import online.lifeasgame.user.domain.Nickname;
 import online.lifeasgame.user.domain.User;
 import online.lifeasgame.user.domain.repository.UserRepository;
 import org.springframework.stereotype.Repository;
@@ -27,5 +28,10 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsByEmail(Email email) {
         return jpa.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByNickname(Nickname nickname) {
+        return jpa.existsByNickname(nickname);
     }
 }

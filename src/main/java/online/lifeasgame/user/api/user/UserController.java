@@ -49,4 +49,13 @@ public class UserController implements UserApiSpecV1 {
         UserResult.Availability availability = userService.checkEmailAvailability(email);
         return ApiResponses.ok(UserWebMapper.toAvailability(availability));
     }
+
+    @Override
+    @GetMapping("/availability/nickname")
+    public ResponseEntity<ApiResponse<UserResponse.Availability>> checkNicknameAvailability(
+            @RequestParam String nickname
+    ) {
+        UserResult.Availability availability = userService.checkNicknameAvailability(nickname);
+        return ApiResponses.ok(UserWebMapper.toAvailability(availability));
+    }
 }

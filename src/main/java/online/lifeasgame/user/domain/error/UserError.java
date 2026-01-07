@@ -5,10 +5,11 @@ import online.lifeasgame.core.error.Sensitivity;
 
 public enum UserError implements ErrorCode {
 
-    EMAIL_DUPLICATE("USR-409-EMAIL_DUP", "Email already in use", 409) {
+    EMAIL_DUPLICATE("USR-409-EMAIL-DUP", "Email already in use", 409) {
         @Override public Sensitivity sensitivity() { return Sensitivity.PII; }
     },
-    USER_NOT_FOUND("USR-404-NOT_FOUND", "User not found", 404);
+    USER_NOT_FOUND("USR-404-NOT-FOUND", "User not found", 404),
+    NICKNAME_DUPLICATE("USR-409-NICKNAME-DUP", "Nickname already in use", 409);
 
     private final String code;
     private final String message;

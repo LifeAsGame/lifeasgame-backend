@@ -39,4 +39,9 @@ public class UserService {
         boolean isAvailable = userReader.existsByEmail(Email.of(email));
         return new UserResult.Availability(isAvailable, UserError.EMAIL_DUPLICATE.message());
     }
+
+    public UserResult.Availability checkNicknameAvailability(String nickname) {
+        boolean isAvailable = userReader.existsByNickname(Nickname.of(nickname));
+        return new UserResult.Availability(isAvailable, UserError.NICKNAME_DUPLICATE.message());
+    }
 }

@@ -3,6 +3,7 @@ package online.lifeasgame.user.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.user.domain.Email;
+import online.lifeasgame.user.domain.Nickname;
 import online.lifeasgame.user.domain.User;
 import online.lifeasgame.user.domain.error.UserError;
 import online.lifeasgame.user.domain.repository.UserRepository;
@@ -24,5 +25,9 @@ class UserReader {
 
     public boolean existsByEmail(Email email) {
         return userRepository.existsByEmail(email);
+    }
+
+    public boolean existsByNickname(Nickname nickname) {
+        return userRepository.existsByNickname(nickname);
     }
 }

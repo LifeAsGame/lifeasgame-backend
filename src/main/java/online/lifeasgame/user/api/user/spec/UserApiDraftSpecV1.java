@@ -8,15 +8,9 @@ import online.lifeasgame.user.api.user.request.UserRequest;
 import online.lifeasgame.user.api.user.response.UserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "User API V2")
 public interface UserApiDraftSpecV1 {
-
-    @Operation(summary = "닉네임 사용 가능 여부", description = "닉네임 중복 여부를 확인합니다.")
-    ResponseEntity<ApiResponse<UserResponse.Availability>> checkNicknameAvailability(
-            @RequestParam String nickname
-    );
 
     @Operation(summary = "닉네임 변경", description = "현재 로그인한 유저의 닉네임을 변경합니다.")
     ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
