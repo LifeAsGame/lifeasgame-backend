@@ -34,4 +34,9 @@ public interface UserApiSpecV1 {
     ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
             @Valid @RequestBody UserRequest.ChangeNickname request
     );
+
+    @Operation(summary = "비밀번호 변경", description = "현재 로그인한 유저의 비밀번호를 변경합니다.")
+    ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(
+            @Valid @RequestBody UserRequest.ChangePassword request
+    );
 }

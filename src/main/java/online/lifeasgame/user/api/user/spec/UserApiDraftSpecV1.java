@@ -12,16 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "User API V2")
 public interface UserApiDraftSpecV1 {
 
-    @Operation(summary = "닉네임 변경", description = "현재 로그인한 유저의 닉네임을 변경합니다.")
-    ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
-            @Valid @RequestBody UserRequest.ChangeNickname request
-    );
-
-    @Operation(summary = "비밀번호 변경", description = "현재 로그인한 유저의 비밀번호를 변경합니다.")
-    ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(
-            @Valid @RequestBody UserRequest.ChangePassword request
-    );
-
     @Operation(summary = "회원 탈퇴", description = "현재 로그인한 유저를 탈퇴 처리합니다. (권장: soft delete)")
     ResponseEntity<ApiResponse<UserResponse.Deleted>> deleteMe();
 

@@ -65,4 +65,11 @@ public class UserController implements UserApiSpecV1 {
         UserResult.NicknameChanged nicknameChanged = userFacade.changeNickname(request.nickname());
         return ApiResponses.ok(UserWebMapper.toNicknameChanged(nicknameChanged));
     }
+
+    @Override
+    @PatchMapping("/me/password")
+    public ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(UserRequest.ChangePassword request) {
+        UserResult.PasswordChanged passwordChanged = userFacade.changePassword(UserWebMapper.toChangePasswordCommand(request));
+        return ApiResponses.ok(UserWebMapper.toPasswordChanged(passwordChanged));
+    }
 }

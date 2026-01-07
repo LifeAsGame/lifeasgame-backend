@@ -9,7 +9,8 @@ public enum UserError implements ErrorCode {
         @Override public Sensitivity sensitivity() { return Sensitivity.PII; }
     },
     USER_NOT_FOUND("USR-404-NOT-FOUND", "User not found", 404),
-    NICKNAME_DUPLICATE("USR-409-NICKNAME-DUP", "Nickname already in use", 409);
+    NICKNAME_DUPLICATE("USR-409-NICKNAME-DUP", "Nickname already in use", 409),
+    INCORRECT_PASSWORD("USR-400-INVALID-CURRENT-PASSWORD", "Current password is incorrect", 400);
 
     private final String code;
     private final String message;

@@ -2,6 +2,7 @@ package online.lifeasgame.user.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.security.CurrentUserAccessor;
+import online.lifeasgame.user.application.command.UserCommand;
 import online.lifeasgame.user.application.result.UserResult;
 import org.springframework.stereotype.Component;
 
@@ -18,5 +19,9 @@ public class UserFacade {
 
     public UserResult.NicknameChanged changeNickname(String nickname) {
         return userService.changeNickname(currentUser.currentUserIdOrThrow(), nickname);
+    }
+
+    public UserResult.PasswordChanged changePassword(UserCommand.ChangePassword command) {
+        return userService.changePassword(currentUser.currentUserIdOrThrow(), command);
     }
 }

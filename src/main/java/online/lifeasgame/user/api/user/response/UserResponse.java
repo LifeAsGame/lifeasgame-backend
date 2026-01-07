@@ -37,7 +37,7 @@ public final class UserResponse {
 
     public record NicknameChanged(Long userId, String nickname) {}
 
-    public record PasswordChanged(Long userId, Instant changedAt) {}
+    public record PasswordChanged(Long userId) {}
 
     public record Deleted(Long userId, String status, Instant changedAt) {}
 

@@ -50,4 +50,14 @@ public class UserService {
         user.changeNickname(Nickname.of(nickname));
         return new UserResult.NicknameChanged(user.getId(), user.getNickname().getValue());
     }
+
+    public UserResult.PasswordChanged changePassword(Long userId, UserCommand.ChangePassword command) {
+        User user = userReader.findByIdOrElseThrow(userId);
+        user.changePassword(
+                passwordHasher.hash(RawPassword.of(command.currentPassword())),
+                passwordHasher.hash(RawPassword.of(command.newPassword()))
+        );
+
+        return new UserResult.PasswordChanged(user.getId());
+    }
 }

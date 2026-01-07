@@ -24,4 +24,7 @@ public final class UserResult {
 
     public record NicknameChanged(Long userId, String nickname) {
     }
+
+    public record PasswordChanged(Long userId) {
+    }
 }

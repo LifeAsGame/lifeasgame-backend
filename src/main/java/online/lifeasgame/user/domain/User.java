@@ -5,8 +5,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.user.domain.error.UserError;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,5 +62,16 @@ public class User extends AbstractTime {
 
     public void changeNickname(Nickname nickname) {
         this.nickname = nickname;
+    }
+
+    public void changePassword(
+            HashedPassword currentPassword,
+            HashedPassword newPassword
+    ) {
+        if (this.passwordHash.equals(currentPassword)) {
+            this.passwordHash = newPassword;
+        } else {
+            throw new DomainException(UserError.INCORRECT_PASSWORD);
+        }
     }
 }
