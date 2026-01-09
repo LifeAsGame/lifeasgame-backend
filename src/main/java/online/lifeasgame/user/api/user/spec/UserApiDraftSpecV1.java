@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "User API V2")
 public interface UserApiDraftSpecV1 {
 
-    @Operation(summary = "내 설정 조회", description = "현재 로그인한 유저의 설정(UserSetting)을 조회합니다.")
-    ResponseEntity<ApiResponse<UserResponse.Settings>> getMySettings();
-
     @Operation(summary = "내 설정 수정", description = "현재 로그인한 유저의 설정(UserSetting)을 부분 수정합니다.")
     ResponseEntity<ApiResponse<UserResponse.Settings>> updateMySettings(
             @Valid @RequestBody UserRequest.UpdateSettings request

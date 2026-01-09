@@ -42,4 +42,7 @@ public interface UserApiSpecV1 {
 
     @Operation(summary = "회원 탈퇴", description = "현재 로그인한 유저를 탈퇴 처리합니다. (권장: soft delete)")
     ResponseEntity<ApiResponse<UserResponse.Deleted>> deleteMe(UserRequest.Delete request);
+
+    @Operation(summary = "내 설정 조회", description = "현재 로그인한 유저의 설정(UserSetting)을 조회합니다.")
+    ResponseEntity<ApiResponse<UserResponse.Settings>> getMySettings();
 }

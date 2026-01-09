@@ -44,4 +44,14 @@ public final class UserWebMapper {
     public static UserResponse.Deleted toDeleted(UserResult.Deleted result) {
         return new UserResponse.Deleted(result.userId(), result.status());
     }
+
+    public static UserResponse.Settings toSettings(UserResult.Settings result) {
+        return new UserResponse.Settings(
+                result.userId(),
+                result.volume(),
+                result.uiLayoutJson(),
+                result.flagsJson(),
+                result.updatedAt()
+        );
+    }
 }

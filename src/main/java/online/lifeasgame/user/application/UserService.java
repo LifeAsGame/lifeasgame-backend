@@ -7,6 +7,7 @@ import online.lifeasgame.user.application.result.UserResult;
 import online.lifeasgame.user.domain.Email;
 import online.lifeasgame.user.domain.Nickname;
 import online.lifeasgame.user.domain.User;
+import online.lifeasgame.user.domain.UserSetting;
 import online.lifeasgame.user.domain.error.UserError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class UserService {
     private final UserWriter userWriter;
     private final UserReader userReader;
     private final PasswordHasher passwordHasher;
+    private final UserSettingReader userSettingReader;
 
     @Transactional
     public UserResult.Created register(UserCommand.Register register) {
@@ -65,5 +67,10 @@ public class UserService {
         User user = userReader.findByIdOrElseThrow(userId);
         user.delete(passwordHasher.hash(RawPassword.of(password)));
         return new UserResult.Deleted(user.getId(), user.getStatus().name());
+    }
+
+    public UserResult.Settings getSettings(Long userId) {
+        UserSetting userSetting = userSettingReader.findByIdOrElseThrow(userId);
+        return UserResult.Settings.from(userSetting);
     }
 }

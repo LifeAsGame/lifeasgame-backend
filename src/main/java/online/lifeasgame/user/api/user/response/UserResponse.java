@@ -46,7 +46,6 @@ public final class UserResponse {
             int volume,
             String uiLayoutJson,
             String flagsJson,
-            Long version,
             Instant updatedAt
     ) {}
 }
