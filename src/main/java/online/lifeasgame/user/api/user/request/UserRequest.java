@@ -25,13 +25,6 @@ public final class UserRequest {
     ) {
     }
 
-    public record UpdateSettings(
-            @Min(0) @Max(100) Integer volume,
-            String uiLayoutJson,
-            String flagsJson
-    ) {
-    }
-
     public record Delete(
             @NotBlank @Size(min = 8, max = 72) String password
     ) {

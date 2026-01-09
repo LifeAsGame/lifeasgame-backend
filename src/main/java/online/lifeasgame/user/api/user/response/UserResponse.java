@@ -1,6 +1,5 @@
 package online.lifeasgame.user.api.user.response;
 
-import java.time.Instant;
 import java.util.List;
 
 public final class UserResponse {
@@ -40,12 +39,4 @@ public final class UserResponse {
     public record PasswordChanged(Long userId) {}
 
     public record Deleted(Long userId, String status) {}
-
-    public record Settings(
-            Long userId,
-            int volume,
-            String uiLayoutJson,
-            String flagsJson,
-            Instant updatedAt
-    ) {}
 }

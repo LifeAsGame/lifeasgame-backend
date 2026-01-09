@@ -87,10 +87,4 @@ public class UserController implements UserApiSpecV1 {
         UserResult.Deleted deleted = userFacade.delete(request.password());
         return ApiResponses.deleted(UserWebMapper.toDeleted(deleted));
     }
-
-    @Override
-    public ResponseEntity<ApiResponse<UserResponse.Settings>> getMySettings() {
-        UserResult.Settings settings = userFacade.getUserSettings();
-        return ApiResponses.ok(UserWebMapper.toSettings(settings));
-    }
 }

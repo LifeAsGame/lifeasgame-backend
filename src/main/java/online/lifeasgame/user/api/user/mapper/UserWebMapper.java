@@ -1,9 +1,9 @@
 package online.lifeasgame.user.api.user.mapper;
 
-import online.lifeasgame.user.application.command.UserCommand;
-import online.lifeasgame.user.application.result.UserResult;
 import online.lifeasgame.user.api.user.request.UserRequest;
 import online.lifeasgame.user.api.user.response.UserResponse;
+import online.lifeasgame.user.application.command.UserCommand;
+import online.lifeasgame.user.application.result.UserResult;
 
 public final class UserWebMapper {
 
@@ -43,15 +43,5 @@ public final class UserWebMapper {
 
     public static UserResponse.Deleted toDeleted(UserResult.Deleted result) {
         return new UserResponse.Deleted(result.userId(), result.status());
-    }
-
-    public static UserResponse.Settings toSettings(UserResult.Settings result) {
-        return new UserResponse.Settings(
-                result.userId(),
-                result.volume(),
-                result.uiLayoutJson(),
-                result.flagsJson(),
-                result.updatedAt()
-        );
     }
 }

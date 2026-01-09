@@ -28,8 +28,4 @@ public class UserFacade {
     public UserResult.Deleted delete(String password) {
         return userService.delete(currentUser.currentUserIdOrThrow(), password);
     }
-
-    public UserResult.Settings getUserSettings() {
-        return userService.getSettings(currentUser.currentUserIdOrThrow());
-    }
 }

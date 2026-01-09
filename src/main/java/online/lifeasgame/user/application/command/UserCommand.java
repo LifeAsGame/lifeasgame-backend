@@ -1,8 +1,5 @@
 package online.lifeasgame.user.application.command;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
 public final class UserCommand {
 
     private UserCommand() {}
@@ -11,8 +8,8 @@ public final class UserCommand {
     }
 
     public record ChangePassword(
-            @NotBlank @Size(min = 8, max = 72) String currentPassword,
-            @NotBlank @Size(min = 8, max = 72) String newPassword
+            String currentPassword,
+            String newPassword
     ) {
     }
 }
