@@ -1,6 +1,10 @@
 package online.lifeasgame.user.application.result;
 
+import online.lifeasgame.user.application.query.UserSearchQuery;
 import online.lifeasgame.user.domain.User;
+
+import java.time.Instant;
+import java.util.List;
 
 public final class UserResult {
 
@@ -29,5 +33,43 @@ public final class UserResult {
     }
 
     public record Deleted(Long userId, String status) {
+    }
+
+    public record UserList(
+            List<UserSummary> users,
+            PageInfo page
+    ) {
+        public static UserList from(List<UserSearchQuery.UserRow> users, int page, int size, long total) {
+            return new UserList(
+                    users.stream()
+                            .map(
+                                    user -> new UserSummary(
+                                            user.id(),
+                                            user.email(),
+                                            user.nickname(),
+                                            user.status(),
+                                            user.createdAt()
+                                    )
+                            )
+                            .toList(),
+                    new PageInfo(page, size, total)
+            );
+        }
+
+        public record UserSummary(
+                Long id,
+                String email,
+                String nickname,
+                String status,
+                Instant createdAt
+        ) {
+
+        }
+        public record PageInfo(
+                int page,
+                int size,
+                long totalElements
+        ) {
+        }
     }
 }

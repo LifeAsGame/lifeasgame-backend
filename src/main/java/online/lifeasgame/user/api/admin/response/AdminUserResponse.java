@@ -27,8 +27,8 @@ public final class AdminUserResponse {
                 long totalElements
         ) {
         }
-
     }
+
     public record UserDetail(
             Long id,
             String email,
