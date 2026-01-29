@@ -9,19 +9,9 @@ import online.lifeasgame.user.api.admin.response.AdminUserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Admin User API V1")
 public interface AdminUserApiDraftSpecV1 {
-
-    @Operation(summary = "유저 검색", description = "이메일/닉네임/상태로 유저 목록을 조회합니다.")
-    ResponseEntity<ApiResponse<AdminUserResponse.UserList>> search(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String nickname,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    );
 
     @Operation(summary = "유저 상세 조회", description = "유저 상세 정보를 조회합니다.")
     ResponseEntity<ApiResponse<AdminUserResponse.UserDetail>> get(
