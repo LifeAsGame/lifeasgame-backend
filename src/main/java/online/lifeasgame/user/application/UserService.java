@@ -51,7 +51,13 @@ public class UserService {
     public UserResult.NicknameChanged changeNickname(Long userId, String nickname) {
         User user = userReader.findByIdOrElseThrow(userId);
         user.changeNickname(Nickname.of(nickname));
-        return new UserResult.NicknameChanged(user.getId(), user.getNickname().getValue());
+
+        return new UserResult.NicknameChanged(
+                user.getId(),
+                nickname,
+                user.getNickname().getValue(),
+                user.getUpdatedAt()
+        );
     }
 
     @Transactional

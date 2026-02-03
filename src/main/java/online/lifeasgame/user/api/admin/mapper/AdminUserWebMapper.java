@@ -69,4 +69,13 @@ public final class AdminUserWebMapper {
                 request.reason()
         );
     }
+
+    public static AdminUserResponse.NicknameChanged toNicknameChanged(UserResult.NicknameChanged result) {
+        return new AdminUserResponse.NicknameChanged(
+                result.userId(),
+                result.oldNickname(),
+                result.newNickname(),
+                result.changedAt()
+        );
+    }
 }

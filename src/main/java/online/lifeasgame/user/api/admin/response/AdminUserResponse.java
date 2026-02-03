@@ -76,7 +76,6 @@ public final class AdminUserResponse {
             Long userId,
             String oldNickname,
             String newNickname,
-            String reason,
             Instant changedAt
     ) {
 

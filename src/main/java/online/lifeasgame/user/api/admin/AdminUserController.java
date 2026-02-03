@@ -52,4 +52,13 @@ public class AdminUserController implements AdminUserApiSpecV1 {
         UserResult.StatusChanged statusChanged = userService.changeStatus(userId, AdminUserWebMapper.toChangeStatusCommand(request));
         return ApiResponses.ok(AdminUserWebMapper.toStatusChanged(statusChanged));
     }
+
+    @Override
+    public ResponseEntity<ApiResponse<AdminUserResponse.NicknameChanged>> forceChangeNickname(
+            Long userId,
+            AdminUserRequest.ForceChangeNickname request
+    ) {
+        UserResult.NicknameChanged nicknameChanged = userService.changeNickname(userId, request.nickname());
+        return ApiResponses.ok(AdminUserWebMapper.toNicknameChanged(nicknameChanged));
+    }
 }

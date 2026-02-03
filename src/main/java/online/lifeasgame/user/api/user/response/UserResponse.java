@@ -1,5 +1,6 @@
 package online.lifeasgame.user.api.user.response;
 
+import java.time.Instant;
 import java.util.List;
 
 public final class UserResponse {
@@ -34,7 +35,14 @@ public final class UserResponse {
 
     public record Availability(boolean available, String reason) {}
 
-    public record NicknameChanged(Long userId, String nickname) {}
+    public record NicknameChanged(
+            Long userId,
+            String oldNickname,
+            String newNickname,
+            Instant changedAt
+    ) {
+
+    }
 
     public record PasswordChanged(Long userId) {}
 

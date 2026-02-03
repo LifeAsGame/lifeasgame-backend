@@ -30,7 +30,12 @@ public final class UserWebMapper {
     }
 
     public static UserResponse.NicknameChanged toNicknameChanged(UserResult.NicknameChanged result) {
-        return new UserResponse.NicknameChanged(result.userId(), result.nickname());
+        return new UserResponse.NicknameChanged(
+                result.userId(),
+                result.oldNickname(),
+                result.newNickname(),
+                result.changedAt()
+        );
     }
 
     public static UserCommand.ChangePassword toChangePasswordCommand(UserRequest.ChangePassword request) {
