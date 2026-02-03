@@ -1,5 +1,6 @@
 package online.lifeasgame.user.api.admin.mapper;
 
+import online.lifeasgame.user.api.admin.request.AdminUserRequest;
 import online.lifeasgame.user.api.admin.response.AdminUserResponse;
 import online.lifeasgame.user.application.command.UserCommand;
 import online.lifeasgame.user.application.result.UserResult;
@@ -49,6 +50,23 @@ public final class AdminUserWebMapper {
                 p.page(),
                 p.size(),
                 p.totalElements()
+        );
+    }
+
+    public static AdminUserResponse.StatusChanged toStatusChanged(UserResult.StatusChanged result) {
+        return new AdminUserResponse.StatusChanged(
+                result.userId(),
+                result.fromStatus(),
+                result.toStatus(),
+                result.reason(),
+                result.changedAt()
+        );
+    }
+
+    public static UserCommand.ChangeStatus toChangeStatusCommand(AdminUserRequest.ChangeStatus request) {
+        return new UserCommand.ChangeStatus(
+                request.toStatus(),
+                request.reason()
         );
     }
 }

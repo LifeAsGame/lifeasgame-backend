@@ -66,6 +66,20 @@ public class UserService {
     }
 
     @Transactional
+    public UserResult.StatusChanged changeStatus(Long userId, UserCommand.ChangeStatus command) {
+        User user = userReader.findByIdOrElseThrow(userId);
+        user.changeStatus(UserStatus.parse(command.status()));
+
+        return new UserResult.StatusChanged(
+                user.getId(),
+                command.status(),
+                user.getStatus().name(),
+                command.reason(),
+                user.getUpdatedAt()
+        );
+    }
+
+    @Transactional
     public UserResult.Deleted delete(Long userId, String password) {
         User user = userReader.findByIdOrElseThrow(userId);
         user.delete(passwordHasher.hash(RawPassword.of(password)));

@@ -72,4 +72,13 @@ public final class UserResult {
         ) {
         }
     }
+
+    public record StatusChanged(
+            Long userId,
+            String fromStatus,
+            String toStatus,
+            String reason,
+            Instant changedAt
+    ) {
+    }
 }

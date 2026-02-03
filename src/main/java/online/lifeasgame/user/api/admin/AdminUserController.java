@@ -4,12 +4,16 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import online.lifeasgame.user.api.admin.mapper.AdminUserWebMapper;
+import online.lifeasgame.user.api.admin.request.AdminUserRequest;
 import online.lifeasgame.user.api.admin.response.AdminUserResponse;
 import online.lifeasgame.user.api.admin.spec.AdminUserApiSpecV1;
 import online.lifeasgame.user.application.UserService;
 import online.lifeasgame.user.application.result.UserResult;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,5 +42,14 @@ public class AdminUserController implements AdminUserApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminUserResponse.UserInfo>> get(Long userId) {
         UserResult.UserInfo userInfo = userService.getUserInfo(userId);
         return ApiResponses.ok(AdminUserWebMapper.toUserInfo(userInfo));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<AdminUserResponse.StatusChanged>> changeStatus(
+            Long userId,
+            AdminUserRequest.ChangeStatus request
+    ) {
+        UserResult.StatusChanged statusChanged = userService.changeStatus(userId, AdminUserWebMapper.toChangeStatusCommand(request));
+        return ApiResponses.ok(AdminUserWebMapper.toStatusChanged(statusChanged));
     }
 }

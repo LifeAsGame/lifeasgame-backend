@@ -70,8 +70,8 @@ public final class AdminUserResponse {
             String reason,
             Instant changedAt
     ) {
-
     }
+
     public record NicknameChanged(
             Long userId,
             String oldNickname,

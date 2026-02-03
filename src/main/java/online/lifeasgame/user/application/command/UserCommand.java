@@ -22,4 +22,10 @@ public final class UserCommand {
             int size
     ) {
     }
+
+    public record ChangeStatus(
+            String status,
+            String reason
+    ) {
+    }
 }
