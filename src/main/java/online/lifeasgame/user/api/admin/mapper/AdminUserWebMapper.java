@@ -25,6 +25,15 @@ public final class AdminUserWebMapper {
         return new AdminUserResponse.UserList(users, page);
     }
 
+    public static AdminUserResponse.UserInfo toUserInfo(UserResult.UserInfo result) {
+        return new AdminUserResponse.UserInfo(
+                null,
+                null,
+                null
+        );
+    }
+
+
     private static AdminUserResponse.UserList.UserSummary toUserSummary(UserResult.UserList.UserSummary s) {
         return new AdminUserResponse.UserList.UserSummary(
                 s.id(),

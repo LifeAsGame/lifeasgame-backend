@@ -13,11 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Admin User API V1")
 public interface AdminUserApiDraftSpecV1 {
 
-    @Operation(summary = "유저 상세 조회", description = "유저 상세 정보를 조회합니다.")
-    ResponseEntity<ApiResponse<AdminUserResponse.UserDetail>> get(
-            @PathVariable Long userId
-    );
-
     @Operation(summary = "유저 상태 변경", description = "유저 상태를 변경합니다. (ACTIVE/BANNED/DELETED)")
     ResponseEntity<ApiResponse<AdminUserResponse.StatusChanged>> changeStatus(
             @PathVariable Long userId,

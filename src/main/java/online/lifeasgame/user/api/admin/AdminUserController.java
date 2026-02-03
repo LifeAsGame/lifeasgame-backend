@@ -33,4 +33,10 @@ public class AdminUserController implements AdminUserApiSpecV1 {
 
         return ApiResponses.ok(AdminUserWebMapper.toUserList(userList));
     }
+
+    @Override
+    public ResponseEntity<ApiResponse<AdminUserResponse.UserInfo>> get(Long userId) {
+        UserResult.UserInfo userInfo = userService.getUserInfo(userId);
+        return ApiResponses.ok(AdminUserWebMapper.toUserInfo(userInfo));
+    }
 }

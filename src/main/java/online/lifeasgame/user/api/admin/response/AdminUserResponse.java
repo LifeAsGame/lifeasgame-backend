@@ -1,5 +1,7 @@
 package online.lifeasgame.user.api.admin.response;
 
+import online.lifeasgame.user.api.user.response.UserResponse;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -37,8 +39,30 @@ public final class AdminUserResponse {
             Instant createdAt,
             Instant updatedAt
     ) {
-
     }
+
+    public record UserInfo(
+            UserResponse.UserInfo.UserSummary user,
+            UserResponse.UserInfo.PlayerHint player,
+            UserResponse.UserInfo.UiHint ui
+    ) {
+        public record UserSummary(
+                Long id,
+                String email,
+                String nickname,
+                String status
+        ) {
+        }
+
+        public record PlayerHint(boolean exists, Long playerId) {
+        }
+
+        public record UiHint(List<String> nextActions, UserResponse.UserInfo.UiHint.Badges badges) {
+            public record Badges(int notifications, int pendingRewards) {
+            }
+        }
+    }
+
     public record StatusChanged(
             Long userId,
             String fromStatus,
