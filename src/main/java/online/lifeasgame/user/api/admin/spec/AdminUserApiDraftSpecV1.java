@@ -29,10 +29,4 @@ public interface AdminUserApiDraftSpecV1 {
             @PathVariable Long userId,
             @Valid @RequestBody AdminUserRequest.ForceChangeNickname request
     );
-
-    @Operation(summary = "유저 설정 수정", description = "특정 유저의 설정(UserSetting)을 부분 수정합니다.")
-    ResponseEntity<ApiResponse<AdminUserResponse.Settings>> updateSettings(
-            @PathVariable Long userId,
-            @Valid @RequestBody AdminUserRequest.UpdateSettings request
-    );
 }
