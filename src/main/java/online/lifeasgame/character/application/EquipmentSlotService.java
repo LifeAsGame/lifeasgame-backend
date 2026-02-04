@@ -23,4 +23,9 @@ public class EquipmentSlotService {
 
         return EquipmentSlotResult.Info.fromList(equipmentSlots);
     }
+
+    public EquipmentSlotResult.Info getEquipmentSlot(Long slotId) {
+        EquipmentSlot equipmentSlot = equipmentSlotReader.getByIdOrThrow(slotId);
+        return EquipmentSlotResult.Info.from(equipmentSlot);
+    }
 }

@@ -25,4 +25,14 @@ public final class EquipmentSlotWebMapper {
                         .toList()
         );
     }
+
+    public static EquipmentSlotResponse.Info toInfo(EquipmentSlotResult.Info result) {
+        return new EquipmentSlotResponse.Info(
+                result.equipmentSlotId(),
+                result.code(),
+                result.name(),
+                result.category(),
+                result.role()
+        );
+    }
 }
