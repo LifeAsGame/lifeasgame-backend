@@ -53,4 +53,14 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
         AchievementResult.Info result = achievementService.getAchievement(achievementId);
         return ApiResponses.ok(AdminAchievementWebMapper.toInfo(result));
     }
+
+    @Override
+    @PatchMapping("/{achievementId}")
+    public ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> update(
+            Long achievementId,
+            AdminAchievementRequest.Update request
+    ) {
+        AchievementResult.Info result = achievementService.update(achievementId, AdminAchievementWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminAchievementWebMapper.toInfo(result));
+    }
 }

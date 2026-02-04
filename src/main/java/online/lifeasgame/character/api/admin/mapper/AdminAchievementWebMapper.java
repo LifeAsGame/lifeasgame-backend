@@ -46,4 +46,13 @@ public final class AdminAchievementWebMapper {
                         .toList()
         );
     }
+
+    public static AchievementCommand.Update toUpdateCommand(AdminAchievementRequest.Update request) {
+        return new AchievementCommand.Update(
+                request.code(),
+                request.name(),
+                request.category(),
+                request.descMd()
+        );
+    }
 }

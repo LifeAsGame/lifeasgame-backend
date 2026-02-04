@@ -46,4 +46,19 @@ public class AchievementService {
         Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
         return AchievementResult.Info.from(achievement);
     }
+
+    @Transactional
+    public AchievementResult.Info update(Long achievementId, AchievementCommand.Update command) {
+        AchievementCategory category = AchievementCategory.parse(command.category());
+
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
+        achievement.update(
+                command.code(),
+                command.name(),
+                category,
+                command.descMd()
+        );
+
+        return AchievementResult.Info.from(achievement);
+    }
 }

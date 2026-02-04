@@ -34,4 +34,9 @@ public interface AdminAchievementApiSpecV1 {
             @PathVariable Long achievementId
     );
 
+    @Operation(summary = "Achievement 수정", description = "Achievement를 수정합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> update(
+            @PathVariable Long achievementId,
+            @Valid @RequestBody AdminAchievementRequest.Update request
+    );
 }
