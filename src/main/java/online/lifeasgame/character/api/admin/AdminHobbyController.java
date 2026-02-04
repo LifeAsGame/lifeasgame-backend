@@ -52,4 +52,14 @@ public class AdminHobbyController implements AdminHobbyApiSpecV1 {
         HobbyResult.Info result = hobbyService.getHobby(hobbyId);
         return ApiResponses.ok(AdminHobbyWebMapper.toInfo(result));
     }
+
+    @Override
+    @PatchMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> update(
+            @PathVariable Long hobbyId,
+            @Valid @RequestBody AdminHobbyRequest.Update request
+    ) {
+        HobbyResult.Info result = hobbyService.update(hobbyId, AdminHobbyWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminHobbyWebMapper.toInfo(result));
+    }
 }

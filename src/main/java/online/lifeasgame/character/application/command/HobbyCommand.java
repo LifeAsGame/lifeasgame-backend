@@ -11,4 +11,10 @@ public final class HobbyCommand {
             String category
     ) {
     }
+
+    public record Update(
+            String name,
+            String category
+    ) {
+    }
 }

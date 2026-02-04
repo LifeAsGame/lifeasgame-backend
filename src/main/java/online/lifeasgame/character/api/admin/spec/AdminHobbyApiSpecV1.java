@@ -31,4 +31,9 @@ public interface AdminHobbyApiSpecV1 {
             @PathVariable Long hobbyId
     );
 
+    @Operation(summary = "Hobby 수정", description = "Hobby를 수정합니다.")
+    ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> update(
+            @PathVariable Long hobbyId,
+            @Valid @RequestBody AdminHobbyRequest.Update request
+    );
 }

@@ -39,4 +39,11 @@ public final class AdminHobbyWebMapper {
                         .toList()
         );
     }
+
+    public static HobbyCommand.Update toUpdateCommand(AdminHobbyRequest.Update request) {
+        return new HobbyCommand.Update(
+                request.name(),
+                request.category()
+        );
+    }
 }

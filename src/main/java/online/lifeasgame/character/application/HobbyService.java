@@ -38,4 +38,16 @@ public class HobbyService {
         Hobby hobby = hobbyReader.getByIdOrThrow(hobbyId);
         return HobbyResult.Info.from(hobby);
     }
+
+    @Transactional
+    public HobbyResult.Info update(Long hobbyId, HobbyCommand.Update command) {
+        HobbyCategory category = HobbyCategory.parse(command.category());
+        Hobby hobby = hobbyReader.getByIdOrThrow(hobbyId);
+        hobby.update(
+                command.name(),
+                category
+        );
+
+        return HobbyResult.Info.from(hobby);
+    }
 }
