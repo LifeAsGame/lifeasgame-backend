@@ -63,4 +63,13 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
         AchievementResult.Info result = achievementService.update(achievementId, AdminAchievementWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(AdminAchievementWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{achievementId}")
+    public ResponseEntity<ApiResponse<AdminAchievementResponse.Deleted>> delete(
+            @PathVariable Long achievementId
+    ) {
+        AchievementResult.Deleted result = achievementService.delete(achievementId);
+        return ApiResponses.deleted(AdminAchievementWebMapper.toDeleted(result));
+    }
 }

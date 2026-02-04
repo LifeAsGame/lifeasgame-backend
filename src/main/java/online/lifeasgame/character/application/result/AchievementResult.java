@@ -30,4 +30,7 @@ public final class AchievementResult {
             return achievements.stream().map(Info::from).toList();
         }
     }
+
+    public record Deleted(Long achievementId) {
+    }
 }

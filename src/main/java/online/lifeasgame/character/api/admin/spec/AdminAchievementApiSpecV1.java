@@ -39,4 +39,9 @@ public interface AdminAchievementApiSpecV1 {
             @PathVariable Long achievementId,
             @Valid @RequestBody AdminAchievementRequest.Update request
     );
+
+    @Operation(summary = "Achievement 삭제", description = "Achievement를 삭제합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Deleted>> delete(
+            @PathVariable Long achievementId
+    );
 }

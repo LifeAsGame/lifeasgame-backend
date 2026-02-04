@@ -14,4 +14,6 @@ public interface AchievementRepository {
     List<Achievement> findByCategoryIn(List<AchievementCategory> categories);
 
     Optional<Achievement> findById(Long id);
+
+    void delete(Long achievementId);
 }

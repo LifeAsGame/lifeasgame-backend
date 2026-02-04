@@ -55,4 +55,8 @@ public final class AdminAchievementWebMapper {
                 request.descMd()
         );
     }
+
+    public static AdminAchievementResponse.Deleted toDeleted(AchievementResult.Deleted result) {
+        return new AdminAchievementResponse.Deleted(result.achievementId());
+    }
 }

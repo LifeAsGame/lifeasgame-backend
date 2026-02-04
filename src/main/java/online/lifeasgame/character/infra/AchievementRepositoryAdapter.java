@@ -1,13 +1,14 @@
 package online.lifeasgame.character.infra;
 
 
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
 import online.lifeasgame.character.domain.repository.AchievementRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,5 +34,10 @@ public class AchievementRepositoryAdapter implements AchievementRepository {
     @Override
     public Optional<Achievement> findById(Long id) {
         return jpaRepository.findById(id);
+    }
+
+    @Override
+    public void delete(Long achievementId) {
+        jpaRepository.deleteById(achievementId);
     }
 }

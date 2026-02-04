@@ -61,4 +61,10 @@ public class AchievementService {
 
         return AchievementResult.Info.from(achievement);
     }
+
+    @Transactional
+    public AchievementResult.Deleted delete(Long achievementId) {
+        achievementWriter.delete(achievementId);
+        return new AchievementResult.Deleted(achievementId);
+    }
 }
