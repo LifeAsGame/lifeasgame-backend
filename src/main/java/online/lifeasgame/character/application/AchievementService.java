@@ -41,4 +41,9 @@ public class AchievementService {
                 achievement.getDescMd()
         );
     }
+
+    public AchievementResult.Info getAchievement(Long achievementId) {
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
+        return AchievementResult.Info.from(achievement);
+    }
 }

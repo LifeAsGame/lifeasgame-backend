@@ -25,4 +25,14 @@ public final class AchievementWebMapper {
                         .toList()
         );
     }
+
+    public static AchievementResponse.Info toInfo(AchievementResult.Info result) {
+        return new AchievementResponse.Info(
+                result.achievementId(),
+                result.code(),
+                result.name(),
+                result.category(),
+                result.descMd()
+        );
+    }
 }
