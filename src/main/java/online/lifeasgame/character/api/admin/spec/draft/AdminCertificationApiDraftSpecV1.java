@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AdminCertificationApiDraftSpecV1 {
 
-    @Operation(summary = "Certification 단건 조회", description = "Certification 단건을 조회합니다.")
-    ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
-            @PathVariable Long certificationId
-    );
-
     @Operation(summary = "Certification 수정", description = "Certification을 수정합니다.")
     ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> update(
             @PathVariable Long certificationId,

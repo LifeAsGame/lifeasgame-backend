@@ -7,6 +7,7 @@ import online.lifeasgame.character.api.admin.request.AdminCertificationRequest;
 import online.lifeasgame.character.api.admin.response.AdminCertificationResponse;
 import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -23,5 +24,10 @@ public interface AdminCertificationApiSpecV1 {
     @Operation(summary = "Certification 목록 조회", description = "Certification 목록을 조회합니다. category 필터 가능")
     ResponseEntity<ApiResponse<AdminCertificationResponse.Infos>> list(
             @RequestParam(name = "category", required = false) List<String> categories
+    );
+
+    @Operation(summary = "Certification 단건 조회", description = "Certification 단건을 조회합니다.")
+    ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
+            @PathVariable Long certificationId
     );
 }

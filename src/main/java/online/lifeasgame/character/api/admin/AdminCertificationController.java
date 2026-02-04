@@ -43,4 +43,13 @@ public class AdminCertificationController implements AdminCertificationApiSpecV1
         List<CertificationResult.Info> results = certificationService.getCertifications(categories);
         return ApiResponses.ok(AdminCertificationWebMapper.toInfos(results));
     }
+
+    @Override
+    @GetMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
+            @PathVariable Long certificationId
+    ) {
+        CertificationResult.Info result = certificationService.getCertification(certificationId);
+        return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
+    }
 }
