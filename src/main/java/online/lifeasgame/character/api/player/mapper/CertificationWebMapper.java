@@ -24,4 +24,14 @@ public final class CertificationWebMapper {
                         .toList()
         );
     }
+
+    public static CertificationResponse.Info toInfo(CertificationResult.Info result) {
+
+        return new CertificationResponse.Info(
+                result.certificationId(),
+                result.name(),
+                result.issuer(),
+                result.category()
+        );
+    }
 }

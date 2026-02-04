@@ -42,4 +42,9 @@ public class CertificationService {
                 certification.getCategory().name()
         );
     }
+
+    public CertificationResult.Info getCertification(Long certificationId) {
+        Certification certification = certificationReader.getByIdOrThrow(certificationId);
+        return CertificationResult.Info.from(certification);
+    }
 }
