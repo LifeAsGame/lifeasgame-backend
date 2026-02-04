@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AdminAchievementApiDraftSpecV1 {
 
-    @Operation(summary = "Achievement 단건 조회", description = "Achievement 단건을 조회합니다.")
-    ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> get(
-            @PathVariable Long achievementId
-    );
-
     @Operation(summary = "Achievement 수정", description = "Achievement를 수정합니다.")
     ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> update(
             @PathVariable Long achievementId,

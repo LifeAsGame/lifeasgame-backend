@@ -9,6 +9,7 @@ import online.lifeasgame.character.api.admin.response.AdminAchievementResponse;
 import online.lifeasgame.character.api.admin.response.AdminAchievementResponse.Info;
 import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,4 +28,10 @@ public interface AdminAchievementApiSpecV1 {
     ResponseEntity<ApiResponse<AdminAchievementResponse.Infos>> list(
             @RequestParam(name = "category", required = false) List<String> categories
     );
+
+    @Operation(summary = "Achievement 단건 조회", description = "Achievement 단건을 조회합니다.")
+    ResponseEntity<ApiResponse<AdminAchievementResponse.Info>> get(
+            @PathVariable Long achievementId
+    );
+
 }
