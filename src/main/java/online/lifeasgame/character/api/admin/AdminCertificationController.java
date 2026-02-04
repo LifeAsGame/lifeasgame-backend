@@ -62,4 +62,13 @@ public class AdminCertificationController implements AdminCertificationApiSpecV1
         CertificationResult.Info result = certificationService.update(certificationId, AdminCertificationWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Deleted>> delete(
+            @PathVariable Long certificationId
+    ) {
+        CertificationResult.Deleted result = certificationService.delete(certificationId);
+        return ApiResponses.deleted(AdminCertificationWebMapper.toDeleted(result.certificationId()));
+    }
 }

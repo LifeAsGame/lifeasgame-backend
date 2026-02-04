@@ -50,4 +50,8 @@ public final class AdminCertificationWebMapper {
                 request.category()
         );
     }
+
+    public static AdminCertificationResponse.Deleted toDeleted(Long certificationId) {
+        return new AdminCertificationResponse.Deleted(certificationId);
+    }
 }

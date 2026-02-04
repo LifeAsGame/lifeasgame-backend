@@ -48,6 +48,7 @@ public class CertificationService {
         return CertificationResult.Info.from(certification);
     }
 
+    @Transactional
     public CertificationResult.Info update(Long certificationId, CertificationCommand.Update command) {
         CertificationCategory category = CertificationCategory.parse(command.category());
 
@@ -59,5 +60,11 @@ public class CertificationService {
         );
 
         return CertificationResult.Info.from(certification);
+    }
+
+    @Transactional
+    public CertificationResult.Deleted delete(Long certificationId) {
+        certificationWriter.delete(certificationId);
+        return new CertificationResult.Deleted(certificationId);
     }
 }
