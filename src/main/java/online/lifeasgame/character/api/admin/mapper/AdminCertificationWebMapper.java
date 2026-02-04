@@ -42,4 +42,12 @@ public final class AdminCertificationWebMapper {
                         .toList()
         );
     }
+
+    public static CertificationCommand.Update toUpdateCommand(AdminCertificationRequest.Update request) {
+        return new CertificationCommand.Update(
+                request.name(),
+                request.issuer(),
+                request.category()
+        );
+    }
 }

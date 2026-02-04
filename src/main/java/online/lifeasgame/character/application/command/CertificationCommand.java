@@ -12,4 +12,11 @@ public final class CertificationCommand {
             String category
     ) {
     }
+
+    public record Update(
+            String name,
+            String issuer,
+            String category
+    ) {
+    }
 }

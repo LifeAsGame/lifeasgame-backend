@@ -47,4 +47,17 @@ public class CertificationService {
         Certification certification = certificationReader.getByIdOrThrow(certificationId);
         return CertificationResult.Info.from(certification);
     }
+
+    public CertificationResult.Info update(Long certificationId, CertificationCommand.Update command) {
+        CertificationCategory category = CertificationCategory.parse(command.category());
+
+        Certification certification = certificationReader.getByIdOrThrow(certificationId);
+        certification.update(
+                command.name(),
+                command.issuer(),
+                category
+        );
+
+        return CertificationResult.Info.from(certification);
+    }
 }

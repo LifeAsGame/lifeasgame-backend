@@ -52,4 +52,14 @@ public class AdminCertificationController implements AdminCertificationApiSpecV1
         CertificationResult.Info result = certificationService.getCertification(certificationId);
         return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
     }
+
+    @Override
+    @PatchMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> update(
+            @PathVariable Long certificationId,
+            @Valid @RequestBody AdminCertificationRequest.Update request
+    ) {
+        CertificationResult.Info result = certificationService.update(certificationId, AdminCertificationWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
+    }
 }

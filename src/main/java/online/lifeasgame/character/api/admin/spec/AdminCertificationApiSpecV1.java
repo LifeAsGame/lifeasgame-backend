@@ -30,4 +30,11 @@ public interface AdminCertificationApiSpecV1 {
     ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
             @PathVariable Long certificationId
     );
+
+    @Operation(summary = "Certification 수정", description = "Certification을 수정합니다.")
+    ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> update(
+            @PathVariable Long certificationId,
+            @Valid @RequestBody AdminCertificationRequest.Update request
+    );
+
 }
