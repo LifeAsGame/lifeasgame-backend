@@ -62,4 +62,13 @@ public class AdminHobbyController implements AdminHobbyApiSpecV1 {
         HobbyResult.Info result = hobbyService.update(hobbyId, AdminHobbyWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(AdminHobbyWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Deleted>> delete(
+            @PathVariable Long hobbyId
+    ) {
+        HobbyResult.Deleted result = hobbyService.delete(hobbyId);
+        return ApiResponses.deleted(AdminHobbyWebMapper.toDeleted(result));
+    }
 }

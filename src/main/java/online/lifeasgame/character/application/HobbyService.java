@@ -50,4 +50,10 @@ public class HobbyService {
 
         return HobbyResult.Info.from(hobby);
     }
+
+    @Transactional
+    public HobbyResult.Deleted delete(Long hobbyId) {
+        hobbyWriter.delete(hobbyId);
+        return new HobbyResult.Deleted(hobbyId);
+    }
 }

@@ -36,4 +36,9 @@ public interface AdminHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody AdminHobbyRequest.Update request
     );
+
+    @Operation(summary = "Hobby 삭제", description = "Hobby를 삭제합니다.")
+    ResponseEntity<ApiResponse<AdminHobbyResponse.Deleted>> delete(
+            @PathVariable Long hobbyId
+    );
 }

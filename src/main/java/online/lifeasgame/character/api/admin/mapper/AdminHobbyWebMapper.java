@@ -46,4 +46,8 @@ public final class AdminHobbyWebMapper {
                 request.category()
         );
     }
+
+    public static AdminHobbyResponse.Deleted toDeleted(HobbyResult.Deleted result) {
+        return new AdminHobbyResponse.Deleted(result.hobbyId());
+    }
 }
