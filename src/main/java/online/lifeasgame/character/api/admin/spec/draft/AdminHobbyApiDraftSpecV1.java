@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AdminHobbyApiDraftSpecV1 {
 
-    @Operation(summary = "Hobby 단건 조회", description = "Hobby 단건을 조회합니다.")
-    ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> get(
-            @PathVariable Long hobbyId
-    );
-
     @Operation(summary = "Hobby 수정", description = "Hobby를 수정합니다.")
     ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> update(
             @PathVariable Long hobbyId,

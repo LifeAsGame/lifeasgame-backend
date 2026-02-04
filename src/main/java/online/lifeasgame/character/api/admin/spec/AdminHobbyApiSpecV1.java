@@ -7,6 +7,7 @@ import online.lifeasgame.character.api.admin.request.AdminHobbyRequest;
 import online.lifeasgame.character.api.admin.response.AdminHobbyResponse;
 import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -24,4 +25,10 @@ public interface AdminHobbyApiSpecV1 {
     ResponseEntity<ApiResponse<AdminHobbyResponse.Infos>> list(
             @RequestParam(name = "category", required = false) List<String> categories
     );
+
+    @Operation(summary = "Hobby 단건 조회", description = "Hobby 단건을 조회합니다.")
+    ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> get(
+            @PathVariable Long hobbyId
+    );
+
 }
