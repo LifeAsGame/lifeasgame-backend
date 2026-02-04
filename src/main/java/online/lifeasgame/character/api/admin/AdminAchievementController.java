@@ -11,12 +11,10 @@ import online.lifeasgame.character.application.result.AchievementResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +34,14 @@ public class AdminAchievementController implements AdminAchievementApiSpecV1 {
                 URI.create("/admin/v1/achievements/" + result.code()),
                 AdminAchievementWebMapper.toInfo(result)
         );
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminAchievementResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    ) {
+        List<AchievementResult.Info> results = achievementService.getAchievements(categories);
+        return ApiResponses.ok(AdminAchievementWebMapper.toInfos(results));
     }
 }

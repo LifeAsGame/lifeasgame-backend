@@ -5,6 +5,8 @@ import online.lifeasgame.character.api.admin.response.AdminAchievementResponse;
 import online.lifeasgame.character.application.command.AchievementCommand;
 import online.lifeasgame.character.application.result.AchievementResult;
 
+import java.util.List;
+
 public final class AdminAchievementWebMapper {
 
     private AdminAchievementWebMapper() {}
@@ -25,6 +27,23 @@ public final class AdminAchievementWebMapper {
                 result.name(),
                 result.category(),
                 result.descMd()
+        );
+    }
+
+    public static AdminAchievementResponse.Infos toInfos(List<AchievementResult.Info> results) {
+        return new AdminAchievementResponse.Infos(
+                results.stream()
+                        .map(
+                                result ->
+                                        new AdminAchievementResponse.Info(
+                                                result.achievementId(),
+                                                result.code(),
+                                                result.name(),
+                                                result.category(),
+                                                result.descMd()
+                                        )
+                        )
+                        .toList()
         );
     }
 }
