@@ -31,10 +31,11 @@ public class HobbyService {
                 )
         );
 
-        return new HobbyResult.Info(
-                hobby.getId(),
-                hobby.getName(),
-                hobby.getCategory().name()
-        );
+        return HobbyResult.Info.from(hobby);
+    }
+
+    public HobbyResult.Info getHobby(Long hobbyId) {
+        Hobby hobby = hobbyReader.getByIdOrThrow(hobbyId);
+        return HobbyResult.Info.from(hobby);
     }
 }
