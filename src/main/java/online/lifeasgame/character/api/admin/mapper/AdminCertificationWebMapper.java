@@ -5,6 +5,8 @@ import online.lifeasgame.character.api.admin.response.AdminCertificationResponse
 import online.lifeasgame.character.application.command.CertificationCommand;
 import online.lifeasgame.character.application.result.CertificationResult;
 
+import java.util.List;
+
 public final class AdminCertificationWebMapper {
 
     private AdminCertificationWebMapper() {}
@@ -23,6 +25,21 @@ public final class AdminCertificationWebMapper {
                 result.name(),
                 result.issuer(),
                 result.category()
+        );
+    }
+
+    public static AdminCertificationResponse.Infos toInfos(List<CertificationResult.Info> results) {
+        return new AdminCertificationResponse.Infos(
+                results.stream()
+                        .map(
+                                result -> new AdminCertificationResponse.Info(
+                                        result.certificationId(),
+                                        result.name(),
+                                        result.issuer(),
+                                        result.category()
+                                )
+                        )
+                        .toList()
         );
     }
 }

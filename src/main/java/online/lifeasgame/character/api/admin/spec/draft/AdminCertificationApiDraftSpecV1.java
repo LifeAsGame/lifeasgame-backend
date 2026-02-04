@@ -8,17 +8,8 @@ import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 public interface AdminCertificationApiDraftSpecV1 {
-
-    @Operation(summary = "Certification 목록 조회", description = "Certification 목록을 조회합니다. category/issuer 필터 가능")
-    ResponseEntity<ApiResponse<AdminCertificationResponse.Infos>> list(
-            @RequestParam(name = "category", required = false) List<String> categories,
-            @RequestParam(name = "issuer", required = false) String issuer
-    );
 
     @Operation(summary = "Certification 단건 조회", description = "Certification 단건을 조회합니다.")
     ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
