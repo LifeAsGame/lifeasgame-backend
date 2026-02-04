@@ -35,4 +35,9 @@ public class TitleService {
 
         return TitleResult.Info.from(title);
     }
+
+    public TitleResult.Info getTitle(Long titleId) {
+        Title title = titleReader.getByIdOrThrow(titleId);
+        return TitleResult.Info.from(title);
+    }
 }

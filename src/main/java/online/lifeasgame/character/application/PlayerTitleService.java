@@ -29,7 +29,7 @@ public class PlayerTitleService {
 
     @Transactional
     public PlayerTitleResult.Created createTitle(Long playerId, Long titleId) {
-        Title title = titleReader.getById(titleId);
+        Title title = titleReader.getByIdOrThrow(titleId);
 
         PlayerTitle playerTitle = playerTitleWriter.create(
                 PlayerTitle.create(playerId, titleId)

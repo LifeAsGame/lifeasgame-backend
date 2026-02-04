@@ -9,10 +9,7 @@ import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,5 +27,14 @@ public class TitleController implements TitleApiSpecV1 {
     ) {
         List<TitleResult.Info> results = titleService.getTitles(categories);
         return ApiResponses.ok(TitleWebMapper.toTitleInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<TitleResponse.Info>> titleInfo(
+            @PathVariable Long titleId
+    ) {
+        TitleResult.Info result = titleService.getTitle(titleId);
+        return ApiResponses.ok(TitleWebMapper.toTitleInfo(result));
     }
 }
