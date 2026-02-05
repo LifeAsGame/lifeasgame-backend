@@ -178,4 +178,8 @@ public final class PlayerResult {
         public record Item(Long playerId, Long userId, String name) {
         }
     }
+
+    public record Renamed(Long playerId, String name) {
+
+    }
 }

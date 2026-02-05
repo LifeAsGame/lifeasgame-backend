@@ -145,4 +145,14 @@ public final class AdminPlayerWebMapper {
                 .toList()
         );
     }
+
+    public static PlayerCommand.Renamed toRenameCommand(AdminPlayerRequest.Rename request) {
+        return new PlayerCommand.Renamed(
+                request.name()
+        );
+    }
+
+    public static AdminPlayerResponse.Renamed toRenamed(PlayerResult.Renamed result) {
+        return new AdminPlayerResponse.Renamed(result.playerId(), result.name());
+    }
 }

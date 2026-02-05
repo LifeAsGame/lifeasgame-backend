@@ -48,4 +48,7 @@ public final class PlayerCommand {
             List<String> codes
     ) {
     }
+
+    public record Renamed(String name) {
+    }
 }

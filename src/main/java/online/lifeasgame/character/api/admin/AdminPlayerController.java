@@ -98,6 +98,16 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
     }
 
     @Override
+    @PatchMapping("/{playerId}/rename")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.Renamed>> rename(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.Rename request
+    ) {
+        PlayerResult.Renamed result = playerService.rename(playerId, AdminPlayerWebMapper.toRenameCommand(request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toRenamed(result));
+    }
+
+    @Override
     @PatchMapping("/{playerId}/titles/{titleId}")
     public ResponseEntity<ApiResponse<AdminPlayerResponse.UpdatedTitle>> updateTitle(
             @PathVariable Long playerId,

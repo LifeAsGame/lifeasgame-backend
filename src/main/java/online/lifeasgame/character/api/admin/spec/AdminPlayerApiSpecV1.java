@@ -56,6 +56,12 @@ public interface AdminPlayerApiSpecV1 {
             @Valid @RequestBody AdminPlayerRequest.GrantStatusEffects request
     );
 
+    @Operation(summary = "Player 이름 변경", description = "Player 이름을 변경합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.Renamed>> rename(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.Rename request
+    );
+
     @Operation(summary = "Player 대표 Title 변경", description = "Player 대표 Title을 변경합니다")
     ResponseEntity<ApiResponse<AdminPlayerResponse.UpdatedTitle>> updateTitle(
             @PathVariable Long playerId,
