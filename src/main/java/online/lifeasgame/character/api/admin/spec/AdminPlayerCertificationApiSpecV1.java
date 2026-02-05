@@ -19,4 +19,10 @@ public interface AdminPlayerCertificationApiSpecV1 {
             @PathVariable Long certificationId,
             @Valid @RequestBody AdminPlayerCertificationRequest.Create request
     );
+
+    @Operation(summary = "Player Certification 회수", description = "Player의 Certification을 회수합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Revoked>> revokeCertification(
+            @PathVariable Long playerId,
+            @PathVariable Long certificationId
+    );
 }

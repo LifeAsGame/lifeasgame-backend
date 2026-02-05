@@ -71,4 +71,6 @@ public final class PlayerCertificationResult {
             );
         }
     }
+
+    public record Revoked(Long playerId, Long certificationId) {}
 }
