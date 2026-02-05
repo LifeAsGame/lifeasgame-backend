@@ -9,6 +9,7 @@ import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Admin API V1")
 public interface AdminPlayerApiSpecV1 {
@@ -64,5 +65,10 @@ public interface AdminPlayerApiSpecV1 {
     @Operation(summary = "Player 단건 조회", description = "관리용 Player 상세를 조회합니다.")
     ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
             @PathVariable Long playerId
+    );
+
+    @Operation(summary = "Player 조회", description = "userId로 Player를 검색합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.Players>> getPlayersOfUser(
+            @RequestParam(required = false) Long userId
     );
 }

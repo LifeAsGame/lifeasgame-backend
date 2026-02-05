@@ -7,11 +7,8 @@ public final class AdminPlayerResponse {
     private AdminPlayerResponse() {
     }
 
-    public record Players(List<Item> players, PageInfo page) {
-        public record Item(Long playerId, Long userId, String name, int level, long totalExp) {
-        }
-
-        public record PageInfo(int page, int size, long totalElements) {
+    public record Players(List<Item> players) {
+        public record Item(Long playerId, Long userId, String name) {
         }
     }
 

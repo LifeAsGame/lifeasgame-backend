@@ -159,4 +159,23 @@ public final class PlayerResult {
         public record Item(String code, String category) {
         }
     }
+
+    public record Players(List<Item> players) {
+        public static Players fromList(List<Player> players) {
+            return new Players(
+                    players.stream()
+                            .map(
+                                    player -> new Item(
+                                            player.getId(),
+                                            player.getUserId(),
+                                            player.getName().value()
+                                    )
+                            )
+                            .toList()
+            );
+        }
+
+        public record Item(Long playerId, Long userId, String name) {
+        }
+    }
 }

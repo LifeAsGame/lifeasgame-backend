@@ -9,6 +9,8 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
@@ -119,5 +121,10 @@ public class PlayerService {
         );
 
         return PlayerResult.StatusEffectsGranted.from(player.getId(), player.getStatusEffects());
+    }
+
+    public PlayerResult.Players getPlayersOfUser(Long userId) {
+        List<Player> players = playerReader.getByUserIdOrThrow(userId);
+        return PlayerResult.Players.fromList(players);
     }
 }

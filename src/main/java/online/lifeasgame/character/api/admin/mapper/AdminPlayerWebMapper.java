@@ -131,4 +131,18 @@ public final class AdminPlayerWebMapper {
                 result.representativeTitleId()
         );
     }
+
+    public static AdminPlayerResponse.Players toPlayers(PlayerResult.Players results) {
+        return new AdminPlayerResponse.Players(
+                results.players().stream()
+                .map(
+                        result -> new AdminPlayerResponse.Players.Item(
+                                    result.playerId(),
+                                    result.userId(),
+                                    result.name()
+                        )
+                )
+                .toList()
+        );
+    }
 }
