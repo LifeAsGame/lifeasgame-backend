@@ -106,4 +106,13 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
         PlayerResult.UpdatedTitle result = playerService.changeRepresentativeTitle(playerId, titleId);
         return ApiResponses.ok(AdminPlayerWebMapper.toUpdatedTitle(result));
     }
+
+    @Override
+    @GetMapping("/{playerId}")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
+            @PathVariable Long playerId
+    ) {
+        PlayerResult.PlayerInfo result = playerService.getPlayerInfo(playerId);
+        return ApiResponses.ok(AdminPlayerWebMapper.toPlayerInfo(result));
+    }
 }

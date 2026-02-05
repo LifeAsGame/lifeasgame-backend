@@ -17,7 +17,6 @@ public final class AdminPlayerResponse {
 
     public record PlayerInfo(
             Long playerId,
-            Long userId,
             String name,
             String gender,
             String job,

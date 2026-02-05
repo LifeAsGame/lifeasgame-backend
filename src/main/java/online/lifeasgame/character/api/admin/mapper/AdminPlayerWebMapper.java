@@ -101,4 +101,34 @@ public final class AdminPlayerWebMapper {
     public static AdminPlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle updatedTitle) {
         return new AdminPlayerResponse.UpdatedTitle(updatedTitle.titleId());
     }
+
+    public static AdminPlayerResponse.PlayerInfo toPlayerInfo(PlayerResult.PlayerInfo result) {
+        return new AdminPlayerResponse.PlayerInfo(
+                result.playerId(),
+                result.name(),
+                result.gender(),
+                result.job(),
+                result.level(),
+                result.exp(),
+                result.currentHealth(),
+                result.healthCapacity(),
+                result.currentMana(),
+                result.manaCapacity(),
+                result.str(),
+                result.agi(),
+                result.dex(),
+                result.intel(),
+                result.vit(),
+                result.luc(),
+                result.effects().stream()
+                        .map(
+                                effect -> new AdminPlayerResponse.PlayerInfo.StatusEffect(
+                                        effect.code(),
+                                        effect.category()
+                                )
+                        )
+                        .toList(),
+                result.representativeTitleId()
+        );
+    }
 }

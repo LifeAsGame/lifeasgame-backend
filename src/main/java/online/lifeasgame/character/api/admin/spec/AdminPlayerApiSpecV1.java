@@ -60,4 +60,9 @@ public interface AdminPlayerApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     );
+
+    @Operation(summary = "Player 단건 조회", description = "관리용 Player 상세를 조회합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
+            @PathVariable Long playerId
+    );
 }

@@ -12,11 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 public interface AdminPlayerApiSpecV1 {
 
-    @Operation(summary = "Player 단건 조회", description = "관리용 Player 상세를 조회합니다.")
-    ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
-            @PathVariable Long playerId
-    );
-
     @Operation(summary = "Player 검색", description = "userId/이름으로 Player를 검색합니다.")
     ResponseEntity<ApiResponse<AdminPlayerResponse.Players>> search(
             @RequestParam(required = false) Long userId,

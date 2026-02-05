@@ -41,8 +41,8 @@ public final class PlayerWebMapper {
                         .map(
                                 effect ->
                                         new PlayerResponse.Info.StatusEffects(
-                                                effect.name(),
-                                                effect.category().name()
+                                                effect.code(),
+                                                effect.category()
                                         )
                         )
                         .toList(),
