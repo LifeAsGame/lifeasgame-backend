@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerCollectionWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerCollectionResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerCollectionSpecV1;
 import online.lifeasgame.lifelog.application.CollectionLogFacade;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,5 +65,14 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     ) {
         CollectionResult.Info result = collectionLogFacade.update(collectionId, PlayerCollectionWebMapper.toUpdateCommand(request));
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{collectionId}")
+    public ResponseEntity<ApiResponse<PlayerCollectionResponse.Info>> get(
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Info result = collectionLogFacade.getCollection(collectionId);
+        return ApiResponses.ok(PlayerCollectionWebMapper.toInfo(result));
     }
 }

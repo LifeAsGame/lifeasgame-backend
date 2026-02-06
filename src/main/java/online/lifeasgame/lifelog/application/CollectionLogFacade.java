@@ -34,4 +34,9 @@ public class CollectionLogFacade {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return collectionLogService.search(playerId, command);
     }
+
+    public CollectionResult.Info getCollection(Long collectionId) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return collectionLogService.getCollection(playerId, collectionId);
+    }
 }

@@ -83,4 +83,9 @@ public class CollectionLogService {
                 .map(CollectionResult.Info::from)
                 .toList();
     }
+
+    public CollectionResult.Info getCollection(Long playerId, Long collectionId) {
+        CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
+        return CollectionResult.Info.from(collectionLog);
+    }
 }

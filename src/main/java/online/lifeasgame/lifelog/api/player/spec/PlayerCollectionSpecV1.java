@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerCollectionResponse;
 import org.springframework.http.ResponseEntity;
@@ -39,5 +40,10 @@ public interface PlayerCollectionSpecV1 {
     ResponseEntity<PlayerCollectionResponse.Info> update(
             @PathVariable Long collectionId,
             @Valid @RequestBody PlayerCollectionRequest.Update request
+    );
+
+    @Operation(summary = "단건 조회")
+    ResponseEntity<ApiResponse<PlayerCollectionResponse.Info>> get(
+            @PathVariable Long collectionId
     );
 }
