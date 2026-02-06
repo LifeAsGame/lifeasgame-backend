@@ -46,4 +46,9 @@ public interface PlayerCollectionSpecV1 {
     ResponseEntity<ApiResponse<PlayerCollectionResponse.Info>> get(
             @PathVariable Long collectionId
     );
+
+    @Operation(summary = "컬렉션 삭제")
+    ResponseEntity<ApiResponse<PlayerCollectionResponse.Deleted>> delete(
+            @PathVariable Long collectionId
+    );
 }

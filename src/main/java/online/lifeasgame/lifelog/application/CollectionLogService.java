@@ -88,4 +88,9 @@ public class CollectionLogService {
         CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
         return CollectionResult.Info.from(collectionLog);
     }
+
+    public CollectionResult.Deleted delete(Long playerId, Long collectionId) {
+        collectionLogWriter.delete(playerId, collectionId);
+        return new CollectionResult.Deleted(playerId, collectionId);
+    }
 }

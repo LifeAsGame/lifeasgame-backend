@@ -75,4 +75,13 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
         CollectionResult.Info result = collectionLogFacade.getCollection(collectionId);
         return ApiResponses.ok(PlayerCollectionWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{collectionId}")
+    public ResponseEntity<ApiResponse<PlayerCollectionResponse.Deleted>> delete(
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Deleted result = collectionLogFacade.delete(collectionId);
+        return ApiResponses.deleted(PlayerCollectionWebMapper.toDeleted(result));
+    }
 }

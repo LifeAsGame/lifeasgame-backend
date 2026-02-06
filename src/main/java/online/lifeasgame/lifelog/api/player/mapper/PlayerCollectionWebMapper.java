@@ -60,4 +60,10 @@ public final class PlayerCollectionWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static PlayerCollectionResponse.Deleted toDeleted(CollectionResult.Deleted result) {
+        return new PlayerCollectionResponse.Deleted(
+                result.collectionId()
+        );
+    }
 }

@@ -17,4 +17,8 @@ public class CollectionLogWriter {
     public CollectionLog create(CollectionLog collectionLog) {
         return repository.save(collectionLog);
     }
+
+    public void delete(Long playerId, Long collectionId) {
+        repository.deleteByIdAndPlayerId(collectionId, playerId);
+    }
 }

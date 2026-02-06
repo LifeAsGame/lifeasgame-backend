@@ -58,4 +58,9 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository {
         List<Long> ids = idPage.getContent();
         return jpa.findAllWithTagsByIdIn(ids);
     }
+
+    @Override
+    public void deleteByIdAndPlayerId(Long collectionId, Long playerId) {
+        jpa.deleteByIdAndPlayerId(collectionId, playerId);
+    }
 }
