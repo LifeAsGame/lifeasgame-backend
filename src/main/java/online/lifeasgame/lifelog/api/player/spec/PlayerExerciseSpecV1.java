@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.spec;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerExerciseResponse;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -40,5 +41,10 @@ public interface PlayerExerciseSpecV1 {
     ResponseEntity<PlayerExerciseResponse.Info> update(
             @PathVariable Long exerciseId,
             @Valid @RequestBody PlayerExerciseRequest.Update request
+    );
+
+    @Operation(summary = "단건 조회")
+    ResponseEntity<ApiResponse<PlayerExerciseResponse.Info>> get(
+            @PathVariable Long exerciseId
     );
 }

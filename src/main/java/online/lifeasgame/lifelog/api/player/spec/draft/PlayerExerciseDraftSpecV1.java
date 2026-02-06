@@ -8,11 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 public interface PlayerExerciseDraftSpecV1 {
 
-    @Operation(summary = "단건 조회")
-    ResponseEntity<ApiResponse<PlayerExerciseResponse.Info>> get(
-            @PathVariable Long exerciseId
-    );
-
     @Operation(summary = "운동 삭제")
     ResponseEntity<ApiResponse<PlayerExerciseResponse.Deleted>> delete(
             @PathVariable Long exerciseId

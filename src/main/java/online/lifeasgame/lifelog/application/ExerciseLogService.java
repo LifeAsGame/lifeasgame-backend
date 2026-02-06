@@ -84,4 +84,9 @@ public class ExerciseLogService {
                 .map(ExerciseResult.Info::from)
                 .toList();
     }
+
+    public ExerciseResult.Info getExercise(Long playerId, Long exerciseId) {
+        ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
+        return ExerciseResult.Info.from(exerciseLog);
+    }
 }

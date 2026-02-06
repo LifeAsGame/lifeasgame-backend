@@ -2,12 +2,14 @@ package online.lifeasgame.lifelog.api.player;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerExerciseWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerExerciseResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerExerciseSpecV1;
 import online.lifeasgame.lifelog.application.ExerciseLogFacade;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,5 +62,14 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
     ) {
         ExerciseResult.Info result = exerciseLogFacade.update(exerciseId, PlayerExerciseWebMapper.toUpdateCommand(request));
         return ResponseEntity.ok(PlayerExerciseWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{exerciseId}")
+    public ResponseEntity<ApiResponse<PlayerExerciseResponse.Info>> get(
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Info result = exerciseLogFacade.getExercise(exerciseId);
+        return ApiResponses.ok(PlayerExerciseWebMapper.toInfo(result));
     }
 }
