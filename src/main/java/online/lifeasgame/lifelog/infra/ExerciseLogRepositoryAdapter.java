@@ -57,4 +57,9 @@ public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository {
         );
         return pr.getContent();
     }
+
+    @Override
+    public void deleteByIdAndPlayerId(Long exerciseId, Long playerId) {
+        jpa.deleteByIdAndPlayerId(exerciseId, playerId);
+    }
 }

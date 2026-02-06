@@ -89,4 +89,10 @@ public class ExerciseLogService {
         ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
         return ExerciseResult.Info.from(exerciseLog);
     }
+
+    @Transactional
+    public ExerciseResult.Deleted delete(Long playerId, Long exerciseId) {
+        exerciseLogWriter.delete(playerId, exerciseId);
+        return new ExerciseResult.Deleted(exerciseId);
+    }
 }

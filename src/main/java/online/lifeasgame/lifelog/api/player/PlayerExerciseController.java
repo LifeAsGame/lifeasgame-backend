@@ -72,4 +72,13 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
         ExerciseResult.Info result = exerciseLogFacade.getExercise(exerciseId);
         return ApiResponses.ok(PlayerExerciseWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{exerciseId}")
+    public ResponseEntity<ApiResponse<PlayerExerciseResponse.Deleted>> delete(
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Deleted result = exerciseLogFacade.delete(exerciseId);
+        return ApiResponses.deleted(PlayerExerciseWebMapper.toDeleted(result));
+    }
 }

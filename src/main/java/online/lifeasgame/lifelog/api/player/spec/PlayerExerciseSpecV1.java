@@ -47,4 +47,9 @@ public interface PlayerExerciseSpecV1 {
     ResponseEntity<ApiResponse<PlayerExerciseResponse.Info>> get(
             @PathVariable Long exerciseId
     );
+
+    @Operation(summary = "운동 삭제")
+    ResponseEntity<ApiResponse<PlayerExerciseResponse.Deleted>> delete(
+            @PathVariable Long exerciseId
+    );
 }

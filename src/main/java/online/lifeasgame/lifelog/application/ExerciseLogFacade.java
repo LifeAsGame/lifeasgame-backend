@@ -43,4 +43,9 @@ public class ExerciseLogFacade {
         Long playerId = getPlayer();
         return exerciseLogService.getExercise(playerId, exerciseId);
     }
+
+    public ExerciseResult.Deleted delete(Long exerciseId) {
+        Long playerId = getPlayer();
+        return exerciseLogService.delete(playerId, exerciseId);
+    }
 }

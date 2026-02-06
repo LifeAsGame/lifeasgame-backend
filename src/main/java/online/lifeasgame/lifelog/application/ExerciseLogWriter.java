@@ -18,4 +18,8 @@ public class ExerciseLogWriter {
     public ExerciseLog create(ExerciseLog exerciseLog) {
         return repository.save(exerciseLog);
     }
+
+    public void delete(Long playerId, Long exerciseId) {
+        repository.deleteByIdAndPlayerId(exerciseId, playerId);
+    }
 }
