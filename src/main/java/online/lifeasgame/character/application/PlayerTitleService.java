@@ -37,4 +37,9 @@ public class PlayerTitleService {
 
         return PlayerTitleResult.Created.from(playerTitle, title);
     }
+
+    public PlayerTitleResult.Revoked revokeTitle(Long playerId, Long titleId) {
+        playerTitleWriter.revoke(playerId, titleId);
+        return new PlayerTitleResult.Revoked(playerId, titleId);
+    }
 }

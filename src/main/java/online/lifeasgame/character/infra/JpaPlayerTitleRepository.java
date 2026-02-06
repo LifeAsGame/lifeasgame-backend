@@ -25,4 +25,6 @@ public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Lon
     List<PlayerTitleView> findPlayerTitleViews(@Param("playerId") Long playerId);
 
     boolean existsByPlayerIdAndTitleId(Long playerId, Long titleId);
+
+    void deleteByPlayerIdAndTitleId(Long playerId, Long titleId);
 }

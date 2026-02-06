@@ -17,4 +17,11 @@ public final class AdminPlayerTitleWebMapper {
                 result.acquiredAt()
         );
     }
+
+    public static AdminPlayerTitleResponse.Revoked toRevoked(PlayerTitleResult.Revoked result) {
+        return new AdminPlayerTitleResponse.Revoked(
+                result.playerId(),
+                result.titleId()
+        );
+    }
 }

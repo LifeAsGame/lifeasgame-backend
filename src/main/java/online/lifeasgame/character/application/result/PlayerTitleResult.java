@@ -50,4 +50,7 @@ public final class PlayerTitleResult {
             );
         }
     }
+
+    public record Revoked(Long playerId, Long titleId) {
+    }
 }

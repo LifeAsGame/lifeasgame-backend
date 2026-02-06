@@ -15,4 +15,10 @@ public interface AdminPlayerTitleApiSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long titleId
     );
+
+    @Operation(summary = "Player Title 회수", description = "Player의 Title을 회수합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Revoked>> revokeTitle(
+            @PathVariable Long playerId,
+            @PathVariable Long titleId
+    );
 }
