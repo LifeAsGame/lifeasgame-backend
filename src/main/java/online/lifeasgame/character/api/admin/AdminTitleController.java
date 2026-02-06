@@ -39,4 +39,13 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
         List<TitleResult.Info> results = titleService.getTitles(categories);
         return ApiResponses.ok(AdminTitleWebMapper.toInfos(results));
     }
+
+    @Override
+    @GetMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> get(
+            @PathVariable Long titleId
+    ) {
+        TitleResult.Info result = titleService.getTitle(titleId);
+        return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
 }

@@ -8,6 +8,7 @@ import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
 import online.lifeasgame.character.api.admin.response.AdminTitleResponse.Info;
 import online.lifeasgame.core.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -26,4 +27,8 @@ public interface AdminTitleApiSpecV1 {
             @RequestParam(name = "category", required = false) List<String> categories
     );
 
+    @Operation(summary = "Title 단건 조회", description = "Title 단건을 조회합니다.")
+    ResponseEntity<ApiResponse<AdminTitleResponse.Info>> get(
+            @PathVariable Long titleId
+    );
 }

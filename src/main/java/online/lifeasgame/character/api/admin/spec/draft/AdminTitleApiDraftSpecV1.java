@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AdminTitleApiDraftSpecV1 {
 
-    @Operation(summary = "Title 단건 조회", description = "Title 단건을 조회합니다.")
-    ResponseEntity<ApiResponse<AdminTitleResponse.Info>> get(
-            @PathVariable Long titleId
-    );
-
     @Operation(summary = "Title 수정", description = "Title을 수정합니다.")
     ResponseEntity<ApiResponse<AdminTitleResponse.Info>> update(
             @PathVariable Long titleId,
