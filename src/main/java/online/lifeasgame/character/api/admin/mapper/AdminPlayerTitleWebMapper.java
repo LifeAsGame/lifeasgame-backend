@@ -1,5 +1,6 @@
 package online.lifeasgame.character.api.admin.mapper;
 
+import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
 import online.lifeasgame.character.application.result.PlayerTitleResult;
 
@@ -22,6 +23,15 @@ public final class AdminPlayerTitleWebMapper {
         return new AdminPlayerTitleResponse.Revoked(
                 result.playerId(),
                 result.titleId()
+        );
+    }
+
+    public static PlayerTitleResult.Update toUpdateCommand(AdminTitleRequest.Update request) {
+        return new PlayerTitleResult.Update(
+                request.code(),
+                request.name(),
+                request.category(),
+                request.descMd()
         );
     }
 }

@@ -2,6 +2,7 @@ package online.lifeasgame.character.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.api.admin.mapper.AdminPlayerTitleWebMapper;
 import online.lifeasgame.character.api.admin.mapper.AdminTitleWebMapper;
 import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
 import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
@@ -46,6 +47,16 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
             @PathVariable Long titleId
     ) {
         TitleResult.Info result = titleService.getTitle(titleId);
+        return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PatchMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> update(
+            @PathVariable Long titleId,
+            @Valid @RequestBody AdminTitleRequest.Update request
+    ) {
+        TitleResult.Info result = titleService.update(titleId, AdminPlayerTitleWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
     }
 }

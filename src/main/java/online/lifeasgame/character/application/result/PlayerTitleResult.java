@@ -53,4 +53,12 @@ public final class PlayerTitleResult {
 
     public record Revoked(Long playerId, Long titleId) {
     }
+
+    public record Update(
+            String code,
+            String name,
+            String category,
+            String descMd
+    ) {
+    }
 }

@@ -58,4 +58,16 @@ public class Title extends AbstractTime {
     ) {
         return new Title(code, name, titleCategory, descMd);
     }
+
+    public void update(
+            String code,
+            String name,
+            TitleCategory category,
+            String descMd
+    ) {
+        this.code = code;
+        this.name = name;
+        this.category = category;
+        this.descMd = descMd;
+    }
 }

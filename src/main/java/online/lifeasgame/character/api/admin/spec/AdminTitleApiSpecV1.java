@@ -31,4 +31,10 @@ public interface AdminTitleApiSpecV1 {
     ResponseEntity<ApiResponse<AdminTitleResponse.Info>> get(
             @PathVariable Long titleId
     );
+
+    @Operation(summary = "Title 수정", description = "Title을 수정합니다.")
+    ResponseEntity<ApiResponse<AdminTitleResponse.Info>> update(
+            @PathVariable Long titleId,
+            @Valid @RequestBody AdminTitleRequest.Update request
+    );
 }
