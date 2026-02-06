@@ -117,4 +117,10 @@ public class MediaLogService {
 
         return MediaLogResult.Info.from(mediaLog);
     }
+
+    @Transactional
+    public MediaLogResult.Deleted delete(Long playerId, Long mediaId) {
+        mediaLogWriter.delete(playerId, mediaId);
+        return new MediaLogResult.Deleted(mediaId);
+    }
 }

@@ -47,4 +47,7 @@ public final class MediaLogResult {
             );
         }
     }
+
+    public record Deleted(Long mediaId) {
+    }
 }

@@ -49,4 +49,8 @@ public interface PlayerMediaLogSpecV1 {
             @Valid @RequestBody PlayerMediaLogRequest.Update request
     );
 
+    @Operation(summary = "삭제(플레이어)")
+    ResponseEntity<ApiResponse<PlayerMediaLogResponse.Deleted>> delete(
+            @PathVariable Long mediaId
+    );
 }

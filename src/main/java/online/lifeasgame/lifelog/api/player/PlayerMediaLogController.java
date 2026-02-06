@@ -102,4 +102,13 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
         MediaLogResult.Info result= mediaLogFacade.update(mediaId, PlayerMediaLogWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{mediaId}")
+    public ResponseEntity<ApiResponse<PlayerMediaLogResponse.Deleted>> delete(
+            @PathVariable Long mediaId
+    ) {
+        MediaLogResult.Deleted result = mediaLogFacade.delete(mediaId);
+        return ApiResponses.deleted(PlayerMediaLogWebMapper.toDeleted(result));
+    }
 }

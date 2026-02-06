@@ -58,4 +58,9 @@ public class MediaLogFacade {
         Long playerId = getPlayer();
         return mediaLogService.update(playerId, mediaId, command);
     }
+
+    public MediaLogResult.Deleted delete(Long mediaId) {
+        Long playerId = getPlayer();
+        return mediaLogService.delete(playerId, mediaId);
+    }
 }

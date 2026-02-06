@@ -17,4 +17,8 @@ public class MediaLogWriter {
     public MediaLog create(MediaLog mediaLog) {
         return repository.save(mediaLog);
     }
+
+    public void delete(Long playerId, Long mediaId) {
+        repository.deleteByIdAndPlayerId(mediaId, playerId);
+    }
 }
