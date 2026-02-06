@@ -85,4 +85,8 @@ public final class PlayerMediaLogWebMapper {
                 request.tags()
         );
     }
+
+    public static PlayerMediaLogResponse.Deleted toDeleted(MediaLogResult.Deleted result) {
+        return new PlayerMediaLogResponse.Deleted(result.mediaId());
+    }
 }

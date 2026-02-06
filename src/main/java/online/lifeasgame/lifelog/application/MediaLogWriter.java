@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class MediaLogWriter {
+class MediaLogWriter {
 
     private final MediaLogRepository repository;
 

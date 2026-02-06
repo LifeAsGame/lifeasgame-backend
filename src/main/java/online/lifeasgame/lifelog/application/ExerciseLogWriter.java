@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class ExerciseLogWriter {
+class ExerciseLogWriter {
 
     private final ExerciseLogRepository repository;
 

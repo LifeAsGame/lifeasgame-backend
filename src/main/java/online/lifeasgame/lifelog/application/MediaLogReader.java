@@ -16,7 +16,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class MediaLogReader {
+class MediaLogReader {
 
     private final MediaLogRepository repository;
 
