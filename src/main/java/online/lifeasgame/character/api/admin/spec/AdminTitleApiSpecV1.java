@@ -37,4 +37,9 @@ public interface AdminTitleApiSpecV1 {
             @PathVariable Long titleId,
             @Valid @RequestBody AdminTitleRequest.Update request
     );
+
+    @Operation(summary = "Title 삭제", description = "Title을 삭제합니다.")
+    ResponseEntity<ApiResponse<AdminTitleResponse.Deleted>> delete(
+            @PathVariable Long titleId
+    );
 }

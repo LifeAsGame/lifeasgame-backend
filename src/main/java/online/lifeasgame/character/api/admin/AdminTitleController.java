@@ -59,4 +59,13 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
         TitleResult.Info result = titleService.update(titleId, AdminPlayerTitleWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Deleted>> delete(
+            @PathVariable Long titleId
+    ) {
+        TitleResult.Deleted result = titleService.delete(titleId);
+        return ApiResponses.deleted(AdminTitleWebMapper.toDelete(result));
+    }
 }

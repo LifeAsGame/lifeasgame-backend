@@ -56,4 +56,10 @@ public class TitleService {
 
         return TitleResult.Info.from(title);
     }
+
+    @Transactional
+    public TitleResult.Deleted delete(Long titleId) {
+        titleWriter.delete(titleId);
+        return new TitleResult.Deleted(titleId);
+    }
 }

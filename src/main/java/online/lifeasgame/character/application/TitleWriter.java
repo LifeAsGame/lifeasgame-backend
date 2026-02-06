@@ -17,4 +17,8 @@ class TitleWriter {
     public Title create(Title title) {
         return repository.save(title);
     }
+
+    public void delete(Long titleId) {
+        repository.deleteById(titleId);
+    }
 }

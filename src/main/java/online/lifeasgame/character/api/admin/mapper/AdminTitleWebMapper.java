@@ -45,4 +45,8 @@ public final class AdminTitleWebMapper {
                         .toList()
         );
     }
+
+    public static AdminTitleResponse.Deleted toDelete(TitleResult.Deleted result) {
+        return new AdminTitleResponse.Deleted(result.titleId());
+    }
 }

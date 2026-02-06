@@ -31,4 +31,7 @@ public final class TitleResult {
             return titles.stream().map(Info::from).collect(Collectors.toList());
         }
     }
+
+    public record Deleted(Long titleId) {
+    }
 }
