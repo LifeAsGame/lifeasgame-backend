@@ -19,4 +19,10 @@ public interface AdminPlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody AdminPlayerHobbyRequest.Grant request
     );
+
+    @Operation(summary = "Player Hobby 회수", description = "Player의 Hobby를 회수합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.Revoked>> revokeHobby(
+            @PathVariable Long playerId,
+            @PathVariable Long hobbyId
+    );
 }

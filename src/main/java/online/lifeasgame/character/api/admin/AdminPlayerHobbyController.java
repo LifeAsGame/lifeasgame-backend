@@ -34,4 +34,14 @@ public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
 
         return ApiResponses.ok(AdminPlayerHobbyWebMapper.toGranted(result));
     }
+
+    @Override
+    @DeleteMapping("/{playerId}/hobbies/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.Revoked>> revokeHobby(
+            @PathVariable Long playerId,
+            @PathVariable Long hobbyId
+    ) {
+        PlayerHobbyResult.Revoked result = playerHobbyService.revokeHobby(playerId, hobbyId);
+        return ApiResponses.ok(AdminPlayerHobbyWebMapper.toRevoked(result));
+    }
 }

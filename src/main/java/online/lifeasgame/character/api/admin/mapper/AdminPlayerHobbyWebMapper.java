@@ -37,4 +37,11 @@ public final class AdminPlayerHobbyWebMapper {
                 result.xp()
         );
     }
+
+    public static AdminPlayerHobbyResponse.Revoked toRevoked(PlayerHobbyResult.Revoked result) {
+        return new AdminPlayerHobbyResponse.Revoked(
+                result.playerId(),
+                result.hobbyId()
+        );
+    }
 }

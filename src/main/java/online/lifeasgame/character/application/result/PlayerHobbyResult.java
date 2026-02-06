@@ -89,4 +89,10 @@ public final class PlayerHobbyResult {
             );
         }
     }
+
+    public record Revoked(
+            Long playerId,
+            Long hobbyId
+    ) {
+    }
 }
