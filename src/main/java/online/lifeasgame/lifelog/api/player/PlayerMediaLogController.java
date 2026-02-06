@@ -2,12 +2,14 @@ package online.lifeasgame.lifelog.api.player;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerMediaLogWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerMediaLogRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerMediaLogResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerMediaLogSpecV1;
 import online.lifeasgame.lifelog.application.MediaLogFacade;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,5 +91,15 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
     public ResponseEntity<PlayerMediaLogResponse.Info> rewatch(@PathVariable Long mediaId) {
         MediaLogResult.Info result = mediaLogFacade.rewatch(mediaId);
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PatchMapping("/{mediaId}")
+    public ResponseEntity<ApiResponse<PlayerMediaLogResponse.Info>> update(
+            @PathVariable Long mediaId,
+            @Valid @RequestBody PlayerMediaLogRequest.Update request
+    ) {
+        MediaLogResult.Info result= mediaLogFacade.update(mediaId, PlayerMediaLogWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 }

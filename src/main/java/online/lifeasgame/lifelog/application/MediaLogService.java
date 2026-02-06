@@ -96,4 +96,25 @@ public class MediaLogService {
                 .map(MediaLogResult.Info::from)
                 .toList();
     }
+
+    @Transactional
+    public MediaLogResult.Info update(Long playerId, Long mediaId, MediaLogCommand.Update command) {
+        MediaCategory mediaCategory = MediaCategory.parse(command.category());
+        Title title = Title.of(command.title(), command.originalTitle());
+        EpisodeProgress episodeProgress = EpisodeProgress.of(command.currentEpisode(), command.totalEpisode());
+        WatchStatus watchStatus = WatchStatus.parse(command.status());
+        MediaTags tags = MediaTags.of(command.tags());
+
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+
+        mediaLog.update(
+                mediaCategory,
+                title,
+                episodeProgress,
+                watchStatus,
+                tags
+        );
+
+        return MediaLogResult.Info.from(mediaLog);
+    }
 }
