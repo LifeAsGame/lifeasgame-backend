@@ -5,6 +5,8 @@ import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
 import online.lifeasgame.character.application.command.TitleCommand;
 import online.lifeasgame.character.application.result.TitleResult;
 
+import java.util.List;
+
 public final class AdminTitleWebMapper {
 
     private AdminTitleWebMapper() {}
@@ -25,6 +27,22 @@ public final class AdminTitleWebMapper {
                 result.name(),
                 result.category(),
                 result.descMd()
+        );
+    }
+
+    public static AdminTitleResponse.Infos toInfos(List<TitleResult.Info> results) {
+        return new AdminTitleResponse.Infos(
+                results.stream()
+                        .map(
+                                result -> new AdminTitleResponse.Info(
+                                        result.titleId(),
+                                        result.code(),
+                                        result.name(),
+                                        result.category(),
+                                        result.descMd()
+                                )
+                        )
+                        .toList()
         );
     }
 }

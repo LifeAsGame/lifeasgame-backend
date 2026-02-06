@@ -11,10 +11,9 @@ import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,5 +29,14 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
     ) {
         TitleResult.Info result = titleService.create(AdminTitleWebMapper.toCreateCommand(request));
         return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    ) {
+        List<TitleResult.Info> results = titleService.getTitles(categories);
+        return ApiResponses.ok(AdminTitleWebMapper.toInfos(results));
     }
 }
