@@ -123,4 +123,9 @@ public class MediaLogService {
         mediaLogWriter.delete(playerId, mediaId);
         return new MediaLogResult.Deleted(mediaId);
     }
+
+    public MediaLogResult.Info getMedia(Long playerId, Long mediaId) {
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+        return MediaLogResult.Info.from(mediaLog);
+    }
 }

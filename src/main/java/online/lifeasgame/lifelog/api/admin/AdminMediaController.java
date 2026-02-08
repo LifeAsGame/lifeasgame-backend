@@ -2,12 +2,14 @@ package online.lifeasgame.lifelog.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminMediaWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminMediaRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminMediaResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminMediaSpecV1;
 import online.lifeasgame.lifelog.application.MediaLogService;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -104,5 +106,15 @@ public class AdminMediaController implements AdminMediaSpecV1 {
     ) {
         MediaLogResult.Info result = mediaLogService.rewatch(playerId, mediaId);
         return ResponseEntity.ok(AdminMediaWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/media/{mediaId}")
+    public ResponseEntity<ApiResponse<AdminMediaResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long mediaId
+    ) {
+        MediaLogResult.Info result = mediaLogService.getMedia(playerId, mediaId);
+        return ApiResponses.ok(AdminMediaWebMapper.toInfo(result));
     }
 }
