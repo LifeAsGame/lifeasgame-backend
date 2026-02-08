@@ -8,13 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 public interface AdminCollectionDraftSpecV1 {
 
-    @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
-    ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> get(
-            @PathVariable Long playerId,
-            @PathVariable Long collectionId
-    );
-
-
     @Operation(summary = "컬렉션 삭제(관리자, 플레이어 스코프)")
     ResponseEntity<ApiResponse<AdminCollectionResponse.Deleted>> delete(
             @PathVariable Long playerId,

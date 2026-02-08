@@ -45,4 +45,10 @@ public interface AdminCollectionSpecV1 {
             @PathVariable Long collectionId,
             @Valid @RequestBody AdminCollectionRequest.Update request
     );
+
+    @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    );
 }

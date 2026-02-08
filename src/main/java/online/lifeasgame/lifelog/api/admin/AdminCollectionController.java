@@ -80,4 +80,14 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
 
         return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
     }
+
+    @Override
+    @GetMapping("/{playerId}/collections/{collectionId}")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Info result = collectionLogService.getCollection(playerId, collectionId);
+        return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
+    }
 }
