@@ -117,4 +117,14 @@ public class AdminMediaController implements AdminMediaSpecV1 {
         MediaLogResult.Info result = mediaLogService.getMedia(playerId, mediaId);
         return ApiResponses.ok(AdminMediaWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{playerId}/media/{mediaId}")
+    public ResponseEntity<ApiResponse<AdminMediaResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long mediaId
+    ) {
+        MediaLogResult.Deleted result = mediaLogService.delete(playerId, mediaId);
+        return ApiResponses.deleted(AdminMediaWebMapper.toDeleted(result.mediaId()));
+    }
 }

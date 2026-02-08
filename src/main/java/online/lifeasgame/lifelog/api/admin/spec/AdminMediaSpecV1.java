@@ -48,4 +48,10 @@ public interface AdminMediaSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long mediaId
     );
+
+    @Operation(summary = "삭제(관리자)")
+    ResponseEntity<ApiResponse<AdminMediaResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long mediaId
+    );
 }
