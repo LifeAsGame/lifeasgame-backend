@@ -1,12 +1,9 @@
 package online.lifeasgame.inventory.api.player.spec.draft;
 
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.inventory.api.player.request.MailboxRequest;
 import online.lifeasgame.inventory.api.player.response.MailboxResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 public interface MailboxApiDraftSpecV1 {
@@ -16,7 +13,4 @@ public interface MailboxApiDraftSpecV1 {
             @RequestParam(defaultValue = "true") boolean includeItem,
             @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
     );
-
-    @Operation(summary = "우편 삭제", description = "우편 슬롯을 삭제합니다(보상 폐기).")
-    ResponseEntity<ApiResponse<Void>> delete(@Valid @RequestBody MailboxRequest.Delete request);
 }

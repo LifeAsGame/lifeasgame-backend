@@ -32,4 +32,9 @@ public class MailboxFacade {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         mailboxService.claimAll(playerId, command);
     }
+
+    public void delete(MailboxCommand.Delete command) {
+        Long playerId = currentPlayer.currentPlayerIdOrThrow();
+        mailboxService.delete(playerId, command);
+    }
 }

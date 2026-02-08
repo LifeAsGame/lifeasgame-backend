@@ -65,4 +65,8 @@ public final class MailboxWebMapper {
                         .toList()
         );
     }
+
+    public static MailboxCommand.Delete toDeleteCommand(MailboxRequest.Delete request) {
+        return new MailboxCommand.Delete(request.slotIndex());
+    }
 }

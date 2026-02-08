@@ -11,11 +11,7 @@ import online.lifeasgame.inventory.api.player.response.MailboxResponse;
 import online.lifeasgame.inventory.api.player.spec.MailboxApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,6 +49,13 @@ public class MailboxController implements MailboxApiSpecV1 {
             @Valid @RequestBody MailboxRequest.ClaimAll request
     ) {
         mailboxFacade.claimAll(MailboxWebMapper.toClaimAllCommand(request));
+        return ApiResponses.noContent();
+    }
+
+    @Override
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> delete(MailboxRequest.Delete request) {
+        mailboxFacade.delete(MailboxWebMapper.toDeleteCommand(request));
         return ApiResponses.noContent();
     }
 }

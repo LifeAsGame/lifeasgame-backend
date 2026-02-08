@@ -83,4 +83,10 @@ public class MailboxService {
         List<MailboxEntryView> entryViews = mailBoxQueryReader.list(playerId);
         return MailboxResult.Entries.fromViews(entryViews);
     }
+
+    @Transactional
+    public void delete(Long playerId, MailboxCommand.Delete command) {
+        PlayerMailbox mailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
+        mailbox.deleteEntry(SlotIndex.of(command.slotIndex()));
+    }
 }
