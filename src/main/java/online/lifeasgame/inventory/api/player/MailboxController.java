@@ -46,4 +46,13 @@ public class MailboxController implements MailboxApiSpecV1 {
         mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));
         return ApiResponses.noContent();
     }
+
+    @Override
+    @PostMapping("/claim/all")
+    public ResponseEntity<ApiResponse<Void>> claimAll(
+            @Valid @RequestBody MailboxRequest.ClaimAll request
+    ) {
+        mailboxFacade.claimAll(MailboxWebMapper.toClaimAllCommand(request));
+        return ApiResponses.noContent();
+    }
 }

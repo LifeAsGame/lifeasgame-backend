@@ -21,4 +21,7 @@ public interface MailboxApiSpecV1 {
 
     @Operation(summary = "우편 수령", description = "우편 슬롯에서 인벤토리로 수령합니다.")
     ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request);
+
+    @Operation(summary = "우편 일괄 수령", description = "여러 슬롯을 한 번에 수령합니다.")
+    ResponseEntity<ApiResponse<Void>> claimAll(@Valid @RequestBody MailboxRequest.ClaimAll request);
 }

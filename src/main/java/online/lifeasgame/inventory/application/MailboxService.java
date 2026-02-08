@@ -37,29 +37,47 @@ public class MailboxService {
 
     @Transactional
     public void claim(Long playerId, MailboxCommand.Claim command) {
+        PlayerMailbox mailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory inventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+
+        claimSingle(mailbox, inventory, command);
+    }
+
+    @Transactional
+    public void claimAll(Long playerId, MailboxCommand.ClaimAll command) {
+        PlayerMailbox mailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory inventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+
+        for (MailboxCommand.Claim claim : command.claims()) {
+            claimSingle(mailbox, inventory, claim);
+        }
+    }
+
+    private void claimSingle(
+            PlayerMailbox mailbox,
+            PlayerInventory inventory,
+            MailboxCommand.Claim command
+    ) {
         SlotIndex slotIndex = SlotIndex.of(command.slotIndex());
 
-        PlayerMailbox playerMailbox = mailboxReader.getByPlayerIdOrThrow(playerId);
-        MailboxEntry mailboxEntry = playerMailbox.getEntry(slotIndex);
+        MailboxEntry entry = mailbox.getEntry(slotIndex);
 
-        Item item = itemReader.getByIdOrThrow(mailboxEntry.getItemId());
+        Item item = itemReader.getByIdOrThrow(entry.getItemId());
         ItemCarryPolicy policy = ItemCarryPolicy.from(item);
 
-        PlayerMailbox.ClaimedSlice slice = playerMailbox.claim(
-                SlotIndex.of(command.slotIndex()),
+        PlayerMailbox.ClaimedSlice slice = mailbox.claim(
+                slotIndex,
                 command.quantity(),
                 policy
         );
 
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
-        playerInventory.add(
+        inventory.add(
                 policy,
                 slice.quantity(),
                 slice.attrs(),
                 slice.bound()
         );
     }
-
     @Transactional(readOnly = true)
     public MailboxResult.Entries list(Long playerId) {
         List<MailboxEntryView> entryViews = mailBoxQueryReader.list(playerId);

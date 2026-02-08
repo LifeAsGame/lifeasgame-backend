@@ -18,21 +18,21 @@ public final class MailboxWebMapper {
         );
     }
 
-    private static MailboxResponse.Entry toEntry(MailboxResult.Entry e) {
+    private static MailboxResponse.Entry toEntry(MailboxResult.Entry result) {
         return new MailboxResponse.Entry(
-                e.mailId(),
-                e.slotIndex(),
-                e.itemId(),
-                e.itemName(),
-                e.category(),
-                e.type(),
-                e.rarity(),
-                e.stackable(),
-                e.maxStack(),
-                e.quantity(),
-                e.bound(),
-                e.durability(),
-                e.instanceAttrs()
+                result.mailId(),
+                result.slotIndex(),
+                result.itemId(),
+                result.itemName(),
+                result.category(),
+                result.type(),
+                result.rarity(),
+                result.stackable(),
+                result.maxStack(),
+                result.quantity(),
+                result.bound(),
+                result.durability(),
+                result.instanceAttrs()
         );
     }
 
@@ -45,11 +45,24 @@ public final class MailboxWebMapper {
         );
     }
 
-    public static MailboxResponse.Slot toSlot(MailboxResult.Slot slot) {
-        return new MailboxResponse.Slot(slot.slot());
+    public static MailboxResponse.Slot toSlot(MailboxResult.Slot result) {
+        return new MailboxResponse.Slot(result.slot());
     }
 
     public static MailboxCommand.Claim toClaimCommand(MailboxRequest.Claim request) {
         return new MailboxCommand.Claim(request.slotIndex(), request.quantity());
+    }
+
+    public static MailboxCommand.ClaimAll toClaimAllCommand(MailboxRequest.ClaimAll request) {
+        return new MailboxCommand.ClaimAll(
+                request.claims().stream()
+                        .map(
+                                claim -> new MailboxCommand.Claim(
+                                        claim.slotIndex(),
+                                        claim.quantity()
+                                )
+                        )
+                        .toList()
+        );
     }
 }

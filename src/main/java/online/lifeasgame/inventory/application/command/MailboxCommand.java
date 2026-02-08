@@ -1,5 +1,6 @@
 package online.lifeasgame.inventory.application.command;
 
+import java.util.List;
 import java.util.Map;
 
 public final class MailboxCommand {
@@ -15,5 +16,10 @@ public final class MailboxCommand {
     }
 
     public record Claim(int slotIndex, int quantity) {
+    }
+
+    public record ClaimAll(
+            List<Claim> claims
+    ) {
     }
 }

@@ -17,9 +17,6 @@ public interface MailboxApiDraftSpecV1 {
             @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
     );
 
-    @Operation(summary = "우편 일괄 수령", description = "여러 슬롯을 한 번에 수령합니다.")
-    ResponseEntity<ApiResponse<MailboxResponse.Claimed>> claimAll(@Valid @RequestBody MailboxRequest.ClaimAll request);
-
     @Operation(summary = "우편 삭제", description = "우편 슬롯을 삭제합니다(보상 폐기).")
     ResponseEntity<ApiResponse<Void>> delete(@Valid @RequestBody MailboxRequest.Delete request);
 }

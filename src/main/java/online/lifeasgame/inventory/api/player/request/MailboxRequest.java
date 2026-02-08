@@ -26,8 +26,7 @@ public final class MailboxRequest {
     }
 
     public record ClaimAll(
-            @NotNull List<Integer> slotIndexes,
-            String idempotencyKey
+            List<Claim> claims
     ) {}
 
     public record Delete(
