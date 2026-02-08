@@ -3,9 +3,11 @@ package online.lifeasgame.user.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
+@Getter
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Volume {
@@ -24,4 +26,5 @@ public class Volume {
     public static Volume of(int value) {
         return new Volume(value);
     }
+
 }

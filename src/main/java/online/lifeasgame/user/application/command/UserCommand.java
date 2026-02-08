@@ -1,13 +1,31 @@
 package online.lifeasgame.user.application.command;
 
-public class UserCommand {
+public final class UserCommand {
+
+    private UserCommand() {
+    }
+
     public record Register(String email, String password, String nickname) {
-        public static Register of(
-                String email,
-                String password,
-                String nickname
-        ) {
-            return new Register(email, password, nickname);
-        }
+    }
+
+    public record ChangePassword(
+            String currentPassword,
+            String newPassword
+    ) {
+    }
+
+    public record Search(
+            String email,
+            String nickname,
+            String status,
+            int page,
+            int size
+    ) {
+    }
+
+    public record ChangeStatus(
+            String status,
+            String reason
+    ) {
     }
 }
