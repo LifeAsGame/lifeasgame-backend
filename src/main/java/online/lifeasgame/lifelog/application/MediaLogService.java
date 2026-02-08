@@ -7,14 +7,12 @@ import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
