@@ -93,4 +93,14 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
         ExerciseResult.Info result = exerciseLogService.getExercise(playerId, exerciseId);
         return ApiResponses.ok(AdminExerciseWebMapper.toInfo(result));
     }
+
+    @Override
+    @GetMapping("/{playerId}/exercises/{exerciseId}")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Deleted result = exerciseLogService.delete(playerId, exerciseId);
+        return ApiResponses.deleted(AdminExerciseWebMapper.toDeleted(result));
+    }
 }

@@ -54,4 +54,10 @@ public interface AdminExerciseSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long exerciseId
     );
+
+    @Operation(summary = "운동 삭제(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    );
 }
