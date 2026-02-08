@@ -26,8 +26,8 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
 
     private final ExerciseLogService exerciseLogService;
 
-    @GetMapping("/{playerId}/exercises/recent")
     @Override
+    @GetMapping("/{playerId}/exercises/recent")
     public ResponseEntity<List<AdminExerciseResponse.Info>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
@@ -36,6 +36,7 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
         return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
+    @Override
     @GetMapping("/{playerId}/exercises/search")
     public ResponseEntity<List<AdminExerciseResponse.Info>> search(
             @PathVariable Long playerId,
@@ -53,8 +54,8 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
         return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
-    @PostMapping("/{playerId}/exercises")
     @Override
+    @PostMapping("/{playerId}/exercises")
     public ResponseEntity<AdminExerciseResponse.Created> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminExerciseRequest.Create request
@@ -67,8 +68,8 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
         return ResponseEntity.ok(AdminExerciseWebMapper.toCreated(result));
     }
 
-    @PostMapping("/{playerId}/exercises/{exerciseId}")
     @Override
+    @PostMapping("/{playerId}/exercises/{exerciseId}")
     public ResponseEntity<AdminExerciseResponse.Info> update(
             @PathVariable Long playerId,
             @PathVariable Long exerciseId,
