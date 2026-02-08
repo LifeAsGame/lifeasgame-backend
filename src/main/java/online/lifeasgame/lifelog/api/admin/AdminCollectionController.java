@@ -24,8 +24,8 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
 
     private final CollectionLogService collectionLogService;
 
-    @GetMapping("/{playerId}/collections/recent")
     @Override
+    @GetMapping("/{playerId}/collections/recent")
     public ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
@@ -51,8 +51,8 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
         return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
     }
 
-    @PostMapping("/{playerId}/collections")
     @Override
+    @PostMapping("/{playerId}/collections")
     public ResponseEntity<ApiResponse<AdminCollectionResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminCollectionRequest.Create request
@@ -65,8 +65,8 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
         return ApiResponses.ok(AdminCollectionWebMapper.toCreated(result));
     }
 
-    @PostMapping("/{playerId}/collections/{collectionId}")
     @Override
+    @PostMapping("/{playerId}/collections/{collectionId}")
     public ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long collectionId,
