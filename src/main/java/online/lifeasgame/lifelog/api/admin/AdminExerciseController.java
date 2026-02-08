@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminExerciseWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminExerciseSpecV1;
 import online.lifeasgame.lifelog.application.ExerciseLogService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -79,5 +81,15 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
         );
 
         return ResponseEntity.ok(AdminExerciseWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/exercises/{exerciseId}")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Info result = exerciseLogService.getExercise(playerId, exerciseId);
+        return ApiResponses.ok(AdminExerciseWebMapper.toInfo(result));
     }
 }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -46,5 +47,11 @@ public interface AdminExerciseSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long exerciseId,
             @Valid @RequestBody AdminExerciseRequest.Update request
+    );
+
+    @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
     );
 }
