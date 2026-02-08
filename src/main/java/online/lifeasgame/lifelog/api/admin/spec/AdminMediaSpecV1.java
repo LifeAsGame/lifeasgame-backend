@@ -1,4 +1,3 @@
-// ADMIN CONTROLLER SPEC
 package online.lifeasgame.lifelog.api.admin.spec;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,10 +15,10 @@ import java.util.List;
 public interface AdminMediaSpecV1 {
 
     @Operation(summary = "최근 조회(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminMediaResponse.Info>> recent(Long playerId, Integer limit);
+    ResponseEntity<ApiResponse<List<AdminMediaResponse.Info>>> recent(Long playerId, Integer limit);
 
     @Operation(summary = "검색(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminMediaResponse.Info>> search(
+    ResponseEntity<ApiResponse<List<AdminMediaResponse.Info>>> search(
             Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
@@ -29,19 +28,19 @@ public interface AdminMediaSpecV1 {
     );
 
     @Operation(summary = "미디어 생성(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminMediaResponse.Created> create(Long playerId, AdminMediaRequest.Create request);
+    ResponseEntity<ApiResponse<AdminMediaResponse.Created>> create(Long playerId, AdminMediaRequest.Create request);
 
     @Operation(summary = "평점 반영(관리자)")
-    ResponseEntity<AdminMediaResponse.Info> rate(Long playerId, Long mediaId, AdminMediaRequest.Rate request);
+    ResponseEntity<ApiResponse<AdminMediaResponse.Info>> rate(Long playerId, Long mediaId, AdminMediaRequest.Rate request);
 
     @Operation(summary = "에피소드 진행(관리자)")
-    ResponseEntity<AdminMediaResponse.Info> advance(Long playerId, Long mediaId, AdminMediaRequest.Advance request);
+    ResponseEntity<ApiResponse<AdminMediaResponse.Info>> advance(Long playerId, Long mediaId, AdminMediaRequest.Advance request);
 
     @Operation(summary = "상태 변경(관리자)")
-    ResponseEntity<AdminMediaResponse.Info> markStatus(Long playerId, Long mediaId, AdminMediaRequest.MarkStatus request);
+    ResponseEntity<ApiResponse<AdminMediaResponse.Info>> markStatus(Long playerId, Long mediaId, AdminMediaRequest.MarkStatus request);
 
     @Operation(summary = "리와치(관리자)")
-    ResponseEntity<AdminMediaResponse.Info> rewatch(Long playerId, Long mediaId);
+    ResponseEntity<ApiResponse<AdminMediaResponse.Info>> rewatch(Long playerId, Long mediaId);
 
     @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
     ResponseEntity<ApiResponse<AdminMediaResponse.Info>> get(
