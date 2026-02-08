@@ -51,4 +51,10 @@ public interface AdminCollectionSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long collectionId
     );
+
+    @Operation(summary = "컬렉션 삭제(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    );
 }

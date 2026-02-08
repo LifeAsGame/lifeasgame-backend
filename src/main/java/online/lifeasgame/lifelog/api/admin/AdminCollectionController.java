@@ -90,4 +90,14 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
         CollectionResult.Info result = collectionLogService.getCollection(playerId, collectionId);
         return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
     }
+
+    @Override
+    @DeleteMapping("/{playerId}/collections/{collectionId}")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Deleted result = collectionLogService.delete(playerId, collectionId);
+        return ApiResponses.deleted(AdminCollectionWebMapper.toDeleted(result));
+    }
 }

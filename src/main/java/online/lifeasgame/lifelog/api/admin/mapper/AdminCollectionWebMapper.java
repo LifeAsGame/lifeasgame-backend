@@ -55,4 +55,8 @@ public final class AdminCollectionWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static AdminCollectionResponse.Deleted toDeleted(CollectionResult.Deleted result) {
+        return new AdminCollectionResponse.Deleted(result.collectionId());
+    }
 }
