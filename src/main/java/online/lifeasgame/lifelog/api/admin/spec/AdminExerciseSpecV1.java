@@ -21,13 +21,13 @@ import java.util.List;
 public interface AdminExerciseSpecV1 {
 
     @Operation(summary = "최근 조회(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminExerciseResponse.Info>> recent(
+    ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
     @Operation(summary = "검색(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminExerciseResponse.Info>> search(
+    ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> search(
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -37,13 +37,13 @@ public interface AdminExerciseSpecV1 {
     );
 
     @Operation(summary = "운동 등록(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminExerciseResponse.Created> create(
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminExerciseRequest.Create request
     );
 
     @Operation(summary = "운동 수정(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminExerciseResponse.Info> update(
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long exerciseId,
             @Valid @RequestBody AdminExerciseRequest.Update request
