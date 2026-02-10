@@ -39,4 +39,35 @@ public class UserSetting extends AbstractTime {
     public static UserSetting ensureDefault(Long userId) {
         return new UserSetting(userId, Volume.of(50));
     }
+
+    public void apply(
+            Integer volume,
+            String uiLayoutJson,
+            String flagsJson
+    ) {
+        if (volume != null) {
+            changeVolume(Volume.of(volume));
+        }
+        if (uiLayoutJson != null) {
+            changeUiLayout(uiLayoutJson);
+        }
+        if (flagsJson != null) {
+            changeFlags(flagsJson);
+        }
+    }
+
+    private void changeVolume(Volume volume) {
+        if (this.volume.equals(volume)) {
+            return;
+        }
+        this.volume = volume;
+    }
+
+    private void changeUiLayout(String json) {
+        this.uiLayoutJson = json;
+    }
+
+    private void changeFlags(String json) {
+        this.flagsJson = json;
+    }
 }
