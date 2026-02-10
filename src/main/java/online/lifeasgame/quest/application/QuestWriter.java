@@ -49,4 +49,8 @@ class QuestWriter {
     public QuestAcceptance accept(QuestAcceptance questAcceptance) {
         return questAcceptanceRepository.save(questAcceptance);
     }
+
+    public void cancel(Long playerId, Long questId) {
+        questAcceptanceRepository.deleteByPlayerIdAndQuestId(playerId, questId);
+    }
 }

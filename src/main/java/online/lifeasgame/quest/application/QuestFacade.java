@@ -29,4 +29,9 @@ public class QuestFacade {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return questService.accept(playerId, command);
     }
+
+    public QuestResult.Canceled cancel(QuestCommand.Cancel command) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return questService.cancel(playerId, command);
+    }
 }

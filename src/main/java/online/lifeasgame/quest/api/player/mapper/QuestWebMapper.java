@@ -93,4 +93,19 @@ public final class QuestWebMapper {
                 request.guildId()
         );
     }
+
+    public static QuestCommand.Cancel toCancelCommand(String questCode, QuestRequest.Cancel request) {
+        return new QuestCommand.Cancel(
+                questCode,
+                request.reason()
+        );
+    }
+
+    public static QuestResponse.Canceled toCanceled(QuestResult.Canceled result) {
+        return new QuestResponse.Canceled(
+                result.playerId(),
+                result.questId(),
+                result.questCode()
+        );
+    }
 }

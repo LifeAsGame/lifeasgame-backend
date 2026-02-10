@@ -49,4 +49,14 @@ public class QuestAcceptanceRepositoryAdapter implements QuestAcceptanceReposito
     public Optional<QuestAcceptance> findLatestByQuestAndPlayer(Long questId, Long playerId) {
         return jpaQuestAcceptanceRepository.findTopByQuestIdAndPlayerIdOrderByIdDesc(questId, playerId);
     }
+
+    @Override
+    public boolean existsByPlayerIdAndId(Long playerId, Long questId) {
+        return jpaQuestAcceptanceRepository.existsByPlayerIdAndId(playerId, questId);
+    }
+
+    @Override
+    public void deleteByPlayerIdAndQuestId(Long playerId, Long questId) {
+        jpaQuestAcceptanceRepository.deleteByPlayerIdAndId(playerId, questId);
+    }
 }

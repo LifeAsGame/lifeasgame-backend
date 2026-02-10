@@ -53,4 +53,14 @@ public class QuestController implements QuestSpecV1 {
                 QuestWebMapper.toAcceptance(result)
         );
     }
+
+    @Override
+    @DeleteMapping("/{questCode}")
+    public ResponseEntity<ApiResponse<QuestResponse.Canceled>> cancel(
+            @PathVariable String questCode,
+            @Valid @RequestBody QuestRequest.Cancel request
+    ) {
+        QuestResult.Canceled result = questFacade.cancel(QuestWebMapper.toCancelCommand(questCode, request));
+        return ApiResponses.deleted(QuestWebMapper.toCanceled(result));
+    }
 }

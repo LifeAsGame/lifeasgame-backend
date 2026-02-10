@@ -138,6 +138,8 @@ public class QuestService {
         QuestCode questCode = QuestCode.parse(command.questCode());
         Quest quest = questReader.getByCode(questCode);
 
+        questReader.assertAcceptanceIsExists(playerId, quest.getId());
+
         QuestAcceptance questAcceptance = questWriter.accept(
                 QuestAcceptance.start(
                         quest.getId(),
@@ -149,5 +151,15 @@ public class QuestService {
         );
 
         return QuestResult.Acceptance.from(questAcceptance, quest);
+    }
+
+    @Transactional
+    public QuestResult.Canceled cancel(Long playerId, QuestCommand.Cancel command) {
+        QuestCode questCode = QuestCode.parse(command.questCode());
+        Quest quest = questReader.getByCode(questCode);
+
+        questWriter.cancel(playerId, quest.getId());
+
+        return new QuestResult.Canceled(playerId, quest.getId(), questCode.name());
     }
 }

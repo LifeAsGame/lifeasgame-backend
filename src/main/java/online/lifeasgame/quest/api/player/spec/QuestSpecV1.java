@@ -32,4 +32,10 @@ public interface QuestSpecV1 {
             @PathVariable String questCode,
             @Valid @RequestBody QuestRequest.Accept request
     );
+
+    @Operation(summary = "퀘스트 포기", description = "진행중 퀘스트를 포기(CANCELED) 처리합니다. (멱등키 권장)")
+    ResponseEntity<ApiResponse<QuestResponse.Canceled>> cancel(
+            @PathVariable String questCode,
+            @Valid @RequestBody QuestRequest.Cancel request
+    );
 }

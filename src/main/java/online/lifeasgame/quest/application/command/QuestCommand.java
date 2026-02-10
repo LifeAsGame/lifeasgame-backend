@@ -43,4 +43,10 @@ public final class QuestCommand {
             Long guildId
     ) {
     }
+
+    public record Cancel(
+            String questCode,
+            String reason
+    ) {
+    }
 }

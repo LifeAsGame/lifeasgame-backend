@@ -87,4 +87,11 @@ public final class QuestResponse {
             List<String> statuses
     ) {
     }
+
+    public record Canceled(
+            Long playerId,
+            Long questId,
+            String questCode
+    ) {
+    }
 }

@@ -11,12 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface QuestDraftSpecV1 {
 
-    @Operation(summary = "퀘스트 포기", description = "진행중 퀘스트를 포기(CANCELED) 처리합니다. (멱등키 권장)")
-    ResponseEntity<ApiResponse<QuestResponse.Acceptance>> cancel(
-            @PathVariable String questCode,
-            @Valid @RequestBody QuestRequest.Cancel request
-    );
-
     @Operation(summary = "보상 요청(수령 트리거)", description = "DONE 퀘스트의 보상 파이프라인을 요청/재요청합니다. (멱등키 권장)")
     ResponseEntity<ApiResponse<QuestResponse.RewardClaimed>> claimReward(
             @PathVariable String questCode,
