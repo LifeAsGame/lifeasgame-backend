@@ -2,9 +2,13 @@ package online.lifeasgame.quest.api.admin.spec;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Admin Quest API V1")
 public interface AdminQuestSpecV1 {
@@ -29,4 +33,10 @@ public interface AdminQuestSpecV1 {
 
     @Operation(summary = "Quest Acceptance 단건 조회", description = "acceptanceId로 Acceptance 상세를 조회합니다.")
     ResponseEntity<AdminQuestResponse.Acceptance> acceptance(Long acceptanceId);
+
+    @Operation(summary = "Acceptance 진행도 조정", description = "운영/CS 목적으로 Acceptance 진행도를 SET/ADD 방식으로 조정합니다. (멱등키 권장)")
+    ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> adjustProgress(
+            @PathVariable Long acceptanceId,
+            @Valid @RequestBody AdminQuestRequest.AdjustProgress request
+    );
 }

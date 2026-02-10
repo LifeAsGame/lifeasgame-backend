@@ -49,4 +49,9 @@ public final class QuestCommand {
             String reason
     ) {
     }
+
+    public record AdjustProgress(
+            Integer delta
+    ) {
+    }
 }

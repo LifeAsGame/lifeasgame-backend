@@ -162,4 +162,13 @@ public class QuestService {
 
         return new QuestResult.Canceled(playerId, quest.getId(), questCode.name());
     }
+
+    @Transactional
+    public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
+        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        Quest quest = questReader.getById(acceptance.getQuestId());
+        acceptance.addProgress(command.delta(), quest);
+
+        return QuestResult.Acceptance.from(acceptance, quest);
+    }
 }

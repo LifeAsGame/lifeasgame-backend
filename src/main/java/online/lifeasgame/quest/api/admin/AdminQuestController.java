@@ -2,6 +2,8 @@ package online.lifeasgame.quest.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import online.lifeasgame.quest.api.admin.mapper.AdminQuestWebMapper;
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
@@ -84,5 +86,18 @@ public class AdminQuestController implements AdminQuestSpecV1 {
         );
 
         return ResponseEntity.ok(AdminQuestWebMapper.toAcceptance(result));
+    }
+
+    @Override
+    @PatchMapping("/acceptances/{acceptanceId}/progress")
+    public ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> adjustProgress(
+            @PathVariable Long acceptanceId,
+            @Valid @RequestBody AdminQuestRequest.AdjustProgress request
+    ) {
+        QuestResult.Acceptance result = questService.adjustAcceptanceProgress(
+                acceptanceId,
+                AdminQuestWebMapper.toAdjustProgressCommand(request)
+        );
+        return ApiResponses.ok(AdminQuestWebMapper.toAcceptance(result));
     }
 }
