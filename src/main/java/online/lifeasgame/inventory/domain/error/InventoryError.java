@@ -15,8 +15,9 @@ public enum InventoryError implements ErrorCode {
     NOT_ENOUGH_QUANTITY("INV-NOT-ENOUGH-QUANTITY","Not enough quantity",400),
     DURABILITY_POLICY("INV-DURABILITY-POLICY","Durability policy violation",400),
     ITEM_NOT_FOUND("INV-ITEM-NOT-FOUND","Item not found",404),
-    CONTAINER_NOT_FOUND("INV-CONTAINER-NOT-FOUND","Container not found",404);
-    ;
+    CONTAINER_NOT_FOUND("INV-CONTAINER-NOT-FOUND","Container not found",404),
+    INVENTORY_ENTRY_NOT_FOUND("INV-ENTRY-NOT-FOUND","Inventory entry not found",404),;
+
 
     private final String code;
     private final String message;

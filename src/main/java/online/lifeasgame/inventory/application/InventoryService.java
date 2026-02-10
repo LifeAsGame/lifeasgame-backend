@@ -43,6 +43,11 @@ public class InventoryService {
         return InventoryResult.Entries.fromViews(entryViews);
     }
 
+    public InventoryResult.Entry getEntry(Long playerId, Long itemInstanceId) {
+        InventoryEntryView entryView = inventoryQueryReader.getEntry(playerId, itemInstanceId);
+        return InventoryResult.Entry.fromView(entryView);
+    }
+
     @Transactional
     public void remove(Long playerId, InventoryCommand.Remove command) {
         PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);

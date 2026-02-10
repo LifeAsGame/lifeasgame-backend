@@ -81,4 +81,11 @@ public class InventoryWebMapper {
                 request.quantity()
         );
     }
+
+    public static InventoryResponse.EntryDetail toEntryDetail(InventoryResult.Entry result) {
+        return new InventoryResponse.EntryDetail(
+                null,
+                toEntry(result)
+        );
+    }
 }

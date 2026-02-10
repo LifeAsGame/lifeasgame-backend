@@ -42,4 +42,9 @@ public class InventoryFacade {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         return inventoryService.split(playerId, cmd);
     }
+
+    public InventoryResult.Entry getEntry(Long itemInstanceId) {
+        Long playerId = currentPlayer.currentPlayerIdOrThrow();
+        return inventoryService.getEntry(playerId, itemInstanceId);
+    }
 }
