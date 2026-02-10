@@ -123,6 +123,22 @@ public class QuestAcceptance extends AbstractTime {
         this.status = QuestStatus.CANCELED;
     }
 
+    public void changeStatus(QuestStatus questStatus) {
+        if (this.status == questStatus) {
+            return;
+        }
+        if (questStatus == QuestStatus.CANCELED) {
+            cancel();
+        } else if (questStatus == QuestStatus.IN_PROGRESS) {
+            Guard.checkState(this.status != QuestStatus.DONE, "cannot change to in progress from done quest");
+            this.status = QuestStatus.IN_PROGRESS;
+        } else if (questStatus == QuestStatus.DONE) {
+            complete();
+        } else {
+            throw new IllegalArgumentException("unsupported status: " + questStatus);
+        }
+    }
+
     public boolean isInProgress() {
         return status == QuestStatus.IN_PROGRESS;
     }

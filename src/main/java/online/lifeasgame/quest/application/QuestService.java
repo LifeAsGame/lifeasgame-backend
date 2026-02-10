@@ -171,4 +171,13 @@ public class QuestService {
 
         return QuestResult.Acceptance.from(acceptance, quest);
     }
+
+    @Transactional
+    public QuestResult.Acceptance changeAcceptanceStatus(Long acceptanceId, QuestCommand.ChangeStatus command) {
+        QuestStatus questStatus = QuestStatus.parse(command.status());
+        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        acceptance.changeStatus(questStatus);
+        Quest quest = questReader.getById(acceptance.getQuestId());
+        return QuestResult.Acceptance.from(acceptance, quest);
+    }
 }

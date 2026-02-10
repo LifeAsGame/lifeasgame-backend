@@ -100,4 +100,17 @@ public class AdminQuestController implements AdminQuestSpecV1 {
         );
         return ApiResponses.ok(AdminQuestWebMapper.toAcceptance(result));
     }
+
+    @Override
+    @PatchMapping("/acceptances/{acceptanceId}/status")
+    public ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> changeStatus(
+            @PathVariable Long acceptanceId,
+            @Valid @RequestBody AdminQuestRequest.ChangeStatus request
+    ) {
+        QuestResult.Acceptance result = questService.changeAcceptanceStatus(
+                acceptanceId,
+                AdminQuestWebMapper.toChangeStatusCommand(request)
+        );
+        return ApiResponses.ok(AdminQuestWebMapper.toAcceptance(result));
+    }
 }

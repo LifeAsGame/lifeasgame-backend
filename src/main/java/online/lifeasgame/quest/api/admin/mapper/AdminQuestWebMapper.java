@@ -117,4 +117,11 @@ public final class AdminQuestWebMapper {
                 request.delta()
         );
     }
+
+    public static QuestCommand.ChangeStatus toChangeStatusCommand(AdminQuestRequest.ChangeStatus request) {
+        return new QuestCommand.ChangeStatus(
+                request.status(),
+                request.reason()
+        );
+    }
 }

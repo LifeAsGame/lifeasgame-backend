@@ -54,4 +54,10 @@ public final class QuestCommand {
             Integer delta
     ) {
     }
+
+    public record ChangeStatus(
+            String status,
+            String reason
+    ) {
+    }
 }

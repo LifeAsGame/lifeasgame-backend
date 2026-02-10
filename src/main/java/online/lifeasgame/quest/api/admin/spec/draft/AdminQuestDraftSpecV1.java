@@ -19,18 +19,6 @@ public interface AdminQuestDraftSpecV1 {
             @RequestParam(name = "status", required = false) String status
     );
 
-    @Operation(summary = "Acceptance 진행도 조정", description = "운영/CS 목적으로 Acceptance 진행도를 SET/ADD 방식으로 조정합니다. (멱등키 권장)")
-    ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> adjustProgress(
-            @PathVariable Long acceptanceId,
-            @Valid @RequestBody AdminQuestRequest.AdjustProgress request
-    );
-
-    @Operation(summary = "Acceptance 상태 변경", description = "Acceptance 상태를 강제로 변경합니다. (예: CANCELED, DONE) (멱등키 권장)")
-    ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> changeStatus(
-            @PathVariable Long acceptanceId,
-            @Valid @RequestBody AdminQuestRequest.ChangeStatus request
-    );
-
     @Operation(summary = "보상 파이프라인 강제 트리거", description = "DONE 상태 Acceptance에 대해 보상 이벤트를 강제 발행/재발행합니다. (멱등키 권장)")
     ResponseEntity<ApiResponse<AdminQuestResponse.RewardTriggered>> triggerReward(
             @PathVariable Long acceptanceId,
