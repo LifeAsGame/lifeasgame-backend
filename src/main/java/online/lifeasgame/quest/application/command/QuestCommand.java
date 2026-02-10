@@ -36,4 +36,11 @@ public final class QuestCommand {
 
     public record PlayerQuest(String questCode) {
     }
+
+    public record Accept(
+            String questCode,
+            Long partyId,
+            Long guildId
+    ) {
+    }
 }

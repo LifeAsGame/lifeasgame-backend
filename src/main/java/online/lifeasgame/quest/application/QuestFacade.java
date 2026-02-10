@@ -24,4 +24,9 @@ public class QuestFacade {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return questService.playerQuest(playerId, command);
     }
+
+    public QuestResult.Acceptance accept(QuestCommand.Accept command) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return questService.accept(playerId, command);
+    }
 }

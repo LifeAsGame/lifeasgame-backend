@@ -64,12 +64,6 @@ public final class QuestResponse {
     ) {
     }
 
-    public record Accepted(
-            boolean newlyCreated,
-            Acceptance acceptance
-    ) {
-    }
-
     public record Reward(
             int exp,
             Map<String, Integer> stats

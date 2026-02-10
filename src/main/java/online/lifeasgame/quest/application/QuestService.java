@@ -8,6 +8,7 @@ import online.lifeasgame.quest.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -130,5 +131,23 @@ public class QuestService {
     public Quest ensureQuest(QuestCode code) {
         return questReader.findByCode(code)
                 .orElseGet(() -> questWriter.create(questBlueprintCatalog.require(code).instantiate()));
+    }
+
+    @Transactional
+    public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
+        QuestCode questCode = QuestCode.parse(command.questCode());
+        Quest quest = questReader.getByCode(questCode);
+
+        QuestAcceptance questAcceptance = questWriter.accept(
+                QuestAcceptance.start(
+                        quest.getId(),
+                        playerId,
+                        command.partyId(),
+                        command.guildId(),
+                        TimePeriod.daily(LocalDate.now())
+                )
+        );
+
+        return QuestResult.Acceptance.from(questAcceptance, quest);
     }
 }

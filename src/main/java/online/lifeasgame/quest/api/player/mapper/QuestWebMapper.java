@@ -1,5 +1,6 @@
 package online.lifeasgame.quest.api.player.mapper;
 
+import online.lifeasgame.quest.api.player.request.QuestRequest;
 import online.lifeasgame.quest.api.player.response.QuestResponse;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
@@ -82,6 +83,14 @@ public final class QuestWebMapper {
                 results.stream()
                         .map(QuestWebMapper::toBlueprint)
                         .toList()
+        );
+    }
+
+    public static QuestCommand.Accept toAcceptCommand(String questCode, QuestRequest.Accept request) {
+        return new QuestCommand.Accept(
+                questCode,
+                request.partyId(),
+                request.guildId()
         );
     }
 }
