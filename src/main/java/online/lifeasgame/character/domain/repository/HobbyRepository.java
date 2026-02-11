@@ -14,4 +14,6 @@ public interface HobbyRepository {
     List<Hobby> findByCategoryIn(List<HobbyCategory> categories);
 
     Optional<Hobby> findById(Long id);
+
+    void delete(Long hobbyId);
 }

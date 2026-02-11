@@ -2,7 +2,6 @@ package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.domain.CoreStats;
 import online.lifeasgame.character.domain.Player;
-import online.lifeasgame.character.domain.StatusEffectCode;
 import online.lifeasgame.character.domain.StatusEffects;
 
 import java.util.List;
@@ -17,6 +16,7 @@ public final class PlayerResult {
     }
 
     public record PlayerInfo(
+            Long playerId,
             String name,
             String gender,
             String job,
@@ -28,10 +28,14 @@ public final class PlayerResult {
             int manaCapacity,
             int str, int agi, int dex, int intel, int vit, int luc,
             Map<String, Integer> extraStats,
-            List<StatusEffectCode> effects
+            List<StatusEffect> effects,
+            Long representativeTitleId
     ) {
+        public record StatusEffect(String code, String category) {}
+
         public static PlayerInfo from(Player player) {
             return new PlayerInfo(
+                    player.getId(),
                     player.getName().value(),
                     player.getGender().name(),
                     player.getJob(),
@@ -48,7 +52,15 @@ public final class PlayerResult {
                     player.getStats().vit(),
                     player.getStats().luc(),
                     player.getExtraStats().asMap(),
-                    player.getStatusEffects().asList()
+                    player.getStatusEffects().asList().stream()
+                            .map(
+                                    effect -> new StatusEffect(
+                                            effect.name(),
+                                            effect.category().name()
+                                    )
+                            )
+                            .toList(),
+                    player.getTitleId()
             );
         }
     }
@@ -146,5 +158,28 @@ public final class PlayerResult {
 
         public record Item(String code, String category) {
         }
+    }
+
+    public record Players(List<Item> players) {
+        public static Players fromList(List<Player> players) {
+            return new Players(
+                    players.stream()
+                            .map(
+                                    player -> new Item(
+                                            player.getId(),
+                                            player.getUserId(),
+                                            player.getName().value()
+                                    )
+                            )
+                            .toList()
+            );
+        }
+
+        public record Item(Long playerId, Long userId, String name) {
+        }
+    }
+
+    public record Renamed(Long playerId, String name) {
+
     }
 }

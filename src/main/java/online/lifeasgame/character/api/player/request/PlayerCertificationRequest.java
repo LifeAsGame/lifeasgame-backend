@@ -7,7 +7,7 @@ public final class PlayerCertificationRequest {
     private PlayerCertificationRequest() {
     }
 
-    public record Change(
+    public record Update(
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {

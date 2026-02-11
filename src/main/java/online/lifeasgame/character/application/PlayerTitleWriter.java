@@ -17,4 +17,8 @@ class PlayerTitleWriter {
     public PlayerTitle create(PlayerTitle playerTitle) {
         return repository.save(playerTitle);
     }
+
+    public void revoke(Long playerId, Long titleId) {
+        repository.deleteByPlayerIdAndTitleId(playerId, titleId);
+    }
 }

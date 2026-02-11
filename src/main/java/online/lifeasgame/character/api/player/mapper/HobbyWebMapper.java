@@ -23,4 +23,12 @@ public final class HobbyWebMapper {
                         .toList()
         );
     }
+
+    public static HobbyResponse.Info toInfo(HobbyResult.Info result) {
+        return new HobbyResponse.Info(
+                result.hobbyId(),
+                result.name(),
+                result.category()
+        );
+    }
 }

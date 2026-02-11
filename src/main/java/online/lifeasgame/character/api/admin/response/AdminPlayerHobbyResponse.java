@@ -20,4 +20,6 @@ public final class AdminPlayerHobbyResponse {
             long xp
     ) {
     }
+
+    public record Revoked(Long playerId, Long hobbyId) {}
 }

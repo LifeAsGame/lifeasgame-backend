@@ -7,6 +7,29 @@ public final class AdminPlayerResponse {
     private AdminPlayerResponse() {
     }
 
+    public record Players(List<Item> players) {
+        public record Item(Long playerId, Long userId, String name) {
+        }
+    }
+
+    public record PlayerInfo(
+            Long playerId,
+            String name,
+            String gender,
+            String job,
+            int level,
+            long totalExp,
+            int currentHealth,
+            int healthCapacity,
+            int currentMana,
+            int manaCapacity,
+            int str, int agi, int dex, int intel, int vit, int luc,
+            List<StatusEffect> effects,
+            Long representativeTitleId
+    ) {
+        public record StatusEffect(String code, String category) {}
+    }
+
     public record ExpGranted(
             Long playerId,
             long requestedExp,
@@ -52,6 +75,15 @@ public final class AdminPlayerResponse {
         }
     }
 
+    public record StatusEffectsSet(
+            Long playerId,
+            List<Item> effects
+    ) {
+        public record Item(String code, String category) {}
+    }
+
     public record UpdatedTitle(Long titleId) {
     }
+
+    public record Renamed(Long playerId, String name) {}
 }

@@ -28,4 +28,7 @@ public final class CertificationResult {
             return certifications.stream().map(Info::from).toList();
         }
     }
+
+    public record Deleted(Long certificationId) {
+    }
 }

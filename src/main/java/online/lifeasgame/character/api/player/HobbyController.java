@@ -9,10 +9,7 @@ import online.lifeasgame.character.application.result.HobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,10 +22,19 @@ public class HobbyController implements HobbyApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<HobbyResponse.Infos>> HobbyInfos(
+    public ResponseEntity<ApiResponse<HobbyResponse.Infos>> hobbyInfos(
             @RequestParam(name = "category", required = false) List<String> categories
     ) {
         List<HobbyResult.Info> results = hobbyService.getHobbies(categories);
         return ApiResponses.ok(HobbyWebMapper.toInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<HobbyResponse.Info>> hobbyInfo(
+            @PathVariable Long hobbyId
+    ) {
+        HobbyResult.Info result = hobbyService.getHobby(hobbyId);
+        return ApiResponses.ok(HobbyWebMapper.toInfo(result));
     }
 }

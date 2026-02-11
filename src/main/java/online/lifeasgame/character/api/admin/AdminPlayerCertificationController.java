@@ -34,4 +34,14 @@ public class AdminPlayerCertificationController implements AdminPlayerCertificat
 
         return ApiResponses.ok(AdminPlayerCertificationWebMapper.toGranted(result));
     }
+
+    @Override
+    @DeleteMapping("/{playerId}/certifications/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Revoked>> revokeCertification(
+            @PathVariable Long playerId,
+            @PathVariable Long certificationId
+    ) {
+        PlayerCertificationResult.Revoked result = playerCertificationService.revokeCertification(playerId, certificationId);
+        return ApiResponses.ok(AdminPlayerCertificationWebMapper.toRevoked(result));
+    }
 }

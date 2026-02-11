@@ -1,13 +1,14 @@
 package online.lifeasgame.character.infra;
 
 
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.HobbyCategory;
 import online.lifeasgame.character.domain.repository.HobbyRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,5 +34,10 @@ public class HobbyRepositoryAdapter implements HobbyRepository {
     @Override
     public Optional<Hobby> findById(Long id) {
         return jpaRepository.findById(id);
+    }
+
+    @Override
+    public void delete(Long hobbyId) {
+        jpaRepository.deleteById(hobbyId);
     }
 }

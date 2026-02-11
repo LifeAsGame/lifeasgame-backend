@@ -10,6 +10,7 @@ public final class AchievementResult {
     }
 
     public record Info(
+            Long achievementId,
             String code,
             String name,
             String category,
@@ -17,6 +18,7 @@ public final class AchievementResult {
     ) {
         public static Info from(Achievement achievement) {
             return new Info(
+                    achievement.getId(),
                     achievement.getCode(),
                     achievement.getName(),
                     achievement.getCategory().name(),
@@ -27,5 +29,8 @@ public final class AchievementResult {
         public static List<Info> fromList(List<Achievement> achievements) {
             return achievements.stream().map(Info::from).toList();
         }
+    }
+
+    public record Deleted(Long achievementId) {
     }
 }

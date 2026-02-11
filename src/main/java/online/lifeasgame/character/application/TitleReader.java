@@ -27,7 +27,7 @@ class TitleReader {
         return repository.findByCategoryIn(categories);
     }
 
-    public Title getById(Long titleId) {
+    public Title getByIdOrThrow(Long titleId) {
         return repository.findById(titleId)
                 .orElseThrow(() -> new DomainException(TitleError.TITLE_NOT_FOUND));
     }

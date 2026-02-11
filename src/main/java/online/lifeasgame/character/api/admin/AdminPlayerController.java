@@ -32,7 +32,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/health/current")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> updateCurrentHp(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentHp>> setCurrentHp(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHp request
     ){
@@ -43,7 +43,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/health/capacity")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> updateHpCapacity(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.HpCapacity>> setHpCapacity(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeHpCapacity request
     ) {
@@ -54,7 +54,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/mana/current")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> updateCurrentMp(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.CurrentMp>> setCurrentMp(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMp request
     ){
@@ -64,7 +64,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/{playerId}/mana/capacity")
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> updateMpCapacity(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.MpCapacity>> setMpCapacity(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminPlayerRequest.ChangeMpCapacity request
     ) {
@@ -98,6 +98,16 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
     }
 
     @Override
+    @PatchMapping("/{playerId}/rename")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.Renamed>> rename(
+            @PathVariable Long playerId,
+            @Valid @RequestBody AdminPlayerRequest.Rename request
+    ) {
+        PlayerResult.Renamed result = playerService.rename(playerId, AdminPlayerWebMapper.toRenameCommand(request));
+        return ApiResponses.ok(AdminPlayerWebMapper.toRenamed(result));
+    }
+
+    @Override
     @PatchMapping("/{playerId}/titles/{titleId}")
     public ResponseEntity<ApiResponse<AdminPlayerResponse.UpdatedTitle>> updateTitle(
             @PathVariable Long playerId,
@@ -105,5 +115,23 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
     ) {
         PlayerResult.UpdatedTitle result = playerService.changeRepresentativeTitle(playerId, titleId);
         return ApiResponses.ok(AdminPlayerWebMapper.toUpdatedTitle(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}")
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
+            @PathVariable Long playerId
+    ) {
+        PlayerResult.PlayerInfo result = playerService.getPlayerInfo(playerId);
+        return ApiResponses.ok(AdminPlayerWebMapper.toPlayerInfo(result));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.Players>> getPlayersOfUser(
+            @RequestParam(required = false) Long userId
+    ) {
+         PlayerResult.Players results = playerService.getPlayersOfUser(userId);
+        return ApiResponses.ok(AdminPlayerWebMapper.toPlayers(results));
     }
 }

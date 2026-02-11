@@ -1,13 +1,15 @@
 package online.lifeasgame.character.infra;
 
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
 import online.lifeasgame.character.domain.EquipmentSlotRole;
 import online.lifeasgame.character.domain.repository.EquipmentSlotRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +20,11 @@ public class EquipmentSlotRepositoryAdapter implements EquipmentSlotRepository {
     @Override
     public List<EquipmentSlot> findAll() {
         return jpaRepository.findAll();
+    }
+
+    @Override
+    public Optional<EquipmentSlot> findById(Long slotId) {
+        return jpaRepository.findById(slotId);
     }
 
     @Override

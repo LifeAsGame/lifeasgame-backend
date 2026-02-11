@@ -32,7 +32,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
     @Override
     @PostMapping("/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Created>> createPlayerCertification(
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Created>> create(
             @PathVariable Long certificationId,
             @Valid @RequestBody PlayerCertificationRequest.Create request
     ) {
@@ -49,9 +49,9 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
     @Override
     @PatchMapping("/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Changed>> updatePlayerCertification(
+    public ResponseEntity<ApiResponse<PlayerCertificationResponse.Changed>> update(
             @PathVariable Long certificationId,
-            @Valid @RequestBody PlayerCertificationRequest.Change request
+            @Valid @RequestBody PlayerCertificationRequest.Update request
     ) {
         PlayerCertificationResult.Changed result =
                 playerCertificationFacade.changePlayerCertification(
@@ -63,7 +63,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
 
     @Override
     @DeleteMapping("/certifications/{certificationId}")
-    public ResponseEntity<ApiResponse<Long>> deletePlayerCertification(@PathVariable Long certificationId) {
+    public ResponseEntity<ApiResponse<Long>> delete(@PathVariable Long certificationId) {
         playerCertificationFacade.deletePlayerCertification(certificationId);
         return ApiResponses.deleted(certificationId);
     }

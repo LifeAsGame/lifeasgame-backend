@@ -243,6 +243,10 @@ public class Player extends AbstractTime {
         domainEvents.add(event);
     }
 
+    public void rename(Name name) {
+        this.name = name;
+    }
+
     public record GainResult(
             long requestedExp,
             long appliedExp,

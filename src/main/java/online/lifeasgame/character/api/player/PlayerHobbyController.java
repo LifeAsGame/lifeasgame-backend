@@ -32,7 +32,7 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
     @Override
     @PostMapping("/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Created>> createPlayerHobby(
+    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Created>> create(
             @PathVariable Long hobbyId,
             @Valid @RequestBody PlayerHobbyRequest.Create request
     ) {
@@ -48,9 +48,9 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
     @Override
     @PatchMapping("/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Changed>> updatePlayerHobby(
+    public ResponseEntity<ApiResponse<PlayerHobbyResponse.Changed>> update(
             @PathVariable Long hobbyId,
-            @Valid @RequestBody PlayerHobbyRequest.Change request
+            @Valid @RequestBody PlayerHobbyRequest.Update request
     ) {
         PlayerHobbyResult.Changed result = playerHobbyFacade.changePlayerHobby(
                 PlayerHobbyWebMapper.toChangeCommand(hobbyId, request)
@@ -61,7 +61,7 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
     @Override
     @DeleteMapping("/hobbies/{hobbyId}")
-    public ResponseEntity<ApiResponse<Long>> deletePlayerHobby(@PathVariable Long hobbyId) {
+    public ResponseEntity<ApiResponse<Long>> delete(@PathVariable Long hobbyId) {
         playerHobbyFacade.deletePlayerHobby(hobbyId);
         return ApiResponses.deleted(hobbyId);
     }

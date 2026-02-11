@@ -11,4 +11,9 @@ public final class AdminHobbyRequest {
             @NotBlank String category
     ) {
     }
+
+    public record Update(
+            String name,
+            String category
+    ) {}
 }

@@ -31,10 +31,29 @@ public class HobbyService {
                 )
         );
 
-        return new HobbyResult.Info(
-                hobby.getId(),
-                hobby.getName(),
-                hobby.getCategory().name()
+        return HobbyResult.Info.from(hobby);
+    }
+
+    public HobbyResult.Info getHobby(Long hobbyId) {
+        Hobby hobby = hobbyReader.getByIdOrThrow(hobbyId);
+        return HobbyResult.Info.from(hobby);
+    }
+
+    @Transactional
+    public HobbyResult.Info update(Long hobbyId, HobbyCommand.Update command) {
+        HobbyCategory category = HobbyCategory.parse(command.category());
+        Hobby hobby = hobbyReader.getByIdOrThrow(hobbyId);
+        hobby.update(
+                command.name(),
+                category
         );
+
+        return HobbyResult.Info.from(hobby);
+    }
+
+    @Transactional
+    public HobbyResult.Deleted delete(Long hobbyId) {
+        hobbyWriter.delete(hobbyId);
+        return new HobbyResult.Deleted(hobbyId);
     }
 }

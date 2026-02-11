@@ -47,4 +47,13 @@ public class PlayerAchievementService {
                 playerAchievement.getAcquiredAt()
         );
     }
+
+    @Transactional
+    public PlayerAchievementResult.Revoked revokeAchievement(Long playerId, Long achievementId) {
+        playerReader.assertExistsById(playerId);
+        achievementReader.assertExistsById(achievementId);
+
+        playerAchievementWriter.revoke(playerId, achievementId);
+        return new PlayerAchievementResult.Revoked(achievementId, achievementId);
+    }
 }

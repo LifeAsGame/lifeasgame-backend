@@ -14,4 +14,6 @@ public interface TitleRepository {
     Title save(Title title);
 
     Optional<Title> findById(Long titleId);
+
+    void deleteById(Long titleId);
 }

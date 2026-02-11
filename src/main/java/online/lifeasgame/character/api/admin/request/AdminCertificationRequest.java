@@ -12,4 +12,10 @@ public final class AdminCertificationRequest {
             @NotBlank String category
     ) {
     }
+
+    public record Update(
+            String name,
+            String issuer,
+            String category
+    ) {}
 }

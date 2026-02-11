@@ -21,6 +21,11 @@ public class PlayerAchievementRepositoryAdapter implements PlayerAchievementRepo
     }
 
     @Override
+    public void deleteByPlayerIdAndAchievementId(Long playerId, Long achievementId) {
+        jpaRepository.deleteByPlayerIdAndAchievementId(playerId, achievementId);
+    }
+
+    @Override
     public List<PlayerAchievementView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerAchievementViews(playerId);
     }

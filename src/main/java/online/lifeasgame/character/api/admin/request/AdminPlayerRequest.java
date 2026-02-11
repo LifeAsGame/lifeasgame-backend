@@ -55,4 +55,12 @@ public final class AdminPlayerRequest {
             @NotEmpty List<@NotBlank String> codes
     ) {
     }
+
+    public record SetStatusEffects(
+            @NotNull List<@NotBlank String> codes
+    ) {}
+
+    public record Rename(
+            @NotBlank String name
+    ) {}
 }

@@ -62,4 +62,10 @@ public class PlayerCertificationService {
     public void deletePlayerCertification(Long playerId, Long certificationId) {
         playerCertificationWriter.deletePlayerCertification(playerId, certificationId);
     }
+
+    @Transactional
+    public PlayerCertificationResult.Revoked revokeCertification(Long playerId, Long certificationId) {
+        playerCertificationWriter.deletePlayerCertification(playerId, certificationId);
+        return new PlayerCertificationResult.Revoked(playerId, certificationId);
+    }
 }

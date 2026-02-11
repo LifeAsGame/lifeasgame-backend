@@ -60,4 +60,10 @@ public class Certification extends AbstractTime {
         this.issuer = issuer;
         this.category = category;
     }
+
+    public void update(String name, String issuer, CertificationCategory category) {
+        this.name = name;
+        this.issuer = issuer;
+        this.category = category;
+    }
 }

@@ -1,10 +1,12 @@
 package online.lifeasgame.character.infra;
 
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,5 +32,10 @@ public class PlayerRepositoryAdapter implements PlayerRepository {
     @Override
     public boolean existsById(Long playerId) {
         return jpaRepository.existsById(playerId);
+    }
+
+    @Override
+    public List<Player> findByUserId(Long userId) {
+        return jpaRepository.findByUserId(userId);
     }
 }

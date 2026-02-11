@@ -10,6 +10,7 @@ public final class EquipmentSlotResult {
     }
 
     public record Info(
+            Long equipmentSlotId,
             String code,
             String name,
             String category,
@@ -17,6 +18,7 @@ public final class EquipmentSlotResult {
     ) {
         public static Info from(EquipmentSlot equipmentSlot) {
             return new Info(
+                    equipmentSlot.getId(),
                     equipmentSlot.getCode(),
                     equipmentSlot.getName(),
                     equipmentSlot.getCategory().name(),

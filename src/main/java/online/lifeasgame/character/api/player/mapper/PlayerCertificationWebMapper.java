@@ -32,7 +32,7 @@ public final class PlayerCertificationWebMapper {
 
     public static PlayerCertificationCommand.Change toChangeCommand(
             Long certificationId,
-            PlayerCertificationRequest.Change request
+            PlayerCertificationRequest.Update request
     ) {
         return new PlayerCertificationCommand.Change(
                 certificationId,

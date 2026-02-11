@@ -26,10 +26,18 @@ public final class PlayerEquipmentWebMapper {
                                 result ->
                                         new PlayerEquipmentResponse.Info(
                                                 result.slotId(),
+                                                result.slotCode(),
+                                                result.slotName(),
+                                                result.slotCategory(),
+                                                result.slotRole(),
                                                 result.itemInstanceId()
                                         )
                         )
                         .toList()
         );
+    }
+
+    public static PlayerEquipmentResponse.UnEquipped toUnEquipped(Long slotId) {
+        return new PlayerEquipmentResponse.UnEquipped(slotId);
     }
 }

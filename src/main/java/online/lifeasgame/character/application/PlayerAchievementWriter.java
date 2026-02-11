@@ -17,4 +17,8 @@ class PlayerAchievementWriter {
     public PlayerAchievement create(PlayerAchievement playerAchievement) {
         return repository.save(playerAchievement);
     }
+
+    public void revoke(Long playerId, Long achievementId) {
+        repository.deleteByPlayerIdAndAchievementId(playerId, achievementId);
+    }
 }

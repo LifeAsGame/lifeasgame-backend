@@ -17,4 +17,8 @@ class HobbyWriter {
     public Hobby create(Hobby hobby) {
         return repository.save(hobby);
     }
+
+    public void delete(Long hobbyId) {
+        repository.delete(hobbyId);
+    }
 }
