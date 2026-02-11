@@ -49,7 +49,6 @@ public final class GuildCommand {
     }
 
     public record TransferLeader(
-            Long fromLeaderPlayerId,
             Long toPlayerId
     ) {
     }

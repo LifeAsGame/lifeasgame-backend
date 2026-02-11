@@ -112,7 +112,7 @@ public final class PlayerGuildWebMapper {
     }
 
     public static GuildCommand.TransferLeader toTransferLeaderCommand(PlayerGuildRequest.TransferLeader request) {
-        return new GuildCommand.TransferLeader(request.fromLeaderPlayerId(), request.toPlayerId());
+        return new GuildCommand.TransferLeader(request.toPlayerId());
     }
 
     public static GuildCommand.Kick toKickCommand(PlayerGuildRequest.Kick request) {

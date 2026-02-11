@@ -18,6 +18,16 @@ public final class PlayerGuildResponse {
     ) {
     }
 
+    public record MyGuild(
+            Long id,
+            String name,
+            String code,
+            String status,
+            String myRole,
+            int memberCount,
+            int maxMembers
+    ) {}
+
     public record Info(
             Long id,
             Long playerId,
@@ -36,6 +46,22 @@ public final class PlayerGuildResponse {
             Instant updatedAt
     ) {
     }
+
+    public record Member(
+            Long playerId,
+            String role,
+            String joinedAt
+    ) {}
+
+    public record WaitMember(
+            Long id,
+            Long playerId,
+            String type,
+            String status,
+            String message,
+            String requestedAt,
+            String expiresAt
+    ) {}
 
     public record Page<T>(
             List<T> contents,

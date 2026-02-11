@@ -31,4 +31,8 @@ public final class PlayerChatRequest {
             String content
     ) {
     }
+
+    public record Read(Long lastReadMessageId) {
+    }
+
 }

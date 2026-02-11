@@ -56,7 +56,6 @@ public final class PlayerGuildRequest {
     }
 
     public record TransferLeader(
-            @NotNull Long fromLeaderPlayerId,
             @NotNull Long toPlayerId
     ) {
     }

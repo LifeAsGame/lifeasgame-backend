@@ -18,23 +18,19 @@ import java.util.List;
 @Tag(name = "Social Follow API V1 (Player)")
 public interface PlayerFollowApiSpecV1 {
 
-    @Operation(summary = "내가 팔로우하는 목록")
+    @Operation(summary = "팔로잉 목록")
     ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followings(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(
-                    defaultValue = "20"
-            ) int size
+            @RequestParam(defaultValue = "20") int size
     );
 
-    @Operation(summary = "나를 팔로우하는 목록")
+    @Operation(summary = "팔로워 목록")
     ResponseEntity<ApiResponse<PlayerFollowResponse.Page<PlayerFollowResponse.Summary>>> followers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(
-                    defaultValue = "20"
-            ) int size
+            @RequestParam(defaultValue = "20") int size
     );
 
-    @Operation(summary = "최근 팔로우(내가 팔로우 / 나를 팔로우)")
+    @Operation(summary = "최근 팔로우/팔로워")
     ResponseEntity<ApiResponse<List<PlayerFollowResponse.Summary>>> recent(
             @RequestParam(defaultValue = "followings") String type,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
