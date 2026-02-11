@@ -73,4 +73,20 @@ public final class PlayerMediaLogWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static MediaLogCommand.Update toUpdateCommand(PlayerMediaLogRequest.Update request) {
+        return new MediaLogCommand.Update(
+                request.category(),
+                request.title(),
+                request.originalTitle(),
+                request.currentEpisode(),
+                request.totalEpisode(),
+                request.status(),
+                request.tags()
+        );
+    }
+
+    public static PlayerMediaLogResponse.Deleted toDeleted(MediaLogResult.Deleted result) {
+        return new PlayerMediaLogResponse.Deleted(result.mediaId());
+    }
 }

@@ -10,11 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class CollectionLogWriter {
+class CollectionLogWriter {
 
     private final CollectionLogRepository repository;
 
     public CollectionLog create(CollectionLog collectionLog) {
         return repository.save(collectionLog);
+    }
+
+    public void delete(Long playerId, Long collectionId) {
+        repository.deleteByIdAndPlayerId(collectionId, playerId);
     }
 }

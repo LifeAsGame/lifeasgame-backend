@@ -13,7 +13,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class CollectionLogReader {
+class CollectionLogReader {
 
     private final CollectionLogRepository repository;
 

@@ -16,4 +16,6 @@ public interface CollectionLogRepository {
     List<CollectionLog> findByPlayerId(Long playerId, int limit);
 
     List<CollectionLog> search(Long playerId, CollectionCategory category, String titleLike, int page, int size);
+
+    void deleteByIdAndPlayerId(Long collectionId, Long playerId);
 }

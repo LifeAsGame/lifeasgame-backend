@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminCollectionWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminCollectionRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminCollectionResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminCollectionSpecV1;
 import online.lifeasgame.lifelog.application.CollectionLogService;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,19 +24,19 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
 
     private final CollectionLogService collectionLogService;
 
-    @GetMapping("/{playerId}/collections/recent")
     @Override
-    public ResponseEntity<List<AdminCollectionResponse.Info>> recent(
+    @GetMapping("/{playerId}/collections/recent")
+    public ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
         List<CollectionResult.Info> results = collectionLogService.recent(playerId, limit);
-        return ResponseEntity.ok(AdminCollectionWebMapper.toInfos(results));
+        return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
     }
 
     @Override
     @GetMapping("/{playerId}/collections/search")
-    public ResponseEntity<List<AdminCollectionResponse.Info>> search(
+    public ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> search(
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
@@ -46,12 +48,12 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
                 AdminCollectionWebMapper.toSearchCommand(category, titleLike, page, size)
         );
 
-        return ResponseEntity.ok(AdminCollectionWebMapper.toInfos(results));
+        return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
     }
 
-    @PostMapping("/{playerId}/collections")
     @Override
-    public ResponseEntity<AdminCollectionResponse.Created> create(
+    @PostMapping("/{playerId}/collections")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminCollectionRequest.Create request
     ) {
@@ -60,12 +62,12 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
                 AdminCollectionWebMapper.toCreateCommand(request)
         );
 
-        return ResponseEntity.ok(AdminCollectionWebMapper.toCreated(result));
+        return ApiResponses.ok(AdminCollectionWebMapper.toCreated(result));
     }
 
-    @PostMapping("/{playerId}/collections/{collectionId}")
     @Override
-    public ResponseEntity<AdminCollectionResponse.Info> update(
+    @PostMapping("/{playerId}/collections/{collectionId}")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long collectionId,
             @Valid @RequestBody AdminCollectionRequest.Update request
@@ -76,6 +78,26 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
                 AdminCollectionWebMapper.toUpdateCommand(request)
         );
 
-        return ResponseEntity.ok(AdminCollectionWebMapper.toInfo(result));
+        return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/collections/{collectionId}")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Info result = collectionLogService.getCollection(playerId, collectionId);
+        return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
+    }
+
+    @Override
+    @DeleteMapping("/{playerId}/collections/{collectionId}")
+    public ResponseEntity<ApiResponse<AdminCollectionResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    ) {
+        CollectionResult.Deleted result = collectionLogService.delete(playerId, collectionId);
+        return ApiResponses.deleted(AdminCollectionWebMapper.toDeleted(result));
     }
 }

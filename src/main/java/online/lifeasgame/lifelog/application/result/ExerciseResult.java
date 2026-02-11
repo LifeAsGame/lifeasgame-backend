@@ -40,4 +40,7 @@ public final class ExerciseResult {
             );
         }
     }
+
+    public record Deleted(Long exerciseId) {
+    }
 }

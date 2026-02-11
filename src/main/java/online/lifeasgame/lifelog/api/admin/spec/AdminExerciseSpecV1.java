@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,13 +21,13 @@ import java.util.List;
 public interface AdminExerciseSpecV1 {
 
     @Operation(summary = "최근 조회(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminExerciseResponse.Info>> recent(
+    ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
     @Operation(summary = "검색(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminExerciseResponse.Info>> search(
+    ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> search(
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -36,15 +37,27 @@ public interface AdminExerciseSpecV1 {
     );
 
     @Operation(summary = "운동 등록(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminExerciseResponse.Created> create(
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminExerciseRequest.Create request
     );
 
     @Operation(summary = "운동 수정(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminExerciseResponse.Info> update(
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long exerciseId,
             @Valid @RequestBody AdminExerciseRequest.Update request
+    );
+
+    @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    );
+
+    @Operation(summary = "운동 삭제(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminExerciseResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
     );
 }
