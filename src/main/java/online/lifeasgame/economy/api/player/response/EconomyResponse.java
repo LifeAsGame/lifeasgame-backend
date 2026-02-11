@@ -8,6 +8,15 @@ public final class EconomyResponse {
     private EconomyResponse() {
     }
 
+    public record Page<T>(
+            List<T> content,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages
+    ) {
+    }
+
     public record ListingId(Long id) {
     }
 
@@ -15,6 +24,19 @@ public final class EconomyResponse {
             String reservationToken,
             String holdId,
             Instant expiresAt
+    ) {
+    }
+
+    public record ListingDetail(
+            Long id,
+            Long itemInstanceId,
+            Long itemId,
+            Long sellerId,
+            long price,
+            String currency,
+            String status,
+            Long reservedBy,
+            Instant reservationExpiresAt
     ) {
     }
 
