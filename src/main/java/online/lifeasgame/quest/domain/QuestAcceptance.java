@@ -20,15 +20,16 @@ import java.time.Instant;
                 columnNames = {"player_id", "quest_id", "period_start", "period_end"}
         ),
         indexes = {
-                @Index(name="idx_qa_player", columnList="player_id"),
-                @Index(name="idx_qa_quest",  columnList="quest_id"),
-                @Index(name="idx_qa_status", columnList="status")
+                @Index(name = "idx_qa_player", columnList = "player_id"),
+                @Index(name = "idx_qa_quest", columnList = "quest_id"),
+                @Index(name = "idx_qa_status", columnList = "status")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestAcceptance extends AbstractTime {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "quest_id", nullable = false)
@@ -62,7 +63,13 @@ public class QuestAcceptance extends AbstractTime {
     @Version
     private Long version;
 
-    private QuestAcceptance(Long questId, Long playerId, TimePeriod period) {
+    private QuestAcceptance(
+            Long questId,
+            Long playerId,
+            Long partyId,
+            Long guildId,
+            TimePeriod period
+    ) {
         Guard.notNull(questId, "questId");
         Guard.minValue(questId, 1L, "questId");
         Guard.notNull(playerId, "playerId");
@@ -70,15 +77,21 @@ public class QuestAcceptance extends AbstractTime {
         Guard.notNull(period, "period");
         this.questId = questId;
         this.playerId = playerId;
+        this.partyId = partyId;
+        this.guildId = guildId;
         this.period = period;
         this.progressValue = 0;
     }
 
     public static QuestAcceptance start(Long questId, Long playerId, TimePeriod period) {
-        return new QuestAcceptance(questId, playerId, period);
+        return new QuestAcceptance(questId, playerId, null, null, period);
     }
 
-    public void addProgress(int delta, Quest quest){
+    public static QuestAcceptance start(Long questId, Long playerId, Long partyId, Long guildId, TimePeriod period) {
+        return new QuestAcceptance(questId, playerId, partyId, guildId, period);
+    }
+
+    public void addProgress(int delta, Quest quest) {
         Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
         Guard.notNull(quest, "quest");
         Guard.minValue(delta, 0, "delta");
@@ -88,7 +101,7 @@ public class QuestAcceptance extends AbstractTime {
         }
     }
 
-    public void setProgress(int value, Quest quest){
+    public void setProgress(int value, Quest quest) {
         Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
         Guard.notNull(quest, "quest");
         Guard.minValue(value, 0, "progress value");
@@ -98,16 +111,32 @@ public class QuestAcceptance extends AbstractTime {
         }
     }
 
-    public void complete(){
+    public void complete() {
         if (status == QuestStatus.DONE) return;
         Guard.checkState(status == QuestStatus.IN_PROGRESS, "cannot complete from" + status);
         this.status = QuestStatus.DONE;
         this.completedAt = Instant.now();
     }
 
-    public void cancel(){
+    public void cancel() {
         Guard.checkState(status != QuestStatus.DONE, "cannot cancel done quest");
         this.status = QuestStatus.CANCELED;
+    }
+
+    public void changeStatus(QuestStatus questStatus) {
+        if (this.status == questStatus) {
+            return;
+        }
+        if (questStatus == QuestStatus.CANCELED) {
+            cancel();
+        } else if (questStatus == QuestStatus.IN_PROGRESS) {
+            Guard.checkState(this.status != QuestStatus.DONE, "cannot change to in progress from done quest");
+            this.status = QuestStatus.IN_PROGRESS;
+        } else if (questStatus == QuestStatus.DONE) {
+            complete();
+        } else {
+            throw new IllegalArgumentException("unsupported status: " + questStatus);
+        }
     }
 
     public boolean isInProgress() {

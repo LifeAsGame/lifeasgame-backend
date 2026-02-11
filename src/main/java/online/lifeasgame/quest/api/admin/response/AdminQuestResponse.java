@@ -21,31 +21,6 @@ public final class AdminQuestResponse {
             Map<String, Integer> rewardStats,
             Instant dueAt
     ) {
-        public static Blueprint of(
-                String code,
-                String title,
-                String category,
-                String descriptionMd,
-                String targetType,
-                int targetValue,
-                String repeatRule,
-                int rewardExp,
-                Map<String, Integer> rewardStats,
-                Instant dueAt
-        ) {
-            return new Blueprint(
-                    code,
-                    title,
-                    category,
-                    descriptionMd,
-                    targetType,
-                    targetValue,
-                    repeatRule,
-                    rewardExp,
-                    rewardStats,
-                    dueAt
-            );
-        }
     }
 
     public record Blueprints(List<Blueprint> blueprints) {
@@ -89,5 +64,23 @@ public final class AdminQuestResponse {
     }
 
     public record Acceptances(List<Acceptance> acceptances) {
+    }
+
+    public record RewardTriggered(
+            Long acceptanceId,
+            String questCode,
+            Long playerId,
+            String state,
+            String correlationId,
+            Instant triggeredAt
+    ) {
+    }
+
+    public record Meta(
+            List<String> categories,
+            List<String> targetTypes,
+            List<String> repeatRules,
+            List<String> statuses
+    ) {
     }
 }

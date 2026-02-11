@@ -63,4 +63,35 @@ public final class QuestResponse {
             Acceptance acceptance
     ) {
     }
+
+    public record Reward(
+            int exp,
+            Map<String, Integer> stats
+    ) {
+    }
+
+    public record RewardClaimed(
+            String questCode,
+            Long acceptanceId,
+            String state,
+            Reward reward,
+            String correlationId,
+            Instant requestedAt
+    ) {
+    }
+
+    public record Meta(
+            List<String> categories,
+            List<String> targetTypes,
+            List<String> repeatRules,
+            List<String> statuses
+    ) {
+    }
+
+    public record Canceled(
+            Long playerId,
+            Long questId,
+            String questCode
+    ) {
+    }
 }
