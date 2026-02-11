@@ -12,17 +12,27 @@ public class InventoryWebMapper {
 
     public static InventoryResponse.Entries toEntries(InventoryResult.Entries result) {
         return new InventoryResponse.Entries(
-                result.entries().stream()
-                        .map(
-                                entry -> new InventoryResponse.Entry(
-                                        entry.slotIndex(),
-                                        entry.itemId(),
-                                        entry.rarity(),
-                                        entry.quantity(),
-                                        entry.bound()
-                                )
-                        )
+                result.entryViews().stream()
+                        .map(InventoryWebMapper::toEntry)
                         .toList()
+        );
+    }
+
+    private static InventoryResponse.Entry toEntry(InventoryResult.Entry e) {
+        return new InventoryResponse.Entry(
+                e.itemInstanceId(),
+                e.slotIndex(),
+                e.itemId(),
+                e.itemName(),
+                e.category(),
+                e.type(),
+                e.rarity(),
+                e.stackable(),
+                e.maxStack(),
+                e.quantity(),
+                e.bound(),
+                e.durability(),
+                e.instanceAttrs()
         );
     }
 
@@ -69,6 +79,13 @@ public class InventoryWebMapper {
         return new InventoryCommand.Remove(
                 request.slotIndex(),
                 request.quantity()
+        );
+    }
+
+    public static InventoryResponse.EntryDetail toEntryDetail(InventoryResult.Entry result) {
+        return new InventoryResponse.EntryDetail(
+                null,
+                toEntry(result)
         );
     }
 }

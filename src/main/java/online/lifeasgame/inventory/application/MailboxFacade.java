@@ -13,18 +13,28 @@ public class MailboxFacade {
     private final MailboxService mailboxService;
     private final CurrentPlayerAccessor currentPlayer;
 
-    public MailboxResult.Slot deliver(MailboxCommand.Deliver cmd) {
+    public MailboxResult.Slot deliver(MailboxCommand.Deliver command) {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
-        return mailboxService.deliver(playerId, cmd);
+        return mailboxService.deliver(playerId, command);
     }
 
-    public void claim(MailboxCommand.Claim cmd) {
+    public void claim(MailboxCommand.Claim command) {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
-        mailboxService.claim(playerId, cmd);
+        mailboxService.claim(playerId, command);
     }
 
-    public MailboxResult.Mails list() {
+    public MailboxResult.Entries list() {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         return mailboxService.list(playerId);
+    }
+
+    public void claimAll(MailboxCommand.ClaimAll command) {
+        Long playerId = currentPlayer.currentPlayerIdOrThrow();
+        mailboxService.claimAll(playerId, command);
+    }
+
+    public void delete(MailboxCommand.Delete command) {
+        Long playerId = currentPlayer.currentPlayerIdOrThrow();
+        mailboxService.delete(playerId, command);
     }
 }

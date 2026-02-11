@@ -3,6 +3,7 @@ package online.lifeasgame.inventory.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.inventory.application.command.InventoryCommand;
+import online.lifeasgame.inventory.application.query.InventoryEntryView;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.domain.*;
 import org.springframework.stereotype.Service;
@@ -16,9 +17,9 @@ import java.util.List;
 public class InventoryService {
 
     private final InventoryReader inventoryReader;
-    private final InventoryWriter inventoryWriter;
     private final ItemReader itemReader;
     private final DomainEventPublisher domainEventPublisher;
+    private final InventoryQueryReader inventoryQueryReader;
 
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
@@ -38,8 +39,13 @@ public class InventoryService {
     }
 
     public InventoryResult.Entries list(Long playerId) {
-        List<InventoryEntry> entries = inventoryReader.getByPlayerIdOrThrow(playerId).getEntries();
-        return InventoryResult.Entries.fromList(entries);
+        List<InventoryEntryView> entryViews = inventoryQueryReader.list(playerId);
+        return InventoryResult.Entries.fromViews(entryViews);
+    }
+
+    public InventoryResult.Entry getEntry(Long playerId, Long itemInstanceId) {
+        InventoryEntryView entryView = inventoryQueryReader.getEntry(playerId, itemInstanceId);
+        return InventoryResult.Entry.fromView(entryView);
     }
 
     @Transactional

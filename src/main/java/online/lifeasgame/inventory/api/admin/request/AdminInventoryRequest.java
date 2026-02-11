@@ -16,4 +16,8 @@ public final class AdminInventoryRequest {
             boolean bound
     ) {
     }
+
+    public record SetCapacity(
+            @Min(1) int capacitySlots
+    ) {}
 }

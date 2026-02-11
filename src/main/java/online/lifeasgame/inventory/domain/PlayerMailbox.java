@@ -147,6 +147,15 @@ public class PlayerMailbox extends AbstractTime {
         return entries.stream().filter(e -> e.slotIndex.equals(of)).findFirst().orElse(null);
     }
 
+    public void deleteEntry(SlotIndex slot) {
+        ensureValidSlot(slot);
+
+        MailboxEntry entry = findBySlot(slot)
+                .orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
+
+        entries.remove(entry);
+    }
+
     /**
      * 수령 슬라이스 VO (인벤토리에 넣을 정보)
      */
