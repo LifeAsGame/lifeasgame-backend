@@ -20,6 +20,7 @@ public final class PlayerWebMapper {
 
     public static PlayerResponse.Info toPlayerInfo(PlayerResult.PlayerInfo result) {
         return new PlayerResponse.Info(
+                result.playerId(),
                 result.name(),
                 result.gender(),
                 result.job(),
@@ -40,15 +41,16 @@ public final class PlayerWebMapper {
                         .map(
                                 effect ->
                                         new PlayerResponse.Info.StatusEffects(
-                                                effect.name(),
-                                                effect.category().name()
+                                                effect.code(),
+                                                effect.category()
                                         )
                         )
-                        .toList()
+                        .toList(),
+                result.representativeTitleId()
         );
     }
 
-    public static PlayerResponse.Updated toUpdatedTitle(PlayerResult.UpdatedTitle result) {
-        return new PlayerResponse.Updated(result.titleId());
+    public static PlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle result) {
+        return new PlayerResponse.UpdatedTitle(result.titleId());
     }
 }

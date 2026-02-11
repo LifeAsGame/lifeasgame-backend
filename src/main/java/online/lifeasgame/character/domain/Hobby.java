@@ -40,4 +40,9 @@ public class Hobby extends AbstractTime {
     public static Hobby create(String name, HobbyCategory category) {
         return new Hobby(name, category);
     }
+
+    public void update(String name, HobbyCategory category) {
+        this.name = name;
+        this.category = category;
+    }
 }

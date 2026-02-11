@@ -17,4 +17,11 @@ public final class AdminPlayerAchievementWebMapper {
                 result.acquiredAt()
         );
     }
+
+    public static AdminPlayerAchievementResponse.Revoked toRevoked(PlayerAchievementResult.Revoked result) {
+        return new AdminPlayerAchievementResponse.Revoked(
+                result.playerId(),
+                result.achievementId()
+        );
+    }
 }

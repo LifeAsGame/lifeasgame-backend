@@ -24,4 +24,6 @@ public interface ExerciseLogRepository {
             int page,
             int size
     );
+
+    void deleteByIdAndPlayerId(Long exerciseId, Long playerId);
 }

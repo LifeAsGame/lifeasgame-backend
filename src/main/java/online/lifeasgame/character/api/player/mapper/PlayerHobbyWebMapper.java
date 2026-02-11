@@ -55,7 +55,7 @@ public final class PlayerHobbyWebMapper {
         );
     }
 
-    public static PlayerHobbyCommand.Change toChangeCommand(Long hobbyId, PlayerHobbyRequest.Change request) {
+    public static PlayerHobbyCommand.Change toChangeCommand(Long hobbyId, PlayerHobbyRequest.Update request) {
         return new PlayerHobbyCommand.Change(
                 hobbyId,
                 request.customName(),

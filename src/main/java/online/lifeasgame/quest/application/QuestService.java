@@ -8,6 +8,7 @@ import online.lifeasgame.quest.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -130,5 +131,53 @@ public class QuestService {
     public Quest ensureQuest(QuestCode code) {
         return questReader.findByCode(code)
                 .orElseGet(() -> questWriter.create(questBlueprintCatalog.require(code).instantiate()));
+    }
+
+    @Transactional
+    public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
+        QuestCode questCode = QuestCode.parse(command.questCode());
+        Quest quest = questReader.getByCode(questCode);
+
+        questReader.assertAcceptanceIsExists(playerId, quest.getId());
+
+        QuestAcceptance questAcceptance = questWriter.accept(
+                QuestAcceptance.start(
+                        quest.getId(),
+                        playerId,
+                        command.partyId(),
+                        command.guildId(),
+                        TimePeriod.daily(LocalDate.now())
+                )
+        );
+
+        return QuestResult.Acceptance.from(questAcceptance, quest);
+    }
+
+    @Transactional
+    public QuestResult.Canceled cancel(Long playerId, QuestCommand.Cancel command) {
+        QuestCode questCode = QuestCode.parse(command.questCode());
+        Quest quest = questReader.getByCode(questCode);
+
+        questWriter.cancel(playerId, quest.getId());
+
+        return new QuestResult.Canceled(playerId, quest.getId(), questCode.name());
+    }
+
+    @Transactional
+    public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
+        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        Quest quest = questReader.getById(acceptance.getQuestId());
+        acceptance.addProgress(command.delta(), quest);
+
+        return QuestResult.Acceptance.from(acceptance, quest);
+    }
+
+    @Transactional
+    public QuestResult.Acceptance changeAcceptanceStatus(Long acceptanceId, QuestCommand.ChangeStatus command) {
+        QuestStatus questStatus = QuestStatus.parse(command.status());
+        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        acceptance.changeStatus(questStatus);
+        Quest quest = questReader.getById(acceptance.getQuestId());
+        return QuestResult.Acceptance.from(acceptance, quest);
     }
 }

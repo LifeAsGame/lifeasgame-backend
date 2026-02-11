@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminExerciseWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminExerciseSpecV1;
 import online.lifeasgame.lifelog.application.ExerciseLogService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
+import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,18 +26,19 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
 
     private final ExerciseLogService exerciseLogService;
 
-    @GetMapping("/{playerId}/exercises/recent")
     @Override
-    public ResponseEntity<List<AdminExerciseResponse.Info>> recent(
+    @GetMapping("/{playerId}/exercises/recent")
+    public ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
         List<ExerciseResult.Info> results = exerciseLogService.recent(playerId, limit);
-        return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
+        return ApiResponses.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
+    @Override
     @GetMapping("/{playerId}/exercises/search")
-    public ResponseEntity<List<AdminExerciseResponse.Info>> search(
+    public ResponseEntity<ApiResponse<List<AdminExerciseResponse.Info>>> search(
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -48,12 +51,12 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
                 AdminExerciseWebMapper.toSearchCommand(category, from, to, page, size)
         );
 
-        return ResponseEntity.ok(AdminExerciseWebMapper.toInfos(results));
+        return ApiResponses.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
-    @PostMapping("/{playerId}/exercises")
     @Override
-    public ResponseEntity<AdminExerciseResponse.Created> create(
+    @PostMapping("/{playerId}/exercises")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminExerciseRequest.Create request
     ) {
@@ -62,12 +65,12 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
                 AdminExerciseWebMapper.toCreateCommand(request)
         );
 
-        return ResponseEntity.ok(AdminExerciseWebMapper.toCreated(result));
+        return ApiResponses.ok(AdminExerciseWebMapper.toCreated(result));
     }
 
-    @PostMapping("/{playerId}/exercises/{exerciseId}")
     @Override
-    public ResponseEntity<AdminExerciseResponse.Info> update(
+    @PostMapping("/{playerId}/exercises/{exerciseId}")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long exerciseId,
             @Valid @RequestBody AdminExerciseRequest.Update request
@@ -78,6 +81,26 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
                 AdminExerciseWebMapper.toUpdateCommand(request)
         );
 
-        return ResponseEntity.ok(AdminExerciseWebMapper.toInfo(result));
+        return ApiResponses.ok(AdminExerciseWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/exercises/{exerciseId}")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Info result = exerciseLogService.getExercise(playerId, exerciseId);
+        return ApiResponses.ok(AdminExerciseWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/exercises/{exerciseId}")
+    public ResponseEntity<ApiResponse<AdminExerciseResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long exerciseId
+    ) {
+        ExerciseResult.Deleted result = exerciseLogService.delete(playerId, exerciseId);
+        return ApiResponses.deleted(AdminExerciseWebMapper.toDeleted(result));
     }
 }

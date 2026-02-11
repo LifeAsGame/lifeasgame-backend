@@ -47,4 +47,6 @@ public interface CollectionLogJpaRepository extends JpaRepository<CollectionLog,
         order by c.id desc
     """)
     List<CollectionLog> findAllWithTagsByIdIn(@Param("ids") List<Long> ids);
+
+    void deleteByIdAndPlayerId(Long id, Long playerId);
 }

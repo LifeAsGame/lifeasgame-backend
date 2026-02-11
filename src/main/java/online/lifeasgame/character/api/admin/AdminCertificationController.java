@@ -11,12 +11,10 @@ import online.lifeasgame.character.application.result.CertificationResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +33,42 @@ public class AdminCertificationController implements AdminCertificationApiSpecV1
                 URI.create("/admin/v1/certifications/"),
                 AdminCertificationWebMapper.toInfo(result)
         );
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    ) {
+        List<CertificationResult.Info> results = certificationService.getCertifications(categories);
+        return ApiResponses.ok(AdminCertificationWebMapper.toInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> get(
+            @PathVariable Long certificationId
+    ) {
+        CertificationResult.Info result = certificationService.getCertification(certificationId);
+        return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PatchMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Info>> update(
+            @PathVariable Long certificationId,
+            @Valid @RequestBody AdminCertificationRequest.Update request
+    ) {
+        CertificationResult.Info result = certificationService.update(certificationId, AdminCertificationWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminCertificationWebMapper.toInfo(result));
+    }
+
+    @Override
+    @DeleteMapping("/{certificationId}")
+    public ResponseEntity<ApiResponse<AdminCertificationResponse.Deleted>> delete(
+            @PathVariable Long certificationId
+    ) {
+        CertificationResult.Deleted result = certificationService.delete(certificationId);
+        return ApiResponses.deleted(AdminCertificationWebMapper.toDeleted(result.certificationId()));
     }
 }

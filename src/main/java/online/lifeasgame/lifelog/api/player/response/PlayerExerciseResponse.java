@@ -2,6 +2,7 @@ package online.lifeasgame.lifelog.api.player.response;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 public final class PlayerExerciseResponse {
 
@@ -10,6 +11,8 @@ public final class PlayerExerciseResponse {
 
     public record Created(Long id) {
     }
+
+    public record Deleted(Long id) {}
 
     public record Info(
             Long id,
@@ -24,4 +27,14 @@ public final class PlayerExerciseResponse {
             Instant updatedAt
     ) {
     }
+
+    public record Infos(List<Info> items) {}
+
+    public record Page<T>(
+            List<T> content,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages
+    ) {}
 }

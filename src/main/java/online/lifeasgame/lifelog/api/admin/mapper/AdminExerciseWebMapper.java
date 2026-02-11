@@ -67,4 +67,8 @@ public final class AdminExerciseWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static AdminExerciseResponse.Deleted toDeleted(ExerciseResult.Deleted result) {
+        return new AdminExerciseResponse.Deleted(result.exerciseId());
+    }
 }

@@ -9,14 +9,12 @@ import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class ExerciseLogService {
 
     private final ExerciseLogReader exerciseLogReader;
@@ -83,5 +81,16 @@ public class ExerciseLogService {
         ).stream()
                 .map(ExerciseResult.Info::from)
                 .toList();
+    }
+
+    public ExerciseResult.Info getExercise(Long playerId, Long exerciseId) {
+        ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
+        return ExerciseResult.Info.from(exerciseLog);
+    }
+
+    @Transactional
+    public ExerciseResult.Deleted delete(Long playerId, Long exerciseId) {
+        exerciseLogWriter.delete(playerId, exerciseId);
+        return new ExerciseResult.Deleted(exerciseId);
     }
 }

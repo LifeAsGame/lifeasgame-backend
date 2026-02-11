@@ -34,10 +34,37 @@ public class AchievementService {
         );
 
         return new AchievementResult.Info(
+                achievement.getId(),
                 achievement.getCode(),
                 achievement.getName(),
                 achievement.getCategory().name(),
                 achievement.getDescMd()
         );
+    }
+
+    public AchievementResult.Info getAchievement(Long achievementId) {
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
+        return AchievementResult.Info.from(achievement);
+    }
+
+    @Transactional
+    public AchievementResult.Info update(Long achievementId, AchievementCommand.Update command) {
+        AchievementCategory category = AchievementCategory.parse(command.category());
+
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
+        achievement.update(
+                command.code(),
+                command.name(),
+                category,
+                command.descMd()
+        );
+
+        return AchievementResult.Info.from(achievement);
+    }
+
+    @Transactional
+    public AchievementResult.Deleted delete(Long achievementId) {
+        achievementWriter.delete(achievementId);
+        return new AchievementResult.Deleted(achievementId);
     }
 }

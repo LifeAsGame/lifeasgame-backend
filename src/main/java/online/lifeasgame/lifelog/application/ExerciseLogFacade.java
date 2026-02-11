@@ -38,4 +38,14 @@ public class ExerciseLogFacade {
     private Long getPlayer() {
         return currentPlayerAccessor.currentPlayerIdOrThrow();
     }
+
+    public ExerciseResult.Info getExercise(Long exerciseId) {
+        Long playerId = getPlayer();
+        return exerciseLogService.getExercise(playerId, exerciseId);
+    }
+
+    public ExerciseResult.Deleted delete(Long exerciseId) {
+        Long playerId = getPlayer();
+        return exerciseLogService.delete(playerId, exerciseId);
+    }
 }

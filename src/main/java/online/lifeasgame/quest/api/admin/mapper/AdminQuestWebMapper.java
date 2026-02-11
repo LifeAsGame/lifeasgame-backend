@@ -111,4 +111,17 @@ public final class AdminQuestWebMapper {
                 result.dueAt()
         );
     }
+
+    public static QuestCommand.AdjustProgress toAdjustProgressCommand(AdminQuestRequest.AdjustProgress request) {
+        return new QuestCommand.AdjustProgress(
+                request.delta()
+        );
+    }
+
+    public static QuestCommand.ChangeStatus toChangeStatusCommand(AdminQuestRequest.ChangeStatus request) {
+        return new QuestCommand.ChangeStatus(
+                request.status(),
+                request.reason()
+        );
+    }
 }

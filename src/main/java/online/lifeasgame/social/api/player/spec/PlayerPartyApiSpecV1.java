@@ -32,7 +32,6 @@ public interface PlayerPartyApiSpecV1 {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
-
     @Operation(summary = "파티 상세 조회")
     ResponseEntity<ApiResponse<PlayerPartyResponse.Info>> getPartyInfo(
             @PathVariable Long partyId

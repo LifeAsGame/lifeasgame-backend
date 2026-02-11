@@ -16,7 +16,7 @@ public final class PlayerHobbyRequest {
     ) {
     }
 
-    public record Change(
+    public record Update(
             String customName,
             String detail,
             Integer proficiency,

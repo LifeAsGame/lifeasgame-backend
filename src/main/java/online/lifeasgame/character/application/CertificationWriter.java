@@ -17,4 +17,8 @@ class CertificationWriter {
     public Certification create(Certification certification) {
         return repository.save(certification);
     }
+
+    public void delete(Long certificationId) {
+        repository.delete(certificationId);
+    }
 }

@@ -11,11 +11,7 @@ import online.lifeasgame.inventory.api.player.response.MailboxResponse;
 import online.lifeasgame.inventory.api.player.spec.MailboxApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,8 +22,8 @@ public class MailboxController implements MailboxApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<MailboxResponse.Mails>> list() {
-        MailboxResult.Mails result = mailboxFacade.list();
+    public ResponseEntity<ApiResponse<MailboxResponse.Entries>> list() {
+        MailboxResult.Entries result = mailboxFacade.list();
         return ApiResponses.ok(MailboxWebMapper.toMails(result));
     }
 
@@ -44,6 +40,22 @@ public class MailboxController implements MailboxApiSpecV1 {
     @PostMapping("/claim")
     public ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request) {
         mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));
+        return ApiResponses.noContent();
+    }
+
+    @Override
+    @PostMapping("/claim/all")
+    public ResponseEntity<ApiResponse<Void>> claimAll(
+            @Valid @RequestBody MailboxRequest.ClaimAll request
+    ) {
+        mailboxFacade.claimAll(MailboxWebMapper.toClaimAllCommand(request));
+        return ApiResponses.noContent();
+    }
+
+    @Override
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> delete(MailboxRequest.Delete request) {
+        mailboxFacade.delete(MailboxWebMapper.toDeleteCommand(request));
         return ApiResponses.noContent();
     }
 }

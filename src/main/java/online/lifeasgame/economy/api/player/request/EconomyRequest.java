@@ -17,8 +17,19 @@ public final class EconomyRequest {
     ) {
     }
 
+    public record ChangeListingPrice(
+            @Min(1) long price,
+            @NotBlank String currency
+    ) {
+    }
+
     public record ReserveListing(
             @Min(1) int ttlSeconds
+    ) {
+    }
+
+    public record CancelReservation(
+            @NotBlank String reservationToken
     ) {
     }
 
@@ -26,9 +37,6 @@ public final class EconomyRequest {
             String reservationToken,
             @NotBlank String idempotencyKey
     ) {
-    }
-
-    public record CancelListing() {
     }
 
     public record PurchaseShopItem(
@@ -40,7 +48,14 @@ public final class EconomyRequest {
     }
 
     public record ConfirmShopReservation(
-            @NotBlank String reservationToken
+            @NotBlank String reservationToken,
+            String idempotencyKey
+    ) {
+    }
+
+    public record CancelShopReservation(
+            @NotBlank String reservationToken,
+            String idempotencyKey
     ) {
     }
 

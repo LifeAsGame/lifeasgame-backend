@@ -42,4 +42,29 @@ public class CertificationService {
                 certification.getCategory().name()
         );
     }
+
+    public CertificationResult.Info getCertification(Long certificationId) {
+        Certification certification = certificationReader.getByIdOrThrow(certificationId);
+        return CertificationResult.Info.from(certification);
+    }
+
+    @Transactional
+    public CertificationResult.Info update(Long certificationId, CertificationCommand.Update command) {
+        CertificationCategory category = CertificationCategory.parse(command.category());
+
+        Certification certification = certificationReader.getByIdOrThrow(certificationId);
+        certification.update(
+                command.name(),
+                command.issuer(),
+                category
+        );
+
+        return CertificationResult.Info.from(certification);
+    }
+
+    @Transactional
+    public CertificationResult.Deleted delete(Long certificationId) {
+        certificationWriter.delete(certificationId);
+        return new CertificationResult.Deleted(certificationId);
+    }
 }

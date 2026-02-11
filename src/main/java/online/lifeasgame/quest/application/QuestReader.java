@@ -1,10 +1,12 @@
 package online.lifeasgame.quest.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.domain.Quest;
 import online.lifeasgame.quest.domain.QuestAcceptance;
 import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.QuestStatus;
+import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.quest.domain.repository.QuestAcceptanceRepository;
 import online.lifeasgame.quest.domain.repository.QuestRepository;
 import org.springframework.stereotype.Component;
@@ -66,5 +68,11 @@ class QuestReader {
 
     QuestAcceptance findLatest(Long questId, Long playerId) {
         return questAcceptanceRepository.findLatestByQuestAndPlayer(questId, playerId).orElse(null);
+    }
+
+    public void assertAcceptanceIsExists(Long playerId, Long questId) {
+        if (questAcceptanceRepository.existsByPlayerIdAndId(playerId, questId)) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_ALREADY_EXISTS);
+        }
     }
 }

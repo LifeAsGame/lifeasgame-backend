@@ -73,4 +73,8 @@ public final class AdminMediaWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static AdminMediaResponse.Deleted toDeleted(Long mediaId) {
+        return new AdminMediaResponse.Deleted(mediaId);
+    }
 }

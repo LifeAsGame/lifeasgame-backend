@@ -9,10 +9,7 @@ import online.lifeasgame.character.application.result.PlayerTitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,5 +26,15 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
     ) {
         PlayerTitleResult.Created result = playerTitleService.createTitle(playerId, titleId);
         return ApiResponses.ok(AdminPlayerTitleWebMapper.toGrantedTitle(result));
+    }
+
+    @Override
+    @GetMapping("/{playerId}/titles/{titleId}}")
+    public ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Revoked>> revokeTitle(
+            @PathVariable Long playerId,
+            @PathVariable Long titleId
+    ) {
+        PlayerTitleResult.Revoked result = playerTitleService.revokeTitle(playerId, titleId);
+        return ApiResponses.deleted(AdminPlayerTitleWebMapper.toRevoked(result));
     }
 }

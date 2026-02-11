@@ -67,4 +67,10 @@ public final class PlayerExerciseWebMapper {
                 result.updatedAt()
         );
     }
+
+    public static PlayerExerciseResponse.Deleted toDeleted(ExerciseResult.Deleted result) {
+        return new PlayerExerciseResponse.Deleted(
+                result.exerciseId()
+        );
+    }
 }

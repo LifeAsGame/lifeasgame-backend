@@ -67,7 +67,6 @@ public final class AdminGuildWebMapper {
 
     public static GuildCommand.TransferLeader toTransferLeaderCommand(AdminGuildRequest.TransferLeader request) {
         return new GuildCommand.TransferLeader(
-                request.fromLeaderPlayerId(),
                 request.toPlayerId()
         );
     }

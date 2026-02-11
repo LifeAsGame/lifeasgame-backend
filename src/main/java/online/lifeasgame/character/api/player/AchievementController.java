@@ -9,10 +9,7 @@ import online.lifeasgame.character.application.result.AchievementResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,5 +27,14 @@ public class AchievementController implements AchievementApiSpecV1 {
     ) {
         List<AchievementResult.Info> results = achievementService.getAchievements(categories);
         return ApiResponses.ok(AchievementWebMapper.toInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{achievementId}")
+    public ResponseEntity<ApiResponse<AchievementResponse.Info>> achievementInfo(
+             @PathVariable Long achievementId
+    ) {
+        AchievementResult.Info result = achievementService.getAchievement(achievementId);
+        return ApiResponses.ok(AchievementWebMapper.toInfo(result));
     }
 }

@@ -2,6 +2,7 @@ package online.lifeasgame.character.api.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.api.admin.mapper.AdminPlayerTitleWebMapper;
 import online.lifeasgame.character.api.admin.mapper.AdminTitleWebMapper;
 import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
 import online.lifeasgame.character.api.admin.response.AdminTitleResponse;
@@ -11,10 +12,9 @@ import online.lifeasgame.character.application.result.TitleResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,5 +30,42 @@ public class AdminTitleController implements AdminTitleApiSpecV1 {
     ) {
         TitleResult.Info result = titleService.create(AdminTitleWebMapper.toCreateCommand(request));
         return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    ) {
+        List<TitleResult.Info> results = titleService.getTitles(categories);
+        return ApiResponses.ok(AdminTitleWebMapper.toInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> get(
+            @PathVariable Long titleId
+    ) {
+        TitleResult.Info result = titleService.getTitle(titleId);
+        return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PatchMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Info>> update(
+            @PathVariable Long titleId,
+            @Valid @RequestBody AdminTitleRequest.Update request
+    ) {
+        TitleResult.Info result = titleService.update(titleId, AdminPlayerTitleWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminTitleWebMapper.toInfo(result));
+    }
+
+    @Override
+    @DeleteMapping("/{titleId}")
+    public ResponseEntity<ApiResponse<AdminTitleResponse.Deleted>> delete(
+            @PathVariable Long titleId
+    ) {
+        TitleResult.Deleted result = titleService.delete(titleId);
+        return ApiResponses.deleted(AdminTitleWebMapper.toDelete(result));
     }
 }

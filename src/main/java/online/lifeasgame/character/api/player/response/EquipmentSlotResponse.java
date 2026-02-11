@@ -13,6 +13,7 @@ public final class EquipmentSlotResponse {
     }
 
     public record Info(
+            Long slotId,
             String code,
             String name,
             String category,

@@ -145,4 +145,18 @@ public class MediaLog extends AbstractTime {
     public void rewatch() {
         this.rewatchCount += 1;
     }
+
+    public void update(
+            MediaCategory mediaCategory,
+            Title title,
+            EpisodeProgress episodeProgress,
+            WatchStatus watchStatus,
+            MediaTags tags
+    ) {
+        this.category = mediaCategory;
+        this.title = title;
+        this.progress = episodeProgress;
+        this.status = watchStatus;
+        this.mediaTags = tags;
+    }
 }

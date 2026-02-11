@@ -1,23 +1,17 @@
 package online.lifeasgame.user.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.user.domain.error.UserError;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -65,4 +59,57 @@ public class User extends AbstractTime {
     }
 
     public void recordEvent(DomainEvent e) { domainEvents.add(e); }
+
+    public void changeNickname(Nickname nickname) {
+        this.nickname = nickname;
+    }
+
+    public void changePassword(
+            HashedPassword currentPassword,
+            HashedPassword newPassword
+    ) {
+        if (this.passwordHash.equals(currentPassword)) {
+            this.passwordHash = newPassword;
+        } else {
+            throw new DomainException(UserError.INCORRECT_PASSWORD);
+        }
+    }
+
+    public void changeStatus(UserStatus newStatus) {
+        if (this.status == UserStatus.DELETED) {
+            throw new DomainException(UserError.USER_ALREADY_DELETED);
+        }
+
+        if (this.status == newStatus) {
+            return;
+        }
+
+        switch (newStatus) {
+            case ACTIVE -> activate();
+            case BANNED -> ban();
+            case DELETED -> deleteBySystem();
+            default -> throw new DomainException(UserError.INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void activate() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    private void ban() {
+        if (this.status == UserStatus.DELETED) {
+            throw new DomainException(UserError.INVALID_STATUS_CHANGE);
+        }
+        this.status = UserStatus.BANNED;
+    }
+
+    private void deleteBySystem() {
+        this.status = UserStatus.DELETED;
+    }
+
+    public void delete(HashedPassword password) {
+        if (this.passwordHash.equals(password)) {
+            this.status = UserStatus.DELETED;
+        }
+    }
 }

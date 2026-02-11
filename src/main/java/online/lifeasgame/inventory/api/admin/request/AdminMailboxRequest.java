@@ -16,4 +16,9 @@ public final class AdminMailboxRequest {
             boolean bound
     ) {
     }
+
+    public record Delete(
+            @Min(0) int slotIndex,
+            String reason
+    ) {}
 }

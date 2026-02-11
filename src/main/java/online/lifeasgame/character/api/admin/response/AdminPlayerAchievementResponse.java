@@ -16,4 +16,6 @@ public final class AdminPlayerAchievementResponse {
             Instant acquiredAt
     ) {
     }
+
+    public record Revoked(Long playerId, Long achievementId) {}
 }

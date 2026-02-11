@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Item API V1 (Player)")
 public interface ItemApiSpecV1 {
 
-
     @Operation(summary = "아이템 상세 조회", description = "아이템 상세 정보를 조회합니다.")
     ResponseEntity<ApiResponse<ItemResponse.Detail>> getItem(@PathVariable Long itemId);
 

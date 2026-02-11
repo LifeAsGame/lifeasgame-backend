@@ -9,6 +9,7 @@ public enum QuestError implements ErrorCode {
     INVALID_QUEST_CODE("QUE-400-INVALID-QUEST-CODE", "Invalid Quest code", 400),
     INVALID_QUEST_REPEATABLE_RULE("QUE-400-INVALID-QUEST-REPEATABLE-RULE", "Invalid Quest repeatable rule", 400),
     INVALID_QUEST_TARGET_TYPE("QUE-400-INVALID-QUEST-TARGET-TYPE", "Invalid Quest target type", 400),
+    QUEST_ACCEPTANCE_ALREADY_EXISTS("QUE-409-QUEST-ACCEPTANCE-ALREADY-EXISTS", "Quest account already exists", 409)
     ;
 
     private final String code;

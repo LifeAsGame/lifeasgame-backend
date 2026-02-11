@@ -20,12 +20,31 @@ public final class PlayerMediaLogRequest {
     ) {
     }
 
-    public record Rate(@DecimalMin("0.0") @DecimalMax("5.0") Double score) {
+    public record Update(
+            String category,
+            String title,
+            String originalTitle,
+            @Min(0) Integer currentEpisode,
+            @Min(1) Integer totalEpisode,
+            String status,
+            Set<String> tags
+    ) {}
+
+    public record Rate(
+            @DecimalMin("0.0") @DecimalMax("5.0") Double score,
+            String idempotencyKey
+    ) {
     }
 
-    public record Advance(@Min(1) Integer step) {
+    public record Advance(
+            @Min(1) Integer step,
+            String idempotencyKey
+    ) {
     }
 
-    public record MarkStatus(@NotBlank String status) {
+    public record MarkStatus(
+            @NotBlank String status,
+            String idempotencyKey
+    ) {
     }
 }

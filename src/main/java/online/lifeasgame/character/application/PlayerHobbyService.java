@@ -71,4 +71,10 @@ public class PlayerHobbyService {
     public void deletePlayerHobby(Long playerId, Long hobbyId) {
         playerHobbyWriter.deleteByPlayerIdAndHobbyId(playerId, hobbyId);
     }
+
+    @Transactional
+    public PlayerHobbyResult.Revoked revokeHobby(Long playerId, Long hobbyId) {
+        playerHobbyWriter.deleteByPlayerIdAndHobbyId(playerId, hobbyId);
+        return new PlayerHobbyResult.Revoked(playerId, hobbyId);
+    }
 }

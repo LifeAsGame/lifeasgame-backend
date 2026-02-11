@@ -18,11 +18,19 @@ public final class PlayerEquipmentResult {
 
     public record Info(
             Long slotId,
+            String slotCode,
+            String slotName,
+            String slotCategory,
+            String slotRole,
             Long itemInstanceId
     ) {
         public static Info from(PlayerEquipment playerEquipment) {
             return new Info(
                     playerEquipment.getSlotId(),
+                    null,
+                    null,
+                    null,
+                    null,
                     playerEquipment.getItemInstanceId()
             );
         }

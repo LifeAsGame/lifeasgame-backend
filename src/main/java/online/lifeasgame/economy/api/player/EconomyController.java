@@ -99,7 +99,7 @@ public class EconomyController implements EconomyApiSpecV1 {
 
     @Override
     @GetMapping("/shop/purchases")
-    public ResponseEntity<ApiResponse<EconomyResponse.ShopPurchases>> myShopPurchases() {
+    public ResponseEntity<ApiResponse<EconomyResponse.ShopPurchases>> getMyShopPurchases() {
         EconomyResult.ShopPurchases purchases = economyFacade.myShopPurchases();
         return ApiResponses.ok(EconomyWebMapper.toShopPurchases(purchases));
     }

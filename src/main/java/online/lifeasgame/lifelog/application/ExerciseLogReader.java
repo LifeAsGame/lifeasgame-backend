@@ -14,7 +14,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class ExerciseLogReader {
+class ExerciseLogReader {
 
     private final ExerciseLogRepository repository;
 

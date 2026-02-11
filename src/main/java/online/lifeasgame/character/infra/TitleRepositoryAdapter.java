@@ -1,12 +1,13 @@
 package online.lifeasgame.character.infra;
 
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Title;
 import online.lifeasgame.character.domain.TitleCategory;
 import online.lifeasgame.character.domain.repository.TitleRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -32,5 +33,10 @@ public class TitleRepositoryAdapter implements TitleRepository {
     @Override
     public Optional<Title> findById(Long id) {
         return jpaRepository.findById(id);
+    }
+
+    @Override
+    public void deleteById(Long titleId) {
+        jpaRepository.deleteById(titleId);
     }
 }

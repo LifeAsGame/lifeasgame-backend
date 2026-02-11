@@ -126,7 +126,7 @@ public class GuildService {
     public void transferLeader(Long playerId, Long id, GuildCommand.TransferLeader command) {
         Guild guild = guildReader.getByIdOrThrow(id);
         ensureLeader(guild, playerId);
-        guild.transferLeadership(command.fromLeaderPlayerId(), command.toPlayerId());
+        guild.transferLeadership(guild.getLeaderPlayerId(), command.toPlayerId());
     }
 
     @Transactional

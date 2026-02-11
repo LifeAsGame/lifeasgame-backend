@@ -7,14 +7,12 @@ import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
@@ -95,5 +93,37 @@ public class MediaLogService {
                 ).stream()
                 .map(MediaLogResult.Info::from)
                 .toList();
+    }
+
+    @Transactional
+    public MediaLogResult.Info update(Long playerId, Long mediaId, MediaLogCommand.Update command) {
+        MediaCategory mediaCategory = MediaCategory.parse(command.category());
+        Title title = Title.of(command.title(), command.originalTitle());
+        EpisodeProgress episodeProgress = EpisodeProgress.of(command.currentEpisode(), command.totalEpisode());
+        WatchStatus watchStatus = WatchStatus.parse(command.status());
+        MediaTags tags = MediaTags.of(command.tags());
+
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+
+        mediaLog.update(
+                mediaCategory,
+                title,
+                episodeProgress,
+                watchStatus,
+                tags
+        );
+
+        return MediaLogResult.Info.from(mediaLog);
+    }
+
+    @Transactional
+    public MediaLogResult.Deleted delete(Long playerId, Long mediaId) {
+        mediaLogWriter.delete(playerId, mediaId);
+        return new MediaLogResult.Deleted(mediaId);
+    }
+
+    public MediaLogResult.Info getMedia(Long playerId, Long mediaId) {
+        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
+        return MediaLogResult.Info.from(mediaLog);
     }
 }

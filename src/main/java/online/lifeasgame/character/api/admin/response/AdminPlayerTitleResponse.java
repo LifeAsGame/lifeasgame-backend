@@ -16,4 +16,6 @@ public final class AdminPlayerTitleResponse {
             Instant acquiredAt
     ) {
     }
+
+    public record Revoked(Long playerId, Long titleId) {}
 }

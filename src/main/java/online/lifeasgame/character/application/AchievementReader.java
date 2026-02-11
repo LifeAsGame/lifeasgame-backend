@@ -31,4 +31,9 @@ class AchievementReader {
         return repository.findById(achievementId)
                 .orElseThrow(() -> new DomainException(AchievementError.ACHIEVEMENT_NOT_FOUND));
     }
+
+    public void assertExistsById(Long achievementId) {
+        repository.findById(achievementId)
+                .orElseThrow(() -> new DomainException(AchievementError.ACHIEVEMENT_NOT_FOUND));
+    }
 }

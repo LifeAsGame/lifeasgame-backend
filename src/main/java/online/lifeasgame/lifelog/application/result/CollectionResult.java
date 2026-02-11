@@ -42,4 +42,10 @@ public final class CollectionResult {
             );
         }
     }
+
+    public record Deleted(
+            Long playerId,
+            Long collectionId
+    ) {
+    }
 }

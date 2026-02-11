@@ -24,14 +24,14 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<PlayerResponse.Info>> playerInfo() {
+    public ResponseEntity<ApiResponse<PlayerResponse.Info>> me() {
         PlayerResult.PlayerInfo result = playerFacade.getPlayerInfo();
         return ApiResponses.ok(PlayerWebMapper.toPlayerInfo(result));
     }
 
     @Override
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<PlayerResponse.Created>> linkStart(
+    public ResponseEntity<ApiResponse<PlayerResponse.Created>> register(
             @Valid @RequestBody PlayerRequest.Register request
     ) {
         PlayerResult.Created result = playerFacade.linkStart(PlayerWebMapper.toRegisterCommand(request));
@@ -43,7 +43,7 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @PatchMapping("/titles/{titleId}")
-    public ResponseEntity<ApiResponse<PlayerResponse.Updated>> updateTitle(
+    public ResponseEntity<ApiResponse<PlayerResponse.UpdatedTitle>> updateTitle(
             @PathVariable Long titleId
     ) {
         PlayerResult.UpdatedTitle result = playerFacade.changeRepresentativeTitle(titleId);

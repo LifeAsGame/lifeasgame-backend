@@ -7,6 +7,6 @@ import org.springframework.http.ResponseEntity;
 
 public interface PlayerTitleApiSpecV1 {
 
-    @Operation(summary = "Player 보유 칭호 목록 출력", description = "사용자가 보유한 칭호 목록을 출력합니다")
+    @Operation(summary = "Player 보유 Title 목록", description = "사용자가 보유한 칭호 목록을 출력합니다.")
     ResponseEntity<ApiResponse<PlayerTitleResponse.Infos>> playerTitleInfos();
 }

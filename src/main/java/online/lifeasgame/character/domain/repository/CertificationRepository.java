@@ -14,4 +14,6 @@ public interface CertificationRepository {
     List<Certification> findByCategoryIn(List<CertificationCategory> categories);
 
     Optional<Certification> findById(Long id);
+
+    void delete(Long certificationId);
 }

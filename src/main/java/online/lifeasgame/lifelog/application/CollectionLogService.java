@@ -7,14 +7,12 @@ import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class CollectionLogService {
 
     private final CollectionLogReader collectionLogReader;
@@ -82,5 +80,15 @@ public class CollectionLogService {
                 ).stream()
                 .map(CollectionResult.Info::from)
                 .toList();
+    }
+
+    public CollectionResult.Info getCollection(Long playerId, Long collectionId) {
+        CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
+        return CollectionResult.Info.from(collectionLog);
+    }
+
+    public CollectionResult.Deleted delete(Long playerId, Long collectionId) {
+        collectionLogWriter.delete(playerId, collectionId);
+        return new CollectionResult.Deleted(playerId, collectionId);
     }
 }

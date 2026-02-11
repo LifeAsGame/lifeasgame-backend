@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
 import online.lifeasgame.character.domain.EquipmentSlotRole;
+import online.lifeasgame.character.domain.error.EquipmentSlotError;
 import online.lifeasgame.character.domain.repository.EquipmentSlotRepository;
+import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,5 +33,10 @@ class EquipmentSlotReader {
         } else {
             return repository.findByCategoryInAndRoleIn(categories, roles);
         }
+    }
+
+    public EquipmentSlot getByIdOrThrow(Long slotId) {
+        return repository.findById(slotId)
+                .orElseThrow(() -> new DomainException(EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND));
     }
 }

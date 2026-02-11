@@ -22,4 +22,6 @@ public interface JpaPlayerAchievementRepository extends JpaRepository<PlayerAchi
                 ORDER BY pa.acquiredAt DESC
         """)
     List<PlayerAchievementView> findPlayerAchievementViews(Long playerId);
+
+    void deleteByPlayerIdAndAchievementId(Long playerId, Long achievementId);
 }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.request.AdminCollectionRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminCollectionResponse;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +19,13 @@ import java.util.List;
 public interface AdminCollectionSpecV1 {
 
     @Operation(summary = "최근 조회(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminCollectionResponse.Info>> recent(
+    ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> recent(
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     );
 
     @Operation(summary = "검색(관리자, 플레이어 스코프)")
-    ResponseEntity<List<AdminCollectionResponse.Info>> search(
+    ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> search(
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
@@ -33,15 +34,27 @@ public interface AdminCollectionSpecV1 {
     );
 
     @Operation(summary = "컬렉션 등록(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminCollectionResponse.Created> create(
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Created>> create(
             @PathVariable Long playerId,
             @Valid @RequestBody AdminCollectionRequest.Create request
     );
 
     @Operation(summary = "컬렉션 수정(관리자, 플레이어 스코프)")
-    ResponseEntity<AdminCollectionResponse.Info> update(
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> update(
             @PathVariable Long playerId,
             @PathVariable Long collectionId,
             @Valid @RequestBody AdminCollectionRequest.Update request
+    );
+
+    @Operation(summary = "단건 조회(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Info>> get(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
+    );
+
+    @Operation(summary = "컬렉션 삭제(관리자, 플레이어 스코프)")
+    ResponseEntity<ApiResponse<AdminCollectionResponse.Deleted>> delete(
+            @PathVariable Long playerId,
+            @PathVariable Long collectionId
     );
 }

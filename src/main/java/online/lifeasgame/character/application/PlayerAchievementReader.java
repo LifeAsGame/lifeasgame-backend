@@ -19,4 +19,8 @@ class PlayerAchievementReader {
     public List<PlayerAchievementView> getViewsByPlayerId(Long playerId) {
         return query.findViewsByPlayerId(playerId);
     }
+
+    public void getByPlayerId(Long playerId) {
+
+    }
 }

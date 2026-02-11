@@ -11,11 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class ExerciseLogWriter {
+class ExerciseLogWriter {
 
     private final ExerciseLogRepository repository;
 
     public ExerciseLog create(ExerciseLog exerciseLog) {
         return repository.save(exerciseLog);
+    }
+
+    public void delete(Long playerId, Long exerciseId) {
+        repository.deleteByIdAndPlayerId(exerciseId, playerId);
     }
 }

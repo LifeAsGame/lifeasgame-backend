@@ -17,4 +17,8 @@ class AchievementWriter {
     public Achievement create(Achievement achievement) {
         return repository.save(achievement);
     }
+
+    public void delete(Long achievementId) {
+        repository.delete(achievementId);
+    }
 }

@@ -38,4 +38,7 @@ public final class PlayerAchievementResult {
             Instant acquiredAt
     ) {
     }
+
+    public record Revoked(Long playerId, Long achievementId) {
+    }
 }

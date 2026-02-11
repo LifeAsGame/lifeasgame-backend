@@ -11,12 +11,10 @@ import online.lifeasgame.character.application.result.HobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +33,42 @@ public class AdminHobbyController implements AdminHobbyApiSpecV1 {
                 URI.create("/admin/v1/hobbies/"),
                 AdminHobbyWebMapper.toInfo(result)
         );
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Infos>> list(
+            @RequestParam(name = "category", required = false) List<String> categories
+    ) {
+        List<HobbyResult.Info> results = hobbyService.getHobbies(categories);
+        return ApiResponses.ok(AdminHobbyWebMapper.toInfos(results));
+    }
+
+    @Override
+    @GetMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> get(
+            @PathVariable Long hobbyId
+    ) {
+        HobbyResult.Info result = hobbyService.getHobby(hobbyId);
+        return ApiResponses.ok(AdminHobbyWebMapper.toInfo(result));
+    }
+
+    @Override
+    @PatchMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Info>> update(
+            @PathVariable Long hobbyId,
+            @Valid @RequestBody AdminHobbyRequest.Update request
+    ) {
+        HobbyResult.Info result = hobbyService.update(hobbyId, AdminHobbyWebMapper.toUpdateCommand(request));
+        return ApiResponses.ok(AdminHobbyWebMapper.toInfo(result));
+    }
+
+    @Override
+    @DeleteMapping("/{hobbyId}")
+    public ResponseEntity<ApiResponse<AdminHobbyResponse.Deleted>> delete(
+            @PathVariable Long hobbyId
+    ) {
+        HobbyResult.Deleted result = hobbyService.delete(hobbyId);
+        return ApiResponses.deleted(AdminHobbyWebMapper.toDeleted(result));
     }
 }

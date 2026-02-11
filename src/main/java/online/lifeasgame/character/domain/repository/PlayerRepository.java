@@ -2,6 +2,7 @@ package online.lifeasgame.character.domain.repository;
 
 import online.lifeasgame.character.domain.Player;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PlayerRepository {
@@ -12,4 +13,6 @@ public interface PlayerRepository {
     Optional<Player> findById(Long playerId);
 
     boolean existsById(Long playerId);
+
+    List<Player> findByUserId(Long userId);
 }

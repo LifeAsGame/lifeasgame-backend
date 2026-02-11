@@ -26,4 +26,7 @@ public final class HobbyResult {
             return hobbies.stream().map(Info::from).toList();
         }
     }
+
+    public record Deleted(Long hobbyId) {
+    }
 }

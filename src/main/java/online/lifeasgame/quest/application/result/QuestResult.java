@@ -135,4 +135,11 @@ public final class QuestResult {
             );
         }
     }
+
+    public record Canceled(
+            Long playerId,
+            Long questId,
+            String questCode
+    ) {
+    }
 }

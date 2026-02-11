@@ -60,4 +60,11 @@ public class Achievement extends AbstractTime {
     ) {
         return new Achievement(code, name, category, descMd);
     }
+
+    public void update(String code, String name, AchievementCategory category, String descMd) {
+        this.code = code;
+        this.name = name;
+        this.category = category;
+        this.descMd = descMd;
+    }
 }

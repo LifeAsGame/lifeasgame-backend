@@ -34,4 +34,8 @@ public final class AdminPlayerCertificationWebMapper {
                 result.grantedAt()
         );
     }
+
+    public static AdminPlayerCertificationResponse.Revoked toRevoked(PlayerCertificationResult.Revoked result) {
+        return new AdminPlayerCertificationResponse.Revoked(result.playerId(), result.certificationId());
+    }
 }

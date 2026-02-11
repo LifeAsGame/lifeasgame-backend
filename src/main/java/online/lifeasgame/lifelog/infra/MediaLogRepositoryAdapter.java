@@ -58,4 +58,9 @@ public class MediaLogRepositoryAdapter implements MediaLogRepository {
         );
         return p.getContent();
     }
+
+    @Override
+    public void deleteByIdAndPlayerId(Long mediaId, Long playerId) {
+        jpa.deleteByIdAndPlayerId(mediaId, playerId);
+    }
 }

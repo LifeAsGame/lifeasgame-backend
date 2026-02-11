@@ -11,13 +11,7 @@ import online.lifeasgame.inventory.api.player.response.InventoryResponse;
 import online.lifeasgame.inventory.api.player.spec.InventoryApiSpecV1;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +26,18 @@ public class InventoryController implements InventoryApiSpecV1 {
         InventoryResult.Entries result = inventoryFacade.list();
         return ApiResponses.ok(InventoryWebMapper.toEntries(result));
     }
+
+    @Override
+    @GetMapping("/{itemInstanceId}")
+    public ResponseEntity<ApiResponse<InventoryResponse.EntryDetail>> getEntry(
+            @PathVariable Long itemInstanceId,
+            @RequestParam(defaultValue = "true") boolean includeItem,
+            @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
+    ) {
+        InventoryResult.Entry result = inventoryFacade.getEntry(itemInstanceId);
+        return ApiResponses.ok(InventoryWebMapper.toEntryDetail(result));
+    }
+
 
     @Override
     @PostMapping("/add")

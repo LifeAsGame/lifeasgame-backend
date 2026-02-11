@@ -17,4 +17,8 @@ public interface JpaQuestAcceptanceRepository extends JpaRepository<QuestAccepta
     List<QuestAcceptance> findAllByQuestIdAndStatus(Long questId, QuestStatus status);
 
     Optional<QuestAcceptance> findTopByQuestIdAndPlayerIdOrderByIdDesc(Long questId, Long playerId);
+
+    boolean existsByPlayerIdAndId(Long playerId, Long id);
+
+    void deleteByPlayerIdAndId(Long playerId, Long id);
 }

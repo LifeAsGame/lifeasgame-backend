@@ -13,6 +13,7 @@ public final class AchievementResponse {
     }
 
     public record Info(
+            Long achievementId,
             String code,
             String name,
             String category,
