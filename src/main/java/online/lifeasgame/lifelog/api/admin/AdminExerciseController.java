@@ -95,7 +95,7 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
     }
 
     @Override
-    @GetMapping("/{playerId}/exercises/{exerciseId}")
+    @DeleteMapping("/{playerId}/exercises/{exerciseId}")
     public ResponseEntity<ApiResponse<AdminExerciseResponse.Deleted>> delete(
             @PathVariable Long playerId,
             @PathVariable Long exerciseId
