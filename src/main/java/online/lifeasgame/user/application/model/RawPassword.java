@@ -8,7 +8,7 @@ public record RawPassword(String value) {
         var v = value.strip();
         Guard.minLength(v, 8, "password");
         Guard.maxLength(v, 72, "password");
-        Guard.check(v.matches("^[a-zA-Z0-9]*$"), "password contains invalid characters");
+        Guard.check(v.matches("^\\S+$"), "password must not contain whitespace");
     }
 
     public static RawPassword of(String value) {

@@ -13,6 +13,8 @@ import online.lifeasgame.core.guard.Guard;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HashedPassword {
 
+    private static final String OAUTH_PLACEHOLDER = "OAUTH_ACCOUNT_NO_PASSWORD";
+
     @Column(name = "password_hash", nullable = false)
     private String value;
 
@@ -24,5 +26,13 @@ public class HashedPassword {
 
     public static HashedPassword of(String value) {
         return new HashedPassword(value);
+    }
+
+    public static HashedPassword oauthPlaceholder() {
+        return new HashedPassword(OAUTH_PLACEHOLDER);
+    }
+
+    public boolean isOAuthAccount() {
+        return OAUTH_PLACEHOLDER.equals(this.value);
     }
 }

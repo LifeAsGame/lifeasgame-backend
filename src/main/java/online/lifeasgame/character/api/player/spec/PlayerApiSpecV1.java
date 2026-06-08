@@ -17,7 +17,7 @@ public interface PlayerApiSpecV1 {
     ResponseEntity<ApiResponse<PlayerResponse.Info>> me();
 
     @Operation(summary = "Player 생성(링크 시작)", description = "User 계정 기준으로 Player를 생성합니다.")
-    ResponseEntity<ApiResponse<PlayerResponse.Created>> register(
+    ResponseEntity<ApiResponse<PlayerResponse.CreatedWithToken>> register(
             @Valid @RequestBody PlayerRequest.Register request
     );
 

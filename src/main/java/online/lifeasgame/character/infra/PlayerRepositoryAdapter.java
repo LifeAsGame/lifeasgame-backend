@@ -5,37 +5,36 @@ import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class PlayerRepositoryAdapter implements PlayerRepository {
 
-    private final JpaPlayerRepository jpaRepository;
+    private final JpaPlayerRepository jpa;
 
     @Override
     public Player save(Player player) {
-        return jpaRepository.save(player);
+        return jpa.save(player);
     }
 
     @Override
     public boolean existsByUserId(Long userId) {
-        return jpaRepository.existsByUserId(userId);
+        return jpa.existsByUserId(userId);
     }
 
     @Override
     public Optional<Player> findById(Long playerId) {
-        return jpaRepository.findById(playerId);
+        return jpa.findById(playerId);
     }
 
     @Override
     public boolean existsById(Long playerId) {
-        return jpaRepository.existsById(playerId);
+        return jpa.existsById(playerId);
     }
 
     @Override
-    public List<Player> findByUserId(Long userId) {
-        return jpaRepository.findByUserId(userId);
+    public Optional<Player> findByUserId(Long userId) {
+        return jpa.findByUserId(userId);
     }
 }

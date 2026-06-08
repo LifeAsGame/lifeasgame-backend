@@ -15,6 +15,13 @@ public final class PlayerResult {
     public record Created(Long id) {
     }
 
+    public record CreatedWithToken(
+            Long id,
+            String accessToken,
+            String refreshToken
+    ) {
+    }
+
     public record PlayerInfo(
             Long playerId,
             String name,
@@ -160,24 +167,16 @@ public final class PlayerResult {
         }
     }
 
-    public record Players(List<Item> players) {
-        public static Players fromList(List<Player> players) {
-            return new Players(
-                    players.stream()
-                            .map(
-                                    player -> new Item(
-                                            player.getId(),
-                                            player.getUserId(),
-                                            player.getName().value()
-                                    )
-                            )
-                            .toList()
+    public record PlayerSummary(Long playerId, Long userId, String name) {
+        public static PlayerSummary from(Player player) {
+            return new PlayerSummary(
+                    player.getId(),
+                    player.getUserId(),
+                    player.getName().value()
             );
-        }
-
-        public record Item(Long playerId, Long userId, String name) {
-        }
     }
+    }
+
 
     public record Renamed(Long playerId, String name) {
 

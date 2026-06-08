@@ -18,7 +18,7 @@ public class PlayerEquipmentService {
 
     @Transactional
     public PlayerEquipmentResult.Equipped equip(Long playerId, Equip command) {
-        playerEquipmentReader.assertNotExistsByItemInstanceId(command.itemInstanceId());
+        playerEquipmentReader.assertNotEquipped(playerId, command.slotId(), command.itemInstanceId());
 
         PlayerEquipment playerEquipment = playerEquipmentWriter.equip(
                 playerId,
@@ -39,5 +39,12 @@ public class PlayerEquipmentService {
         return playerEquipmentInfos.stream()
                 .map(PlayerEquipmentResult.Info::from)
                 .toList();
+    }
+
+    @Transactional
+    public void init(Long playerId) {
+        for (int i = 1; i < 12; i++) {
+            playerEquipmentWriter.create(playerId, (long) i);
+        }
     }
 }

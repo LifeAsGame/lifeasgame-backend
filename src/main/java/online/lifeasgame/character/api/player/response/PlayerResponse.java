@@ -8,7 +8,7 @@ public final class PlayerResponse {
     private PlayerResponse() {
     }
 
-    public record Created(Long id) {
+    public record CreatedWithToken(Long id, String accessToken, String refreshToken) {
     }
 
     public record Info(

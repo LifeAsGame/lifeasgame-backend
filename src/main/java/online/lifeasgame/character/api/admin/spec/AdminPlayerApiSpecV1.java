@@ -74,7 +74,7 @@ public interface AdminPlayerApiSpecV1 {
     );
 
     @Operation(summary = "Player 조회", description = "userId로 Player를 검색합니다.")
-    ResponseEntity<ApiResponse<AdminPlayerResponse.Players>> getPlayersOfUser(
+    ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerSummary>> getPlayerSummary(
             @RequestParam(required = false) Long userId
     );
 }

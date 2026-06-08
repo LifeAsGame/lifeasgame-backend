@@ -6,7 +6,10 @@ import online.lifeasgame.user.domain.error.UserError;
 import java.util.List;
 
 public enum UserStatus {
-    ACTIVE, BANNED, DELETED;
+    ACTIVE,
+    PENDING_EMAIL_VERIFICATION,
+    BANNED,
+    DELETED;
 
     public static UserStatus parse(String raw) {
         return EnumParsers.parseStrict(

@@ -1,6 +1,8 @@
 package online.lifeasgame.user.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.error.AuthException;
+import online.lifeasgame.core.error.api.AuthError;
 import online.lifeasgame.user.application.command.UserCommand;
 import online.lifeasgame.user.application.model.RawPassword;
 import online.lifeasgame.user.application.query.UserSearchQuery;
@@ -32,6 +34,26 @@ public class UserService {
         return new UserResult.Created(userId);
     }
 
+    @Transactional
+    public UserResult.AuthCredential findOrRegisterByGoogle(String email, String name) {
+        return userReader.findByEmail(email)
+                .map(user -> new UserResult.AuthCredential(user.getId()))
+                .orElseGet(() -> {
+                    String nickname = resolveUniqueNickname(name);
+                    Long userId = userWriter.registerByOAuth(
+                            Email.of(email),
+                            Nickname.of(nickname)
+                    );
+                    return new UserResult.AuthCredential(userId);
+                });
+    }
+
+    private String resolveUniqueNickname(String base) {
+        String candidate = base.replaceAll("\\s+", "").substring(0, Math.min(base.length(), 12));
+        if (!userReader.existsByNickname(Nickname.of(candidate))) return candidate;
+        return candidate + "_" + System.currentTimeMillis() % 10000;
+    }
+
     public UserResult.UserInfo getUserInfo(Long userId) {
         User user = userReader.findByIdOrElseThrow(userId);
         return UserResult.UserInfo.from(user);
@@ -45,6 +67,17 @@ public class UserService {
     public UserResult.Availability checkNicknameAvailability(String nickname) {
         boolean isAvailable = !userReader.existsByNickname(Nickname.of(nickname));
         return new UserResult.Availability(isAvailable, UserError.NICKNAME_DUPLICATE.message());
+    }
+
+    @Transactional(readOnly = true)
+    public UserResult.AuthCredential findAuthCredential(String email, String rawPassword) {
+        User user = userReader.findByEmailOrElseThrow(email);
+
+        if (!passwordHasher.matches(RawPassword.of(rawPassword), user.getPasswordHash())) {
+            throw new AuthException(AuthError.BAD_CREDENTIALS);
+        }
+
+        return new UserResult.AuthCredential(user.getId());
     }
 
     @Transactional

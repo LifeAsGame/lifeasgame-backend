@@ -9,10 +9,6 @@ public final class UserWebMapper {
 
     private UserWebMapper() {}
 
-    public static UserCommand.Register toRegisterCommand(UserRequest.Register request) {
-        return new UserCommand.Register(request.email(), request.password(), request.nickname());
-    }
-
     public static UserResponse.Created toCreated(UserResult.Created result) {
         return new UserResponse.Created(result.id());
     }
