@@ -2,18 +2,19 @@ package online.lifeasgame.user.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import java.util.Locale;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
+
+import java.util.Locale;
 
 @Getter
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Email {
 
-    @Column(name = "email", nullable = false, length = 254)
+    @Column(name = "email", nullable = false, length = 254, unique = true)
     private String value;
 
     private Email(String raw) {

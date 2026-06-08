@@ -16,6 +16,11 @@ class PlayerEquipmentWriter {
 
     private final PlayerEquipmentRepository repository;
 
+    public PlayerEquipment create(Long playerId, Long slotId) {
+        PlayerEquipment playerEquipment = PlayerEquipment.create(playerId, slotId, null);
+        return repository.save(playerEquipment);
+    }
+
     public PlayerEquipment equip(Long playerId, Long slotId, Long itemInstanceId) {
         PlayerEquipment playerEquipment = getByPlayerIdAndSlotIdForUpdate(playerId, slotId);
         playerEquipment.equip(itemInstanceId);

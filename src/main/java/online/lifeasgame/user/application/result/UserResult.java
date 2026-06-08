@@ -11,6 +11,8 @@ public final class UserResult {
     private UserResult() {
     }
 
+    public record AuthCredential(Long userId) {}
+
     public record Created(Long id) {
         public static Created of(Long id) {
             return new Created(id);

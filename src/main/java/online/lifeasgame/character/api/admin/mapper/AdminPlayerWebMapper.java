@@ -132,17 +132,11 @@ public final class AdminPlayerWebMapper {
         );
     }
 
-    public static AdminPlayerResponse.Players toPlayers(PlayerResult.Players results) {
-        return new AdminPlayerResponse.Players(
-                results.players().stream()
-                .map(
-                        result -> new AdminPlayerResponse.Players.Item(
-                                    result.playerId(),
-                                    result.userId(),
-                                    result.name()
-                        )
-                )
-                .toList()
+    public static AdminPlayerResponse.PlayerSummary toPlayerSummary(PlayerResult.PlayerSummary result) {
+        return new AdminPlayerResponse.PlayerSummary(
+                result.playerId(),
+                result.userId(),
+                result.name()
         );
     }
 

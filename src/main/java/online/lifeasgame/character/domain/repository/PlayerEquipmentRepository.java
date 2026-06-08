@@ -8,7 +8,9 @@ import java.util.Optional;
 public interface PlayerEquipmentRepository {
     Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId);
 
-    boolean existsByItemInstanceId(Long itemInstanceId);
-
     List<PlayerEquipment> findByPlayerId(Long playerId);
+
+    boolean existsByPlayerIdAndSlotIdAndItemInstanceId(Long playerId, Long slotId, Long instanceId);
+
+    PlayerEquipment save(PlayerEquipment playerEquipment);
 }

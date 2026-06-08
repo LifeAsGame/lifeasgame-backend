@@ -31,13 +31,13 @@ public class PlayerController implements PlayerApiSpecV1 {
 
     @Override
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<PlayerResponse.Created>> register(
+    public ResponseEntity<ApiResponse<PlayerResponse.CreatedWithToken>> register(
             @Valid @RequestBody PlayerRequest.Register request
     ) {
-        PlayerResult.Created result = playerFacade.linkStart(PlayerWebMapper.toRegisterCommand(request));
+        PlayerResult.CreatedWithToken result = playerFacade.linkStart(PlayerWebMapper.toRegisterCommand(request));
         return ApiResponses.created(
                 URI.create("/api/v1/players/" + result.id()),
-                PlayerWebMapper.toCreated(result)
+                PlayerWebMapper.toCreatedWithToken(result)
         );
     }
 

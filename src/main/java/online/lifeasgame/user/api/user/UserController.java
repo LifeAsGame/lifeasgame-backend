@@ -14,8 +14,6 @@ import online.lifeasgame.user.application.result.UserResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -23,18 +21,6 @@ public class UserController implements UserApiSpecV1 {
 
     private final UserService userService;
     private final UserFacade userFacade;
-
-    @Override
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse.Created>> register(
-            @Valid @RequestBody UserRequest.Register request
-    ) {
-        UserResult.Created userResult = userService.register(UserWebMapper.toRegisterCommand(request));
-        return ApiResponses.created(
-                URI.create("/api/v1/users/" + userResult.id()),
-                UserWebMapper.toCreated(userResult)
-        );
-    }
 
     @Override
     @GetMapping("/me")

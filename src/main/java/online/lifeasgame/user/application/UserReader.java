@@ -2,8 +2,8 @@ package online.lifeasgame.user.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
-import online.lifeasgame.user.application.query.UserSearchQuery;
 import online.lifeasgame.user.application.query.UserQueryRepository;
+import online.lifeasgame.user.application.query.UserSearchQuery;
 import online.lifeasgame.user.domain.Email;
 import online.lifeasgame.user.domain.Nickname;
 import online.lifeasgame.user.domain.User;
@@ -13,6 +13,8 @@ import online.lifeasgame.user.domain.repository.UserRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +27,15 @@ class UserReader {
     public User findByIdOrElseThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserError.USER_NOT_FOUND));
+    }
+
+    public User findByEmailOrElseThrow(String emailStr) {
+        return userRepository.findByEmail(Email.of(emailStr))
+                .orElseThrow(() -> new DomainException(UserError.USER_NOT_FOUND));
+    }
+
+    public Optional<User> findByEmail(String emailStr) {
+        return userRepository.findByEmail(Email.of(emailStr));
     }
 
     public boolean existsByEmail(Email email) {

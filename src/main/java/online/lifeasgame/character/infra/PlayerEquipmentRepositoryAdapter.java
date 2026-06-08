@@ -20,8 +20,13 @@ public class PlayerEquipmentRepositoryAdapter implements PlayerEquipmentReposito
     }
 
     @Override
-    public boolean existsByItemInstanceId(Long itemInstanceId) {
-        return jpaRepository.existsByItemInstanceId(itemInstanceId);
+    public boolean existsByPlayerIdAndSlotIdAndItemInstanceId(Long playerId, Long slotId, Long instanceId) {
+        return jpaRepository.existsByPlayerIdAndSlotIdAndItemInstanceId(playerId, slotId, instanceId);
+    }
+
+    @Override
+    public PlayerEquipment save(PlayerEquipment playerEquipment) {
+        return jpaRepository.save(playerEquipment);
     }
 
     @Override

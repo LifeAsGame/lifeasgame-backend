@@ -34,4 +34,16 @@ class UserWriter {
 
         return user.getId();
     }
+
+    public Long registerByOAuth(Email email, Nickname nickname) {
+        User user = userRepository.save(
+                User.registerByOAuth(email, nickname)
+        );
+
+        domainEventPublisher.publish(
+                UserRegistered.of(user.getId(), user.getEmail().getValue(), user.getNickname().getValue())
+        );
+
+        return user.getId();
+    }
 }

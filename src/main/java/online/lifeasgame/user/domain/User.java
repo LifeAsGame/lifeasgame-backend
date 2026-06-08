@@ -50,6 +50,33 @@ public class User extends AbstractTime {
 
     public static User register(Email email, HashedPassword passwordHash, Nickname nickname) {
         return new User(email, passwordHash, nickname, UserStatus.ACTIVE);
+        // 메일 인증 활성화 시 아래로 교체
+        // return new User(email, passwordHash, nickname, UserStatus.PENDING_EMAIL_VERIFICATION);
+    }
+
+    public static User registerByOAuth(Email email, Nickname nickname) {
+        return new User(email, HashedPassword.oauthPlaceholder(), nickname, UserStatus.ACTIVE);
+    }
+
+    // ── 메일 인증 ──────────────────────────────────────────────────────────────
+
+    /**
+     * 이메일 인증 완료 처리.
+     * PENDING_EMAIL_VERIFICATION → ACTIVE
+     */
+    public void verifyEmail() {
+        if (this.status != UserStatus.PENDING_EMAIL_VERIFICATION) {
+            throw new DomainException(UserError.INVALID_STATUS_CHANGE);
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isPendingVerification() {
+        return this.status == UserStatus.PENDING_EMAIL_VERIFICATION;
+    }
+
+    public boolean isOAuthAccount() {
+        return this.passwordHash != null && this.passwordHash.isOAuthAccount();
     }
 
     public List<DomainEvent> pullEvents() {

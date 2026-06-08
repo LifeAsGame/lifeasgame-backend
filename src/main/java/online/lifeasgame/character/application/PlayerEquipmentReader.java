@@ -1,6 +1,7 @@
 package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
 import online.lifeasgame.character.domain.repository.PlayerEquipmentRepository;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -22,8 +24,8 @@ class PlayerEquipmentReader {
         return repository.findByPlayerId(playerId);
     }
 
-    public void assertNotExistsByItemInstanceId(Long itemInstanceId) {
-        if (repository.existsByItemInstanceId(itemInstanceId)) {
+    public void assertNotEquipped(Long playerId, Long slotId, Long instanceId) {
+        if (repository.existsByPlayerIdAndSlotIdAndItemInstanceId(playerId, slotId, instanceId)) {
             throw new DomainException(PlayerEquipmentError.ALREADY_EQUIPPED_ITEM);
         }
     }

@@ -128,10 +128,10 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<AdminPlayerResponse.Players>> getPlayersOfUser(
+    public ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerSummary>> getPlayerSummary(
             @RequestParam(required = false) Long userId
     ) {
-         PlayerResult.Players results = playerService.getPlayersOfUser(userId);
-        return ApiResponses.ok(AdminPlayerWebMapper.toPlayers(results));
+         PlayerResult.PlayerSummary result = playerService.getPlayerSummary(userId);
+        return ApiResponses.ok(AdminPlayerWebMapper.toPlayerSummary(result));
     }
 }

@@ -54,3 +54,5 @@ src/main/resources/application-prod.yml
 # --- QueryDSL / generated sources ---
 /build/
 /**/build/
+
+FORSETTING.md

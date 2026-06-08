@@ -14,8 +14,8 @@ public final class PlayerWebMapper {
         return new PlayerCommand.Register(request.name(), request.gender());
     }
 
-    public static PlayerResponse.Created toCreated(PlayerResult.Created result) {
-        return new PlayerResponse.Created(result.id());
+    public static PlayerResponse.CreatedWithToken toCreatedWithToken(PlayerResult.CreatedWithToken result) {
+        return new PlayerResponse.CreatedWithToken(result.id(), result.accessToken(), result.refreshToken());
     }
 
     public static PlayerResponse.Info toPlayerInfo(PlayerResult.PlayerInfo result) {

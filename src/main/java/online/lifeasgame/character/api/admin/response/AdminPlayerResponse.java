@@ -7,9 +7,7 @@ public final class AdminPlayerResponse {
     private AdminPlayerResponse() {
     }
 
-    public record Players(List<Item> players) {
-        public record Item(Long playerId, Long userId, String name) {
-        }
+    public record PlayerSummary(Long playerId, Long userId, String name) {
     }
 
     public record PlayerInfo(

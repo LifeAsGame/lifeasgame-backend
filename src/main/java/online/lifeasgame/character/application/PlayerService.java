@@ -9,8 +9,6 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
@@ -41,6 +39,11 @@ public class PlayerService {
     public PlayerResult.PlayerInfo getPlayerInfo(Long playerId) {
         Player player = playerReader.getByIdOrThrow(playerId);
         return PlayerResult.PlayerInfo.from(player);
+    }
+
+    public Long findPlayerIdByUserId(Long userId) {
+        Player player = playerReader.getByUserId(userId);
+        return player == null ? null : player.getId();
     }
 
     @Transactional
@@ -123,9 +126,9 @@ public class PlayerService {
         return PlayerResult.StatusEffectsGranted.from(player.getId(), player.getStatusEffects());
     }
 
-    public PlayerResult.Players getPlayersOfUser(Long userId) {
-        List<Player> players = playerReader.getByUserIdOrThrow(userId);
-        return PlayerResult.Players.fromList(players);
+    public PlayerResult.PlayerSummary getPlayerSummary(Long userId) {
+        Player player = playerReader.getByUserIdOrThrow(userId);
+        return PlayerResult.PlayerSummary.from(player);
     }
 
     public PlayerResult.Renamed rename(Long playerId, PlayerCommand.Renamed command) {
