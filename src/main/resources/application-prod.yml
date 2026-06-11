@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  level:
+    root: INFO
+    online.lifeasgame: INFO
+    com.zaxxer.hikari: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: INFO
+
+lifeasgame:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiry-ms: 3600000
+    refresh-token-expiry-ms: 604800000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers
+
+app:
+  error:
+    include-detail-in-response: false
+    mask-detail-always-in-logs: true
+
+    docs:
+      base: "/errors"
+      ext: ""
+      fallback: "NOT-FOUND"
+
+    mask-fields: [password, secret, token]
+    mask-props: [password, secret, token]

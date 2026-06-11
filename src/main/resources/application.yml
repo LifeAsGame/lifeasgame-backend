@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: lifeasgame
+
+  profiles:
+    active: prod
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      maximum-pool-size: 4
+      validation-timeout: 2000
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  task:
+    execution:
+      pool:
+        core-size: 4
+        max-size: 8
+        queue-capacity: 50
+
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+  jpa:
+    open-in-view: false
+
+    hibernate:
+      ddl-auto: none
+
+    properties:
+      hibernate.jdbc.time_zone: Asia/Seoul
+
+  jackson:
+    time-zone: Asia/Seoul
+
+logging:
+  level:
+    root: info
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.orm.jdbc.extract: OFF
+    org.hibernate.type.descriptor.sql: WARN
+
+app:
+  error:
+    docs:
+      base: "/errors"
+      ext: ""
+
+    mask-fields: [password, secret, token]
+    mask-props: [password, secret, token]
+
+    expose-db-reason: false
+
+  outbox:
+    fixedDelayMs: 500
+
+lag:
+  level-curve:
+    max-level: 200
+    base-req-lv1: 100
+
+    brackets:
+      - { from: 1, to: 30, mul: 1.10, add: 25 }
+      - { from: 31, to: 100, mul: 1.12, add: 100 }
+      - { from: 101, to: 200, mul: 1.20, add: 500 }
+#      - { from: 201, to: 260, mul: 1.25, add: 1000 }
+#      - { from: 261, to: 300, mul: 1.30, add: 2500 }
