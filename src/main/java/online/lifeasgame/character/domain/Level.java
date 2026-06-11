@@ -1,0 +1,34 @@
+package online.lifeasgame.character.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
+
+@Embeddable
+@EqualsAndHashCode
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Level {
+
+    @Column(name = "level", nullable = false)
+    private int value;
+
+    private Level(int v) {
+        Guard.minValue(v, 1, "level");
+        this.value = v;
+    }
+
+    public static Level of(int v) {
+        return new Level(v);
+    }
+
+    public int value() {
+        return value;
+    }
+
+    public void with(int v) {
+        this.value = Math.max(1, v);
+    }
+}

@@ -1,0 +1,38 @@
+package online.lifeasgame.user.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import online.lifeasgame.core.guard.Guard;
+
+@Getter(onMethod_ = @JsonIgnore)
+@Embeddable
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class HashedPassword {
+
+    private static final String OAUTH_PLACEHOLDER = "OAUTH_ACCOUNT_NO_PASSWORD";
+
+    @Column(name = "password_hash", nullable = false)
+    private String value;
+
+    private HashedPassword(String value) {
+        Guard.notBlank(value, "hashedPassword");
+        Guard.check(value.length() >= 20, "hashedPassword too short");
+        this.value = value;
+    }
+
+    public static HashedPassword of(String value) {
+        return new HashedPassword(value);
+    }
+
+    public static HashedPassword oauthPlaceholder() {
+        return new HashedPassword(OAUTH_PLACEHOLDER);
+    }
+
+    public boolean isOAuthAccount() {
+        return OAUTH_PLACEHOLDER.equals(this.value);
+    }
+}

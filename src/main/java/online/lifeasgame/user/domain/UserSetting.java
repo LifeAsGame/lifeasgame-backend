@@ -1,0 +1,73 @@
+package online.lifeasgame.user.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+
+@Getter
+@Entity
+@AggregateRoot
+@Table(name = "user_settings")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserSetting extends AbstractTime {
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Embedded
+    private Volume volume;
+
+    @Column(name = "ui_layout", columnDefinition = "json")
+    private String uiLayoutJson;
+
+    @Column(name = "flags", columnDefinition = "json")
+    private String flagsJson;
+
+    private UserSetting(Long userId, Volume volume) {
+        this.userId = userId;
+        this.volume = volume;
+    }
+
+    public static UserSetting ensureDefault(Long userId) {
+        return new UserSetting(userId, Volume.of(50));
+    }
+
+    public void apply(
+            Integer volume,
+            String uiLayoutJson,
+            String flagsJson
+    ) {
+        if (volume != null) {
+            changeVolume(Volume.of(volume));
+        }
+        if (uiLayoutJson != null) {
+            changeUiLayout(uiLayoutJson);
+        }
+        if (flagsJson != null) {
+            changeFlags(flagsJson);
+        }
+    }
+
+    private void changeVolume(Volume volume) {
+        if (this.volume.equals(volume)) {
+            return;
+        }
+        this.volume = volume;
+    }
+
+    private void changeUiLayout(String json) {
+        this.uiLayoutJson = json;
+    }
+
+    private void changeFlags(String json) {
+        this.flagsJson = json;
+    }
+}

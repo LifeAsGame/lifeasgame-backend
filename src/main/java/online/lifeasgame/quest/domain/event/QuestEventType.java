@@ -1,0 +1,15 @@
+package online.lifeasgame.quest.domain.event;
+
+public enum QuestEventType {
+    QUEST_CREATED,
+    QUEST_UPDATED,
+    QUEST_ACCEPTED,
+    QUEST_PROGRESS,
+    QUEST_COMPLETED,
+    QUEST_REWARD_READY,
+    PLAYER_REGISTERED,
+    PLAYER_LEVEL_UP,
+    ITEM_COLLECTED,
+    RESOURCE_GATHERED,
+    BOSS_DEFEATED
+}

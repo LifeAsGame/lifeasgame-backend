@@ -1,0 +1,303 @@
+package online.lifeasgame.platform.web.error;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import online.lifeasgame.core.error.Sensitivity;
+import online.lifeasgame.core.error.api.CommonError;
+import online.lifeasgame.core.error.ErrorKeys;
+import online.lifeasgame.platform.web.error.handler.FieldErrorMapper;
+import online.lifeasgame.platform.web.error.handler.ProblemDetailFactory;
+import online.lifeasgame.platform.web.error.handler.ViolationMapper;
+import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
+import online.lifeasgame.core.error.BaseException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+@RestControllerAdvice
+@Slf4j
+@RequiredArgsConstructor
+public class GlobalExceptionHandler {
+
+    private final ProblemDetailFactory pdf;
+    private final AppErrorProperties props;
+    private final PiiScrubber scrubber;
+
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ProblemDetail> handleBase(BaseException ex, WebRequest req) {
+        var ec = ex.getErrorCode();
+        var status = HttpStatus.valueOf(ec.status());
+        String responseDetail = null;
+
+        if (props.includeDetailInResponse()) {
+            responseDetail = scrubber.scrub(ex.detail(), ec.sensitivity());
+            if (responseDetail == null) {
+                responseDetail = ec.message();
+            }
+        }
+
+        var pd = pdf.base(status, ec.message(), responseDetail, ec.code(), req);
+
+        String logDetail = buildLogMessage(ex.detail(), ec.sensitivity());
+
+        if (status.is4xxClientError()) {
+            log.warn("domain-4xx code={} status={} path={} detail={}",
+                    ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail);
+        } else {
+            if (mustMask(ec.sensitivity())) {
+                log.error("domain-5xx code={} status={} path={} detail={}",
+                        ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail);
+            } else {
+                log.error("domain-5xx code={} status={} path={} detail={}",
+                        ec.code(), ec.status(), pd.getProperties().get(ErrorKeys.PATH), logDetail, ex);
+            }
+        }
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleBadInput(Exception ex, WebRequest req) {
+        var err = CommonError.REQ_BAD_INPUT;
+        var status = HttpStatus.valueOf(err.status());
+        String detail = buildResponseDetail(ex, err.message(), Sensitivity.PII);
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+
+        String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
+        log.warn("400 bad-input path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, WebRequest req
+    ) {
+        var err = CommonError.REQ_BAD_INPUT;
+        var status = HttpStatus.valueOf(err.status());
+
+        String contentType = (req instanceof ServletWebRequest swr)
+                ? swr.getRequest().getContentType()
+                : null;
+
+        Throwable cause = ex.getMostSpecificCause();
+        String detail = null;
+
+        if (props.includeDetailInResponse()) {
+            if (isMissingBody(ex)) {
+                detail = "Request body is required.";
+            } else if (isJsonRequest(contentType) || cause instanceof JsonProcessingException) {
+                detail = classifyJsonDetail(cause);
+            } else {
+                detail = "Malformed request body.";
+            }
+        }
+
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+
+        String causeType = cause.getClass().getSimpleName();
+        log.warn("400 bad-input (not-readable) path={} type={} contentType={} msg={}",
+                pd.getProperties().get(ErrorKeys.PATH),
+                causeType,
+                contentType != null ? contentType : "n/a",
+                buildLogMessage(ex.getMessage(), Sensitivity.SECRET));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    private String classifyJsonDetail(Throwable cause) {
+        return switch (cause) {
+            case InvalidFormatException ignored -> "Invalid JSON value.";
+            case UnrecognizedPropertyException ignored -> "Unknown JSON property.";
+            case MismatchedInputException ignored -> "JSON structure/type mismatch.";
+            case null, default -> "Malformed JSON payload.";
+        };
+    }
+
+    private boolean isMissingBody(HttpMessageNotReadableException ex) {
+        String msg = ex.getMessage();
+        return msg != null && msg.contains("Required request body is missing");
+    }
+
+    private boolean isJsonRequest(String contentType) {
+        if (contentType == null) return false;
+        try {
+            var mt = MediaType.parseMediaType(contentType);
+            if (MediaType.APPLICATION_JSON.includes(mt)) {
+                return true;
+            }
+            mt.getSubtype();
+            return mt.getSubtype().endsWith("+json");
+        } catch (Exception ignore) {
+            return false;
+        }
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex, WebRequest req) {
+        var err = CommonError.REQ_VALIDATION;
+        var status = HttpStatus.valueOf(err.status());
+        var pd  = pdf.base(status, err.message(), "Request body contains invalid fields", err.code(), req);
+        var errors = FieldErrorMapper.from(ex.getBindingResult(), props.maskFields());
+        pd.setProperty(ErrorKeys.ERRORS, errors);
+
+        log.warn("400 validation size={} path={}", errors.size(), pd.getProperties().get(ErrorKeys.PATH));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ProblemDetail> handleConstraint(ConstraintViolationException ex, WebRequest req) {
+        var err = CommonError.REQ_VALIDATION;
+        var status = HttpStatus.valueOf(err.status());
+        var pd  = pdf.base(status, err.message(), "Constraint violation", err.code(), req);
+        var violations = ViolationMapper.from(ex, props.maskProps());
+        pd.setProperty(ErrorKeys.ERRORS, violations);
+
+        log.warn("400 constraint size={} path={}", violations.size(), pd.getProperties().get(ErrorKeys.PATH));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
+    public ResponseEntity<ProblemDetail> handleIllegal(RuntimeException ex, WebRequest req) {
+        var err = CommonError.REQ_BAD_INPUT;
+        var status = HttpStatus.valueOf(err.status());
+        String detail = buildResponseDetail(ex, err.message(), Sensitivity.PII);
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+
+        String logMsg = buildLogMessage(ex.getMessage(), Sensitivity.PII);
+        log.warn("400 illegal-arg path={} msg={}", pd.getProperties().get(ErrorKeys.PATH), logMsg);
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNoResource(NoResourceFoundException ex, WebRequest req) {
+        var err = CommonError.NOT_FOUND;
+        var status = HttpStatus.valueOf(err.status());
+        String detail = props.includeDetailInResponse() ? "Resource not found: " + ex.getResourcePath() : null;
+        var pd = pdf.base(status, err.message(), detail, err.code(), req);
+
+        log.warn("404 not-found path={}", pd.getProperties().get(ErrorKeys.PATH));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest req) {
+        String msg = ex.getMostSpecificCause().getMessage();
+
+        boolean duplicate = false;
+        Throwable cause = ex.getCause();
+
+        if (cause instanceof org.hibernate.exception.ConstraintViolationException hce) {
+            String sqlState = hce.getSQLState();
+            int vendorCode  = hce.getErrorCode();
+            boolean sqlDup = false;
+            if (sqlState != null) {
+                sqlDup = "23505".equals(sqlState) || "23000".equals(sqlState);
+            }
+            duplicate = sqlDup || vendorCode == 1062;
+        } else if (msg != null && msg.toLowerCase().contains("duplicate")) {
+            duplicate = true;
+        }
+
+        var err = duplicate ? CommonError.DATA_DUPLICATE : CommonError.DATA_INTEGRITY;
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), "Data integrity violation", err.code(), req);
+
+        if (msg != null && props.exposeDbReason()) {
+            pd.setProperty(ErrorKeys.REASON, msg);
+        }
+
+        log.warn("db-integrity duplicate={} path={}", duplicate, pd.getProperties().get(ErrorKeys.PATH));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ProblemDetail> handleMethodNotAllowed(
+            HttpRequestMethodNotSupportedException ex,
+            WebRequest req
+    ) {
+        var status = HttpStatus.METHOD_NOT_ALLOWED;
+
+        String detail = props.includeDetailInResponse() ? "지원하지 않는 HTTP 메서드입니다." : null;
+        var pd = pdf.base(
+                status,
+                "Method Not Allowed",
+                detail,
+                "METHOD_NOT_ALLOWED",
+                req
+        );
+
+        var headers = new org.springframework.http.HttpHeaders();
+        var supported = ex.getSupportedHttpMethods();
+        if (supported != null && !supported.isEmpty()) {
+            headers.setAllow(supported);
+        }
+
+        var path = pd.getProperties().get(online.lifeasgame.core.error.ErrorKeys.PATH);
+        log.info("405 method-not-allowed method={} path={}", ex.getMethod(), path);
+
+        return new ResponseEntity<>(pd, headers, status);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleEtc(Exception ex, WebRequest req) {
+        var err = CommonError.GEN_000;
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), err.message(), err.code(), req);
+
+        log.error("500 unhandled path={}", pd.getProperties().get(ErrorKeys.PATH), ex);
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    private String readable(Exception ex, String fallback) {
+        return ex.getMessage() != null ? ex.getMessage() : fallback;
+    }
+
+    private String buildResponseDetail(Exception ex, String fallback, Sensitivity sen) {
+        if (!props.includeDetailInResponse()) {
+            return null;
+        }
+        String raw = readable(ex, fallback);
+        String scrubbed = scrubber.scrub(raw, sen);
+        return scrubbed != null ? scrubbed : fallback;
+    }
+
+    private String buildLogMessage(String raw, Sensitivity sen) {
+        if (raw == null) {
+            return null;
+        }
+
+        if (!mustMask(sen)) {
+            return raw;
+        }
+
+        return scrubber.scrub(raw, sen);
+    }
+
+    private boolean mustMask(Sensitivity s) {
+        return props.maskDetailAlwaysInLogs()
+                || s == Sensitivity.SECRET
+                || s == Sensitivity.PCI;
+    }
+}

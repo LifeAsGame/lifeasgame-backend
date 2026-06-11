@@ -1,0 +1,24 @@
+package online.lifeasgame.character.application;
+
+import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.domain.PlayerAchievement;
+import online.lifeasgame.character.domain.repository.PlayerAchievementRepository;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+@Component
+@RequiredArgsConstructor
+@Transactional(propagation = Propagation.MANDATORY)
+class PlayerAchievementWriter {
+
+    private final PlayerAchievementRepository repository;
+
+    public PlayerAchievement create(PlayerAchievement playerAchievement) {
+        return repository.save(playerAchievement);
+    }
+
+    public void revoke(Long playerId, Long achievementId) {
+        repository.deleteByPlayerIdAndAchievementId(playerId, achievementId);
+    }
+}
