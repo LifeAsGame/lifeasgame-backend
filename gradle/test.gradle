@@ -7,6 +7,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
+
+    testImplementation 'com.h2database:h2'
+
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'io.github.cdimascio:dotenv-java:3.0.0'
 }
