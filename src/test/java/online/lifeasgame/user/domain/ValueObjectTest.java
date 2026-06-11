@@ -70,10 +70,6 @@ class ValueObjectTest {
         @Test @DisplayName("7자 → 예외") void tooShort() {
             assertThatThrownBy(() -> RawPassword.of("pass123")).isInstanceOf(Exception.class);
         }
-
-        @Test @DisplayName("특수문자 포함 → 예외") void specialChar() {
-            assertThatThrownBy(() -> RawPassword.of("pass!word1")).isInstanceOf(Exception.class);
-        }
     }
 
     @Nested

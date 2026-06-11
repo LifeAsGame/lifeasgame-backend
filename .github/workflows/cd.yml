@@ -1,0 +1,97 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build jar (테스트 skip — CI에서 통과됨)
+        run: ./gradlew clean build -x test
+
+      # ── ECR Push ──────────────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker image
+        env:
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/lifeasgame-api:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/lifeasgame-api:$IMAGE_TAG
+          docker tag  $ECR_REGISTRY/lifeasgame-api:$IMAGE_TAG \
+                      $ECR_REGISTRY/lifeasgame-api:latest
+          docker push $ECR_REGISTRY/lifeasgame-api:latest
+
+      # ── EC2 배포 ──────────────────────────────────────────
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key:      ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/lifeasgame
+
+            # IMAGE_TAG 업데이트
+            sed -i "s|IMAGE_TAG=.*|IMAGE_TAG=${{ github.sha }}|" .env
+
+            # ECR 로그인 (IAM Role로 키 없이)
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+              docker login --username AWS \
+                           --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+            # docker-compose.yml이 없으면 GitHub에서 복사
+            # (처음 배포 시만 필요 — 이후엔 파일이 남아있음)
+
+            # 최신 이미지 pull
+            docker compose pull app
+
+            # 무중단에 가까운 재시작
+            docker compose up -d --no-deps app
+
+            # 헬스체크 (최대 90초 대기)
+            echo "헬스체크 대기 중..."
+            for i in $(seq 1 9); do
+              sleep 10
+              if curl -sf http://localhost:8080/actuator/health; then
+                echo "✅ 헬스체크 통과"
+                break
+              fi
+              if [ $i -eq 9 ]; then
+                echo "❌ 헬스체크 실패"
+                docker compose logs app --tail 50
+                exit 1
+              fi
+            done
+
+            # 이전 이미지 정리 (디스크 절약)
+            docker image prune -f
+            echo "🚀 배포 완료: ${{ github.sha }}"

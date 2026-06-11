@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 2
+      initialization-fail-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+lifeasgame:
+  jwt:
+    secret: local-dev-secret-key-must-be-at-least-32-chars!!
+    access-token-expiry-ms: 3600000
+    refresh-token-expiry-ms: 604800000
+
+logging:
+  level:
+    root: INFO
+    online.lifeasgame: DEBUG
+    com.zaxxer.hikari: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+
+app:
+  error:
+    include-detail-in-response: true
+    mask-detail-always-in-logs: true
+    docs:
+      base: "/errors"
+      ext: ""
+      fallback: "NOT-FOUND"

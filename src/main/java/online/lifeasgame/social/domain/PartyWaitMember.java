@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "party_wait_members", indexes = {
         @Index(name = "idx_wait_party", columnList = "party_id"),
-        @Index(name = "idx_wait_player", columnList = "player_id")
+        @Index(name = "idx_wait_party_player", columnList = "player_id")
 }
 )
 public class PartyWaitMember extends AbstractTime {

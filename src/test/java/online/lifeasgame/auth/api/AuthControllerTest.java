@@ -6,13 +6,13 @@ import online.lifeasgame.auth.application.AuthFacade;
 import online.lifeasgame.auth.application.result.AuthResult;
 import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.core.error.api.AuthError;
-import online.lifeasgame.platform.web.error.handler.ProblemDetailFactory;
+import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
+import online.lifeasgame.support.ControllerSliceTest;
+import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,14 +23,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AuthController.class,
-        excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@ControllerSliceTest(controllers = AuthController.class)
 class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockitoBean AuthFacade authFacade;
-    @MockitoBean ProblemDetailFactory problemDetailFactory;
+
+    @MockitoBean AppErrorProperties appErrorProperties;
+    @MockitoBean ErrorDocLinker errorDocLinker;
 
     private static final AuthResult.TokenPair PAIR =
             new AuthResult.TokenPair("access-token","refresh-token",1L,2L);
