@@ -75,7 +75,7 @@ jobs:
             docker compose pull app
 
             # 무중단에 가까운 재시작
-            docker compose up -d --no-deps app
+            docker compose up -d
 
             # 헬스체크 (최대 90초 대기)
             echo "헬스체크 대기 중..."
