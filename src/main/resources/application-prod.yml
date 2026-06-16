@@ -21,6 +21,23 @@ lifeasgame:
     secret: ${JWT_SECRET}
     access-token-expiry-ms: 3600000
     refresh-token-expiry-ms: 604800000
+  economy:
+    events:
+      enabled: false
+      channel: economy.events
+    quest:
+      events:
+        enabled: false
+        channel: quest.events
+    mail:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: false
+
+  swagger-ui:
+    enabled: false
 
 management:
   endpoints:
