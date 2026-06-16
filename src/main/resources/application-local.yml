@@ -18,6 +18,27 @@ lifeasgame:
     secret: local-dev-secret-key-must-be-at-least-32-chars!!
     access-token-expiry-ms: 3600000
     refresh-token-expiry-ms: 604800000
+  economy:
+    events:
+      enabled: false
+      channel: economy.events
+    quest:
+      events:
+        enabled: false
+        channel: quest.events
+    mail:
+      enabled: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 logging:
   level:

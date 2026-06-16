@@ -23,6 +23,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
 
   task:
     execution:
@@ -46,6 +51,13 @@ spring:
 
   jackson:
     time-zone: Asia/Seoul
+
+springdoc:
+  api-docs:
+    enabled: true
+
+  swagger-ui:
+    enabled: true
 
 logging:
   level:
