@@ -1,27 +1,15 @@
 package online.lifeasgame.economy.infra.event;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@Getter
+@Setter
 @ConfigurationProperties(prefix = "lifeasgame.economy.events")
 public class EconomyEventProperties {
 
     private boolean enabled = false;
-
     private String topic = "economy.events";
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
+    private String channel = "economy.events";
 }

@@ -2,7 +2,7 @@ package online.lifeasgame.economy.application.event;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
-import online.lifeasgame.economy.infra.event.KafkaEconomyEventPublisher;
+import online.lifeasgame.economy.infra.event.RedisEconomyEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,11 +17,11 @@ public class EconomyEventBridge {
 
     private static final Logger log = LoggerFactory.getLogger(EconomyEventBridge.class);
 
-    private final KafkaEconomyEventPublisher kafkaPublisher;
+    private final RedisEconomyEventPublisher redisPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEconomyEvent(EconomyEvent event) {
         log.debug("Forwarding economy event {}", event.type());
-        kafkaPublisher.publish(event);
+        redisPublisher.publish(event);
     }
 }
