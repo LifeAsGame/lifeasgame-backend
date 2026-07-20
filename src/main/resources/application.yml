@@ -49,6 +49,10 @@ spring:
     properties:
       hibernate.jdbc.time_zone: Asia/Seoul
 
+  flyway:
+    enabled: false
+    baseline-on-migrate: false
+
   jackson:
     time-zone: Asia/Seoul
 
