@@ -2,6 +2,8 @@ package online.lifeasgame.migration;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -10,10 +12,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
+@DisplayName("Flyway migration history")
 class FlywayHistoryChecksumTest {
 
     @Container
@@ -22,60 +27,63 @@ class FlywayHistoryChecksumTest {
             .withUsername("lifeasgame")
             .withPassword("lifeasgame");
 
-    @Test
-    void secondMigrationIsNoOpAndKeepsVersionOneHistory() throws Exception {
-        Flyway flyway = Flyway.configure()
+    @Nested
+    @DisplayName("migration을 다시 실행할 때")
+    class MigrateAgain {
+
+        @Test
+        @DisplayName("두 번째 실행은 no-op이고 V1과 V2 checksum history를 유지한다")
+        void keepsMigrationHistory() throws Exception {
+            Flyway flyway = flyway();
+
+            MigrateResult first = flyway.migrate();
+            List<HistoryRow> firstHistory = successfulHistory();
+
+            MigrateResult second = flyway.migrate();
+            List<HistoryRow> secondHistory = successfulHistory();
+
+            assertThat(first.migrationsExecuted).isEqualTo(2);
+            assertThat(second.migrationsExecuted).isZero();
+            assertThat(secondHistory).isEqualTo(firstHistory);
+            assertThat(secondHistory).extracting(HistoryRow::version)
+                    .containsExactly("1", "2");
+            assertThat(secondHistory).allSatisfy(history -> {
+                assertThat(history.checksum()).isNotNull();
+                assertThat(history.success()).isTrue();
+            });
+        }
+    }
+
+    private Flyway flyway() {
+        return Flyway.configure()
                 .dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(false)
                 .load();
-
-        MigrateResult first = flyway.migrate();
-        HistoryRow firstHistory = versionOneHistory();
-
-        MigrateResult second = flyway.migrate();
-        HistoryRow secondHistory = versionOneHistory();
-
-        assertThat(first.migrationsExecuted).isEqualTo(1);
-        assertThat(second.migrationsExecuted).isZero();
-        assertThat(secondHistory).isEqualTo(firstHistory);
-        assertThat(secondHistory.version()).isEqualTo("1");
-        assertThat(secondHistory.checksum()).isNotNull();
-        assertThat(secondHistory.success()).isTrue();
-        assertThat(successfulVersionOneRows()).isEqualTo(1);
     }
 
-    private HistoryRow versionOneHistory() throws Exception {
+    private List<HistoryRow> successfulHistory() throws Exception {
         try (Connection connection = MYSQL.createConnection("");
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery("""
                      SELECT installed_rank, version, description, type, script, checksum, success
                      FROM flyway_schema_history
-                     WHERE version = '1'
+                     WHERE success = TRUE
+                     ORDER BY installed_rank
                      """)) {
-            assertThat(resultSet.next()).isTrue();
-            return new HistoryRow(
-                    resultSet.getInt("installed_rank"),
-                    resultSet.getString("version"),
-                    resultSet.getString("description"),
-                    resultSet.getString("type"),
-                    resultSet.getString("script"),
-                    resultSet.getObject("checksum", Integer.class),
-                    resultSet.getBoolean("success")
-            );
-        }
-    }
-
-    private int successfulVersionOneRows() throws Exception {
-        try (Connection connection = MYSQL.createConnection("");
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("""
-                     SELECT COUNT(*)
-                     FROM flyway_schema_history
-                     WHERE version = '1' AND success = TRUE
-                     """)) {
-            assertThat(resultSet.next()).isTrue();
-            return resultSet.getInt(1);
+            List<HistoryRow> history = new ArrayList<>();
+            while (resultSet.next()) {
+                history.add(new HistoryRow(
+                        resultSet.getInt("installed_rank"),
+                        resultSet.getString("version"),
+                        resultSet.getString("description"),
+                        resultSet.getString("type"),
+                        resultSet.getString("script"),
+                        resultSet.getObject("checksum", Integer.class),
+                        resultSet.getBoolean("success")
+                ));
+            }
+            return history;
         }
     }
 
