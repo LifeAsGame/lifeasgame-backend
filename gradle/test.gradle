@@ -2,11 +2,14 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+ext['testcontainers.version'] = '1.21.4'
+
 dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:mysql'
 
     testImplementation 'com.h2database:h2'
 
