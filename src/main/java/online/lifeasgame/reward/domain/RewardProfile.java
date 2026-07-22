@@ -71,7 +71,7 @@ public class RewardProfile extends AbstractTime {
     public RewardProfileLine addLine(
             RewardDefinition rewardDefinition,
             int sortOrder,
-        Long amountOverride
+            Long amountOverride
     ) {
         if (lines.stream().anyMatch(line -> line.getSortOrder() == sortOrder)) {
             throw new DomainException(RewardError.REWARD_LINE_SORT_ORDER_DUPLICATED);
