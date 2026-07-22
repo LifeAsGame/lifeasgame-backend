@@ -50,13 +50,10 @@ class RewardSettlementConcurrencyTest {
     private PlatformTransactionManager transactionManager;
 
     @Autowired
-    private RewardProfileReader profileReader;
-
-    @Autowired
     private RewardSettlementReader settlementReader;
 
     @Autowired
-    private RewardSettlementWriter settlementWriter;
+    private RewardSettlementCreateAttempt createAttempt;
 
     @Autowired
     private RewardSettlementCreateService createService;
@@ -78,13 +75,12 @@ class RewardSettlementConcurrencyTest {
                 assertThat(settlementReader.findByIdentity(PLAYER_ID, SOURCE_TYPE, SOURCE_ID))
                         .isEmpty();
 
-                RewardSettlement winner = RewardSettlement.create(
+                RewardSettlement savedWinner = createAttempt.create(
                         PLAYER_ID,
                         SOURCE_TYPE,
                         SOURCE_ID,
-                        profileReader.getActiveByCodeOrThrow(PROFILE_CODE)
+                        PROFILE_CODE
                 );
-                RewardSettlement savedWinner = settlementWriter.saveAndFlush(winner);
 
                 boolean ordinaryReadStillMisses = settlementReader
                         .findByIdentity(PLAYER_ID, SOURCE_TYPE, SOURCE_ID)

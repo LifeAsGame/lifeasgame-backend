@@ -1,7 +1,6 @@
 package online.lifeasgame.reward.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.reward.domain.RewardProfile;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementSourceType;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,8 +11,7 @@ import org.springframework.stereotype.Service;
 public class RewardSettlementCreateService {
 
     private final RewardSettlementReader settlementReader;
-    private final RewardProfileReader profileReader;
-    private final RewardSettlementWriter settlementWriter;
+    private final RewardSettlementCreateAttempt createAttempt;
 
     public RewardSettlement create(
             Long playerId,
@@ -31,10 +29,8 @@ public class RewardSettlementCreateService {
             Long sourceId,
             String rewardProfileCode
     ) {
-        RewardProfile profile = profileReader.getActiveByCodeOrThrow(rewardProfileCode);
-        RewardSettlement settlement = RewardSettlement.create(playerId, sourceType, sourceId, profile);
         try {
-            return settlementWriter.saveAndFlush(settlement);
+            return createAttempt.create(playerId, sourceType, sourceId, rewardProfileCode);
         } catch (DataIntegrityViolationException exception) {
             return settlementReader.findByIdentityInNewTransaction(playerId, sourceType, sourceId)
                     .orElseThrow(() -> exception);
