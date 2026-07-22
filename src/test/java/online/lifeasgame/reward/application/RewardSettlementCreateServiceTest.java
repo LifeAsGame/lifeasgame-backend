@@ -6,6 +6,7 @@ import online.lifeasgame.reward.domain.RewardProfile;
 import online.lifeasgame.reward.domain.RewardProfileStatus;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementSourceType;
+import online.lifeasgame.reward.domain.RewardSettlementStatus;
 import online.lifeasgame.reward.domain.RewardType;
 import online.lifeasgame.reward.domain.error.RewardError;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,6 +73,26 @@ class RewardSettlementCreateServiceTest {
 
             assertThat(result.getLines()).hasSize(1);
             assertThat(result.getLines().getFirst().getAmount()).isEqualTo(10L);
+            verify(settlementWriter).saveAndFlush(result);
+        }
+
+        @Test
+        @DisplayName("RP_NONE은 Line 없이 COMPLETED Settlement로 저장한다")
+        void savesCompletedSettlementForNoRewardProfile() {
+            RewardProfile profile = activeEmptyProfile();
+            given(settlementReader.findByIdentity(PLAYER_ID, sourceType(), SOURCE_ID))
+                    .willReturn(Optional.empty());
+            given(profileReader.getActiveByCodeOrThrow("RP_NONE")).willReturn(profile);
+            given(settlementWriter.saveAndFlush(any(RewardSettlement.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0, RewardSettlement.class));
+
+            RewardSettlement result = service.create(
+                    PLAYER_ID, sourceType(), SOURCE_ID, "RP_NONE"
+            );
+
+            assertThat(result.getRewardProfileCode()).isEqualTo("RP_NONE");
+            assertThat(result.getLines()).isEmpty();
+            assertThat(result.getStatus()).isEqualTo(RewardSettlementStatus.COMPLETED);
             verify(settlementWriter).saveAndFlush(result);
         }
 
@@ -184,6 +205,14 @@ class RewardSettlementCreateServiceTest {
         );
         ReflectionTestUtils.setField(definition, "id", 20L);
         profile.addLine(definition, 0, null);
+        return profile;
+    }
+
+    private RewardProfile activeEmptyProfile() {
+        RewardProfile profile = RewardProfile.create(
+                "RP_NONE", "No Reward Profile", RewardProfileStatus.ACTIVE
+        );
+        ReflectionTestUtils.setField(profile, "id", 30L);
         return profile;
     }
 

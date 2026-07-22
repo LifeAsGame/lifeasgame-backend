@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("V4 migration 이후 JPA schema validation")
+@DisplayName("V5 migration 이후 JPA schema validation")
 class JpaValidateAfterMigrationTest {
 
     @Container
@@ -61,14 +61,14 @@ class JpaValidateAfterMigrationTest {
     private RewardSettlementReader rewardSettlementReader;
 
     @Nested
-    @DisplayName("V1부터 V4까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V5까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()
@@ -92,11 +92,20 @@ class JpaValidateAfterMigrationTest {
         }
 
         @Test
+        @DisplayName("V5 RP_NONE은 ACTIVE 상태이고 Line이 없다")
+        void loadsNoRewardProfileWithoutLines() {
+            var profile = rewardProfileReader.getActiveByCodeOrThrow("RP_NONE");
+
+            assertThat(profile.isActive()).isTrue();
+            assertThat(profile.getLines()).isEmpty();
+        }
+
+        @Test
         @DisplayName("DTO projection으로 활성 profile 요약을 조회한다")
         void loadsActiveProfileSummariesWithProjection() {
             assertThat(rewardProfileQueryService.listActiveProfiles())
                     .extracting(RewardProfileResult.Summary::code)
-                    .containsExactly("RP_EXP_10", "RP_EXP_30");
+                    .containsExactly("RP_EXP_10", "RP_EXP_30", "RP_NONE");
         }
     }
 

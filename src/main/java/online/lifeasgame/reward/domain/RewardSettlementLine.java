@@ -139,6 +139,20 @@ public class RewardSettlementLine extends AbstractTime {
         failureCode = errorCode.code();
     }
 
+    boolean prepareRetry() {
+        if (status == RewardSettlementLineStatus.PENDING) {
+            return false;
+        }
+        if (status == RewardSettlementLineStatus.SUCCEEDED) {
+            throw new DomainException(
+                    RewardError.REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_RETRY
+            );
+        }
+        status = RewardSettlementLineStatus.PENDING;
+        failureCode = null;
+        return true;
+    }
+
     private void assertExp() {
         if (rewardType != RewardType.EXP) {
             throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_EXP);

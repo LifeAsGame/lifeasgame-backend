@@ -88,9 +88,6 @@ public enum RewardError implements ErrorCode {
     REWARD_SETTLEMENT_PROFILE_ID_REQUIRED(
             "RWD-400-SETTLEMENT-PROFILE-ID-REQUIRED", "Reward settlement requires a persisted reward profile", 400
     ),
-    REWARD_SETTLEMENT_PROFILE_LINES_REQUIRED(
-            "RWD-400-SETTLEMENT-PROFILE-LINES-REQUIRED", "Reward settlement requires at least one profile line", 400
-    ),
     REWARD_SETTLEMENT_DEFINITION_ID_REQUIRED(
             "RWD-400-SETTLEMENT-DEFINITION-ID-REQUIRED", "Reward settlement line requires a persisted reward definition", 400
     ),
@@ -105,6 +102,9 @@ public enum RewardError implements ErrorCode {
     ),
     REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_FAIL(
             "RWD-409-SETTLEMENT-SUCCEEDED-LINE-CANNOT-FAIL", "Succeeded reward settlement line cannot fail", 409
+    ),
+    REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_RETRY(
+            "RWD-409-SETTLEMENT-SUCCEEDED-LINE-CANNOT-RETRY", "Succeeded reward settlement line cannot retry", 409
     ),
     REWARD_SETTLEMENT_FAILURE_CODE_REQUIRED(
             "RWD-400-SETTLEMENT-FAILURE-CODE-REQUIRED", "Failed reward settlement line requires an error code", 400
