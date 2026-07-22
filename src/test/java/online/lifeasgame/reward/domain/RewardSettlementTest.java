@@ -86,6 +86,66 @@ class RewardSettlementTest {
     }
 
     @Nested
+    @DisplayName("EXP Line 처리 가능 여부를 확인할 때")
+    class ValidateExpLineProcessing {
+
+        @Test
+        @DisplayName("PENDING EXP Line은 처리가 필요하다")
+        void requiresPendingExpProcessing() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+
+            assertThat(settlement.getLineOrThrow(0).isExpProcessingRequired()).isTrue();
+        }
+
+        @Test
+        @DisplayName("ITEM Line은 EXP processor에서 처리할 수 없다")
+        void rejectsItemLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+
+            assertRewardError(
+                    () -> settlement.getLineOrThrow(1).isExpProcessingRequired(),
+                    RewardError.REWARD_SETTLEMENT_LINE_NOT_EXP
+            );
+        }
+
+        @Test
+        @DisplayName("SUCCEEDED EXP Line은 기존 결과를 유지하고 재처리하지 않는다")
+        void skipsSucceededExpLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markExpLineSucceeded(1000L);
+
+            boolean processingRequired = settlement.getLineOrThrow(0).isExpProcessingRequired();
+
+            assertThat(processingRequired).isFalse();
+            assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+        }
+
+        @Test
+        @DisplayName("FAILED EXP Line은 자동 재처리할 수 없다")
+        void rejectsFailedExpLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineFailed(0, RewardError.REWARD_DEFINITION_NOT_FOUND);
+
+            assertRewardError(
+                    () -> settlement.getLineOrThrow(0).isExpProcessingRequired(),
+                    RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED
+            );
+        }
+
+        @Test
+        @DisplayName("다른 Settlement의 lineId는 소유 Line으로 조회하지 않는다")
+        void rejectsForeignLineId() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+
+            assertRewardError(
+                    () -> settlement.getLineByIdOrThrow(9999L),
+                    RewardError.REWARD_SETTLEMENT_LINE_NOT_FOUND
+            );
+        }
+    }
+
+    @Nested
     @DisplayName("Line 처리 결과를 반영할 때")
     class UpdateLineResult {
 
@@ -199,12 +259,16 @@ class RewardSettlementTest {
     }
 
     private RewardSettlement settlement(RewardProfile profile) {
-        return RewardSettlement.create(
+        RewardSettlement settlement = RewardSettlement.create(
                 1L,
                 RewardSettlementSourceType.QUEST_COMPLETION,
                 1000L,
                 profile
         );
+        for (int index = 0; index < settlement.getLines().size(); index++) {
+            ReflectionTestUtils.setField(settlement.getLines().get(index), "id", 1000L + index);
+        }
+        return settlement;
     }
 
     private RewardProfile profileWithExpAndItem() {

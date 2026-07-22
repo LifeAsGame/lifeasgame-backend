@@ -97,6 +97,9 @@ public enum RewardError implements ErrorCode {
     REWARD_SETTLEMENT_LINE_NOT_FOUND(
             "RWD-404-SETTLEMENT-LINE-NOT-FOUND", "Reward settlement line not found", 404
     ),
+    REWARD_SETTLEMENT_LINE_NOT_EXP(
+            "RWD-409-SETTLEMENT-LINE-NOT-EXP", "Reward settlement line is not an EXP reward", 409
+    ),
     REWARD_SETTLEMENT_LINE_ALREADY_FAILED(
             "RWD-409-SETTLEMENT-LINE-ALREADY-FAILED", "Failed reward settlement line cannot succeed", 409
     ),
@@ -105,6 +108,9 @@ public enum RewardError implements ErrorCode {
     ),
     REWARD_SETTLEMENT_FAILURE_CODE_REQUIRED(
             "RWD-400-SETTLEMENT-FAILURE-CODE-REQUIRED", "Failed reward settlement line requires an error code", 400
+    ),
+    REWARD_SETTLEMENT_EXP_GROWTH_INCONSISTENT(
+            "RWD-409-SETTLEMENT-EXP-GROWTH-INCONSISTENT", "EXP line and player growth change are inconsistent", 409
     );
 
     private final String code;

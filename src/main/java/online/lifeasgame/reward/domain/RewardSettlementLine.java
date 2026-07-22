@@ -108,6 +108,23 @@ public class RewardSettlementLine extends AbstractTime {
         failureCode = null;
     }
 
+    void succeedExp() {
+        assertExp();
+        succeed();
+    }
+
+    public boolean isExpProcessingRequired() {
+        assertExp();
+        if (status == RewardSettlementLineStatus.FAILED) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED);
+        }
+        return status == RewardSettlementLineStatus.PENDING;
+    }
+
+    boolean isPending() {
+        return status == RewardSettlementLineStatus.PENDING;
+    }
+
     void fail(ErrorCode errorCode) {
         if (status == RewardSettlementLineStatus.SUCCEEDED) {
             throw new DomainException(RewardError.REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_FAIL);
@@ -121,4 +138,11 @@ public class RewardSettlementLine extends AbstractTime {
         status = RewardSettlementLineStatus.FAILED;
         failureCode = errorCode.code();
     }
+
+    private void assertExp() {
+        if (rewardType != RewardType.EXP) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_EXP);
+        }
+    }
+
 }

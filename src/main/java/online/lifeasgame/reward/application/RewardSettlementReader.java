@@ -49,4 +49,15 @@ public class RewardSettlementReader {
         return repository.findById(id)
                 .orElseThrow(() -> new DomainException(RewardError.REWARD_SETTLEMENT_NOT_FOUND));
     }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public RewardSettlement getByIdForUpdateOrThrow(Long id) {
+        return findByIdForUpdate(id)
+                .orElseThrow(() -> new DomainException(RewardError.REWARD_SETTLEMENT_NOT_FOUND));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<RewardSettlement> findByIdForUpdate(Long id) {
+        return repository.findByIdForUpdate(id);
+    }
 }

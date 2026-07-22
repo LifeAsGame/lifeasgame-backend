@@ -106,8 +106,12 @@ public class Player extends AbstractTime {
     }
 
     public GainResult gainExp(long amount, LevelingPolicy leveling) {
-        Guard.minValue(amount, 1, "exp delta");
-        Guard.notNull(leveling, "leveling");
+        if (amount < 1) {
+            throw new DomainException(PlayerError.PLAYER_EXP_AMOUNT_MUST_BE_POSITIVE);
+        }
+        if (leveling == null) {
+            throw new DomainException(PlayerError.PLAYER_LEVELING_POLICY_REQUIRED);
+        }
 
         long beforeTotal = this.exp.value();
         int beforeLv = this.level.value();
@@ -135,6 +139,7 @@ public class Player extends AbstractTime {
         return new GainResult(
                 amount, applied, leftover,
                 beforeLv, afterLv,
+                beforeTotal,
                 this.exp.value(),
                 p.expIntoLevel(), p.expToNext(), p.capForLevel(), p.progressRatio()
         );
@@ -253,6 +258,7 @@ public class Player extends AbstractTime {
             long leftoverExp,
             int beforeLevel,
             int afterLevel,
+            long beforeTotalExp,
             long totalExp,
             long expIntoLevel,
             long expToNext,
