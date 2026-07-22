@@ -27,6 +27,15 @@ public class RewardSettlementReader {
         return repository.findByIdentity(playerId, sourceType, sourceId);
     }
 
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public Optional<RewardSettlement> findByIdentityInNewTransaction(
+            Long playerId,
+            RewardSettlementSourceType sourceType,
+            Long sourceId
+    ) {
+        return repository.findByIdentity(playerId, sourceType, sourceId);
+    }
+
     public RewardSettlement getByIdentityOrThrow(
             Long playerId,
             RewardSettlementSourceType sourceType,

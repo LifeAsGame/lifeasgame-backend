@@ -128,7 +128,8 @@ class RewardSettlementCreateServiceTest {
             RewardProfile profile = activeProfile();
             RewardSettlement winner = settlement(profile);
             given(settlementReader.findByIdentity(PLAYER_ID, sourceType(), SOURCE_ID))
-                    .willReturn(Optional.empty())
+                    .willReturn(Optional.empty());
+            given(settlementReader.findByIdentityInNewTransaction(PLAYER_ID, sourceType(), SOURCE_ID))
                     .willReturn(Optional.of(winner));
             given(profileReader.getActiveByCodeOrThrow(PROFILE_CODE)).willReturn(profile);
             given(settlementWriter.saveAndFlush(any(RewardSettlement.class)))
@@ -137,6 +138,8 @@ class RewardSettlementCreateServiceTest {
             RewardSettlement result = create();
 
             assertThat(result).isSameAs(winner);
+            verify(settlementReader)
+                    .findByIdentityInNewTransaction(PLAYER_ID, sourceType(), SOURCE_ID);
         }
 
         @Test
@@ -144,6 +147,8 @@ class RewardSettlementCreateServiceTest {
         void rethrowsWhenConflictIsNotIdentityDuplicate() {
             RewardProfile profile = activeProfile();
             given(settlementReader.findByIdentity(PLAYER_ID, sourceType(), SOURCE_ID))
+                    .willReturn(Optional.empty());
+            given(settlementReader.findByIdentityInNewTransaction(PLAYER_ID, sourceType(), SOURCE_ID))
                     .willReturn(Optional.empty());
             given(profileReader.getActiveByCodeOrThrow(PROFILE_CODE)).willReturn(profile);
             given(settlementWriter.saveAndFlush(any(RewardSettlement.class)))

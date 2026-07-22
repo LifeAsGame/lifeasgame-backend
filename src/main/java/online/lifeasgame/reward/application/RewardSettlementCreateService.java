@@ -36,7 +36,7 @@ public class RewardSettlementCreateService {
         try {
             return settlementWriter.saveAndFlush(settlement);
         } catch (DataIntegrityViolationException exception) {
-            return settlementReader.findByIdentity(playerId, sourceType, sourceId)
+            return settlementReader.findByIdentityInNewTransaction(playerId, sourceType, sourceId)
                     .orElseThrow(() -> exception);
         }
     }
