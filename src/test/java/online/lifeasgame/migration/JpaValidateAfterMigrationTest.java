@@ -12,6 +12,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import online.lifeasgame.reward.application.RewardProfileReader;
 import online.lifeasgame.reward.application.RewardProfileQueryService;
+import online.lifeasgame.reward.application.RewardSettlementCreateService;
+import online.lifeasgame.reward.application.RewardSettlementReader;
+import online.lifeasgame.reward.domain.RewardSettlementSourceType;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -21,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("V2 migration 이후 JPA schema validation")
+@DisplayName("V3 migration 이후 JPA schema validation")
 class JpaValidateAfterMigrationTest {
 
     @Container
@@ -50,15 +53,21 @@ class JpaValidateAfterMigrationTest {
     @Autowired
     private RewardProfileQueryService rewardProfileQueryService;
 
+    @Autowired
+    private RewardSettlementCreateService rewardSettlementCreateService;
+
+    @Autowired
+    private RewardSettlementReader rewardSettlementReader;
+
     @Nested
-    @DisplayName("V1과 V2가 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V3까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()
@@ -87,6 +96,35 @@ class JpaValidateAfterMigrationTest {
             assertThat(rewardProfileQueryService.listActiveProfiles())
                     .extracting(summary -> summary.code())
                     .containsExactly("RP_EXP_10", "RP_EXP_30");
+        }
+    }
+
+    @Nested
+    @DisplayName("V3 Settlement Aggregate를 저장하고 상세 조회할 때")
+    class PersistSettlementAggregate {
+
+        @Test
+        @DisplayName("Line을 함께 저장하고 같은 식별자의 재호출은 기존 Settlement를 반환한다")
+        void persistsAndReturnsExistingSettlement() {
+            var first = rewardSettlementCreateService.create(
+                    185L,
+                    RewardSettlementSourceType.QUEST_COMPLETION,
+                    185001L,
+                    "RP_EXP_10"
+            );
+            var second = rewardSettlementCreateService.create(
+                    185L,
+                    RewardSettlementSourceType.QUEST_COMPLETION,
+                    185001L,
+                    "RP_EXP_10"
+            );
+            var loaded = rewardSettlementReader.getByIdOrThrow(first.getId());
+
+            assertThat(second.getId()).isEqualTo(first.getId());
+            assertThat(loaded.getLines()).hasSize(1);
+            assertThat(loaded.getLines().getFirst().getRewardDefinitionCode())
+                    .isEqualTo("RD_EXP_10");
+            assertThat(loaded.getLines().getFirst().getAmount()).isEqualTo(10L);
         }
     }
 }
