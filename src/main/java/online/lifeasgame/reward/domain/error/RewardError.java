@@ -69,6 +69,42 @@ public enum RewardError implements ErrorCode {
     ),
     REWARD_AMOUNT_OVERRIDE_MUST_BE_POSITIVE(
             "RWD-400-AMOUNT-OVERRIDE-NOT-POSITIVE", "Reward amount override must be positive", 400
+    ),
+    REWARD_SETTLEMENT_NOT_FOUND(
+            "RWD-404-SETTLEMENT-NOT-FOUND", "Reward settlement not found", 404
+    ),
+    REWARD_SETTLEMENT_PLAYER_ID_REQUIRED(
+            "RWD-400-SETTLEMENT-PLAYER-ID-REQUIRED", "Reward settlement player id must be positive", 400
+    ),
+    REWARD_SETTLEMENT_SOURCE_TYPE_REQUIRED(
+            "RWD-400-SETTLEMENT-SOURCE-TYPE-REQUIRED", "Reward settlement source type is required", 400
+    ),
+    REWARD_SETTLEMENT_SOURCE_ID_REQUIRED(
+            "RWD-400-SETTLEMENT-SOURCE-ID-REQUIRED", "Reward settlement source id must be positive", 400
+    ),
+    REWARD_SETTLEMENT_PROFILE_REQUIRED(
+            "RWD-400-SETTLEMENT-PROFILE-REQUIRED", "Reward settlement requires a reward profile", 400
+    ),
+    REWARD_SETTLEMENT_PROFILE_ID_REQUIRED(
+            "RWD-400-SETTLEMENT-PROFILE-ID-REQUIRED", "Reward settlement requires a persisted reward profile", 400
+    ),
+    REWARD_SETTLEMENT_PROFILE_LINES_REQUIRED(
+            "RWD-400-SETTLEMENT-PROFILE-LINES-REQUIRED", "Reward settlement requires at least one profile line", 400
+    ),
+    REWARD_SETTLEMENT_DEFINITION_ID_REQUIRED(
+            "RWD-400-SETTLEMENT-DEFINITION-ID-REQUIRED", "Reward settlement line requires a persisted reward definition", 400
+    ),
+    REWARD_SETTLEMENT_LINE_NOT_FOUND(
+            "RWD-404-SETTLEMENT-LINE-NOT-FOUND", "Reward settlement line not found", 404
+    ),
+    REWARD_SETTLEMENT_LINE_ALREADY_FAILED(
+            "RWD-409-SETTLEMENT-LINE-ALREADY-FAILED", "Failed reward settlement line cannot succeed", 409
+    ),
+    REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_FAIL(
+            "RWD-409-SETTLEMENT-SUCCEEDED-LINE-CANNOT-FAIL", "Succeeded reward settlement line cannot fail", 409
+    ),
+    REWARD_SETTLEMENT_FAILURE_CODE_REQUIRED(
+            "RWD-400-SETTLEMENT-FAILURE-CODE-REQUIRED", "Failed reward settlement line requires an error code", 400
     );
 
     private final String code;

@@ -11,12 +11,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @DisplayName("Flyway migration")
@@ -33,14 +37,14 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1과 V2가 적용되고 Reward seed profile을 조회할 수 있다")
+        @DisplayName("V1부터 V3까지 적용되고 Settlement 테이블과 중복 방지 제약이 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(2);
-            assertThat(appliedVersions()).containsExactly("1", "2");
+            assertThat(result.migrationsExecuted).isEqualTo(3);
+            assertThat(appliedVersions()).containsExactly("1", "2", "3");
             assertThat(existingTables(
                     "users",
                     "player",
@@ -49,7 +53,9 @@ class FlywayMigrationTest {
                     "inventory_entries",
                     "reward_definitions",
                     "reward_profiles",
-                    "reward_profile_lines"
+                    "reward_profile_lines",
+                    "reward_settlements",
+                    "reward_settlement_lines"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -58,9 +64,22 @@ class FlywayMigrationTest {
                     "inventory_entries",
                     "reward_definitions",
                     "reward_profiles",
-                    "reward_profile_lines"
+                    "reward_profile_lines",
+                    "reward_settlements",
+                    "reward_settlement_lines"
             );
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
+            assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
+                    .containsExactly("player_id", "source_type", "source_id");
+            assertThat(uniqueIndexColumns(
+                    "reward_settlement_lines",
+                    "uq_reward_settlement_line_sort_order"
+            )).containsExactly("reward_settlement_id", "sort_order");
+            insertSettlementIdentity();
+            assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
+                    .isInstanceOfSatisfying(SQLException.class, exception ->
+                            assertThat(exception.getSQLState()).startsWith("23")
+                    );
         }
     }
 
@@ -130,6 +149,56 @@ class FlywayMigrationTest {
                 codes.add(resultSet.getString("code"));
             }
             return codes;
+        }
+    }
+
+    private List<String> uniqueIndexColumns(String tableName, String indexName) throws Exception {
+        try (Connection connection = MYSQL.createConnection("");
+             var statement = connection.prepareStatement("""
+                     SELECT column_name
+                     FROM information_schema.statistics
+                     WHERE table_schema = DATABASE()
+                       AND table_name = ?
+                       AND index_name = ?
+                       AND non_unique = 0
+                     ORDER BY seq_in_index
+                     """)) {
+            statement.setString(1, tableName);
+            statement.setString(2, indexName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<String> columns = new ArrayList<>();
+                while (resultSet.next()) {
+                    columns.add(resultSet.getString("column_name"));
+                }
+                return columns;
+            }
+        }
+    }
+
+    private void insertSettlementIdentity() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO reward_settlements (
+                        player_id,
+                        source_type,
+                        source_id,
+                        reward_profile_id,
+                        reward_profile_code,
+                        status,
+                        created_at,
+                        updated_at
+                    ) VALUES (
+                        185,
+                        'QUEST_COMPLETION',
+                        185001,
+                        1,
+                        'RP_EXP_10',
+                        'PENDING',
+                        CURRENT_TIMESTAMP(6),
+                        CURRENT_TIMESTAMP(6)
+                    )
+                    """);
         }
     }
 }
