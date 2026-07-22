@@ -102,14 +102,47 @@ public class RewardSettlement extends AbstractTime {
         recalculateStatus();
     }
 
+    public void markExpLineSucceeded(Long lineId) {
+        findLineById(lineId).succeedExp();
+        recalculateStatus();
+    }
+
     public void markLineFailed(int sortOrder, ErrorCode errorCode) {
         findLine(sortOrder).fail(errorCode);
         recalculateStatus();
     }
 
+    public boolean markLineFailedIfPending(Long lineId, ErrorCode errorCode) {
+        return lines.stream()
+                .filter(line -> line.getId() != null && line.getId().equals(lineId))
+                .filter(RewardSettlementLine::isPending)
+                .findFirst()
+                .map(line -> {
+                    line.fail(errorCode);
+                    recalculateStatus();
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    public RewardSettlementLine getLineOrThrow(int sortOrder) {
+        return findLine(sortOrder);
+    }
+
+    public RewardSettlementLine getLineByIdOrThrow(Long lineId) {
+        return findLineById(lineId);
+    }
+
     private RewardSettlementLine findLine(int sortOrder) {
         return lines.stream()
                 .filter(line -> line.getSortOrder() == sortOrder)
+                .findFirst()
+                .orElseThrow(() -> new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_FOUND));
+    }
+
+    private RewardSettlementLine findLineById(Long lineId) {
+        return lines.stream()
+                .filter(line -> line.getId() != null && line.getId().equals(lineId))
                 .findFirst()
                 .orElseThrow(() -> new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_FOUND));
     }

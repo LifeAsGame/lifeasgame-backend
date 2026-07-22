@@ -11,6 +11,8 @@ public interface RewardSettlementRepository {
 
     Optional<RewardSettlement> findById(Long id);
 
+    Optional<RewardSettlement> findByIdForUpdate(Long id);
+
     Optional<RewardSettlement> findByIdentity(
             Long playerId,
             RewardSettlementSourceType sourceType,

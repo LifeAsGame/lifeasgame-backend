@@ -25,6 +25,11 @@ public class RewardSettlementRepositoryAdapter implements RewardSettlementReposi
     }
 
     @Override
+    public Optional<RewardSettlement> findByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id);
+    }
+
+    @Override
     public Optional<RewardSettlement> findByIdentity(
             Long playerId,
             RewardSettlementSourceType sourceType,

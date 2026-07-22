@@ -11,6 +11,8 @@ public interface PlayerRepository {
 
     Optional<Player> findById(Long playerId);
 
+    Optional<Player> findByIdForUpdate(Long playerId);
+
     boolean existsById(Long playerId);
 
     Optional<Player> findByUserId(Long userId);

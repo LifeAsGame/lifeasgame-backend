@@ -29,6 +29,11 @@ public class PlayerRepositoryAdapter implements PlayerRepository {
     }
 
     @Override
+    public Optional<Player> findByIdForUpdate(Long playerId) {
+        return jpa.findByIdForUpdate(playerId);
+    }
+
+    @Override
     public boolean existsById(Long playerId) {
         return jpa.existsById(playerId);
     }

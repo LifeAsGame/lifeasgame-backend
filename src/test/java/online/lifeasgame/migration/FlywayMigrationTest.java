@@ -37,14 +37,14 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V3까지 적용되고 Settlement 테이블과 중복 방지 제약이 생성된다")
+        @DisplayName("V1부터 V4까지 적용되고 Settlement와 GrowthChange 중복 방지 제약이 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(3);
-            assertThat(appliedVersions()).containsExactly("1", "2", "3");
+            assertThat(result.migrationsExecuted).isEqualTo(4);
+            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4");
             assertThat(existingTables(
                     "users",
                     "player",
@@ -55,7 +55,8 @@ class FlywayMigrationTest {
                     "reward_profiles",
                     "reward_profile_lines",
                     "reward_settlements",
-                    "reward_settlement_lines"
+                    "reward_settlement_lines",
+                    "player_growth_changes"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -66,7 +67,8 @@ class FlywayMigrationTest {
                     "reward_profiles",
                     "reward_profile_lines",
                     "reward_settlements",
-                    "reward_settlement_lines"
+                    "reward_settlement_lines",
+                    "player_growth_changes"
             );
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
             assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
@@ -75,6 +77,10 @@ class FlywayMigrationTest {
                     "reward_settlement_lines",
                     "uq_reward_settlement_line_sort_order"
             )).containsExactly("reward_settlement_id", "sort_order");
+            assertThat(uniqueIndexColumns(
+                    "player_growth_changes",
+                    "uq_player_growth_change_reward_line"
+            )).containsExactly("reward_line_id");
             insertSettlementIdentity();
             assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
                     .isInstanceOfSatisfying(SQLException.class, exception ->

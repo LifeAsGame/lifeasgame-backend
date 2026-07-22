@@ -21,6 +21,12 @@ class PlayerReader {
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Player getByIdForUpdateOrThrow(Long playerId) {
+        return repository.findByIdForUpdate(playerId)
+                .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
+    }
+
     public void assertExistsById(Long playerId) {
         if (!repository.existsById(playerId)) {
             throw new DomainException(PlayerError.PLAYER_NOT_FOUND);

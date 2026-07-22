@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerCommand;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.domain.*;
-import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +15,7 @@ public class PlayerService {
     private final PlayerWriter playerWriter;
     private final PlayerReader playerReader;
     private final PlayerTitleReader playerTitleReader;
-    private final LevelingPolicy levelingPolicy;
+    private final PlayerExpGrantService playerExpGrantService;
     private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
@@ -58,13 +57,7 @@ public class PlayerService {
 
     @Transactional
     public PlayerResult.ExpGranted grantExp(Long playerId, long exp) {
-        Player player = playerReader.getByIdOrThrow(playerId);
-
-        Player.GainResult gainResult = player.gainExp(exp, levelingPolicy);
-
-        domainEventPublisher.publishAll(player.pullEvents());
-
-        return PlayerResult.ExpGranted.from(playerId, gainResult);
+        return PlayerResult.ExpGranted.from(playerId, playerExpGrantService.grantExp(playerId, exp));
     }
 
     @Transactional
