@@ -4,6 +4,7 @@ import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.event.PlayerLeveledUp;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.reward.application.result.RewardSettlementExpProcessResult;
+import online.lifeasgame.reward.application.result.RewardSettlementLineRetryPreparationResult;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementLineStatus;
 import online.lifeasgame.reward.domain.RewardSettlementSourceType;
@@ -77,6 +78,9 @@ class RewardSettlementExpProcessConcurrencyTest {
 
     @Autowired
     private RewardSettlementLineFailureRecorder failureRecorder;
+
+    @Autowired
+    private RewardSettlementLineRetryPreparationService retryPreparationService;
 
     @MockitoSpyBean
     private RewardSettlementWriter settlementWriter;
@@ -284,6 +288,88 @@ class RewardSettlementExpProcessConcurrencyTest {
         }
     }
 
+    @Nested
+    @DisplayName("RP_NONE으로 무보상 Settlement를 생성할 때")
+    class CreateNoRewardSettlement {
+
+        @Test
+        @DisplayName("Line 없이 즉시 COMPLETED가 되고 같은 Source 재호출은 기존 행을 반환한다")
+        void completesAndReplaysWithoutLines() {
+            RewardSettlement first = createSettlement(189001L, "RP_NONE");
+            RewardSettlement replay = createSettlement(189001L, "RP_NONE");
+
+            assertThat(first.getLines()).isEmpty();
+            assertThat(first.getStatus()).isEqualTo(RewardSettlementStatus.COMPLETED);
+            assertThat(replay.getId()).isEqualTo(first.getId());
+            assertThat(replay.getLines()).isEmpty();
+            assertThat(replay.getStatus()).isEqualTo(RewardSettlementStatus.COMPLETED);
+            assertThat(settlementRowCount()).isEqualTo(1);
+            assertThat(settlementLineRowCount()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("알려진 실패를 명시적으로 Retry 준비할 때")
+    class PrepareKnownFailureRetry {
+
+        @Test
+        @DisplayName("FAILED를 PENDING으로 영속화한 뒤 명시적 processor 호출에서 EXP를 한 번 지급한다")
+        void preparesThenProcessesExactlyOnce() {
+            RewardSettlement settlement = createSettlement(189101L, "RP_EXP_10");
+            Long lineId = settlement.getLines().getFirst().getId();
+            assertThatThrownBy(() -> processService.process(settlement.getId(), lineId))
+                    .isInstanceOfSatisfying(DomainException.class, exception ->
+                            assertThat(exception.getErrorCode()).isEqualTo(PlayerError.PLAYER_NOT_FOUND)
+                    );
+            insertPlayer(0L);
+
+            RewardSettlementLineRetryPreparationResult prepared =
+                    retryPreparationService.prepare(settlement.getId(), lineId);
+
+            assertThat(prepared.changed()).isTrue();
+            assertThat(lineStatus(lineId)).isEqualTo(RewardSettlementLineStatus.PENDING.name());
+            assertThat(lineFailureCode(lineId)).isNull();
+            assertThat(settlementStatus(settlement.getId()))
+                    .isEqualTo(RewardSettlementStatus.PENDING.name());
+            assertThat(playerExp()).isZero();
+            assertThat(growthChangeCount()).isZero();
+
+            RewardSettlementExpProcessResult processed =
+                    processService.process(settlement.getId(), lineId);
+
+            assertThat(processed.replayed()).isFalse();
+            assertThat(playerExp()).isEqualTo(10L);
+            assertThat(growthChangeCount()).isEqualTo(1);
+            assertThat(growthChangeCountByRewardLine(lineId)).isEqualTo(1);
+            assertThat(lineStatus(lineId)).isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
+            assertThat(settlementStatus(settlement.getId()))
+                    .isEqualTo(RewardSettlementStatus.COMPLETED.name());
+        }
+
+        @Test
+        @DisplayName("같은 FAILED Line의 두 동시 요청은 한 번만 변경하고 최종 PENDING을 유지한다")
+        void preparesSameFailedLineConcurrently() throws Exception {
+            RewardSettlement settlement = createSettlement(189102L, "RP_EXP_10");
+            Long lineId = settlement.getLines().getFirst().getId();
+            assertThatThrownBy(() -> processService.process(settlement.getId(), lineId))
+                    .isInstanceOf(DomainException.class);
+
+            List<RewardSettlementLineRetryPreparationResult> results = runConcurrently(
+                    () -> retryPreparationService.prepare(settlement.getId(), lineId),
+                    () -> retryPreparationService.prepare(settlement.getId(), lineId)
+            );
+
+            assertThat(results)
+                    .extracting(RewardSettlementLineRetryPreparationResult::changed)
+                    .containsExactlyInAnyOrder(true, false);
+            assertThat(lineStatus(lineId)).isEqualTo(RewardSettlementLineStatus.PENDING.name());
+            assertThat(lineFailureCode(lineId)).isNull();
+            assertThat(settlementStatus(settlement.getId()))
+                    .isEqualTo(RewardSettlementStatus.PENDING.name());
+            assertThat(growthChangeCount()).isZero();
+        }
+    }
+
     private RewardSettlement createSettlement(long sourceId, String profileCode) {
         return createService.create(PLAYER_ID, SOURCE_TYPE, sourceId, profileCode);
     }
@@ -305,18 +391,18 @@ class RewardSettlementExpProcessConcurrencyTest {
                 """, PLAYER_ID, PLAYER_ID + 100000L, level, exp);
     }
 
-    private List<RewardSettlementExpProcessResult> runConcurrently(
-            CheckedSupplier first,
-            CheckedSupplier second
+    private <T> List<T> runConcurrently(
+            CheckedSupplier<T> first,
+            CheckedSupplier<T> second
     ) throws Exception {
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
-        Future<RewardSettlementExpProcessResult> firstFuture = executor.submit(() -> {
+        Future<T> firstFuture = executor.submit(() -> {
             ready.countDown();
             start.await();
             return first.get();
         });
-        Future<RewardSettlementExpProcessResult> secondFuture = executor.submit(() -> {
+        Future<T> secondFuture = executor.submit(() -> {
             ready.countDown();
             start.await();
             return second.get();
@@ -382,8 +468,8 @@ class RewardSettlementExpProcessConcurrencyTest {
     }
 
     @FunctionalInterface
-    private interface CheckedSupplier {
-        RewardSettlementExpProcessResult get();
+    private interface CheckedSupplier<T> {
+        T get();
     }
 
     static final class LevelUpCommitProbe {

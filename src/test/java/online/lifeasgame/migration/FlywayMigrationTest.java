@@ -37,14 +37,14 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V4까지 적용되고 Settlement와 GrowthChange 중복 방지 제약이 생성된다")
+        @DisplayName("V1부터 V5까지 적용되고 RP_NONE과 중복 방지 제약이 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(4);
-            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4");
+            assertThat(result.migrationsExecuted).isEqualTo(5);
+            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5");
             assertThat(existingTables(
                     "users",
                     "player",
@@ -71,6 +71,7 @@ class FlywayMigrationTest {
                     "player_growth_changes"
             );
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
+            assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
             assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
                     .containsExactly("player_id", "source_type", "source_id");
             assertThat(uniqueIndexColumns(
@@ -158,6 +159,26 @@ class FlywayMigrationTest {
         }
     }
 
+    private NoRewardProfile noRewardProfile() throws Exception {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT profile.status, COUNT(line.id) AS line_count
+                     FROM reward_profiles profile
+                     LEFT JOIN reward_profile_lines line ON line.reward_profile_id = profile.id
+                     WHERE profile.code = 'RP_NONE'
+                     GROUP BY profile.id, profile.status
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            NoRewardProfile result = new NoRewardProfile(
+                    resultSet.getString("status"),
+                    resultSet.getInt("line_count")
+            );
+            assertThat(resultSet.next()).isFalse();
+            return result;
+        }
+    }
+
     private List<String> uniqueIndexColumns(String tableName, String indexName) throws Exception {
         try (Connection connection = MYSQL.createConnection("");
              var statement = connection.prepareStatement("""
@@ -206,5 +227,8 @@ class FlywayMigrationTest {
                     )
                     """);
         }
+    }
+
+    private record NoRewardProfile(String status, int lineCount) {
     }
 }

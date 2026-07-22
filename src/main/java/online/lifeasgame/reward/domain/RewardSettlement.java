@@ -78,10 +78,10 @@ public class RewardSettlement extends AbstractTime {
         this.sourceId = sourceId;
         this.rewardProfileId = rewardProfile.getId();
         this.rewardProfileCode = rewardProfile.getCode();
-        this.status = RewardSettlementStatus.PENDING;
         rewardProfile.getLines().stream()
                 .map(line -> RewardSettlementLine.snapshot(this, line))
                 .forEach(lines::add);
+        recalculateStatus();
     }
 
     public static RewardSettlement create(
@@ -123,6 +123,14 @@ public class RewardSettlement extends AbstractTime {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    public boolean prepareLineRetry(Long lineId) {
+        boolean changed = findLineById(lineId).prepareRetry();
+        if (changed) {
+            recalculateStatus();
+        }
+        return changed;
     }
 
     public RewardSettlementLine getLineOrThrow(int sortOrder) {
@@ -186,9 +194,6 @@ public class RewardSettlement extends AbstractTime {
         rewardProfile.assertActive();
         if (rewardProfile.getId() == null) {
             throw new DomainException(RewardError.REWARD_SETTLEMENT_PROFILE_ID_REQUIRED);
-        }
-        if (rewardProfile.getLines().isEmpty()) {
-            throw new DomainException(RewardError.REWARD_SETTLEMENT_PROFILE_LINES_REQUIRED);
         }
     }
 }

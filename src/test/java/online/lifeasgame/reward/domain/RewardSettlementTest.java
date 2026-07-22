@@ -74,14 +74,95 @@ class RewardSettlementTest {
         }
 
         @Test
-        @DisplayName("Profile Line이 없으면 REWARD_SETTLEMENT_PROFILE_LINES_REQUIRED 예외가 발생한다")
-        void rejectsEmptyProfile() {
-            RewardProfile profile = persistedProfile("RP_EMPTY");
+        @DisplayName("Profile Line이 없으면 빈 Line과 COMPLETED 상태로 생성한다")
+        void createsCompletedSettlementForEmptyProfile() {
+            RewardProfile profile = persistedProfile("RP_NONE");
+
+            RewardSettlement settlement = settlement(profile);
+
+            assertThat(settlement.getRewardProfileId()).isEqualTo(100L);
+            assertThat(settlement.getRewardProfileCode()).isEqualTo("RP_NONE");
+            assertThat(settlement.getLines()).isEmpty();
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.COMPLETED);
+        }
+    }
+
+    @Nested
+    @DisplayName("실패 Line의 재시도를 준비할 때")
+    class PrepareLineRetry {
+
+        @Test
+        @DisplayName("FAILED Line을 PENDING으로 바꾸고 failureCode를 제거한다")
+        void preparesFailedLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineFailed(0, RewardError.REWARD_DEFINITION_NOT_FOUND);
+
+            boolean changed = settlement.prepareLineRetry(1000L);
+
+            RewardSettlementLine line = settlement.getLineByIdOrThrow(1000L);
+            assertThat(changed).isTrue();
+            assertThat(line.getStatus()).isEqualTo(RewardSettlementLineStatus.PENDING);
+            assertThat(line.getFailureCode()).isNull();
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("PENDING Line 재호출은 상태를 변경하지 않는다")
+        void keepsPendingLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+
+            boolean changed = settlement.prepareLineRetry(1000L);
+
+            assertThat(changed).isFalse();
+            assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.PENDING);
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("SUCCEEDED Line은 재시도를 준비할 수 없다")
+        void rejectsSucceededLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineSucceeded(0);
 
             assertRewardError(
-                    () -> settlement(profile),
-                    RewardError.REWARD_SETTLEMENT_PROFILE_LINES_REQUIRED
+                    () -> settlement.prepareLineRetry(1000L),
+                    RewardError.REWARD_SETTLEMENT_SUCCEEDED_LINE_CANNOT_RETRY
             );
+        }
+
+        @Test
+        @DisplayName("부분 실패의 대상 Line만 PENDING으로 바꾸고 부모 상태를 재계산한다")
+        void recalculatesPartialFailure() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineSucceeded(0);
+            settlement.markLineFailed(1, RewardError.REWARD_DEFINITION_NOT_FOUND);
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.PARTIAL_FAILED);
+
+            settlement.prepareLineRetry(1001L);
+
+            assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+            assertThat(settlement.getLineByIdOrThrow(1001L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.PENDING);
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("전체 실패에서 한 Line을 준비하면 부모 상태가 PENDING이 된다")
+        void recalculatesTotalFailure() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineFailed(0, RewardError.REWARD_DEFINITION_NOT_FOUND);
+            settlement.markLineFailed(1, RewardError.REWARD_DEFINITION_NOT_FOUND);
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.FAILED);
+
+            settlement.prepareLineRetry(1000L);
+
+            assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.PENDING);
+            assertThat(settlement.getLineByIdOrThrow(1001L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.FAILED);
+            assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.PENDING);
         }
     }
 
