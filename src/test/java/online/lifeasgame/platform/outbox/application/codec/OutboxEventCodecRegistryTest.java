@@ -24,7 +24,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -155,6 +159,87 @@ class OutboxEventCodecRegistryTest {
             assertThat(decoded.attributes().get("stats"))
                     .isEqualTo(Map.of("strength", 2, "luck", 1L));
         }
+
+        @Test
+        @DisplayName("null 속성은 순서와 함께 보존되고 복원된 Map은 수정할 수 없다")
+        void preservesNullAttributeOrderAndImmutability() {
+            Map<String, Object> attributes = new LinkedHashMap<>();
+            attributes.put("first", 1);
+            attributes.put("nullable", null);
+            attributes.put("last", "end");
+            EconomyEvent source = economyEvent(attributes);
+
+            OutboxEventEnvelope envelope = registry.encode(source);
+            EconomyEvent decoded = (EconomyEvent) registry.decode(
+                    envelope.eventType(),
+                    envelope.payload()
+            );
+
+            assertThat(decoded.attributes()).containsEntry("nullable", null);
+            assertThat(new ArrayList<>(decoded.attributes().keySet()))
+                    .containsExactly("first", "nullable", "last");
+            assertThatThrownBy(() -> decoded.attributes().put("another", "value"))
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("숫자와 Instant, Map, List 속성 타입은 왕복 후에도 유지된다")
+        void preservesSupportedAttributeTypes() {
+            Map<String, Object> attributes = new LinkedHashMap<>();
+            attributes.put("byte", (byte) 1);
+            attributes.put("short", (short) 2);
+            attributes.put("integer", 3);
+            attributes.put("long", 4L);
+            attributes.put("float", 5.5F);
+            attributes.put("double", 6.5D);
+            attributes.put("bigInteger", new BigInteger("7000000000000000000"));
+            attributes.put("bigDecimal", new BigDecimal("8.125"));
+            attributes.put("instant", OCCURRED_AT);
+            attributes.put("map", Map.of("nested", 9L));
+            attributes.put("list", List.of("value", 10, OCCURRED_AT));
+            EconomyEvent source = economyEvent(attributes);
+
+            OutboxEventEnvelope envelope = registry.encode(source);
+            EconomyEvent decoded = (EconomyEvent) registry.decode(
+                    envelope.eventType(),
+                    envelope.payload()
+            );
+
+            assertThat(decoded.attributes()).isEqualTo(attributes);
+        }
+    }
+
+    @Nested
+    @DisplayName("지원하지 않는 동적 속성 타입")
+    class UnsupportedAttributeTypes {
+
+        @Test
+        @DisplayName("Character 속성은 append 전에 명시적으로 거부한다")
+        void rejectsCharacterAttribute() {
+            EconomyEvent event = economyEvent(Map.of("grade", 'A'));
+
+            assertThatThrownBy(() -> registry.encode(event))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(OutboxError.OUTBOX_EVENT_ATTRIBUTE_TYPE_UNSUPPORTED)
+                    );
+        }
+
+        @Test
+        @DisplayName("Enum 속성은 append 전에 명시적으로 거부한다")
+        void rejectsEnumAttribute() {
+            EconomyEvent event = economyEvent(
+                    Map.of("eventType", QuestEventType.QUEST_PROGRESS)
+            );
+
+            assertThatThrownBy(() -> registry.encode(event))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(OutboxError.OUTBOX_EVENT_ATTRIBUTE_TYPE_UNSUPPORTED)
+                    );
+        }
     }
 
     @Nested
@@ -191,6 +276,13 @@ class OutboxEventCodecRegistryTest {
     }
 
     private EconomyEvent economyEvent() {
+        return economyEvent(Map.of(
+                "price", 1_000L,
+                "confirmedAt", OCCURRED_AT
+        ));
+    }
+
+    private EconomyEvent economyEvent(Map<String, Object> attributes) {
         return new EconomyEvent(
                 EconomyEventType.LISTING_PURCHASED,
                 197L,
@@ -201,10 +293,7 @@ class OutboxEventCodecRegistryTest {
                 "reservation",
                 "economy:197",
                 OCCURRED_AT,
-                Map.of(
-                        "price", 1_000L,
-                        "confirmedAt", OCCURRED_AT
-                )
+                attributes
         );
     }
 }
