@@ -4,7 +4,10 @@ import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.platform.outbox.OutboxProperties;
+import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegistry;
 import online.lifeasgame.platform.outbox.domain.OutboxStatus;
+import online.lifeasgame.quest.domain.event.QuestEvent;
+import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.social.domain.ChatChannelType;
 import online.lifeasgame.social.domain.event.ChatChannelDeactivated;
 import org.junit.jupiter.api.*;
@@ -28,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,6 +89,9 @@ class TransactionalOutboxIntegrationTest {
 
     @Autowired
     private OutboxProperties properties;
+
+    @Autowired
+    private OutboxEventCodecRegistry codecRegistry;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -188,6 +195,52 @@ class TransactionalOutboxIntegrationTest {
                     .IllegalTransactionStateException.class);
 
             assertThat(outboxCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("QuestCompleted Definition Snapshot을 JSON payload에 보존한다")
+        void persistsQuestCompletedSnapshot() {
+            QuestEvent source = new QuestEvent(
+                    QuestEventType.QUEST_COMPLETED,
+                    QUEST_PLAYER_ID,
+                    203L,
+                    "quest:test:profile",
+                    Map.of(
+                            "acceptanceId", 20301L,
+                            "questDefinitionVersion", 3,
+                            "rewardProfileCode", "RP_EXP_30",
+                            "completedAt", OCCURRED_AT
+                    ),
+                    OCCURRED_AT,
+                    "quest:203:acceptance:20301:completed"
+            );
+
+            append(source);
+
+            String eventType = jdbcTemplate.queryForObject(
+                    "SELECT event_type FROM outbox_events",
+                    String.class
+            );
+            String payload = jdbcTemplate.queryForObject(
+                    "SELECT payload FROM outbox_events",
+                    String.class
+            );
+            QuestEvent decoded = (QuestEvent) codecRegistry.decode(
+                    eventType,
+                    payload
+            );
+
+            assertThat(eventType).isEqualTo("quest.event.v1");
+            assertThat(decoded).isEqualTo(source);
+            assertThat(decoded.attributes())
+                    .containsEntry("questDefinitionVersion", 3)
+                    .containsEntry("rewardProfileCode", "RP_EXP_30")
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
         }
     }
 

@@ -60,7 +60,7 @@ class QuestAcceptanceCompletionServiceTest {
         @Test
         @DisplayName("COMPLETED로 저장하고 Completed Event와 결과를 반환한다")
         void completesAndPublishesEvent() {
-            Quest quest = quest(QuestCompletionPolicy.USER_CONFIRM);
+            Quest quest = profileQuest(QuestCompletionPolicy.USER_CONFIRM);
             QuestAcceptance acceptance = goalReachedAcceptance(quest);
             given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
@@ -85,7 +85,18 @@ class QuestAcceptanceCompletionServiceTest {
                     .containsEntry(
                             "completionPolicy",
                             QuestCompletionPolicy.USER_CONFIRM.name()
+                    )
+                    .containsEntry("questDefinitionVersion", 7)
+                    .containsEntry("rewardProfileCode", "RP_EXP_30")
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
                     );
+            assertThat(event.correlationId())
+                    .isEqualTo("quest:193:acceptance:1930:completed");
+            assertThat(event.occurredAt()).isEqualTo(result.completedAt());
         }
 
         @Test
@@ -165,6 +176,23 @@ class QuestAcceptanceCompletionServiceTest {
                 "Quest 명시적 완료 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
                 QuestReward.of(0, RewardStats.empty()),
+                QuestRepeatRule.NONE,
+                completionPolicy,
+                null
+        );
+        ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+        return quest;
+    }
+
+    private Quest profileQuest(QuestCompletionPolicy completionPolicy) {
+        Quest quest = Quest.createDefinition(
+                "quest:test:explicit-completion-profile",
+                7,
+                QuestCategory.MAIN,
+                QuestTitle.of("Profile 명시적 완료 테스트"),
+                "RewardProfile Quest 명시적 완료 테스트",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                RewardProfileRef.of("RP_EXP_30"),
                 QuestRepeatRule.NONE,
                 completionPolicy,
                 null

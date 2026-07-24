@@ -1,6 +1,8 @@
 package online.lifeasgame.quest.api;
 
+import jakarta.validation.Validation;
 import online.lifeasgame.quest.api.admin.mapper.AdminQuestWebMapper;
+import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import online.lifeasgame.quest.api.player.mapper.QuestWebMapper;
 import online.lifeasgame.quest.api.player.response.QuestResponse;
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,6 +65,116 @@ class QuestResponseContractTest {
         }
     }
 
+    @Nested
+    @DisplayName("RewardProfile 기반 Definition을 응답으로 변환할 때")
+    class MapProfileDefinition {
+
+        @Test
+        @DisplayName("Admin과 Player 응답은 version/code를 노출하고 inline reward를 null로 둔다")
+        void exposesProfileReferenceWithoutFakeInlineReward() {
+            Quest quest = profileQuest();
+
+            AdminQuestResponse.Definition admin =
+                    AdminQuestWebMapper.toDefinition(
+                            QuestResult.Definition.from(quest)
+                    );
+            QuestResponse.PlayerQuest player =
+                    QuestWebMapper.toPlayerQuest(
+                            QuestResult.PlayerQuest.from(quest, null)
+                    );
+
+            assertThat(admin.definitionVersion()).isEqualTo(4);
+            assertThat(admin.rewardProfileCode()).isEqualTo("RP_EXP_30");
+            assertThat(admin.rewardExp()).isNull();
+            assertThat(admin.rewardStats()).isNull();
+
+            assertThat(player.definitionVersion()).isEqualTo(4);
+            assertThat(player.rewardProfileCode()).isEqualTo("RP_EXP_30");
+            assertThat(player.rewardExp()).isNull();
+            assertThat(player.rewardStats()).isNull();
+        }
+
+        @Test
+        @DisplayName("legacy 응답은 version 1과 기존 inline reward 값을 유지한다")
+        void keepsLegacyInlineRewardResponse() {
+            Quest quest = quest();
+
+            AdminQuestResponse.Definition admin =
+                    AdminQuestWebMapper.toDefinition(
+                            QuestResult.Definition.from(quest)
+                    );
+            QuestResponse.PlayerQuest player =
+                    QuestWebMapper.toPlayerQuest(
+                            QuestResult.PlayerQuest.from(quest, null)
+                    );
+
+            assertThat(admin.definitionVersion()).isEqualTo(1);
+            assertThat(admin.rewardProfileCode()).isNull();
+            assertThat(admin.rewardExp()).isZero();
+            assertThat(admin.rewardStats()).isEqualTo(Map.of());
+            assertThat(player.definitionVersion()).isEqualTo(1);
+            assertThat(player.rewardProfileCode()).isNull();
+            assertThat(player.rewardExp()).isZero();
+            assertThat(player.rewardStats()).isEqualTo(Map.of());
+        }
+
+        @Test
+        @DisplayName("Admin Update의 0 version은 Bean Validation 400 대상이다")
+        void rejectsNonPositiveRequestVersion() {
+            AdminQuestRequest.Update request = new AdminQuestRequest.Update(
+                    0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            var validator = Validation.buildDefaultValidatorFactory()
+                    .getValidator();
+
+            assertThat(validator.validate(request))
+                    .extracting(violation ->
+                            violation.getPropertyPath().toString())
+                    .containsExactly("definitionVersion");
+        }
+
+        @Test
+        @DisplayName("Admin과 Player Blueprint 응답에도 version/code 계약을 노출한다")
+        void exposesBlueprintContract() {
+            QuestBlueprint blueprint = QuestBlueprint.profileBased(
+                    QuestCode.PLAYER_WELCOME,
+                    5,
+                    QuestCategory.MAIN,
+                    QuestTitle.of("Profile Blueprint"),
+                    "profile blueprint",
+                    QuestTarget.of(QuestTargetType.COUNT, 1),
+                    RewardProfileRef.of("RP_EXP_10"),
+                    QuestRepeatRule.NONE,
+                    null,
+                    QuestCompletionPolicy.AUTO
+            );
+            QuestResult.Blueprint result = QuestResult.Blueprint.from(blueprint);
+
+            AdminQuestResponse.Blueprint admin =
+                    AdminQuestWebMapper.toBlueprints(List.of(result))
+                            .blueprints()
+                            .getFirst();
+            QuestResponse.Blueprint player = QuestWebMapper.toBlueprint(result);
+
+            assertThat(admin.definitionVersion()).isEqualTo(5);
+            assertThat(admin.rewardProfileCode()).isEqualTo("RP_EXP_10");
+            assertThat(admin.rewardExp()).isNull();
+            assertThat(admin.rewardStats()).isNull();
+            assertThat(player.definitionVersion()).isEqualTo(5);
+            assertThat(player.rewardProfileCode()).isEqualTo("RP_EXP_10");
+            assertThat(player.rewardExp()).isNull();
+            assertThat(player.rewardStats()).isNull();
+        }
+    }
+
     private Quest quest() {
         Quest quest = Quest.create(
                 "quest:test:response-contract",
@@ -74,6 +188,23 @@ class QuestResponseContractTest {
                 null
         );
         ReflectionTestUtils.setField(quest, "id", 193L);
+        return quest;
+    }
+
+    private Quest profileQuest() {
+        Quest quest = Quest.createDefinition(
+                "quest:test:profile-response-contract",
+                4,
+                QuestCategory.MAIN,
+                QuestTitle.of("Profile 응답 계약 테스트"),
+                "Quest Profile 응답 계약 테스트",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                RewardProfileRef.of("RP_EXP_30"),
+                QuestRepeatRule.NONE,
+                QuestCompletionPolicy.USER_CONFIRM,
+                null
+        );
+        ReflectionTestUtils.setField(quest, "id", 204L);
         return quest;
     }
 }

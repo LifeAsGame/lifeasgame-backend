@@ -9,6 +9,7 @@ import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class QuestService {
     private final QuestBlueprintCatalog questBlueprintCatalog;
     private final QuestReader questReader;
     private final QuestWriter questWriter;
+    private final RewardProfileLookupApi rewardProfileLookupApi;
     private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
@@ -59,15 +61,23 @@ public class QuestService {
     @Transactional
     public QuestResult.Definition updateDefinition(QuestCommand.UpdateDefinition command) {
         Quest quest = ensureQuest(QuestCode.parse(command.questCode()));
+        assertRewardContract(command, quest);
+        RewardProfileRef rewardProfileRef =
+                rewardProfileRefOrNull(command.rewardProfileCode(), quest);
 
         quest.updateDefinition(
                 targetOrNull(command),
                 rewardOrNull(command, quest),
                 QuestRepeatRule.parseNullable(command.repeatRule()),
-                command.dueAt()
+                command.dueAt(),
+                command.definitionVersion(),
+                rewardProfileRef
         );
 
-        domainEventPublisher.publishAll(quest.pullEvents());
+        var events = quest.pullEvents();
+        if (!events.isEmpty()) {
+            domainEventPublisher.publishAll(events);
+        }
 
         return QuestResult.Definition.from(quest);
     }
@@ -86,6 +96,35 @@ public class QuestService {
         int exp = (c.rewardExp() != null) ? c.rewardExp() : quest.getReward().exp();
         RewardStats stats = (c.rewardStats() != null) ? new RewardStats(c.rewardStats()) : quest.getReward().stats();
         return QuestReward.of(exp, stats);
+    }
+
+    private void assertRewardContract(
+            QuestCommand.UpdateDefinition command,
+            Quest quest
+    ) {
+        boolean changesInlineReward =
+                command.rewardExp() != null || command.rewardStats() != null;
+        if (changesInlineReward
+                && (command.rewardProfileCode() != null
+                || quest.usesRewardProfile())) {
+            throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
+        }
+    }
+
+    private RewardProfileRef rewardProfileRefOrNull(
+            String rewardProfileCode,
+            Quest quest
+    ) {
+        if (rewardProfileCode == null) {
+            return null;
+        }
+        RewardProfileRef requested = RewardProfileRef.of(rewardProfileCode);
+        if (requested.code().equals(quest.rewardProfileCodeOrNull())) {
+            return null;
+        }
+        RewardProfileLookupApi.RewardProfileReference reference =
+                rewardProfileLookupApi.getActiveByCode(requested.code());
+        return RewardProfileRef.of(reference.code());
     }
 
     @Transactional(readOnly = true)
@@ -141,7 +180,16 @@ public class QuestService {
     @Transactional
     public Quest ensureQuest(QuestCode code) {
         return questReader.findByCode(code)
-                .orElseGet(() -> questWriter.create(questBlueprintCatalog.require(code).instantiate()));
+                .orElseGet(() -> materialize(questBlueprintCatalog.require(code)));
+    }
+
+    private Quest materialize(QuestBlueprint blueprint) {
+        if (blueprint.usesRewardProfile()) {
+            rewardProfileLookupApi.getActiveByCode(
+                    blueprint.rewardProfileCodeOrNull()
+            );
+        }
+        return questWriter.create(blueprint.instantiate());
     }
 
     @Transactional
@@ -271,6 +319,14 @@ public class QuestService {
                         .attribute("goalReachedAt", acceptance.getGoalReachedAt())
                         .attribute("completedAt", acceptance.getCompletedAt())
                         .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .attribute(
+                                "questDefinitionVersion",
+                                quest.getDefinitionVersion()
+                        )
+                        .attribute(
+                                "rewardProfileCode",
+                                quest.rewardProfileCodeOrNull()
+                        )
                         .occurredAt(acceptance.getCompletedAt())
                         .correlationId(correlation(acceptance, suffix))
                         .build()

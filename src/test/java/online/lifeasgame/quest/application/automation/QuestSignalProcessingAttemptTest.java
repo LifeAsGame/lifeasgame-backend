@@ -78,7 +78,7 @@ class QuestSignalProcessingAttemptTest {
         @Test
         @DisplayName("Receipt를 먼저 flush하고 Goal과 Completed Event를 순서대로 발행한다")
         void savesReceiptBeforeApplyingQuest() {
-            Quest quest = quest(QuestCompletionPolicy.AUTO, QuestRepeatRule.NONE);
+            Quest quest = profileQuest();
             QuestSignal signal = signal(OCCURRED_AT);
             stubReceipt(signal);
             stubNewAcceptance(quest, signal);
@@ -101,6 +101,18 @@ class QuestSignalProcessingAttemptTest {
                             QuestEventType.QUEST_GOAL_REACHED,
                             QuestEventType.QUEST_COMPLETED
                     );
+            QuestEvent completed = events.getLast();
+            assertThat(completed.attributes())
+                    .containsEntry("questDefinitionVersion", 5)
+                    .containsEntry("rewardProfileCode", "RP_EXP_10")
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+            assertThat(completed.correlationId())
+                    .isEqualTo("source:signal-195:completed");
             QuestAcceptance saved = lastSavedAcceptance();
             assertThat(saved.getStatus()).isEqualTo(QuestStatus.COMPLETED);
             assertThat(saved.getGoalReachedAt()).isEqualTo(OCCURRED_AT);
@@ -380,6 +392,23 @@ class QuestSignalProcessingAttemptTest {
                 QuestReward.of(0, RewardStats.empty()),
                 repeatRule,
                 completionPolicy,
+                null
+        );
+        ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+        return quest;
+    }
+
+    private Quest profileQuest() {
+        Quest quest = Quest.createDefinition(
+                QuestCode.PLAYER_WELCOME.value(),
+                5,
+                QuestCategory.MAIN,
+                QuestTitle.of("Profile Signal 계약"),
+                "RewardProfile Quest Signal 계약 테스트",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                RewardProfileRef.of("RP_EXP_10"),
+                QuestRepeatRule.NONE,
+                QuestCompletionPolicy.AUTO,
                 null
         );
         ReflectionTestUtils.setField(quest, "id", QUEST_ID);

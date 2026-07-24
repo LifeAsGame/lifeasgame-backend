@@ -1,6 +1,7 @@
 package online.lifeasgame.migration;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.output.MigrateResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,17 +38,21 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V9까지 적용되고 Quick Record Receipt unique가 생성된다")
+        @DisplayName("V1부터 V10까지 적용되고 legacy Quest에 Definition 계약이 안전하게 추가된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
+            Flyway throughV9 = flyway(MigrationVersion.fromVersion("9"));
+            MigrateResult legacyResult = throughV9.migrate();
+            insertLegacyQuest();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(9);
+            assertThat(legacyResult.migrationsExecuted).isEqualTo(9);
+            assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9"
+                            "6", "7", "8", "9", "10"
                     );
             assertThat(existingTables(
                     "users",
@@ -121,6 +126,27 @@ class FlywayMigrationTest {
                     "outbox_events",
                     "idx_outbox_event_lease"
             )).containsExactly("status", "locked_at");
+            assertThat(indexColumns(
+                    "quests",
+                    "idx_quest_reward_profile_code"
+            )).containsExactly("reward_profile_code");
+            assertThat(questDefinitionColumns()).isEqualTo(
+                    new QuestDefinitionColumns(
+                            "NO",
+                            "1",
+                            "YES",
+                            "reward_exp",
+                            "reward_stats"
+                    )
+            );
+            assertThat(legacyQuestContract()).isEqualTo(
+                    new LegacyQuestContract(1, null, 7, 2)
+            );
+            assertThat(rewardProfileForeignKeyCount()).isZero();
+            assertThatThrownBy(FlywayMigrationTest.this::violateDefinitionVersionCheck)
+                    .isInstanceOfSatisfying(SQLException.class, exception ->
+                            assertThat(exception.getErrorCode()).isEqualTo(3819)
+                    );
             assertThat(uniqueIndexColumns(
                     "quick_record_request_receipts",
                     "uq_quick_record_request_receipt_identity"
@@ -134,11 +160,18 @@ class FlywayMigrationTest {
     }
 
     private Flyway flyway() {
-        return Flyway.configure()
+        return flyway(null);
+    }
+
+    private Flyway flyway(MigrationVersion target) {
+        var configuration = Flyway.configure()
                 .dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .locations("classpath:db/migration")
-                .baselineOnMigrate(false)
-                .load();
+                .baselineOnMigrate(false);
+        if (target != null) {
+            configuration.target(target);
+        }
+        return configuration.load();
     }
 
     private Set<String> appliedVersions() throws Exception {
@@ -297,6 +330,139 @@ class FlywayMigrationTest {
         }
     }
 
+    private void insertLegacyQuest() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO quests (
+                        reward_exp,
+                        target_value,
+                        created_at,
+                        due_at,
+                        updated_at,
+                        code,
+                        title_id,
+                        reward_stats,
+                        category,
+                        description_md,
+                        repeat_rule,
+                        completion_policy,
+                        target_type
+                    ) VALUES (
+                        7,
+                        1,
+                        CURRENT_TIMESTAMP(6),
+                        NULL,
+                        CURRENT_TIMESTAMP(6),
+                        'quest:test:v9-legacy',
+                        'V9 Legacy Quest',
+                        JSON_OBJECT('strength', 2),
+                        'MAIN',
+                        'V9 legacy row',
+                        'NONE',
+                        'AUTO',
+                        'COUNT'
+                    )
+                    """);
+        }
+    }
+
+    private QuestDefinitionColumns questDefinitionColumns() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             var statement = connection.prepareStatement("""
+                     SELECT
+                         MAX(CASE WHEN column_name = 'definition_version'
+                             THEN is_nullable END) AS version_nullable,
+                         MAX(CASE WHEN column_name = 'definition_version'
+                             THEN column_default END) AS version_default,
+                         MAX(CASE WHEN column_name = 'reward_profile_code'
+                             THEN is_nullable END) AS profile_nullable,
+                         MAX(CASE WHEN column_name = 'reward_exp'
+                             THEN column_name END) AS reward_exp_column,
+                         MAX(CASE WHEN column_name = 'reward_stats'
+                             THEN column_name END) AS reward_stats_column
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'quests'
+                     """);
+             ResultSet resultSet = statement.executeQuery()) {
+            assertThat(resultSet.next()).isTrue();
+            return new QuestDefinitionColumns(
+                    resultSet.getString("version_nullable"),
+                    resultSet.getString("version_default"),
+                    resultSet.getString("profile_nullable"),
+                    resultSet.getString("reward_exp_column"),
+                    resultSet.getString("reward_stats_column")
+            );
+        }
+    }
+
+    private LegacyQuestContract legacyQuestContract() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         definition_version,
+                         reward_profile_code,
+                         reward_exp,
+                         JSON_EXTRACT(reward_stats, '$.strength') AS strength
+                     FROM quests
+                     WHERE code = 'quest:test:v9-legacy'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new LegacyQuestContract(
+                    resultSet.getInt("definition_version"),
+                    resultSet.getString("reward_profile_code"),
+                    resultSet.getInt("reward_exp"),
+                    resultSet.getInt("strength")
+            );
+        }
+    }
+
+    private int rewardProfileForeignKeyCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM information_schema.key_column_usage
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'quests'
+                       AND column_name = 'reward_profile_code'
+                       AND referenced_table_name IS NOT NULL
+                     """)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private void violateDefinitionVersionCheck() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    UPDATE quests
+                    SET definition_version = 0
+                    WHERE code = 'quest:test:v9-legacy'
+                    """);
+        }
+    }
+
     private record NoRewardProfile(String status, int lineCount) {
+    }
+
+    private record QuestDefinitionColumns(
+            String versionNullable,
+            String versionDefault,
+            String profileNullable,
+            String rewardExpColumn,
+            String rewardStatsColumn
+    ) {
+    }
+
+    private record LegacyQuestContract(
+            int definitionVersion,
+            String rewardProfileCode,
+            int rewardExp,
+            int strength
+    ) {
     }
 }

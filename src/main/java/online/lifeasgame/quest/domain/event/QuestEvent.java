@@ -47,7 +47,7 @@ public record QuestEvent(
     }
 
     public static QuestEvent snapshot(QuestEventType type, Quest quest, String correlationId) {
-        return QuestEvent.builder(type)
+        Builder builder = QuestEvent.builder(type)
                 .questId(quest.getId())
                 .questCode(quest.getCode())
                 .attribute("title", quest.getTitle().value())
@@ -56,12 +56,16 @@ public record QuestEvent(
                 .attribute("targetValue", quest.target().value())
                 .attribute("repeatRule", quest.getRepeatRule().name())
                 .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                .attribute("rewardExp", quest.getReward().exp())
-                .attribute("rewardStats", quest.getReward().stats().stats())
+                .attribute("questDefinitionVersion", quest.getDefinitionVersion())
+                .attribute("rewardProfileCode", quest.rewardProfileCodeOrNull())
                 .attribute("dueAt", quest.getDueAt())
                 .occurredAt(Instant.now())
-                .correlationId(correlationId)
-                .build();
+                .correlationId(correlationId);
+        if (quest.isLegacyInlineReward()) {
+            builder.attribute("rewardExp", quest.getReward().exp())
+                    .attribute("rewardStats", quest.getReward().stats().stats());
+        }
+        return builder.build();
     }
 
     public static final class Builder {

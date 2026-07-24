@@ -56,7 +56,7 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @PatchMapping("/definitions/{questCode}")
     public ResponseEntity<AdminQuestResponse.Definition> update(
             @PathVariable String questCode,
-            @RequestBody AdminQuestRequest.Update request
+            @Valid @RequestBody AdminQuestRequest.Update request
     ) {
         QuestResult.Definition result = questService.updateDefinition(
                 AdminQuestWebMapper.toUpdateCommand(questCode, request)

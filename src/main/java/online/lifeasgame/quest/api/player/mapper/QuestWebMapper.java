@@ -37,6 +37,8 @@ public final class QuestWebMapper {
                 result.targetValue(),
                 result.repeatRule(),
                 result.completionPolicy(),
+                result.definitionVersion(),
+                result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt(),
@@ -76,6 +78,8 @@ public final class QuestWebMapper {
                 result.target().value(),
                 result.repeatRule(),
                 result.completionPolicy(),
+                result.definitionVersion(),
+                result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()

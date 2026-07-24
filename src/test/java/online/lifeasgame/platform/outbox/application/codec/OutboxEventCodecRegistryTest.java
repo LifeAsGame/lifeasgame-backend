@@ -220,6 +220,55 @@ class OutboxEventCodecRegistryTest {
 
             assertThat(decoded.attributes()).isEqualTo(attributes);
         }
+
+        @Test
+        @DisplayName("신규 QuestCompleted Definition Snapshot을 그대로 왕복한다")
+        void roundTripsProfileQuestCompletedSnapshot() {
+            QuestEvent source = completedQuestEvent(Map.of(
+                    "acceptanceId", 19701L,
+                    "questDefinitionVersion", 4,
+                    "rewardProfileCode", "RP_EXP_30",
+                    "completedAt", OCCURRED_AT
+            ));
+
+            OutboxEventEnvelope envelope = registry.encode(source);
+            QuestEvent decoded = (QuestEvent) registry.decode(
+                    envelope.eventType(),
+                    envelope.payload()
+            );
+
+            assertThat(decoded).isEqualTo(source);
+            assertThat(decoded.attributes())
+                    .containsEntry("questDefinitionVersion", 4)
+                    .containsEntry("rewardProfileCode", "RP_EXP_30")
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+        }
+
+        @Test
+        @DisplayName("legacy QuestCompleted는 rewardProfileCode 없이도 왕복한다")
+        void roundTripsLegacyQuestCompletedWithoutProfileCode() {
+            QuestEvent source = completedQuestEvent(Map.of(
+                    "acceptanceId", 19702L,
+                    "questDefinitionVersion", 1,
+                    "completedAt", OCCURRED_AT
+            ));
+
+            OutboxEventEnvelope envelope = registry.encode(source);
+            QuestEvent decoded = (QuestEvent) registry.decode(
+                    envelope.eventType(),
+                    envelope.payload()
+            );
+
+            assertThat(decoded).isEqualTo(source);
+            assertThat(decoded.attributes())
+                    .containsEntry("questDefinitionVersion", 1)
+                    .doesNotContainKey("rewardProfileCode");
+        }
     }
 
     @Nested
@@ -285,6 +334,18 @@ class OutboxEventCodecRegistryTest {
                 ),
                 OCCURRED_AT,
                 "quest:197:progress"
+        );
+    }
+
+    private QuestEvent completedQuestEvent(Map<String, Object> attributes) {
+        return new QuestEvent(
+                QuestEventType.QUEST_COMPLETED,
+                197L,
+                91L,
+                "Q_OUTBOX",
+                attributes,
+                OCCURRED_AT,
+                "quest:91:acceptance:197:completed"
         );
     }
 

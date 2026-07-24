@@ -29,6 +29,8 @@ public final class AdminQuestWebMapper {
                 result.target().value(),
                 result.repeatRule(),
                 result.completionPolicy(),
+                result.definitionVersion(),
+                result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()
@@ -53,8 +55,10 @@ public final class AdminQuestWebMapper {
     public static QuestCommand.UpdateDefinition toUpdateCommand(String questCode, AdminQuestRequest.Update request) {
         return new QuestCommand.UpdateDefinition(
                 questCode,
+                request.definitionVersion(),
                 request.targetType(),
                 request.targetValue(),
+                request.rewardProfileCode(),
                 request.rewardExp(),
                 request.rewardStats(),
                 request.repeatRule(),
@@ -73,6 +77,8 @@ public final class AdminQuestWebMapper {
                 result.targetValue(),
                 result.repeatRule(),
                 result.completionPolicy(),
+                result.definitionVersion(),
+                result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()

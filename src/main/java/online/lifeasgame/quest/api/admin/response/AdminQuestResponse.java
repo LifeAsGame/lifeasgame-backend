@@ -18,7 +18,9 @@ public final class AdminQuestResponse {
             int targetValue,
             String repeatRule,
             String completionPolicy,
-            int rewardExp,
+            int definitionVersion,
+            String rewardProfileCode,
+            Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
     ) {
@@ -37,7 +39,9 @@ public final class AdminQuestResponse {
             int targetValue,
             String repeatRule,
             String completionPolicy,
-            int rewardExp,
+            int definitionVersion,
+            String rewardProfileCode,
+            Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
     ) {
