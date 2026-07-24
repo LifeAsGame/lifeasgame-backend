@@ -59,7 +59,7 @@ public class CollectionLogService {
                 )
         ));
 
-        return new CollectionResult.Created(saved.getId());
+        return new CollectionResult.Created(saved.getId(), occurredAt);
     }
 
     @Transactional

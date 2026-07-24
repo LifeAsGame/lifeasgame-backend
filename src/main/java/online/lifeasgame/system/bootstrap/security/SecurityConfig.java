@@ -1,5 +1,6 @@
 package online.lifeasgame.system.bootstrap.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.security.jwt.JwtAuthenticationFilter;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
@@ -29,6 +30,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, cause) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_UNAUTHORIZED
+                                )
+                        ))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/login",

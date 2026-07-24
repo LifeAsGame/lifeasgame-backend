@@ -11,7 +11,10 @@ public final class MediaLogResult {
     private MediaLogResult() {
     }
 
-    public record Created(Long id) {
+    public record Created(
+            Long id,
+            Instant recordedAt
+    ) {
     }
 
     public record Info(
