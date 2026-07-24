@@ -20,7 +20,12 @@ public class MediaLogAdvancedQuestTrigger implements QuestTrigger<MediaLogAdvanc
         return List.of(
                 QuestSignal.addProgress(QuestCode.MEDIA_BINGE_5, event.playerId(), event.advancedBy())
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":media:" + event.mediaLogId())
+                        .correlationId(QuestSignalCorrelation.sourceEvent(
+                                "media-advanced",
+                                event.playerId(),
+                                event.mediaLogId(),
+                                event.occurredAt()
+                        ))
                         .attribute("currentStep", event.currentStep())
                         .attribute("totalEpisodes", event.totalEpisodes())
                         .build()

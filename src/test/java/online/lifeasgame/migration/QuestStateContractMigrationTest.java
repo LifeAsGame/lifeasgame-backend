@@ -42,7 +42,9 @@ class QuestStateContractMigrationTest {
             assertThat(v5Flyway.migrate().migrationsExecuted).isEqualTo(5);
             insertLegacyQuestAndDoneAcceptance();
 
-            MigrateResult result = flyway(null).migrate();
+            MigrateResult result = flyway(
+                    MigrationVersion.fromVersion("6")
+            ).migrate();
 
             assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(result.targetSchemaVersion).isEqualTo("6");

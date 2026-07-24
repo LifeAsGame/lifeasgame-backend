@@ -46,6 +46,21 @@ public enum QuestError implements ErrorCode {
             "QUE-400-QUEST-TRANSITION-TIME-REQUIRED",
             "Quest transition time is required",
             400
+    ),
+    QUEST_SIGNAL_CORRELATION_REQUIRED(
+            "QUE-400-QUEST-SIGNAL-CORRELATION-REQUIRED",
+            "Quest signal correlation is required",
+            400
+    ),
+    QUEST_SIGNAL_CORRELATION_TOO_LONG(
+            "QUE-400-QUEST-SIGNAL-CORRELATION-TOO-LONG",
+            "Quest signal correlation is too long",
+            400
+    ),
+    QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT(
+            "QUE-409-QUEST-SIGNAL-RECEIPT-PAYLOAD-CONFLICT",
+            "Quest signal identity was already used with a different payload",
+            409
     )
     ;
 

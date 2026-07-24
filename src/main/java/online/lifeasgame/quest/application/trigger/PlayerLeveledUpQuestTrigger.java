@@ -33,7 +33,12 @@ public class PlayerLeveledUpQuestTrigger implements QuestTrigger<PlayerLeveledUp
     public List<QuestSignal> translate(PlayerLeveledUp event) {
         List<QuestSignal> signals = new ArrayList<>();
         int levelDelta = Math.max(1, event.afterLevel() - event.beforeLevel());
-        String correlation = "player:" + event.playerId() + ":level-up:" + event.afterLevel();
+        String correlation = QuestSignalCorrelation.sourceEvent(
+                "level-up",
+                event.playerId(),
+                event.afterLevel(),
+                event.occurredAt()
+        );
 
         signals.add(
                 QuestSignal.addProgress(QuestCode.PLAYER_LEVEL_TRACK, event.playerId(), levelDelta)
@@ -50,7 +55,7 @@ public class PlayerLeveledUpQuestTrigger implements QuestTrigger<PlayerLeveledUp
                 signals.add(
                         QuestSignal.addProgress(milestone.code(), event.playerId(), 1)
                                 .occurredAt(event.occurredAt())
-                                .correlationId("player:" + event.playerId() + ":level-milestone:" + milestone.threshold())
+                                .correlationId(correlation)
                                 .attribute("beforeLevel", event.beforeLevel())
                                 .attribute("afterLevel", event.afterLevel())
                                 .attribute("milestone", milestone.threshold())

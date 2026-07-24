@@ -20,7 +20,12 @@ public class CollectionLoggedQuestTrigger implements QuestTrigger<CollectionLogg
         return List.of(
                 QuestSignal.addProgress(QuestCode.COLLECTION_HUNTER_10, event.playerId(), event.quantity())
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":collection:" + event.collectionLogId())
+                        .correlationId(QuestSignalCorrelation.sourceEvent(
+                                "collection",
+                                event.playerId(),
+                                event.collectionLogId(),
+                                event.occurredAt()
+                        ))
                         .attribute("category", event.category())
                         .attribute("quantity", event.quantity())
                         .build()

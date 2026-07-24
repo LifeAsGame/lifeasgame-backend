@@ -20,7 +20,12 @@ public class ExerciseLoggedQuestTrigger implements QuestTrigger<ExerciseLogged> 
         return List.of(
                 QuestSignal.addProgress(QuestCode.EXERCISE_MINUTES_300, event.playerId(), event.durationMinutes())
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":exercise:" + event.exerciseLogId())
+                        .correlationId(QuestSignalCorrelation.sourceEvent(
+                                "exercise",
+                                event.playerId(),
+                                event.exerciseLogId(),
+                                event.occurredAt()
+                        ))
                         .attribute("category", event.category())
                         .attribute("distanceKm", event.distanceKm())
                         .attribute("calories", event.calories())
