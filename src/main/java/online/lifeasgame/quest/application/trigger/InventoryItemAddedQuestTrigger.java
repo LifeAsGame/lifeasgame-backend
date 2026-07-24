@@ -20,7 +20,12 @@ public class InventoryItemAddedQuestTrigger implements QuestTrigger<InventoryIte
         return List.of(
                 QuestSignal.addProgress(QuestCode.INVENTORY_COLLECTOR_100, event.playerId(), event.quantity())
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":inventory:" + event.itemId())
+                        .correlationId(QuestSignalCorrelation.sourceEvent(
+                                "inventory-item-added",
+                                event.playerId(),
+                                event.itemId(),
+                                event.occurredAt()
+                        ))
                         .attribute("rarity", event.rarity())
                         .attribute("stackable", event.stackable())
                         .attribute("bound", event.bound())

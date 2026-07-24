@@ -1,13 +1,17 @@
 package online.lifeasgame.quest.application.automation;
 
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.domain.QuestCode;
+import online.lifeasgame.quest.domain.error.QuestError;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class QuestSignal {
+
+    public static final int MAX_CORRELATION_ID_LENGTH = 120;
 
     private final QuestCode questCode;
     private final Long playerId;
@@ -25,7 +29,7 @@ public final class QuestSignal {
         this.progressDelta = builder.progressDelta;
         this.progressValue = builder.progressValue;
         this.occurredAt = builder.occurredAt == null ? Instant.now() : builder.occurredAt;
-        this.correlationId = builder.correlationId;
+        this.correlationId = normalizeCorrelation(builder.correlationId);
         this.attributes = Map.copyOf(builder.attributes);
     }
 
@@ -73,6 +77,17 @@ public final class QuestSignal {
 
     public boolean isSetOperation() {
         return type == QuestSignalType.SET_PROGRESS;
+    }
+
+    private String normalizeCorrelation(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new DomainException(QuestError.QUEST_SIGNAL_CORRELATION_REQUIRED);
+        }
+        String normalized = raw.trim();
+        if (normalized.length() > MAX_CORRELATION_ID_LENGTH) {
+            throw new DomainException(QuestError.QUEST_SIGNAL_CORRELATION_TOO_LONG);
+        }
+        return normalized;
     }
 
     public static final class Builder {

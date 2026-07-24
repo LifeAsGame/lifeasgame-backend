@@ -17,15 +17,21 @@ public class PlayerRegisteredQuestTrigger implements QuestTrigger<PlayerRegister
 
     @Override
     public List<QuestSignal> translate(PlayerRegistered event) {
+        String correlation = QuestSignalCorrelation.sourceEvent(
+                "registered",
+                event.playerId(),
+                event.playerId(),
+                event.occurredAt()
+        );
         return List.of(
                 QuestSignal.addProgress(QuestCode.PLAYER_WELCOME, event.playerId(), 1)
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":registered")
+                        .correlationId(correlation)
                         .attribute("event", "PLAYER_REGISTERED")
                         .build(),
                 QuestSignal.setProgress(QuestCode.PLAYER_LEVEL_TRACK, event.playerId(), 0)
                         .occurredAt(event.occurredAt())
-                        .correlationId("player:" + event.playerId() + ":weekly-level-track")
+                        .correlationId(correlation)
                         .attribute("event", "PLAYER_REGISTERED")
                         .build()
         );

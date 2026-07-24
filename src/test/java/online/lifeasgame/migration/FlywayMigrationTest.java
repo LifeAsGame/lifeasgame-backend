@@ -37,14 +37,15 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V6까지 적용되고 Quest 상태 계약과 중복 방지 제약이 생성된다")
+        @DisplayName("V1부터 V7까지 적용되고 Quest Receipt 중복 방지 제약이 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(6);
-            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6");
+            assertThat(result.migrationsExecuted).isEqualTo(7);
+            assertThat(appliedVersions())
+                    .containsExactly("1", "2", "3", "4", "5", "6", "7");
             assertThat(existingTables(
                     "users",
                     "player",
@@ -56,7 +57,8 @@ class FlywayMigrationTest {
                     "reward_profile_lines",
                     "reward_settlements",
                     "reward_settlement_lines",
-                    "player_growth_changes"
+                    "player_growth_changes",
+                    "quest_signal_receipts"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -68,7 +70,8 @@ class FlywayMigrationTest {
                     "reward_profile_lines",
                     "reward_settlements",
                     "reward_settlement_lines",
-                    "player_growth_changes"
+                    "player_growth_changes",
+                    "quest_signal_receipts"
             );
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
             assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
@@ -82,6 +85,18 @@ class FlywayMigrationTest {
                     "player_growth_changes",
                     "uq_player_growth_change_reward_line"
             )).containsExactly("reward_line_id");
+            assertThat(uniqueIndexColumns(
+                    "quest_signal_receipts",
+                    "uq_quest_signal_receipt_identity"
+            )).containsExactly("quest_code", "player_id", "correlation_id");
+            assertThat(indexColumns(
+                    "quest_signal_receipts",
+                    "idx_quest_signal_receipt_player"
+            )).containsExactly("player_id");
+            assertThat(indexColumns(
+                    "quest_signal_receipts",
+                    "idx_quest_signal_receipt_created_at"
+            )).containsExactly("created_at");
             insertSettlementIdentity();
             assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
                     .isInstanceOfSatisfying(SQLException.class, exception ->
@@ -188,6 +203,31 @@ class FlywayMigrationTest {
                        AND table_name = ?
                        AND index_name = ?
                        AND non_unique = 0
+                     ORDER BY seq_in_index
+                     """)) {
+            statement.setString(1, tableName);
+            statement.setString(2, indexName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<String> columns = new ArrayList<>();
+                while (resultSet.next()) {
+                    columns.add(resultSet.getString("column_name"));
+                }
+                return columns;
+            }
+        }
+    }
+
+    private List<String> indexColumns(
+            String tableName,
+            String indexName
+    ) throws Exception {
+        try (Connection connection = MYSQL.createConnection("");
+             var statement = connection.prepareStatement("""
+                     SELECT column_name
+                     FROM information_schema.statistics
+                     WHERE table_schema = DATABASE()
+                       AND table_name = ?
+                       AND index_name = ?
                      ORDER BY seq_in_index
                      """)) {
             statement.setString(1, tableName);
