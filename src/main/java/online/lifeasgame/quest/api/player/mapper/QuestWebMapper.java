@@ -36,6 +36,7 @@ public final class QuestWebMapper {
                 result.targetType().name(),
                 result.targetValue(),
                 result.repeatRule(),
+                result.completionPolicy(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt(),
@@ -53,11 +54,13 @@ public final class QuestWebMapper {
                 result.descriptionMd(),
                 result.targetType().name(),
                 result.targetValue(),
-                result.progress(),
+                result.progressValue(),
                 result.status(),
+                result.completionPolicy(),
                 result.repeatRule(),
                 result.periodStart(),
                 result.periodEnd(),
+                result.goalReachedAt(),
                 result.completedAt(),
                 result.dueAt()
         );
@@ -72,6 +75,7 @@ public final class QuestWebMapper {
                 result.target().type().name(),
                 result.target().value(),
                 result.repeatRule(),
+                result.completionPolicy(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()

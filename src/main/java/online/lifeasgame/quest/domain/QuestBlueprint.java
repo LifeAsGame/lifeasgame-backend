@@ -10,8 +10,36 @@ public record QuestBlueprint(
         QuestTarget target,
         QuestReward reward,
         QuestRepeatRule repeatRule,
-        Instant dueAt
+        Instant dueAt,
+        QuestCompletionPolicy completionPolicy
 ) {
+    public QuestBlueprint {
+        completionPolicy = QuestCompletionPolicy.defaultIfNull(completionPolicy);
+    }
+
+    public QuestBlueprint(
+            QuestCode code,
+            QuestCategory category,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            QuestReward reward,
+            QuestRepeatRule repeatRule,
+            Instant dueAt
+    ) {
+        this(
+                code,
+                category,
+                title,
+                descriptionMd,
+                target,
+                reward,
+                repeatRule,
+                dueAt,
+                QuestCompletionPolicy.AUTO
+        );
+    }
+
     public Quest instantiate() {
         return Quest.create(
                 code.value(),
@@ -21,6 +49,7 @@ public record QuestBlueprint(
                 target,
                 reward,
                 repeatRule,
+                completionPolicy,
                 dueAt
         );
     }

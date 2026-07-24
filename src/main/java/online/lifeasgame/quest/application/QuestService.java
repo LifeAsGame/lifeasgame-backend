@@ -1,13 +1,18 @@
 package online.lifeasgame.quest.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
+import online.lifeasgame.quest.domain.error.QuestError;
+import online.lifeasgame.quest.domain.event.QuestEvent;
+import online.lifeasgame.quest.domain.event.QuestEventType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +91,10 @@ public class QuestService {
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> questAcceptances(QuestCommand.Acceptances command) {
         Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
-        return questReader.findQuestAcceptances(quest.getId(), QuestStatus.parse(command.status())).stream()
+        return questReader.findQuestAcceptances(
+                        quest.getId(),
+                        QuestStatus.parseNullable(command.status())
+                ).stream()
                 .map(acceptance -> QuestResult.Acceptance.from(acceptance, quest))
                 .toList();
     }
@@ -101,7 +109,10 @@ public class QuestService {
     @Transactional(readOnly = true)
     public List<QuestResult.Acceptance> playerQuests(Long playerId, QuestCommand.PlayerQuests command) {
         List<QuestAcceptance> acceptances =
-                questReader.findPlayerAcceptances(playerId, QuestStatus.parse(command.status()));
+                questReader.findPlayerAcceptances(
+                        playerId,
+                        QuestStatus.parseNullable(command.status())
+                );
 
         if (acceptances.isEmpty()) {
             return List.of();
@@ -157,8 +168,12 @@ public class QuestService {
     public QuestResult.Canceled cancel(Long playerId, QuestCommand.Cancel command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
         Quest quest = questReader.getByCode(questCode);
-
-        questWriter.cancel(playerId, quest.getId());
+        QuestAcceptance acceptance = questReader.findLatest(quest.getId(), playerId);
+        if (acceptance == null) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND);
+        }
+        acceptance.cancel();
+        questWriter.saveAcceptance(acceptance);
 
         return new QuestResult.Canceled(playerId, quest.getId(), questCode.name());
     }
@@ -167,7 +182,15 @@ public class QuestService {
     public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
-        acceptance.addProgress(command.delta(), quest);
+        Instant transitionAt = Instant.now();
+        acceptance.addProgress(command.delta(), quest, transitionAt);
+        publishProgress(acceptance, quest, transitionAt, "admin-progress");
+        if (acceptance.isGoalReached()) {
+            publishGoalReached(acceptance, quest, transitionAt, "admin-goal-reached");
+            if (quest.isAutoCompletion() && acceptance.complete(transitionAt)) {
+                publishCompleted(acceptance, quest, "admin-completed");
+            }
+        }
 
         return QuestResult.Acceptance.from(acceptance, quest);
     }
@@ -176,8 +199,89 @@ public class QuestService {
     public QuestResult.Acceptance changeAcceptanceStatus(Long acceptanceId, QuestCommand.ChangeStatus command) {
         QuestStatus questStatus = QuestStatus.parse(command.status());
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
-        acceptance.changeStatus(questStatus);
         Quest quest = questReader.getById(acceptance.getQuestId());
+        Instant transitionAt = Instant.now();
+        boolean changed = acceptance.changeStatus(questStatus, transitionAt);
+        if (changed && acceptance.isGoalReached()) {
+            publishGoalReached(acceptance, quest, transitionAt, "admin-goal-reached");
+        }
+        if (changed && acceptance.isCompleted()) {
+            publishCompleted(acceptance, quest, "admin-completed");
+        }
         return QuestResult.Acceptance.from(acceptance, quest);
+    }
+
+    private void publishProgress(
+            QuestAcceptance acceptance,
+            Quest quest,
+            Instant occurredAt,
+            String suffix
+    ) {
+        domainEventPublisher.publish(
+                QuestEvent.builder(QuestEventType.QUEST_PROGRESS)
+                        .questId(quest.getId())
+                        .questCode(quest.getCode())
+                        .playerId(acceptance.getPlayerId())
+                        .attribute("acceptanceId", acceptance.getId())
+                        .attribute("progress", acceptance.getProgressValue())
+                        .attribute("target", quest.target().value())
+                        .attribute("status", acceptance.getStatus().name())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .occurredAt(occurredAt)
+                        .correlationId(correlation(acceptance, suffix))
+                        .build()
+        );
+    }
+
+    private void publishGoalReached(
+            QuestAcceptance acceptance,
+            Quest quest,
+            Instant occurredAt,
+            String suffix
+    ) {
+        domainEventPublisher.publish(
+                QuestEvent.builder(QuestEventType.QUEST_GOAL_REACHED)
+                        .questId(quest.getId())
+                        .questCode(quest.getCode())
+                        .playerId(acceptance.getPlayerId())
+                        .attribute("acceptanceId", acceptance.getId())
+                        .attribute("progress", acceptance.getProgressValue())
+                        .attribute("target", quest.target().value())
+                        .attribute("reachedAt", acceptance.getGoalReachedAt())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .occurredAt(occurredAt)
+                        .correlationId(correlation(acceptance, suffix))
+                        .build()
+        );
+    }
+
+    private void publishCompleted(
+            QuestAcceptance acceptance,
+            Quest quest,
+            String suffix
+    ) {
+        domainEventPublisher.publish(
+                QuestEvent.builder(QuestEventType.QUEST_COMPLETED)
+                        .questId(quest.getId())
+                        .questCode(quest.getCode())
+                        .playerId(acceptance.getPlayerId())
+                        .attribute("acceptanceId", acceptance.getId())
+                        .attribute("progress", acceptance.getProgressValue())
+                        .attribute("target", quest.target().value())
+                        .attribute("goalReachedAt", acceptance.getGoalReachedAt())
+                        .attribute("completedAt", acceptance.getCompletedAt())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .occurredAt(acceptance.getCompletedAt())
+                        .correlationId(correlation(acceptance, suffix))
+                        .build()
+        );
+    }
+
+    private String correlation(QuestAcceptance acceptance, String suffix) {
+        return "quest:%d:acceptance:%d:%s".formatted(
+                acceptance.getQuestId(),
+                acceptance.getId(),
+                suffix
+        );
     }
 }

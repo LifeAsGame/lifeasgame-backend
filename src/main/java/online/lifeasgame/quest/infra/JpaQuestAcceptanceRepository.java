@@ -19,6 +19,4 @@ public interface JpaQuestAcceptanceRepository extends JpaRepository<QuestAccepta
     Optional<QuestAcceptance> findTopByQuestIdAndPlayerIdOrderByIdDesc(Long questId, Long playerId);
 
     boolean existsByPlayerIdAndId(Long playerId, Long id);
-
-    void deleteByPlayerIdAndId(Long playerId, Long id);
 }

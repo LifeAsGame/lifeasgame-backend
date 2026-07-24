@@ -37,14 +37,14 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V5까지 적용되고 RP_NONE과 중복 방지 제약이 생성된다")
+        @DisplayName("V1부터 V6까지 적용되고 Quest 상태 계약과 중복 방지 제약이 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(5);
-            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5");
+            assertThat(result.migrationsExecuted).isEqualTo(6);
+            assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6");
             assertThat(existingTables(
                     "users",
                     "player",

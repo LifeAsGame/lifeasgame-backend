@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V5까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V6까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,9 +72,9 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(4);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(5);
             assertThat(history).extracting(HistoryRow::version)
-                    .containsExactly("1", "2", "3", "4", "5");
+                    .containsExactly("1", "2", "3", "4", "5", "6");
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
                     .isEqualTo("baseline current production schema");
@@ -88,7 +88,8 @@ class FlywayExplicitBaselineTest {
                             "V2__reward_definition_foundation.sql",
                             "V3__reward_settlement_foundation.sql",
                             "V4__player_growth_change.sql",
-                            "V5__reward_none_profile.sql"
+                            "V5__reward_none_profile.sql",
+                            "V6__quest_state_contract.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -108,7 +109,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("5");
+                        .isEqualTo("6");
             }
         }
     }

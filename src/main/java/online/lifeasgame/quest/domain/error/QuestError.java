@@ -9,7 +9,44 @@ public enum QuestError implements ErrorCode {
     INVALID_QUEST_CODE("QUE-400-INVALID-QUEST-CODE", "Invalid Quest code", 400),
     INVALID_QUEST_REPEATABLE_RULE("QUE-400-INVALID-QUEST-REPEATABLE-RULE", "Invalid Quest repeatable rule", 400),
     INVALID_QUEST_TARGET_TYPE("QUE-400-INVALID-QUEST-TARGET-TYPE", "Invalid Quest target type", 400),
-    QUEST_ACCEPTANCE_ALREADY_EXISTS("QUE-409-QUEST-ACCEPTANCE-ALREADY-EXISTS", "Quest account already exists", 409)
+    QUEST_NOT_FOUND("QUE-404-QUEST-NOT-FOUND", "Quest not found", 404),
+    QUEST_ACCEPTANCE_NOT_FOUND("QUE-404-QUEST-ACCEPTANCE-NOT-FOUND", "Quest acceptance not found", 404),
+    QUEST_ACCEPTANCE_ALREADY_EXISTS("QUE-409-QUEST-ACCEPTANCE-ALREADY-EXISTS", "Quest account already exists", 409),
+    QUEST_ACCEPTANCE_PROGRESS_NOT_ALLOWED(
+            "QUE-409-QUEST-ACCEPTANCE-PROGRESS-NOT-ALLOWED",
+            "Quest acceptance progress is only allowed while in progress",
+            409
+    ),
+    QUEST_ACCEPTANCE_GOAL_REACH_NOT_ALLOWED(
+            "QUE-409-QUEST-ACCEPTANCE-GOAL-REACH-NOT-ALLOWED",
+            "Quest acceptance cannot reach the goal from its current status",
+            409
+    ),
+    QUEST_ACCEPTANCE_COMPLETION_NOT_ALLOWED(
+            "QUE-409-QUEST-ACCEPTANCE-COMPLETION-NOT-ALLOWED",
+            "Quest acceptance can only complete after reaching its goal",
+            409
+    ),
+    QUEST_ACCEPTANCE_CANCELLATION_NOT_ALLOWED(
+            "QUE-409-QUEST-ACCEPTANCE-CANCELLATION-NOT-ALLOWED",
+            "Completed quest acceptance cannot be canceled",
+            409
+    ),
+    QUEST_ACCEPTANCE_STATUS_TRANSITION_NOT_ALLOWED(
+            "QUE-409-QUEST-ACCEPTANCE-STATUS-TRANSITION-NOT-ALLOWED",
+            "Quest acceptance status transition is not allowed",
+            409
+    ),
+    QUEST_COMPLETION_POLICY_NOT_USER_CONFIRM(
+            "QUE-409-QUEST-COMPLETION-POLICY-NOT-USER-CONFIRM",
+            "Quest does not require user confirmation",
+            409
+    ),
+    QUEST_TRANSITION_TIME_REQUIRED(
+            "QUE-400-QUEST-TRANSITION-TIME-REQUIRED",
+            "Quest transition time is required",
+            400
+    )
     ;
 
     private final String code;

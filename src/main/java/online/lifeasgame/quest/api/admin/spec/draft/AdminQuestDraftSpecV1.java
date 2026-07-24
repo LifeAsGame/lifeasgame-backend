@@ -19,7 +19,7 @@ public interface AdminQuestDraftSpecV1 {
             @RequestParam(name = "status", required = false) String status
     );
 
-    @Operation(summary = "보상 파이프라인 강제 트리거", description = "DONE 상태 Acceptance에 대해 보상 이벤트를 강제 발행/재발행합니다. (멱등키 권장)")
+    @Operation(summary = "보상 파이프라인 강제 트리거", description = "COMPLETED 상태 Acceptance에 대해 보상 이벤트를 강제 발행/재발행합니다. (멱등키 권장)")
     ResponseEntity<ApiResponse<AdminQuestResponse.RewardTriggered>> triggerReward(
             @PathVariable Long acceptanceId,
             @Valid @RequestBody AdminQuestRequest.TriggerReward request

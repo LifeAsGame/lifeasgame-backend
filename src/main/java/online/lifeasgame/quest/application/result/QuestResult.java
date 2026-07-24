@@ -17,6 +17,7 @@ public final class QuestResult {
             String descriptionMd,
             QuestTarget target,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
@@ -29,6 +30,7 @@ public final class QuestResult {
                     blueprint.descriptionMd(),
                     blueprint.target(),
                     blueprint.repeatRule().name(),
+                    blueprint.completionPolicy().name(),
                     blueprint.reward().exp(),
                     blueprint.reward().stats().stats(),
                     blueprint.dueAt()
@@ -46,11 +48,13 @@ public final class QuestResult {
             String descriptionMd,
             QuestTargetType targetType,
             int targetValue,
-            int progress,
+            int progressValue,
             String status,
+            String completionPolicy,
             String repeatRule,
             LocalDate periodStart,
             LocalDate periodEnd,
+            Instant goalReachedAt,
             Instant completedAt,
             Instant dueAt
     ) {
@@ -67,9 +71,11 @@ public final class QuestResult {
                     quest.target().value(),
                     acceptance.getProgressValue(),
                     acceptance.getStatus().name(),
+                    quest.getCompletionPolicy().name(),
                     quest.getRepeatRule().name(),
                     acceptance.getPeriod().start(),
                     acceptance.getPeriod().end(),
+                    acceptance.getGoalReachedAt(),
                     acceptance.getCompletedAt(),
                     quest.getDueAt()
             );
@@ -85,6 +91,7 @@ public final class QuestResult {
             QuestTargetType targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
@@ -99,6 +106,7 @@ public final class QuestResult {
                     quest.target().type(),
                     quest.target().value(),
                     quest.getRepeatRule().name(),
+                    quest.getCompletionPolicy().name(),
                     quest.getReward().exp(),
                     quest.getReward().stats().stats(),
                     quest.getDueAt()
@@ -114,6 +122,7 @@ public final class QuestResult {
             QuestTargetType targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt,
@@ -128,6 +137,7 @@ public final class QuestResult {
                     quest.target().type(),
                     quest.target().value(),
                     quest.getRepeatRule().name(),
+                    quest.getCompletionPolicy().name(),
                     quest.getReward().exp(),
                     quest.getReward().stats().stats(),
                     quest.getDueAt(),
