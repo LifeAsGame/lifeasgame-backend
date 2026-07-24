@@ -7,6 +7,7 @@ import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.quest.domain.repository.QuestAcceptanceRepository;
+import online.lifeasgame.platform.outbox.application.OutboxRelayService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -90,10 +91,14 @@ class QuestSignalProcessingIntegrationTest {
     @Autowired
     private QuestEventCommitProbe eventProbe;
 
+    @Autowired
+    private OutboxRelayService outboxRelayService;
+
     private ExecutorService executor;
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM outbox_events");
         jdbcTemplate.update(
                 "DELETE FROM quest_signal_receipts WHERE player_id = ?",
                 PLAYER_ID
@@ -124,6 +129,7 @@ class QuestSignalProcessingIntegrationTest {
 
             QuestSignalProcessingResult applied =
                     processingService.process(signal);
+            outboxRelayService.relayBatch();
 
             assertThat(applied.outcome())
                     .isEqualTo(QuestSignalProcessingResult.Outcome.APPLIED);
@@ -177,6 +183,7 @@ class QuestSignalProcessingIntegrationTest {
                     () -> processingService.process(signal),
                     () -> processingService.process(signal)
             );
+            outboxRelayService.relayBatch();
 
             assertThat(results)
                     .extracting(QuestSignalProcessingResult::outcome)
@@ -213,6 +220,7 @@ class QuestSignalProcessingIntegrationTest {
         void rejectsConflict() {
             String correlation = "source:collection:conflict";
             processingService.process(signal(1, correlation));
+            outboxRelayService.relayBatch();
             clearInvocations(questProgressStore);
 
             assertThatThrownBy(
@@ -255,12 +263,14 @@ class QuestSignalProcessingIntegrationTest {
 
             assertThat(receiptCount()).isZero();
             assertThat(acceptanceCount()).isZero();
+            assertThat(outboxCount()).isZero();
             assertThat(eventProbe.types()).isEmpty();
             verifyNoInteractions(questProgressStore);
 
             reset(acceptanceRepository);
             QuestSignalProcessingResult retried =
                     processingService.process(signal);
+            outboxRelayService.relayBatch();
 
             assertThat(retried.outcome())
                     .isEqualTo(QuestSignalProcessingResult.Outcome.APPLIED);
@@ -300,6 +310,13 @@ class QuestSignalProcessingIntegrationTest {
                 "SELECT COUNT(*) FROM quest_acceptances WHERE player_id = ?",
                 Integer.class,
                 PLAYER_ID
+        );
+    }
+
+    private int outboxCount() {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM outbox_events",
+                Integer.class
         );
     }
 

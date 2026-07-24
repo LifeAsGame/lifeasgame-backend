@@ -83,7 +83,13 @@ app:
     expose-db-reason: false
 
   outbox:
-    fixedDelayMs: 500
+    enabled: ${OUTBOX_ENABLED:true}
+    fixed-delay-ms: 500
+    batch-size: 50
+    max-attempts: 10
+    retry-delay-ms: 1000
+    lease-duration-ms: 30000
+    instance-id: ${OUTBOX_INSTANCE_ID:${spring.application.name}-${random.uuid}}
 
 lag:
   level-curve:

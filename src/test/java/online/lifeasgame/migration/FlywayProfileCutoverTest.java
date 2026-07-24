@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 @Testcontainers
 @SpringBootTest(properties = {
-        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect"
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect",
+        "app.outbox.enabled=false"
 })
 @ActiveProfiles("local")
 @DisplayName("Flyway profile cutover")
@@ -149,7 +150,7 @@ class FlywayProfileCutoverTest {
     class StartLocalWithCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V7까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
+        @DisplayName("V1부터 V8까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
         void migratesThenValidates() {
             ConfigurableEnvironment environment =
                     (ConfigurableEnvironment) applicationContext.getEnvironment();
@@ -161,8 +162,8 @@ class FlywayProfileCutoverTest {
             assertThat(environment.getProperty(
                     "spring.flyway.baseline-on-migrate", Boolean.class
             )).isFalse();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
-            assertThat(appliedMigrationCount()).isEqualTo(7);
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+            assertThat(appliedMigrationCount()).isEqualTo(8);
         }
     }
 

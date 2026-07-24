@@ -3,6 +3,7 @@ package online.lifeasgame.reward.application;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.event.PlayerLeveledUp;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.platform.outbox.application.OutboxRelayService;
 import online.lifeasgame.reward.application.result.RewardSettlementExpProcessResult;
 import online.lifeasgame.reward.application.result.RewardSettlementLineRetryPreparationResult;
 import online.lifeasgame.reward.domain.RewardSettlement;
@@ -91,10 +92,14 @@ class RewardSettlementExpProcessConcurrencyTest {
     @Autowired
     private LevelUpCommitProbe levelUpCommitProbe;
 
+    @Autowired
+    private OutboxRelayService outboxRelayService;
+
     private ExecutorService executor;
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM outbox_events");
         jdbcTemplate.update("DELETE FROM player_growth_changes");
         jdbcTemplate.update("DELETE FROM reward_settlement_lines");
         jdbcTemplate.update("DELETE FROM reward_settlements");
@@ -185,6 +190,7 @@ class RewardSettlementExpProcessConcurrencyTest {
                     processService.process(settlement.getId(), lineId);
             RewardSettlementExpProcessResult replay =
                     processService.process(settlement.getId(), lineId);
+            outboxRelayService.relayBatch();
 
             assertThat(first.replayed()).isFalse();
             assertThat(replay.replayed()).isTrue();

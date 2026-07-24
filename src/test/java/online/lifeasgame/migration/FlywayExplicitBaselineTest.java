@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V7까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V8까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,9 +72,9 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(6);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(7);
             assertThat(history).extracting(HistoryRow::version)
-                    .containsExactly("1", "2", "3", "4", "5", "6", "7");
+                    .containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
                     .isEqualTo("baseline current production schema");
@@ -90,7 +90,8 @@ class FlywayExplicitBaselineTest {
                             "V4__player_growth_change.sql",
                             "V5__reward_none_profile.sql",
                             "V6__quest_state_contract.sql",
-                            "V7__quest_signal_receipt.sql"
+                            "V7__quest_signal_receipt.sql",
+                            "V8__transactional_outbox.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -110,7 +111,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("7");
+                        .isEqualTo("8");
             }
         }
     }

@@ -5,9 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -18,7 +19,8 @@ public class QuestRewardSaga {
 
     private final DomainEventPublisher domainEventPublisher;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onQuestEvent(QuestEvent event) {
         if (event.type() != QuestEventType.QUEST_COMPLETED) {
             return;

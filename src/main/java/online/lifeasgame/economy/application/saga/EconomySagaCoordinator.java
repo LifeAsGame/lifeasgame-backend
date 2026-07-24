@@ -6,9 +6,10 @@ import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -20,7 +21,8 @@ public class EconomySagaCoordinator {
 
     private final DomainEventPublisher domainEventPublisher;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onEconomyEvent(EconomyEvent event) {
         if (event.type() == EconomyEventType.FULFILLMENT_READY) {
             return;

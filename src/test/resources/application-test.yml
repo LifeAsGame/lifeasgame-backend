@@ -39,4 +39,10 @@ app:
     mask-detail-always-in-logs: true
 
   outbox:
-    fixedDelayMs: 500
+    enabled: false
+    fixed-delay-ms: 500
+    batch-size: 50
+    max-attempts: 10
+    retry-delay-ms: 1000
+    lease-duration-ms: 30000
+    instance-id: test-outbox-instance
