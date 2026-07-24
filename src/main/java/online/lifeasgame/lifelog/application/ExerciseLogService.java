@@ -2,15 +2,20 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -20,6 +25,7 @@ public class ExerciseLogService {
     private final ExerciseLogReader exerciseLogReader;
     private final ExerciseLogWriter exerciseLogWriter;
     private final DomainEventPublisher domainEventPublisher;
+    private final Clock clock;
 
     @Transactional
     public ExerciseResult.Created create(Long playerId, ExerciseCommand.Create command) {
@@ -33,16 +39,25 @@ public class ExerciseLogService {
                 )
         );
 
-        domainEventPublisher.publish(
-                ExerciseLogged.of(
+        Instant occurredAt = clock.instant();
+        domainEventPublisher.publishAll(List.of(
+                new ExerciseLogged(
                         playerId,
                         saved.getId(),
                         saved.getCategory().name(),
                         saved.getMetrics().durationMinutes(),
                         saved.getMetrics().distanceKm(),
-                        saved.getMetrics().calories()
+                        saved.getMetrics().calories(),
+                        occurredAt
+                ),
+                LifeLogRecorded.of(
+                        IdGenerator.newEventId(),
+                        playerId,
+                        saved.getId(),
+                        LifeLogType.EXERCISE,
+                        occurredAt
                 )
-        );
+        ));
 
         return new ExerciseResult.Created(saved.getId());
     }
