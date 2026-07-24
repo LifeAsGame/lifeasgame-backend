@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -37,17 +38,18 @@ public class MediaLogService {
                 )
         );
 
+        Instant recordedAt = clock.instant();
         domainEventPublisher.publish(
                 LifeLogRecorded.of(
                         IdGenerator.newEventId(),
                         playerId,
                         saved.getId(),
                         LifeLogType.MEDIA,
-                        clock.instant()
+                        recordedAt
                 )
         );
 
-        return new MediaLogResult.Created(saved.getId());
+        return new MediaLogResult.Created(saved.getId(), recordedAt);
     }
 
     @Transactional

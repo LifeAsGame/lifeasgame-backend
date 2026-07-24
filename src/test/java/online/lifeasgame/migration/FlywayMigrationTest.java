@@ -37,15 +37,18 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V8까지 적용되고 Outbox 조회 제약과 Index가 생성된다")
+        @DisplayName("V1부터 V9까지 적용되고 Quick Record Receipt unique가 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(8);
+            assertThat(result.migrationsExecuted).isEqualTo(9);
             assertThat(appliedVersions())
-                    .containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+                    .containsExactly(
+                            "1", "2", "3", "4", "5",
+                            "6", "7", "8", "9"
+                    );
             assertThat(existingTables(
                     "users",
                     "player",
@@ -59,7 +62,8 @@ class FlywayMigrationTest {
                     "reward_settlement_lines",
                     "player_growth_changes",
                     "quest_signal_receipts",
-                    "outbox_events"
+                    "outbox_events",
+                    "quick_record_request_receipts"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -73,8 +77,14 @@ class FlywayMigrationTest {
                     "reward_settlement_lines",
                     "player_growth_changes",
                     "quest_signal_receipts",
-                    "outbox_events"
+                    "outbox_events",
+                    "quick_record_request_receipts"
             );
+            assertThat(existingTables(
+                    "quick_lifelog_entries",
+                    "quick_lifelog_entry_tags",
+                    "quick_lifelog_request_receipts"
+            )).isEmpty();
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
             assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
             assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
@@ -111,6 +121,10 @@ class FlywayMigrationTest {
                     "outbox_events",
                     "idx_outbox_event_lease"
             )).containsExactly("status", "locked_at");
+            assertThat(uniqueIndexColumns(
+                    "quick_record_request_receipts",
+                    "uq_quick_record_request_receipt_identity"
+            )).containsExactly("player_id", "idempotency_key");
             insertSettlementIdentity();
             assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
                     .isInstanceOfSatisfying(SQLException.class, exception ->

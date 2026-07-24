@@ -10,7 +10,10 @@ public final class ExerciseResult {
     private ExerciseResult() {
     }
 
-    public record Created(Long id) {
+    public record Created(
+            Long id,
+            Instant recordedAt
+    ) {
     }
 
     public record Info(

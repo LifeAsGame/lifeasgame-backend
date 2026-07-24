@@ -59,7 +59,7 @@ public class ExerciseLogService {
                 )
         ));
 
-        return new ExerciseResult.Created(saved.getId());
+        return new ExerciseResult.Created(saved.getId(), occurredAt);
     }
 
     @Transactional
