@@ -81,14 +81,19 @@ public class QuestAutomationService {
                 ? questProgressStore.set(signal.questCode(), signal.playerId(), signal.progressValue(), ttl)
                 : questProgressStore.increment(signal.questCode(), signal.playerId(), signal.progressDelta(), ttl);
 
-        acceptance.setProgress(progressValue, quest);
+        acceptance.setProgress(progressValue, quest, signal.occurredAt());
+        boolean goalReached = acceptance.isGoalReached();
         acceptance = questAcceptanceRepository.save(acceptance);
 
         publishProgress(signal, quest, acceptance, progressValue);
 
-        if (acceptance.isDone()) {
+        if (goalReached) {
             questProgressStore.reset(signal.questCode(), signal.playerId());
-            publishCompleted(signal, quest, acceptance, progressValue);
+            publishGoalReached(signal, quest, acceptance, progressValue);
+            if (quest.isAutoCompletion() && acceptance.complete(signal.occurredAt())) {
+                acceptance = questAcceptanceRepository.save(acceptance);
+                publishCompleted(signal, quest, acceptance, progressValue);
+            }
         }
     }
 
@@ -99,13 +104,21 @@ public class QuestAutomationService {
             if (current.isInProgress() && current.getPeriod().contains(eventDate)) {
                 return Optional.of(current);
             }
-            if (current.isDone()) {
+            if (current.isGoalReached()) {
+                return Optional.empty();
+            }
+            if (current.isCompleted()) {
                 if (quest.getRepeatRule() == QuestRepeatRule.NONE) {
                     return Optional.empty();
                 }
                 if (current.getPeriod().contains(eventDate)) {
                     return Optional.empty();
                 }
+            }
+            if (current.isCanceled()
+                    && (quest.getRepeatRule() == QuestRepeatRule.NONE
+                    || current.getPeriod().contains(eventDate))) {
+                return Optional.empty();
             }
         }
 
@@ -140,13 +153,15 @@ public class QuestAutomationService {
     private void publishAccepted(QuestSignal signal, Quest quest, QuestAcceptance acceptance) {
         domainEventPublisher.publish(
                 QuestEvent.builder(QuestEventType.QUEST_ACCEPTED)
+                        .attributes(signal.attributes())
                         .questId(quest.getId())
                         .questCode(quest.getCode())
                         .playerId(signal.playerId())
+                        .attribute("acceptanceId", acceptance.getId())
                         .attribute("progress", acceptance.getProgressValue())
                         .attribute("target", quest.target().value())
                         .attribute("repeatRule", quest.getRepeatRule().name())
-                        .attributes(signal.attributes())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
                         .occurredAt(signal.occurredAt())
                         .correlationId(correlation(signal, "accepted"))
                         .build()
@@ -156,17 +171,42 @@ public class QuestAutomationService {
     private void publishProgress(QuestSignal signal, Quest quest, QuestAcceptance acceptance, int progressValue) {
         domainEventPublisher.publish(
                 QuestEvent.builder(QuestEventType.QUEST_PROGRESS)
+                        .attributes(signal.attributes())
                         .questId(quest.getId())
                         .questCode(quest.getCode())
                         .playerId(signal.playerId())
+                        .attribute("acceptanceId", acceptance.getId())
                         .attribute("progress", progressValue)
                         .attribute("target", quest.target().value())
                         .attribute("repeatRule", quest.getRepeatRule().name())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
                         .attribute("status", acceptance.getStatus().name())
                         .attribute("delta", signal.type() == QuestSignalType.ADD_PROGRESS ? signal.progressDelta() : null)
-                        .attributes(signal.attributes())
                         .occurredAt(signal.occurredAt())
                         .correlationId(correlation(signal, "progress"))
+                        .build()
+        );
+    }
+
+    private void publishGoalReached(
+            QuestSignal signal,
+            Quest quest,
+            QuestAcceptance acceptance,
+            int progressValue
+    ) {
+        domainEventPublisher.publish(
+                QuestEvent.builder(QuestEventType.QUEST_GOAL_REACHED)
+                        .attributes(signal.attributes())
+                        .questId(quest.getId())
+                        .questCode(quest.getCode())
+                        .playerId(signal.playerId())
+                        .attribute("acceptanceId", acceptance.getId())
+                        .attribute("progress", progressValue)
+                        .attribute("target", quest.target().value())
+                        .attribute("reachedAt", acceptance.getGoalReachedAt())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .occurredAt(signal.occurredAt())
+                        .correlationId(correlation(signal, "goal-reached"))
                         .build()
         );
     }
@@ -174,15 +214,18 @@ public class QuestAutomationService {
     private void publishCompleted(QuestSignal signal, Quest quest, QuestAcceptance acceptance, int progressValue) {
         domainEventPublisher.publish(
                 QuestEvent.builder(QuestEventType.QUEST_COMPLETED)
+                        .attributes(signal.attributes())
                         .questId(quest.getId())
                         .questCode(quest.getCode())
                         .playerId(signal.playerId())
+                        .attribute("acceptanceId", acceptance.getId())
                         .attribute("progress", progressValue)
                         .attribute("target", quest.target().value())
                         .attribute("repeatRule", quest.getRepeatRule().name())
+                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .attribute("goalReachedAt", acceptance.getGoalReachedAt())
                         .attribute("completedAt", acceptance.getCompletedAt())
-                        .attributes(signal.attributes())
-                        .occurredAt(signal.occurredAt())
+                        .occurredAt(acceptance.getCompletedAt())
                         .correlationId(correlation(signal, "completed"))
                         .build()
         );

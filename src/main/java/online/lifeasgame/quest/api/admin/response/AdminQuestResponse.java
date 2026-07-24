@@ -17,6 +17,7 @@ public final class AdminQuestResponse {
             String targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
@@ -35,6 +36,7 @@ public final class AdminQuestResponse {
             String targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
@@ -53,11 +55,13 @@ public final class AdminQuestResponse {
             String category,
             String targetType,
             int targetValue,
-            int progress,
+            int progressValue,
             String status,
+            String completionPolicy,
             String repeatRule,
             java.time.LocalDate periodStart,
             java.time.LocalDate periodEnd,
+            Instant goalReachedAt,
             Instant completedAt,
             Instant dueAt
     ) {

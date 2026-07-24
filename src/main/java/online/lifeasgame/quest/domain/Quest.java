@@ -50,6 +50,10 @@ public class Quest extends AbstractTime {
     @Column(name = "repeat_rule", length = 20)
     private QuestRepeatRule repeatRule = QuestRepeatRule.NONE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "completion_policy", length = 20, nullable = false)
+    private QuestCompletionPolicy completionPolicy = QuestCompletionPolicy.AUTO;
+
     @Column(name = "due_at")
     private Instant dueAt;
 
@@ -64,6 +68,7 @@ public class Quest extends AbstractTime {
             QuestTarget target,
             QuestReward reward,
             QuestRepeatRule repeatRule,
+            QuestCompletionPolicy completionPolicy,
             Instant dueAt
     ) {
         this.code = Guard.notBlank(code, "code").trim();
@@ -73,6 +78,7 @@ public class Quest extends AbstractTime {
         this.target = Guard.notNull(target, "target");
         this.reward = Guard.notNull(reward, "reward");
         this.repeatRule = repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
+        this.completionPolicy = QuestCompletionPolicy.defaultIfNull(completionPolicy);
         this.dueAt = dueAt;
     }
 
@@ -86,7 +92,41 @@ public class Quest extends AbstractTime {
             QuestRepeatRule repeatRule,
             Instant dueAt
     ) {
-        return new Quest(code, category, title, descriptionMd, target, reward, repeatRule, dueAt);
+        return create(
+                code,
+                category,
+                title,
+                descriptionMd,
+                target,
+                reward,
+                repeatRule,
+                QuestCompletionPolicy.AUTO,
+                dueAt
+        );
+    }
+
+    public static Quest create(
+            String code,
+            QuestCategory category,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            QuestReward reward,
+            QuestRepeatRule repeatRule,
+            QuestCompletionPolicy completionPolicy,
+            Instant dueAt
+    ) {
+        return new Quest(
+                code,
+                category,
+                title,
+                descriptionMd,
+                target,
+                reward,
+                repeatRule,
+                completionPolicy,
+                dueAt
+        );
     }
 
     public void updateDefinition(
@@ -149,6 +189,14 @@ public class Quest extends AbstractTime {
 
     public QuestTarget target() {
         return target;
+    }
+
+    public boolean isAutoCompletion() {
+        return completionPolicy == QuestCompletionPolicy.AUTO;
+    }
+
+    public boolean requiresUserConfirmation() {
+        return completionPolicy == QuestCompletionPolicy.USER_CONFIRM;
     }
 
     public String getCode() {

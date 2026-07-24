@@ -40,7 +40,7 @@ public interface AdminQuestSpecV1 {
             @Valid @RequestBody AdminQuestRequest.AdjustProgress request
     );
 
-    @Operation(summary = "Acceptance 상태 변경", description = "Acceptance 상태를 강제로 변경합니다. (예: CANCELED, DONE) (멱등키 권장)")
+    @Operation(summary = "Acceptance 상태 변경", description = "허용된 상태 전이만 수행합니다. DONE 입력은 COMPLETED로 해석합니다. (멱등키 권장)")
     ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> changeStatus(
             @PathVariable Long acceptanceId,
             @Valid @RequestBody AdminQuestRequest.ChangeStatus request

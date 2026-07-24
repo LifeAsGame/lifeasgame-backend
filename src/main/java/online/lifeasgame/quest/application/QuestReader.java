@@ -31,12 +31,12 @@ class QuestReader {
 
     Quest getByCode(QuestCode code) {
         return questRepository.findByCode(code.value())
-                .orElseThrow(() -> new IllegalArgumentException("Quest not found for code " + code.value()));
+                .orElseThrow(() -> new DomainException(QuestError.QUEST_NOT_FOUND));
     }
 
     Quest getById(Long questId) {
         return questRepository.findById(questId)
-                .orElseThrow(() -> new IllegalArgumentException("Quest not found for id " + questId));
+                .orElseThrow(() -> new DomainException(QuestError.QUEST_NOT_FOUND));
     }
 
     Collection<Quest> getByIds(Collection<Long> questIds) {
@@ -56,7 +56,7 @@ class QuestReader {
 
     QuestAcceptance getAcceptance(Long acceptanceId) {
         return questAcceptanceRepository.findById(acceptanceId)
-                .orElseThrow(() -> new IllegalArgumentException("Quest acceptance not found for id " + acceptanceId));
+                .orElseThrow(() -> new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND));
     }
 
     List<QuestAcceptance> findQuestAcceptances(Long questId, QuestStatus status) {

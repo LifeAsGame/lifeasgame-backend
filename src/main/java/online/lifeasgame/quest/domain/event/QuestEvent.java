@@ -55,6 +55,7 @@ public record QuestEvent(
                 .attribute("targetType", quest.target().type().name())
                 .attribute("targetValue", quest.target().value())
                 .attribute("repeatRule", quest.getRepeatRule().name())
+                .attribute("completionPolicy", quest.getCompletionPolicy().name())
                 .attribute("rewardExp", quest.getReward().exp())
                 .attribute("rewardStats", quest.getReward().stats().stats())
                 .attribute("dueAt", quest.getDueAt())

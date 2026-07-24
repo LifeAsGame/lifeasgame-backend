@@ -35,6 +35,7 @@ class QuestWriter {
                         .attribute("targetType", saved.target().type().name())
                         .attribute("targetValue", saved.target().value())
                         .attribute("repeatRule", saved.getRepeatRule().name())
+                        .attribute("completionPolicy", saved.getCompletionPolicy().name())
                         .attribute("rewardExp", saved.getReward().exp())
                         .attribute("rewardStats", saved.getReward().stats().stats())
                         .attribute("dueAt", saved.getDueAt())
@@ -50,7 +51,7 @@ class QuestWriter {
         return questAcceptanceRepository.save(questAcceptance);
     }
 
-    public void cancel(Long playerId, Long questId) {
-        questAcceptanceRepository.deleteByPlayerIdAndQuestId(playerId, questId);
+    public QuestAcceptance saveAcceptance(QuestAcceptance questAcceptance) {
+        return questAcceptanceRepository.save(questAcceptance);
     }
 }

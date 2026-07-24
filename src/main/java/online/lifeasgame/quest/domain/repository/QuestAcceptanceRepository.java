@@ -22,6 +22,4 @@ public interface QuestAcceptanceRepository {
     Optional<QuestAcceptance> findLatestByQuestAndPlayer(Long questId, Long playerId);
 
     boolean existsByPlayerIdAndId(Long playerId, Long questId);
-
-    void deleteByPlayerIdAndQuestId(Long playerId, Long questId);
 }

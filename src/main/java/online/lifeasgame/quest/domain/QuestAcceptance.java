@@ -5,8 +5,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.quest.domain.error.QuestError;
 
 import java.time.Instant;
 
@@ -54,6 +56,9 @@ public class QuestAcceptance extends AbstractTime {
     @Column(name = "progress_value", nullable = false)
     private int progressValue = 0;
 
+    @Column(name = "goal_reached_at")
+    private Instant goalReachedAt;
+
     @Column(name = "completed_at")
     private Instant completedAt;
 
@@ -92,59 +97,100 @@ public class QuestAcceptance extends AbstractTime {
     }
 
     public void addProgress(int delta, Quest quest) {
-        Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
+        addProgress(delta, quest, Instant.now());
+    }
+
+    public void addProgress(int delta, Quest quest, Instant reachedAt) {
+        assertProgressAllowed();
         Guard.notNull(quest, "quest");
         Guard.minValue(delta, 0, "delta");
         this.progressValue += delta;
         if (quest.target().reachedBy(this.progressValue)) {
-            complete();
+            reachGoal(reachedAt);
         }
     }
 
     public void setProgress(int value, Quest quest) {
-        Guard.checkState(status == QuestStatus.IN_PROGRESS, "Quest status is not in progress");
+        setProgress(value, quest, Instant.now());
+    }
+
+    public void setProgress(int value, Quest quest, Instant reachedAt) {
+        assertProgressAllowed();
         Guard.notNull(quest, "quest");
         Guard.minValue(value, 0, "progress value");
         this.progressValue = value;
         if (quest.target().reachedBy(this.progressValue)) {
-            complete();
+            reachGoal(reachedAt);
         }
     }
 
-    public void complete() {
-        if (status == QuestStatus.DONE) return;
-        Guard.checkState(status == QuestStatus.IN_PROGRESS, "cannot complete from" + status);
-        this.status = QuestStatus.DONE;
-        this.completedAt = Instant.now();
+    public boolean reachGoal(Instant reachedAt) {
+        if (status == QuestStatus.GOAL_REACHED) {
+            return false;
+        }
+        if (status != QuestStatus.IN_PROGRESS) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_GOAL_REACH_NOT_ALLOWED);
+        }
+        this.goalReachedAt = requireTransitionTime(reachedAt);
+        this.status = QuestStatus.GOAL_REACHED;
+        return true;
     }
 
-    public void cancel() {
-        Guard.checkState(status != QuestStatus.DONE, "cannot cancel done quest");
+    public boolean complete(Instant completedAt) {
+        if (status == QuestStatus.COMPLETED) {
+            return false;
+        }
+        if (status != QuestStatus.GOAL_REACHED) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_COMPLETION_NOT_ALLOWED);
+        }
+        this.completedAt = requireTransitionTime(completedAt);
+        this.status = QuestStatus.COMPLETED;
+        return true;
+    }
+
+    public boolean cancel() {
+        if (status == QuestStatus.CANCELED) {
+            return false;
+        }
+        if (status == QuestStatus.COMPLETED) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_CANCELLATION_NOT_ALLOWED);
+        }
         this.status = QuestStatus.CANCELED;
+        return true;
     }
 
-    public void changeStatus(QuestStatus questStatus) {
+    public boolean changeStatus(QuestStatus questStatus, Instant changedAt) {
+        if (questStatus == null) {
+            throw new DomainException(QuestError.INVALID_QUEST_STATUS);
+        }
         if (this.status == questStatus) {
-            return;
+            return false;
         }
-        if (questStatus == QuestStatus.CANCELED) {
-            cancel();
-        } else if (questStatus == QuestStatus.IN_PROGRESS) {
-            Guard.checkState(this.status != QuestStatus.DONE, "cannot change to in progress from done quest");
-            this.status = QuestStatus.IN_PROGRESS;
-        } else if (questStatus == QuestStatus.DONE) {
-            complete();
-        } else {
-            throw new IllegalArgumentException("unsupported status: " + questStatus);
-        }
+        return switch (questStatus) {
+            case GOAL_REACHED -> reachGoal(changedAt);
+            case COMPLETED -> complete(changedAt);
+            case CANCELED -> cancel();
+            case IN_PROGRESS ->
+                    throw new DomainException(
+                            QuestError.QUEST_ACCEPTANCE_STATUS_TRANSITION_NOT_ALLOWED
+                    );
+        };
     }
 
     public boolean isInProgress() {
         return status == QuestStatus.IN_PROGRESS;
     }
 
-    public boolean isDone() {
-        return status == QuestStatus.DONE;
+    public boolean isGoalReached() {
+        return status == QuestStatus.GOAL_REACHED;
+    }
+
+    public boolean isCompleted() {
+        return status == QuestStatus.COMPLETED;
+    }
+
+    public boolean isCanceled() {
+        return status == QuestStatus.CANCELED;
     }
 
     public void assignIdempotencyKey(String key) {
@@ -152,5 +198,18 @@ public class QuestAcceptance extends AbstractTime {
             return;
         }
         this.idempotencyKey = key;
+    }
+
+    private void assertProgressAllowed() {
+        if (status != QuestStatus.IN_PROGRESS) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_PROGRESS_NOT_ALLOWED);
+        }
+    }
+
+    private Instant requireTransitionTime(Instant transitionTime) {
+        if (transitionTime == null) {
+            throw new DomainException(QuestError.QUEST_TRANSITION_TIME_REQUIRED);
+        }
+        return transitionTime;
     }
 }

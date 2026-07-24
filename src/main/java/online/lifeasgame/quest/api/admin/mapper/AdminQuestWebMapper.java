@@ -28,6 +28,7 @@ public final class AdminQuestWebMapper {
                 result.target().type().name(),
                 result.target().value(),
                 result.repeatRule(),
+                result.completionPolicy(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()
@@ -71,6 +72,7 @@ public final class AdminQuestWebMapper {
                 result.targetType().name(),
                 result.targetValue(),
                 result.repeatRule(),
+                result.completionPolicy(),
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt()
@@ -102,11 +104,13 @@ public final class AdminQuestWebMapper {
                 result.category(),
                 result.targetType().name(),
                 result.targetValue(),
-                result.progress(),
+                result.progressValue(),
                 result.status(),
+                result.completionPolicy(),
                 result.repeatRule(),
                 result.periodStart(),
                 result.periodEnd(),
+                result.goalReachedAt(),
                 result.completedAt(),
                 result.dueAt()
         );

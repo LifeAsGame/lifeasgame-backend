@@ -18,6 +18,7 @@ public final class QuestResponse {
             String targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
@@ -36,11 +37,13 @@ public final class QuestResponse {
             String descriptionMd,
             String targetType,
             int targetValue,
-            int progress,
+            int progressValue,
             String status,
+            String completionPolicy,
             String repeatRule,
             LocalDate periodStart,
             LocalDate periodEnd,
+            Instant goalReachedAt,
             Instant completedAt,
             Instant dueAt
     ) {
@@ -57,6 +60,7 @@ public final class QuestResponse {
             String targetType,
             int targetValue,
             String repeatRule,
+            String completionPolicy,
             int rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt,
