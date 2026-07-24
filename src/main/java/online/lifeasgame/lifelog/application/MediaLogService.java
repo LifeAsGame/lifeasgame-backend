@@ -2,13 +2,17 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.*;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.util.List;
 
 @Service
@@ -18,6 +22,7 @@ public class MediaLogService {
     private final MediaLogReader mediaLogReader;
     private final MediaLogWriter mediaLogWriter;
     private final DomainEventPublisher domainEventPublisher;
+    private final Clock clock;
 
     @Transactional
     public MediaLogResult.Created create(Long playerId, MediaLogCommand.Create command) {
@@ -29,6 +34,16 @@ public class MediaLogService {
                         EpisodeProgress.of(command.currentEpisode(), command.totalEpisode()),
                         WatchStatus.parse(command.status()),
                         MediaTags.of(command.tags())
+                )
+        );
+
+        domainEventPublisher.publish(
+                LifeLogRecorded.of(
+                        IdGenerator.newEventId(),
+                        playerId,
+                        saved.getId(),
+                        LifeLogType.MEDIA,
+                        clock.instant()
                 )
         );
 

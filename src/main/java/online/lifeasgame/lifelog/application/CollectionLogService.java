@@ -2,13 +2,18 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -18,6 +23,7 @@ public class CollectionLogService {
     private final CollectionLogReader collectionLogReader;
     private final CollectionLogWriter collectionLogWriter;
     private final DomainEventPublisher domainEventPublisher;
+    private final Clock clock;
 
     @Transactional
     public CollectionResult.Created create(Long playerId, CollectionCommand.Create command) {
@@ -35,14 +41,23 @@ public class CollectionLogService {
                 )
         );
 
-        domainEventPublisher.publish(
-                CollectionLogged.of(
+        Instant occurredAt = clock.instant();
+        domainEventPublisher.publishAll(List.of(
+                new CollectionLogged(
                         playerId,
                         saved.getId(),
                         saved.getCategory().name(),
-                        saved.getQuantity().value()
+                        saved.getQuantity().value(),
+                        occurredAt
+                ),
+                LifeLogRecorded.of(
+                        IdGenerator.newEventId(),
+                        playerId,
+                        saved.getId(),
+                        LifeLogType.COLLECTION,
+                        occurredAt
                 )
-        );
+        ));
 
         return new CollectionResult.Created(saved.getId());
     }

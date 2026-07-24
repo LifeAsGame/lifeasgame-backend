@@ -8,4 +8,8 @@ public final class IdGenerator {
     public static String newTraceId() {
         return UUID.randomUUID().toString();
     }
+
+    public static String newEventId() {
+        return UUID.randomUUID().toString();
+    }
 }

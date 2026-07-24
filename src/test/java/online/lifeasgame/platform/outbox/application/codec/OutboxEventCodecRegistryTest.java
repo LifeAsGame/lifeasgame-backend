@@ -12,6 +12,8 @@ import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
@@ -86,6 +88,15 @@ class OutboxEventCodecRegistryTest {
                             250,
                             OCCURRED_AT
                     ),
+                    new LifeLogRecorded(
+                            "2a294fd2-1e08-49b9-a9f2-a3a4e3c17cb6",
+                            1,
+                            197L,
+                            52L,
+                            LifeLogType.EXERCISE,
+                            null,
+                            OCCURRED_AT
+                    ),
                     new MediaLogAdvanced(
                             197L,
                             61L,
@@ -132,6 +143,8 @@ class OutboxEventCodecRegistryTest {
                     .isEqualTo("player.registered.v1");
             assertThat(registry.aliasFor(PlayerLeveledUp.class))
                     .isEqualTo("player.leveled-up.v1");
+            assertThat(registry.aliasFor(LifeLogRecorded.class))
+                    .isEqualTo("lifelog.recorded.v1");
             assertThat(registry.aliasFor(QuestEvent.class))
                     .isEqualTo("quest.event.v1");
             assertThat(registry.aliasFor(EconomyEvent.class))
