@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("V7 migration 이후 JPA schema validation")
+@DisplayName("V8 migration 이후 JPA schema validation")
 class JpaValidateAfterMigrationTest {
 
     @Container
@@ -61,14 +61,14 @@ class JpaValidateAfterMigrationTest {
     private RewardSettlementReader rewardSettlementReader;
 
     @Nested
-    @DisplayName("V1부터 V7까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V8까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()

@@ -37,15 +37,15 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V7까지 적용되고 Quest Receipt 중복 방지 제약이 생성된다")
+        @DisplayName("V1부터 V8까지 적용되고 Outbox 조회 제약과 Index가 생성된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(result.migrationsExecuted).isEqualTo(7);
+            assertThat(result.migrationsExecuted).isEqualTo(8);
             assertThat(appliedVersions())
-                    .containsExactly("1", "2", "3", "4", "5", "6", "7");
+                    .containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
             assertThat(existingTables(
                     "users",
                     "player",
@@ -58,7 +58,8 @@ class FlywayMigrationTest {
                     "reward_settlements",
                     "reward_settlement_lines",
                     "player_growth_changes",
-                    "quest_signal_receipts"
+                    "quest_signal_receipts",
+                    "outbox_events"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -71,7 +72,8 @@ class FlywayMigrationTest {
                     "reward_settlements",
                     "reward_settlement_lines",
                     "player_growth_changes",
-                    "quest_signal_receipts"
+                    "quest_signal_receipts",
+                    "outbox_events"
             );
             assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
             assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
@@ -97,6 +99,18 @@ class FlywayMigrationTest {
                     "quest_signal_receipts",
                     "idx_quest_signal_receipt_created_at"
             )).containsExactly("created_at");
+            assertThat(uniqueIndexColumns(
+                    "outbox_events",
+                    "uq_outbox_event_event_id"
+            )).containsExactly("event_id");
+            assertThat(indexColumns(
+                    "outbox_events",
+                    "idx_outbox_event_ready"
+            )).containsExactly("status", "next_attempt_at", "id");
+            assertThat(indexColumns(
+                    "outbox_events",
+                    "idx_outbox_event_lease"
+            )).containsExactly("status", "locked_at");
             insertSettlementIdentity();
             assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
                     .isInstanceOfSatisfying(SQLException.class, exception ->

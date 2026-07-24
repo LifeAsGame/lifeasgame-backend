@@ -8,9 +8,8 @@ import online.lifeasgame.quest.application.automation.QuestAutomationService;
 import online.lifeasgame.quest.application.automation.QuestSignal;
 import online.lifeasgame.quest.application.trigger.QuestTriggerRegistry;
 import online.lifeasgame.quest.domain.event.QuestEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -20,7 +19,7 @@ public class QuestEventBridge {
     private final QuestTriggerRegistry triggerRegistry;
     private final QuestAutomationService questAutomationService;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void onDomainEvent(DomainEvent event) {
         if (event instanceof QuestEvent questEvent) {
             log.trace("Skipping quest event {} to avoid recursion", questEvent.type());
