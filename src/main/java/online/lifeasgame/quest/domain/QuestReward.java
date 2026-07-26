@@ -30,6 +30,10 @@ public class QuestReward {
         return new QuestReward(exp, stats);
     }
 
+    public static QuestReward empty() {
+        return new QuestReward(0, RewardStats.empty());
+    }
+
     public int exp() {
         return exp;
     }

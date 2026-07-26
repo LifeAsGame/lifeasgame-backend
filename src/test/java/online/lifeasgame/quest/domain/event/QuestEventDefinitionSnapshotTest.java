@@ -10,14 +10,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class QuestEventDefinitionSnapshotTest {
 
     @Test
-    @DisplayName("RewardProfile Definition은 version과 code만 보상 계약으로 기록한다")
+    @DisplayName("RewardProfile QuestCompleted는 version과 code만 보상 계약으로 기록한다")
     void snapshotsProfileDefinitionReference() {
         QuestEvent event = QuestEvent.snapshot(
-                QuestEventType.QUEST_UPDATED,
+                QuestEventType.QUEST_COMPLETED,
                 profileQuest(),
-                "quest:test:profile:updated"
+                "quest:test:profile:completed"
         );
 
+        assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
         assertThat(event.attributes())
                 .containsEntry("questDefinitionVersion", 3)
                 .containsEntry("rewardProfileCode", "RP_EXP_30")
@@ -30,19 +31,24 @@ class QuestEventDefinitionSnapshotTest {
     }
 
     @Test
-    @DisplayName("legacy Definition은 version 1과 기존 inline reward Snapshot을 유지한다")
+    @DisplayName("legacy QuestCompleted는 version 1과 inline reward Snapshot을 유지한다")
     void snapshotsLegacyDefinition() {
         QuestEvent event = QuestEvent.snapshot(
-                QuestEventType.QUEST_UPDATED,
+                QuestEventType.QUEST_COMPLETED,
                 legacyQuest(),
-                "quest:test:legacy:updated"
+                "quest:test:legacy:completed"
         );
 
+        assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
         assertThat(event.attributes())
                 .containsEntry("questDefinitionVersion", 1)
                 .containsEntry("rewardExp", 7)
                 .containsEntry("rewardStats", java.util.Map.of("strength", 2))
-                .doesNotContainKey("rewardProfileCode");
+                .doesNotContainKeys(
+                        "rewardProfileCode",
+                        "rewardLines",
+                        "rewardProfileId"
+                );
     }
 
     private Quest profileQuest() {

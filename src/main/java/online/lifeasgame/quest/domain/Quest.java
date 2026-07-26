@@ -97,7 +97,7 @@ public class Quest extends AbstractTime {
         this.target = Guard.notNull(target, "target");
         this.reward = rewardProfileRef == null
                 ? Guard.notNull(reward, "reward")
-                : QuestReward.of(0, RewardStats.empty());
+                : QuestReward.empty();
         this.rewardProfileRef = rewardProfileRef;
         this.repeatRule = repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
         this.completionPolicy = QuestCompletionPolicy.defaultIfNull(completionPolicy);
@@ -215,6 +215,7 @@ public class Quest extends AbstractTime {
         if (nextRewardProfileRef != null
                 && !nextRewardProfileRef.equals(rewardProfileRef)) {
             rewardProfileRef = nextRewardProfileRef;
+            reward = QuestReward.empty();
             changed = true;
         }
 

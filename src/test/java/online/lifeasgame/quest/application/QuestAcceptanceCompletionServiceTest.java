@@ -113,7 +113,25 @@ class QuestAcceptanceCompletionServiceTest {
             assertThat(replay.status()).isEqualTo(QuestStatus.COMPLETED.name());
             assertThat(replay.completedAt()).isEqualTo(first.completedAt());
             verify(questWriter, times(1)).saveAcceptance(acceptance);
-            verify(domainEventPublisher, times(1)).publish(any());
+            ArgumentCaptor<DomainEvent> eventCaptor =
+                    ArgumentCaptor.forClass(DomainEvent.class);
+            verify(domainEventPublisher, times(1))
+                    .publish(eventCaptor.capture());
+            QuestEvent event = (QuestEvent) eventCaptor.getValue();
+            assertThat(event.attributes())
+                    .containsEntry("questDefinitionVersion", 1)
+                    .containsEntry("rewardExp", 25)
+                    .containsEntry(
+                            "rewardStats",
+                            java.util.Map.of("vitality", 1)
+                    )
+                    .doesNotContainKeys(
+                            "rewardProfileCode",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+            assertThat(event.correlationId())
+                    .isEqualTo("quest:193:acceptance:1930:completed");
         }
     }
 
@@ -175,7 +193,10 @@ class QuestAcceptanceCompletionServiceTest {
                 QuestTitle.of("명시적 완료 테스트"),
                 "Quest 명시적 완료 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
-                QuestReward.of(0, RewardStats.empty()),
+                QuestReward.of(
+                        25,
+                        new RewardStats(java.util.Map.of("vitality", 1))
+                ),
                 QuestRepeatRule.NONE,
                 completionPolicy,
                 null

@@ -86,11 +86,14 @@ class QuestServiceStateContractTest {
             QuestEvent event = (QuestEvent) eventCaptor.getValue();
             assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
             assertThat(event.attributes())
-                    .containsEntry("questDefinitionVersion", 6)
-                    .containsEntry("rewardProfileCode", "RP_EXP_30")
-                    .doesNotContainKeys(
-                            "rewardExp",
+                    .containsEntry("questDefinitionVersion", 1)
+                    .containsEntry("rewardExp", 45)
+                    .containsEntry(
                             "rewardStats",
+                            java.util.Map.of("wisdom", 3)
+                    )
+                    .doesNotContainKeys(
+                            "rewardProfileCode",
                             "rewardLines",
                             "rewardProfileId"
                     );
@@ -142,14 +145,16 @@ class QuestServiceStateContractTest {
     }
 
     private Quest quest() {
-        Quest quest = Quest.createDefinition(
+        Quest quest = Quest.create(
                 QuestCode.PLAYER_WELCOME.value(),
-                6,
                 QuestCategory.MAIN,
                 QuestTitle.of("서비스 상태 계약"),
                 "QuestService 상태 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
-                RewardProfileRef.of("RP_EXP_30"),
+                QuestReward.of(
+                        45,
+                        new RewardStats(java.util.Map.of("wisdom", 3))
+                ),
                 QuestRepeatRule.NONE,
                 QuestCompletionPolicy.USER_CONFIRM,
                 null

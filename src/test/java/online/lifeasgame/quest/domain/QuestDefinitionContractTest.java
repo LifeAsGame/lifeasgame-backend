@@ -81,7 +81,7 @@ class QuestDefinitionContractTest {
         @Test
         @DisplayName("profile ref와 inline reward 동시 변경을 거부한다")
         void rejectsMixedRewardContracts() {
-            Quest quest = legacyQuest();
+            Quest quest = nonZeroLegacyQuest();
 
             assertQuestError(
                     () -> quest.updateDefinition(
@@ -97,7 +97,64 @@ class QuestDefinitionContractTest {
 
             assertThat(quest.getDefinitionVersion()).isEqualTo(1);
             assertThat(quest.rewardProfileCodeOrNull()).isNull();
+            assertThat(quest.getReward().exp()).isEqualTo(70);
+            assertThat(quest.getReward().stats().stats())
+                    .containsEntry("strength", 2);
+            assertThat(quest.pullEvents()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("non-zero legacy reward를 profile 계약 전환 시 empty로 정리한다")
+        void clearsLegacyRewardWhenApplyingProfileReference() {
+            Quest quest = nonZeroLegacyQuest();
+
+            quest.updateDefinition(
+                    null,
+                    null,
+                    null,
+                    null,
+                    2,
+                    RewardProfileRef.of("RP_EXP_30")
+            );
+
+            assertThat(quest.usesRewardProfile()).isTrue();
+            assertThat(quest.rewardProfileCodeOrNull()).isEqualTo("RP_EXP_30");
             assertThat(quest.getReward().exp()).isZero();
+            assertThat(quest.getReward().stats().stats()).isEmpty();
+            QuestEvent event = (QuestEvent) quest.pullEvents().getFirst();
+            assertThat(event.attributes())
+                    .containsEntry("questDefinitionVersion", 2)
+                    .containsEntry("rewardProfileCode", "RP_EXP_30")
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+        }
+
+        @Test
+        @DisplayName("version validation 실패 시 legacy reward와 profile ref를 모두 보존한다")
+        void preservesRewardWhenValidationFails() {
+            Quest quest = nonZeroLegacyQuest();
+
+            assertQuestError(
+                    () -> quest.updateDefinition(
+                            QuestTarget.of(QuestTargetType.COUNT, 2),
+                            null,
+                            null,
+                            null,
+                            0,
+                            RewardProfileRef.of("RP_EXP_30")
+                    ),
+                    QuestError.QUEST_DEFINITION_VERSION_INVALID
+            );
+
+            assertThat(quest.target().value()).isEqualTo(1);
+            assertThat(quest.rewardProfileCodeOrNull()).isNull();
+            assertThat(quest.getReward().exp()).isEqualTo(70);
+            assertThat(quest.getReward().stats().stats())
+                    .containsEntry("strength", 2);
             assertThat(quest.pullEvents()).isEmpty();
         }
 
@@ -175,6 +232,23 @@ class QuestDefinitionContractTest {
                 "inline reward 기반 Quest",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
                 QuestReward.of(0, RewardStats.empty()),
+                QuestRepeatRule.NONE,
+                QuestCompletionPolicy.AUTO,
+                null
+        );
+    }
+
+    private Quest nonZeroLegacyQuest() {
+        return Quest.create(
+                "quest:test:legacy-non-zero",
+                QuestCategory.MAIN,
+                QuestTitle.of("Non-zero Legacy Quest"),
+                "non-zero inline reward 기반 Quest",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestReward.of(
+                        70,
+                        new RewardStats(java.util.Map.of("strength", 2))
+                ),
                 QuestRepeatRule.NONE,
                 QuestCompletionPolicy.AUTO,
                 null

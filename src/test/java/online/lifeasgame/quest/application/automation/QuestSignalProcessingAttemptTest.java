@@ -284,13 +284,29 @@ class QuestSignalProcessingAttemptTest {
             assertThat(current.getPeriod().start()).isEqualTo(eventDate);
             assertThat(current.getStatus())
                     .isEqualTo(QuestStatus.COMPLETED);
-            assertThat(publishedEvents(4)).extracting(QuestEvent::type)
+            List<QuestEvent> events = publishedEvents(4);
+            assertThat(events).extracting(QuestEvent::type)
                     .containsExactly(
                             QuestEventType.QUEST_ACCEPTED,
                             QuestEventType.QUEST_PROGRESS,
                             QuestEventType.QUEST_GOAL_REACHED,
                             QuestEventType.QUEST_COMPLETED
                     );
+            QuestEvent completed = events.getLast();
+            assertThat(completed.attributes())
+                    .containsEntry("questDefinitionVersion", 1)
+                    .containsEntry("rewardExp", 15)
+                    .containsEntry(
+                            "rewardStats",
+                            java.util.Map.of("focus", 1)
+                    )
+                    .doesNotContainKeys(
+                            "rewardProfileCode",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+            assertThat(completed.correlationId())
+                    .isEqualTo("source:signal-195:completed");
             verify(questProgressStore).reset(
                     QuestCode.PLAYER_WELCOME,
                     PLAYER_ID
@@ -389,7 +405,10 @@ class QuestSignalProcessingAttemptTest {
                 QuestTitle.of("Receipt 상태 계약"),
                 "Quest Signal Receipt 상태 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, target),
-                QuestReward.of(0, RewardStats.empty()),
+                QuestReward.of(
+                        15,
+                        new RewardStats(java.util.Map.of("focus", 1))
+                ),
                 repeatRule,
                 completionPolicy,
                 null

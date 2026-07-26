@@ -326,14 +326,7 @@ public class QuestSignalProcessingAttempt {
                                 acceptance.getGoalReachedAt()
                         )
                         .attribute("completedAt", acceptance.getCompletedAt())
-                        .attribute(
-                                "questDefinitionVersion",
-                                quest.getDefinitionVersion()
-                        )
-                        .attribute(
-                                "rewardProfileCode",
-                                quest.rewardProfileCodeOrNull()
-                        )
+                        .definitionSnapshot(quest)
                         .occurredAt(acceptance.getCompletedAt())
                         .correlationId(correlation(signal, "completed"))
                         .build()

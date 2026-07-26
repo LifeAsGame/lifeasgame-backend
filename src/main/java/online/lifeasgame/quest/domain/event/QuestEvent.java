@@ -56,15 +56,10 @@ public record QuestEvent(
                 .attribute("targetValue", quest.target().value())
                 .attribute("repeatRule", quest.getRepeatRule().name())
                 .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                .attribute("questDefinitionVersion", quest.getDefinitionVersion())
-                .attribute("rewardProfileCode", quest.rewardProfileCodeOrNull())
+                .definitionSnapshot(quest)
                 .attribute("dueAt", quest.getDueAt())
                 .occurredAt(Instant.now())
                 .correlationId(correlationId);
-        if (quest.isLegacyInlineReward()) {
-            builder.attribute("rewardExp", quest.getReward().exp())
-                    .attribute("rewardStats", quest.getReward().stats().stats());
-        }
         return builder.build();
     }
 
@@ -114,6 +109,27 @@ public record QuestEvent(
                 this.attributes.put(key, value);
             }
             return this;
+        }
+
+        public Builder definitionSnapshot(Quest quest) {
+            Guard.notNull(quest, "quest");
+            attribute("questDefinitionVersion", quest.getDefinitionVersion())
+                    .attribute("rewardLines", null)
+                    .attribute("rewardProfileId", null);
+            if (quest.usesRewardProfile()) {
+                return attribute(
+                        "rewardProfileCode",
+                        quest.rewardProfileCodeOrNull()
+                )
+                        .attribute("rewardExp", null)
+                        .attribute("rewardStats", null);
+            }
+            return attribute("rewardProfileCode", null)
+                    .attribute("rewardExp", quest.getReward().exp())
+                    .attribute(
+                            "rewardStats",
+                            quest.getReward().stats().stats()
+                    );
         }
 
         public Builder occurredAt(Instant occurredAt) {

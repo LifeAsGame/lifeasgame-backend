@@ -319,14 +319,7 @@ public class QuestService {
                         .attribute("goalReachedAt", acceptance.getGoalReachedAt())
                         .attribute("completedAt", acceptance.getCompletedAt())
                         .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                        .attribute(
-                                "questDefinitionVersion",
-                                quest.getDefinitionVersion()
-                        )
-                        .attribute(
-                                "rewardProfileCode",
-                                quest.rewardProfileCodeOrNull()
-                        )
+                        .definitionSnapshot(quest)
                         .occurredAt(acceptance.getCompletedAt())
                         .correlationId(correlation(acceptance, suffix))
                         .build()
