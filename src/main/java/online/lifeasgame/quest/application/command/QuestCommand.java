@@ -16,8 +16,10 @@ public final class QuestCommand {
 
     public record UpdateDefinition(
             String questCode,
+            Integer definitionVersion,
             String targetType,
             Integer targetValue,
+            String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
             String repeatRule,

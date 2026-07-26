@@ -1,6 +1,7 @@
 package online.lifeasgame.quest.api.admin.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -13,9 +14,11 @@ public final class AdminQuestRequest {
     public record Ensure(@NotBlank String code) {}
 
     public record Update(
+            @Positive Integer definitionVersion,
             String targetType,
             Integer targetValue,
             String repeatRule,
+            @Size(max = 80) String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt

@@ -5,15 +5,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -25,6 +28,9 @@ public class Quest extends AbstractTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "definition_version", nullable = false)
+    private int definitionVersion = 1;
 
     @Column(name = "code", length = 80, nullable = false, unique = true)
     private String code;
@@ -45,6 +51,9 @@ public class Quest extends AbstractTime {
 
     @Embedded
     private QuestReward reward;
+
+    @Embedded
+    private RewardProfileRef rewardProfileRef;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "repeat_rule", length = 20)
@@ -67,16 +76,29 @@ public class Quest extends AbstractTime {
             String descriptionMd,
             QuestTarget target,
             QuestReward reward,
+            int definitionVersion,
+            RewardProfileRef rewardProfileRef,
             QuestRepeatRule repeatRule,
             QuestCompletionPolicy completionPolicy,
             Instant dueAt
     ) {
+        validateDefinitionVersion(definitionVersion);
+        if (rewardProfileRef == null && reward == null) {
+            throw new DomainException(QuestError.QUEST_REWARD_PROFILE_CODE_REQUIRED);
+        }
+        if (rewardProfileRef != null && reward != null) {
+            throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
+        }
+        this.definitionVersion = definitionVersion;
         this.code = Guard.notBlank(code, "code").trim();
         this.category = Guard.notNull(category, "category");
         this.title = Guard.notNull(title, "title");
         this.descriptionMd = descriptionMd == null ? null : descriptionMd.trim();
         this.target = Guard.notNull(target, "target");
-        this.reward = Guard.notNull(reward, "reward");
+        this.reward = rewardProfileRef == null
+                ? Guard.notNull(reward, "reward")
+                : QuestReward.empty();
+        this.rewardProfileRef = rewardProfileRef;
         this.repeatRule = repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
         this.completionPolicy = QuestCompletionPolicy.defaultIfNull(completionPolicy);
         this.dueAt = dueAt;
@@ -123,6 +145,35 @@ public class Quest extends AbstractTime {
                 descriptionMd,
                 target,
                 reward,
+                1,
+                null,
+                repeatRule,
+                completionPolicy,
+                dueAt
+        );
+    }
+
+    public static Quest createDefinition(
+            String code,
+            int definitionVersion,
+            QuestCategory category,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            RewardProfileRef rewardProfileRef,
+            QuestRepeatRule repeatRule,
+            QuestCompletionPolicy completionPolicy,
+            Instant dueAt
+    ) {
+        return new Quest(
+                code,
+                category,
+                title,
+                descriptionMd,
+                target,
+                null,
+                definitionVersion,
+                rewardProfileRef,
                 repeatRule,
                 completionPolicy,
                 dueAt
@@ -133,28 +184,83 @@ public class Quest extends AbstractTime {
             QuestTarget questTarget,
             QuestReward questReward,
             QuestRepeatRule questRepeatRule,
-            Instant dueAt
+            Instant dueAt,
+            Integer nextDefinitionVersion,
+            RewardProfileRef nextRewardProfileRef
     ) {
+        validateUpdate(nextDefinitionVersion, questReward, nextRewardProfileRef);
         boolean changed = false;
 
-        if (questTarget != null) {
+        if (questTarget != null && !questTarget.equals(target)) {
             changeTarget(questTarget);
             changed = true;
         }
-        if (questReward != null) {
+        if (questReward != null && !questReward.equals(reward)) {
             changeReward(questReward);
             changed = true;
         }
-        if (questRepeatRule != null) {
+        if (questRepeatRule != null && questRepeatRule != repeatRule) {
             changeRepeatRule(questRepeatRule);
             changed = true;
         }
-        if (dueAt != null) {
+        if (dueAt != null && !Objects.equals(dueAt, this.dueAt)) {
             reschedule(dueAt);
+            changed = true;
+        }
+        if (nextDefinitionVersion != null
+                && nextDefinitionVersion != definitionVersion) {
+            definitionVersion = nextDefinitionVersion;
+            changed = true;
+        }
+        if (nextRewardProfileRef != null
+                && !nextRewardProfileRef.equals(rewardProfileRef)) {
+            rewardProfileRef = nextRewardProfileRef;
+            reward = QuestReward.empty();
             changed = true;
         }
 
         if (changed) recordUpdatedEvent();
+    }
+
+    public void updateDefinition(
+            QuestTarget questTarget,
+            QuestReward questReward,
+            QuestRepeatRule questRepeatRule,
+            Instant dueAt
+    ) {
+        updateDefinition(
+                questTarget,
+                questReward,
+                questRepeatRule,
+                dueAt,
+                null,
+                null
+        );
+    }
+
+    private void validateUpdate(
+            Integer nextDefinitionVersion,
+            QuestReward questReward,
+            RewardProfileRef nextRewardProfileRef
+    ) {
+        if (nextDefinitionVersion != null) {
+            validateDefinitionVersion(nextDefinitionVersion);
+            if (nextDefinitionVersion < definitionVersion) {
+                throw new DomainException(
+                        QuestError.QUEST_DEFINITION_VERSION_DECREASE_NOT_ALLOWED
+                );
+            }
+        }
+        if (questReward != null
+                && (nextRewardProfileRef != null || usesRewardProfile())) {
+            throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
+        }
+    }
+
+    private static void validateDefinitionVersion(int definitionVersion) {
+        if (definitionVersion < 1) {
+            throw new DomainException(QuestError.QUEST_DEFINITION_VERSION_INVALID);
+        }
     }
 
     private void recordUpdatedEvent() {
@@ -176,6 +282,9 @@ public class Quest extends AbstractTime {
     }
 
     public void changeReward(QuestReward reward) {
+        if (usesRewardProfile()) {
+            throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
+        }
         this.reward = Guard.notNull(reward, "reward");
     }
 
@@ -197,6 +306,18 @@ public class Quest extends AbstractTime {
 
     public boolean requiresUserConfirmation() {
         return completionPolicy == QuestCompletionPolicy.USER_CONFIRM;
+    }
+
+    public boolean usesRewardProfile() {
+        return rewardProfileRef != null;
+    }
+
+    public boolean isLegacyInlineReward() {
+        return !usesRewardProfile();
+    }
+
+    public String rewardProfileCodeOrNull() {
+        return rewardProfileRef == null ? null : rewardProfileRef.code();
     }
 
     public String getCode() {

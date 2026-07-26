@@ -22,7 +22,10 @@ public interface QuestSpecV1 {
 
     );
 
-    @Operation(summary = "내 퀘스트 상세", description = "Quest 정의 + 플레이어의 최신 Acceptance(있으면)까지 함께 조회합니다.")
+    @Operation(
+            summary = "내 퀘스트 상세",
+            description = "Quest 정의와 최신 Acceptance를 조회합니다. rewardProfileCode가 있으면 신규 Profile 계약, null이면 legacy inline reward 계약입니다."
+    )
     ResponseEntity<QuestResponse.PlayerQuest> detail(
             @PathVariable String questCode
     );

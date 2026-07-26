@@ -50,6 +50,7 @@ public class QuestAcceptanceCompletionService {
                         .attribute("goalReachedAt", acceptance.getGoalReachedAt())
                         .attribute("completedAt", acceptance.getCompletedAt())
                         .attribute("completionPolicy", quest.getCompletionPolicy().name())
+                        .definitionSnapshot(quest)
                         .occurredAt(acceptance.getCompletedAt())
                         .correlationId(
                                 "quest:%d:acceptance:%d:completed".formatted(

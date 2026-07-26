@@ -7,6 +7,7 @@ import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,6 +43,9 @@ class QuestServiceStateContractTest {
     private QuestWriter questWriter;
 
     @Mock
+    private RewardProfileLookupApi rewardProfileLookupApi;
+
+    @Mock
     private DomainEventPublisher domainEventPublisher;
 
     private QuestService service;
@@ -52,6 +56,7 @@ class QuestServiceStateContractTest {
                 questBlueprintCatalog,
                 questReader,
                 questWriter,
+                rewardProfileLookupApi,
                 domainEventPublisher
         );
     }
@@ -78,8 +83,22 @@ class QuestServiceStateContractTest {
 
             ArgumentCaptor<DomainEvent> eventCaptor = ArgumentCaptor.forClass(DomainEvent.class);
             verify(domainEventPublisher).publish(eventCaptor.capture());
-            assertThat(((QuestEvent) eventCaptor.getValue()).type())
-                    .isEqualTo(QuestEventType.QUEST_COMPLETED);
+            QuestEvent event = (QuestEvent) eventCaptor.getValue();
+            assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
+            assertThat(event.attributes())
+                    .containsEntry("questDefinitionVersion", 1)
+                    .containsEntry("rewardExp", 45)
+                    .containsEntry(
+                            "rewardStats",
+                            java.util.Map.of("wisdom", 3)
+                    )
+                    .doesNotContainKeys(
+                            "rewardProfileCode",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+            assertThat(event.correlationId())
+                    .isEqualTo("quest:193:acceptance:1930:admin-completed");
         }
     }
 
@@ -132,7 +151,10 @@ class QuestServiceStateContractTest {
                 QuestTitle.of("서비스 상태 계약"),
                 "QuestService 상태 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
-                QuestReward.of(0, RewardStats.empty()),
+                QuestReward.of(
+                        45,
+                        new RewardStats(java.util.Map.of("wisdom", 3))
+                ),
                 QuestRepeatRule.NONE,
                 QuestCompletionPolicy.USER_CONFIRM,
                 null

@@ -13,10 +13,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Admin Quest API V1")
 public interface AdminQuestSpecV1 {
 
-    @Operation(summary = "Quest Blueprint 목록", description = "서버에 정의된 Blueprint(카탈로그 소스) 목록을 조회합니다.")
+    @Operation(
+            summary = "Quest Blueprint 목록",
+            description = "서버에 정의된 Blueprint 목록입니다. rewardProfileCode가 있으면 신규 Profile 계약, null이면 legacy inline reward 계약입니다."
+    )
     ResponseEntity<AdminQuestResponse.Blueprints> catalog();
 
-    @Operation(summary = "Quest Definition 목록", description = "DB에 저장된 Quest Definition 목록을 조회합니다.")
+    @Operation(
+            summary = "Quest Definition 목록",
+            description = "DB Definition 목록입니다. rewardProfileCode가 있으면 신규 Profile 계약, null이면 legacy inline reward 계약입니다."
+    )
     ResponseEntity<AdminQuestResponse.Definitions> definitions();
 
     @Operation(summary = "Quest Definition 생성/보장", description = "Blueprint code 기준으로 Quest Definition을 생성(또는 존재 보장)합니다.")
@@ -25,8 +31,14 @@ public interface AdminQuestSpecV1 {
     @Operation(summary = "Quest Definition 단건 조회", description = "questCode로 Quest Definition을 조회합니다.")
     ResponseEntity<AdminQuestResponse.Definition> definition(String questCode);
 
-    @Operation(summary = "Quest Definition 수정", description = "타겟/보상/반복/마감일을 수정합니다.")
-    ResponseEntity<AdminQuestResponse.Definition> update(String questCode, AdminQuestRequest.Update request);
+    @Operation(
+            summary = "Quest Definition 수정",
+            description = "타겟/버전/Profile 참조/legacy 보상/반복/마감일을 부분 수정합니다. Profile 참조와 legacy 보상은 동시에 변경할 수 없습니다."
+    )
+    ResponseEntity<AdminQuestResponse.Definition> update(
+            String questCode,
+            @Valid @RequestBody AdminQuestRequest.Update request
+    );
 
     @Operation(summary = "Quest Acceptance 목록(quest 기준)", description = "특정 questCode에 대한 Acceptance 목록을 조회합니다. (status 필터 가능)")
     ResponseEntity<AdminQuestResponse.Acceptances> acceptances(String questCode, String status);

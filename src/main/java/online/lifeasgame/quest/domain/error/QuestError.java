@@ -61,6 +61,31 @@ public enum QuestError implements ErrorCode {
             "QUE-409-QUEST-SIGNAL-RECEIPT-PAYLOAD-CONFLICT",
             "Quest signal identity was already used with a different payload",
             409
+    ),
+    QUEST_DEFINITION_VERSION_INVALID(
+            "QUE-400-DEFINITION-VERSION-INVALID",
+            "Quest definition version must be at least 1",
+            400
+    ),
+    QUEST_DEFINITION_VERSION_DECREASE_NOT_ALLOWED(
+            "QUE-400-DEFINITION-VERSION-DECREASE-NOT-ALLOWED",
+            "Quest definition version cannot decrease",
+            400
+    ),
+    QUEST_REWARD_PROFILE_CODE_REQUIRED(
+            "QUE-400-REWARD-PROFILE-CODE-REQUIRED",
+            "Quest reward profile code is required",
+            400
+    ),
+    QUEST_REWARD_PROFILE_CODE_TOO_LONG(
+            "QUE-400-REWARD-PROFILE-CODE-TOO-LONG",
+            "Quest reward profile code is too long",
+            400
+    ),
+    QUEST_REWARD_CONTRACT_CONFLICT(
+            "QUE-400-REWARD-CONTRACT-CONFLICT",
+            "Reward profile and legacy inline reward cannot be changed together",
+            400
     )
     ;
 

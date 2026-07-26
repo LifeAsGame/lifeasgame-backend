@@ -18,7 +18,9 @@ public final class QuestResult {
             QuestTarget target,
             String repeatRule,
             String completionPolicy,
-            int rewardExp,
+            int definitionVersion,
+            String rewardProfileCode,
+            Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
     ) {
@@ -31,8 +33,14 @@ public final class QuestResult {
                     blueprint.target(),
                     blueprint.repeatRule().name(),
                     blueprint.completionPolicy().name(),
-                    blueprint.reward().exp(),
-                    blueprint.reward().stats().stats(),
+                    blueprint.definitionVersion(),
+                    blueprint.rewardProfileCodeOrNull(),
+                    blueprint.usesRewardProfile()
+                            ? null
+                            : blueprint.reward().exp(),
+                    blueprint.usesRewardProfile()
+                            ? null
+                            : blueprint.reward().stats().stats(),
                     blueprint.dueAt()
             );
         }
@@ -92,7 +100,9 @@ public final class QuestResult {
             int targetValue,
             String repeatRule,
             String completionPolicy,
-            int rewardExp,
+            int definitionVersion,
+            String rewardProfileCode,
+            Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt
     ) {
@@ -107,8 +117,10 @@ public final class QuestResult {
                     quest.target().value(),
                     quest.getRepeatRule().name(),
                     quest.getCompletionPolicy().name(),
-                    quest.getReward().exp(),
-                    quest.getReward().stats().stats(),
+                    quest.getDefinitionVersion(),
+                    quest.rewardProfileCodeOrNull(),
+                    legacyRewardExp(quest),
+                    legacyRewardStats(quest),
                     quest.getDueAt()
             );
         }
@@ -123,7 +135,9 @@ public final class QuestResult {
             int targetValue,
             String repeatRule,
             String completionPolicy,
-            int rewardExp,
+            int definitionVersion,
+            String rewardProfileCode,
+            Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt,
             Acceptance acceptance
@@ -138,8 +152,10 @@ public final class QuestResult {
                     quest.target().value(),
                     quest.getRepeatRule().name(),
                     quest.getCompletionPolicy().name(),
-                    quest.getReward().exp(),
-                    quest.getReward().stats().stats(),
+                    quest.getDefinitionVersion(),
+                    quest.rewardProfileCodeOrNull(),
+                    legacyRewardExp(quest),
+                    legacyRewardStats(quest),
                     quest.getDueAt(),
                     acceptance == null ? null : Acceptance.from(acceptance, quest)
             );
@@ -151,5 +167,15 @@ public final class QuestResult {
             Long questId,
             String questCode
     ) {
+    }
+
+    private static Integer legacyRewardExp(Quest quest) {
+        return quest.isLegacyInlineReward() ? quest.getReward().exp() : null;
+    }
+
+    private static Map<String, Integer> legacyRewardStats(Quest quest) {
+        return quest.isLegacyInlineReward()
+                ? quest.getReward().stats().stats()
+                : null;
     }
 }

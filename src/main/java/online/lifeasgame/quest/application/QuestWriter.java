@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
@@ -27,21 +25,11 @@ class QuestWriter {
         Quest saved = questRepository.save(quest);
 
         domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_CREATED)
-                        .questCode(saved.getCode())
-                        .questId(saved.getId())
-                        .attribute("title", saved.getTitle().value())
-                        .attribute("category", saved.getCategory().name())
-                        .attribute("targetType", saved.target().type().name())
-                        .attribute("targetValue", saved.target().value())
-                        .attribute("repeatRule", saved.getRepeatRule().name())
-                        .attribute("completionPolicy", saved.getCompletionPolicy().name())
-                        .attribute("rewardExp", saved.getReward().exp())
-                        .attribute("rewardStats", saved.getReward().stats().stats())
-                        .attribute("dueAt", saved.getDueAt())
-                        .occurredAt(Instant.now())
-                        .correlationId("quest:" + saved.getCode())
-                        .build()
+                QuestEvent.snapshot(
+                        QuestEventType.QUEST_CREATED,
+                        saved,
+                        "quest:" + saved.getCode()
+                )
         );
 
         return saved;

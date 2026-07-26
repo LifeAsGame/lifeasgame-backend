@@ -47,7 +47,7 @@ public record QuestEvent(
     }
 
     public static QuestEvent snapshot(QuestEventType type, Quest quest, String correlationId) {
-        return QuestEvent.builder(type)
+        Builder builder = QuestEvent.builder(type)
                 .questId(quest.getId())
                 .questCode(quest.getCode())
                 .attribute("title", quest.getTitle().value())
@@ -56,12 +56,11 @@ public record QuestEvent(
                 .attribute("targetValue", quest.target().value())
                 .attribute("repeatRule", quest.getRepeatRule().name())
                 .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                .attribute("rewardExp", quest.getReward().exp())
-                .attribute("rewardStats", quest.getReward().stats().stats())
+                .definitionSnapshot(quest)
                 .attribute("dueAt", quest.getDueAt())
                 .occurredAt(Instant.now())
-                .correlationId(correlationId)
-                .build();
+                .correlationId(correlationId);
+        return builder.build();
     }
 
     public static final class Builder {
@@ -110,6 +109,27 @@ public record QuestEvent(
                 this.attributes.put(key, value);
             }
             return this;
+        }
+
+        public Builder definitionSnapshot(Quest quest) {
+            Guard.notNull(quest, "quest");
+            attribute("questDefinitionVersion", quest.getDefinitionVersion())
+                    .attribute("rewardLines", null)
+                    .attribute("rewardProfileId", null);
+            if (quest.usesRewardProfile()) {
+                return attribute(
+                        "rewardProfileCode",
+                        quest.rewardProfileCodeOrNull()
+                )
+                        .attribute("rewardExp", null)
+                        .attribute("rewardStats", null);
+            }
+            return attribute("rewardProfileCode", null)
+                    .attribute("rewardExp", quest.getReward().exp())
+                    .attribute(
+                            "rewardStats",
+                            quest.getReward().stats().stats()
+                    );
         }
 
         public Builder occurredAt(Instant occurredAt) {

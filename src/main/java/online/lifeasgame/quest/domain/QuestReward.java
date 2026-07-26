@@ -4,10 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.guard.Guard;
 
 @Embeddable
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestReward {
 
@@ -26,6 +28,10 @@ public class QuestReward {
 
     public static QuestReward of(int exp, RewardStats stats) {
         return new QuestReward(exp, stats);
+    }
+
+    public static QuestReward empty() {
+        return new QuestReward(0, RewardStats.empty());
     }
 
     public int exp() {
