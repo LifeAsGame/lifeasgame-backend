@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.domain.Item;
 import online.lifeasgame.inventory.domain.ItemCategory;
+import online.lifeasgame.inventory.domain.ItemCode;
 import online.lifeasgame.inventory.domain.ItemType;
 import online.lifeasgame.inventory.domain.Rarity;
 import online.lifeasgame.inventory.domain.error.ItemError;
@@ -24,6 +25,11 @@ class ItemReader {
     public Item getByIdOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new DomainException(ItemError.ITEM_NOT_FOUND));
+    }
+
+    public Item getByCodeOrThrow(ItemCode code) {
+        return repository.findByCode(code)
+                .orElseThrow(() -> new DomainException(ItemError.ITEM_CODE_NOT_FOUND));
     }
 
     public Page<Item> search(

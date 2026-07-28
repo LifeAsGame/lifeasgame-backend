@@ -3,6 +3,7 @@ package online.lifeasgame.inventory.infra;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.domain.Item;
 import online.lifeasgame.inventory.domain.ItemCategory;
+import online.lifeasgame.inventory.domain.ItemCode;
 import online.lifeasgame.inventory.domain.ItemType;
 import online.lifeasgame.inventory.domain.Rarity;
 import online.lifeasgame.inventory.domain.repository.ItemRepository;
@@ -21,6 +22,11 @@ public class ItemRepositoryAdapter implements ItemRepository {
     @Override
     public Optional<Item> findById(Long id) {
         return jpaRepository.findById(id);
+    }
+
+    @Override
+    public Optional<Item> findByCode(ItemCode code) {
+        return jpaRepository.findByCode(code);
     }
 
     @Override

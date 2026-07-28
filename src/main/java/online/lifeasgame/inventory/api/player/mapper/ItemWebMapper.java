@@ -11,6 +11,7 @@ public final class ItemWebMapper {
     public static ItemResponse.Detail toDetail(ItemResult.Detail result) {
         return new ItemResponse.Detail(
                 result.id(),
+                result.code(),
                 result.name(),
                 result.category(),
                 result.type(),
@@ -25,6 +26,7 @@ public final class ItemWebMapper {
     public static ItemResponse.Summary toSummary(ItemResult.Summary result) {
         return new ItemResponse.Summary(
                 result.id(),
+                result.code(),
                 result.name(),
                 result.category(),
                 result.type(),

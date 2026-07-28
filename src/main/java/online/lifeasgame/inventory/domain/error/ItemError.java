@@ -5,6 +5,7 @@ import online.lifeasgame.core.error.ErrorCode;
 public enum ItemError implements ErrorCode {
 
     ITEM_NOT_FOUND("ITM-404-NOT-FOUND", "Item not found", 404),
+    ITEM_CODE_NOT_FOUND("ITM-404-CODE-NOT-FOUND", "Item code not found", 404),
     ITEM_NAME_DUP("ITM-409-NAME-DUP", "Duplicate item name", 409),
     INVALID_ITEM_CATEGORY("ITM-400-INVALID-ITEM-CATEGORY", "Invalid item category", 400),
     INVALID_ITEM_TYPE("ITM-400-INVALID-ITEM-TYPE", "Invalid item type", 400),

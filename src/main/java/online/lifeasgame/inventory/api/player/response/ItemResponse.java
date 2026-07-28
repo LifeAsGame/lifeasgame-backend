@@ -14,6 +14,7 @@ public final class ItemResponse {
 
     public record Summary(
             Long id,
+            String code,
             String name,
             String category,
             String type,
@@ -25,6 +26,7 @@ public final class ItemResponse {
 
     public record Detail(
             Long id,
+            String code,
             String name,
             String category,
             String type,
