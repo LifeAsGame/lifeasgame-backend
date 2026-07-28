@@ -6,8 +6,23 @@ public enum QuestError implements ErrorCode {
 
     INVALID_QUEST_STATUS("QUE-400-INVALID-QUEST-STATUS", "Invalid Quest status", 400),
     INVALID_QUEST_CATEGORY("QUE-400-INVALID-QUEST-CATEGORY", "Invalid Quest category", 400),
+    INVALID_QUEST_SEMANTIC_CATEGORY(
+            "QUE-400-INVALID-QUEST-SEMANTIC-CATEGORY",
+            "Invalid Quest semantic category",
+            400
+    ),
+    INVALID_QUEST_PROGRESS_SOURCE(
+            "QUE-400-INVALID-QUEST-PROGRESS-SOURCE",
+            "Invalid Quest progress source",
+            400
+    ),
     INVALID_QUEST_CODE("QUE-400-INVALID-QUEST-CODE", "Invalid Quest code", 400),
     INVALID_QUEST_REPEATABLE_RULE("QUE-400-INVALID-QUEST-REPEATABLE-RULE", "Invalid Quest repeatable rule", 400),
+    INVALID_QUEST_REPEAT_POLICY(
+            "QUE-400-INVALID-QUEST-REPEAT-POLICY",
+            "Invalid Quest repeat policy",
+            400
+    ),
     INVALID_QUEST_TARGET_TYPE("QUE-400-INVALID-QUEST-TARGET-TYPE", "Invalid Quest target type", 400),
     QUEST_NOT_FOUND("QUE-404-QUEST-NOT-FOUND", "Quest not found", 404),
     QUEST_ACCEPTANCE_NOT_FOUND("QUE-404-QUEST-ACCEPTANCE-NOT-FOUND", "Quest acceptance not found", 404),
@@ -70,6 +85,36 @@ public enum QuestError implements ErrorCode {
     QUEST_DEFINITION_VERSION_DECREASE_NOT_ALLOWED(
             "QUE-400-DEFINITION-VERSION-DECREASE-NOT-ALLOWED",
             "Quest definition version cannot decrease",
+            400
+    ),
+    QUEST_SEMANTIC_CATEGORY_REQUIRED(
+            "QUE-400-SEMANTIC-CATEGORY-REQUIRED",
+            "Quest semantic category is required for the final definition contract",
+            400
+    ),
+    QUEST_PROGRESS_SOURCE_REQUIRED(
+            "QUE-400-PROGRESS-SOURCE-REQUIRED",
+            "Quest progress source is required for the final definition contract",
+            400
+    ),
+    QUEST_REPEAT_POLICY_REQUIRED(
+            "QUE-400-REPEAT-POLICY-REQUIRED",
+            "Quest repeat policy is required for the final definition contract",
+            400
+    ),
+    QUEST_REPEAT_CONTRACT_CONFLICT(
+            "QUE-400-REPEAT-CONTRACT-CONFLICT",
+            "repeatRule and repeatPolicy cannot specify different values",
+            400
+    ),
+    QUEST_ROLE_TEMPLATE_CODE_REQUIRED(
+            "QUE-400-ROLE-TEMPLATE-CODE-REQUIRED",
+            "Quest role template code is required when provided",
+            400
+    ),
+    QUEST_ROLE_TEMPLATE_CODE_TOO_LONG(
+            "QUE-400-ROLE-TEMPLATE-CODE-TOO-LONG",
+            "Quest role template code is too long",
             400
     ),
     QUEST_REWARD_PROFILE_CODE_REQUIRED(

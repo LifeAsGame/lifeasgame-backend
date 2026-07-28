@@ -87,11 +87,21 @@ class QuestResponseContractTest {
             assertThat(admin.rewardProfileCode()).isEqualTo("RP_EXP_30");
             assertThat(admin.rewardExp()).isNull();
             assertThat(admin.rewardStats()).isNull();
+            assertThat(admin.semanticCategory()).isEqualTo("GROWTH");
+            assertThat(admin.progressSource()).isEqualTo("COUNT");
+            assertThat(admin.repeatPolicy()).isEqualTo("ONCE");
+            assertThat(admin.repeatRule()).isEqualTo("ONCE");
+            assertThat(admin.roleTemplateCode()).isEqualTo("ROLE_WARRIOR");
 
             assertThat(player.definitionVersion()).isEqualTo(4);
             assertThat(player.rewardProfileCode()).isEqualTo("RP_EXP_30");
             assertThat(player.rewardExp()).isNull();
             assertThat(player.rewardStats()).isNull();
+            assertThat(player.semanticCategory()).isEqualTo("GROWTH");
+            assertThat(player.progressSource()).isEqualTo("COUNT");
+            assertThat(player.repeatPolicy()).isEqualTo("ONCE");
+            assertThat(player.repeatRule()).isEqualTo("ONCE");
+            assertThat(player.roleTemplateCode()).isEqualTo("ROLE_WARRIOR");
         }
 
         @Test
@@ -112,10 +122,45 @@ class QuestResponseContractTest {
             assertThat(admin.rewardProfileCode()).isNull();
             assertThat(admin.rewardExp()).isZero();
             assertThat(admin.rewardStats()).isEqualTo(Map.of());
+            assertThat(admin.semanticCategory()).isNull();
+            assertThat(admin.progressSource()).isNull();
+            assertThat(admin.repeatPolicy()).isNull();
+            assertThat(admin.roleTemplateCode()).isNull();
             assertThat(player.definitionVersion()).isEqualTo(1);
             assertThat(player.rewardProfileCode()).isNull();
             assertThat(player.rewardExp()).isZero();
             assertThat(player.rewardStats()).isEqualTo(Map.of());
+            assertThat(player.semanticCategory()).isNull();
+            assertThat(player.progressSource()).isNull();
+            assertThat(player.repeatPolicy()).isNull();
+            assertThat(player.roleTemplateCode()).isNull();
+        }
+
+        @Test
+        @DisplayName("Admin Update의 blank Role code는 Bean Validation 400 대상이다")
+        void rejectsBlankRoleTemplateCode() {
+            AdminQuestRequest.Update request = new AdminQuestRequest.Update(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "GROWTH",
+                    "COUNT",
+                    "ONCE",
+                    "   "
+            );
+
+            var validator = Validation.buildDefaultValidatorFactory()
+                    .getValidator();
+
+            assertThat(validator.validate(request))
+                    .extracting(violation ->
+                            violation.getPropertyPath().toString())
+                    .containsExactly("roleTemplateCode");
         }
 
         @Test
@@ -144,15 +189,18 @@ class QuestResponseContractTest {
         @Test
         @DisplayName("Admin과 Player Blueprint 응답에도 version/code 계약을 노출한다")
         void exposesBlueprintContract() {
-            QuestBlueprint blueprint = QuestBlueprint.profileBased(
+            QuestBlueprint blueprint = QuestBlueprint.finalContract(
                     QuestCode.PLAYER_WELCOME,
                     5,
                     QuestCategory.MAIN,
+                    QuestSemanticCategory.RECORD,
                     QuestTitle.of("Profile Blueprint"),
                     "profile blueprint",
                     QuestTarget.of(QuestTargetType.COUNT, 1),
+                    QuestProgressSource.RECORD_CREATED,
                     RewardProfileRef.of("RP_EXP_10"),
-                    QuestRepeatRule.NONE,
+                    QuestRepeatRule.DAILY,
+                    null,
                     null,
                     QuestCompletionPolicy.AUTO
             );
@@ -168,10 +216,18 @@ class QuestResponseContractTest {
             assertThat(admin.rewardProfileCode()).isEqualTo("RP_EXP_10");
             assertThat(admin.rewardExp()).isNull();
             assertThat(admin.rewardStats()).isNull();
+            assertThat(admin.semanticCategory()).isEqualTo("RECORD");
+            assertThat(admin.progressSource()).isEqualTo("RECORD_CREATED");
+            assertThat(admin.repeatPolicy()).isEqualTo("DAILY");
+            assertThat(admin.roleTemplateCode()).isNull();
             assertThat(player.definitionVersion()).isEqualTo(5);
             assertThat(player.rewardProfileCode()).isEqualTo("RP_EXP_10");
             assertThat(player.rewardExp()).isNull();
             assertThat(player.rewardStats()).isNull();
+            assertThat(player.semanticCategory()).isEqualTo("RECORD");
+            assertThat(player.progressSource()).isEqualTo("RECORD_CREATED");
+            assertThat(player.repeatPolicy()).isEqualTo("DAILY");
+            assertThat(player.roleTemplateCode()).isNull();
         }
     }
 
@@ -196,11 +252,14 @@ class QuestResponseContractTest {
                 "quest:test:profile-response-contract",
                 4,
                 QuestCategory.MAIN,
+                QuestSemanticCategory.GROWTH,
                 QuestTitle.of("Profile 응답 계약 테스트"),
                 "Quest Profile 응답 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
                 RewardProfileRef.of("RP_EXP_30"),
-                QuestRepeatRule.NONE,
+                QuestRepeatRule.ONCE,
+                QuestRoleTemplateRef.of("ROLE_WARRIOR"),
                 QuestCompletionPolicy.USER_CONFIRM,
                 null
         );

@@ -2,9 +2,11 @@ package online.lifeasgame.quest.application;
 
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
+import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
@@ -19,9 +21,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -133,6 +138,104 @@ class QuestServiceStateContractTest {
         }
     }
 
+    @Nested
+    @DisplayName("Player가 repeat 정책에 따라 Quest를 수락할 때")
+    class AcceptByRepeatPolicy {
+
+        @Test
+        @DisplayName("ONCE는 영구 Acceptance 기간을 생성한다")
+        void acceptsOnceWithForeverPeriod() {
+            Quest quest = finalQuest(QuestRepeatRule.ONCE);
+            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+                    .willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(null);
+            given(questWriter.accept(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            QuestResult.Acceptance result = service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.PLAYER_WELCOME.name(),
+                            null,
+                            null
+                    )
+            );
+
+            assertThat(result.periodStart())
+                    .isEqualTo(LocalDate.of(1970, 1, 1));
+            assertThat(result.periodEnd())
+                    .isEqualTo(LocalDate.of(9999, 12, 31));
+            assertThat(result.repeatPolicy()).isEqualTo("ONCE");
+        }
+
+        @Test
+        @DisplayName("DAILY는 이전 기간 완료 후 현재 기간 재수락을 허용한다")
+        void acceptsNextDailyPeriod() {
+            Quest quest = finalQuest(QuestRepeatRule.DAILY);
+            LocalDate today = LocalDate.now();
+            QuestAcceptance previous = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.daily(today.minusDays(1))
+            );
+            previous.reachGoal(Instant.now().minusSeconds(60));
+            previous.complete(Instant.now().minusSeconds(30));
+            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+                    .willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(previous);
+            given(questWriter.accept(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            QuestResult.Acceptance result = service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.PLAYER_WELCOME.name(),
+                            null,
+                            null
+                    )
+            );
+
+            assertThat(result.periodStart()).isEqualTo(today);
+            assertThat(result.periodEnd()).isEqualTo(today);
+        }
+
+        @Test
+        @DisplayName("ONCE의 기존 Acceptance가 있으면 재수락을 거부한다")
+        void rejectsRepeatedOnceAcceptance() {
+            Quest quest = finalQuest(QuestRepeatRule.ONCE);
+            QuestAcceptance previous = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever()
+            );
+            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+                    .willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(previous);
+
+            assertThatThrownBy(() -> service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.PLAYER_WELCOME.name(),
+                            null,
+                            null
+                    )
+            ))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(
+                                            QuestError
+                                                    .QUEST_ACCEPTANCE_ALREADY_EXISTS
+                                    )
+                    );
+        }
+    }
+
     private QuestAcceptance goalReachedAcceptance(Quest quest) {
         QuestAcceptance acceptance = QuestAcceptance.start(
                 QUEST_ID,
@@ -156,6 +259,26 @@ class QuestServiceStateContractTest {
                         new RewardStats(java.util.Map.of("wisdom", 3))
                 ),
                 QuestRepeatRule.NONE,
+                QuestCompletionPolicy.USER_CONFIRM,
+                null
+        );
+        ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+        return quest;
+    }
+
+    private Quest finalQuest(QuestRepeatRule repeatPolicy) {
+        Quest quest = Quest.createDefinition(
+                QuestCode.PLAYER_WELCOME.value(),
+                2,
+                QuestCategory.MAIN,
+                QuestSemanticCategory.GROWTH,
+                QuestTitle.of("Repeat 수락 계약"),
+                "Repeat 수락 계약 테스트",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
+                RewardProfileRef.of("RP_EXP_10"),
+                repeatPolicy,
+                null,
                 QuestCompletionPolicy.USER_CONFIRM,
                 null
         );

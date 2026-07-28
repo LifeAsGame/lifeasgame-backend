@@ -71,7 +71,13 @@ public class QuestService {
                 QuestRepeatRule.parseNullable(command.repeatRule()),
                 command.dueAt(),
                 command.definitionVersion(),
-                rewardProfileRef
+                rewardProfileRef,
+                QuestSemanticCategory.parseNullable(
+                        command.semanticCategory()
+                ),
+                QuestProgressSource.parseNullable(command.progressSource()),
+                QuestRepeatRule.parsePolicyNullable(command.repeatPolicy()),
+                roleTemplateRefOrNull(command.roleTemplateCode())
         );
 
         var events = quest.pullEvents();
@@ -125,6 +131,10 @@ public class QuestService {
         RewardProfileLookupApi.RewardProfileReference reference =
                 rewardProfileLookupApi.getActiveByCode(requested.code());
         return RewardProfileRef.of(reference.code());
+    }
+
+    private QuestRoleTemplateRef roleTemplateRefOrNull(String code) {
+        return code == null ? null : QuestRoleTemplateRef.of(code);
     }
 
     @Transactional(readOnly = true)
@@ -196,8 +206,17 @@ public class QuestService {
     public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
         Quest quest = questReader.getByCode(questCode);
-
-        questReader.assertAcceptanceIsExists(playerId, quest.getId());
+        LocalDate acceptedDate = LocalDate.now();
+        TimePeriod period = quest.getRepeatRule().periodFor(acceptedDate);
+        QuestAcceptance latest = questReader.findLatest(
+                quest.getId(),
+                playerId
+        );
+        if (latest != null && latest.getPeriod().contains(acceptedDate)) {
+            throw new DomainException(
+                    QuestError.QUEST_ACCEPTANCE_ALREADY_EXISTS
+            );
+        }
 
         QuestAcceptance questAcceptance = questWriter.accept(
                 QuestAcceptance.start(
@@ -205,7 +224,7 @@ public class QuestService {
                         playerId,
                         command.partyId(),
                         command.guildId(),
-                        TimePeriod.daily(LocalDate.now())
+                        period
                 )
         );
 

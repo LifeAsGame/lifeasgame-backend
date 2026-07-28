@@ -114,6 +114,28 @@ public record QuestEvent(
         public Builder definitionSnapshot(Quest quest) {
             Guard.notNull(quest, "quest");
             attribute("questDefinitionVersion", quest.getDefinitionVersion())
+                    .attribute(
+                            "questSemanticCategory",
+                            quest.getSemanticCategory() == null
+                                    ? null
+                                    : quest.getSemanticCategory().name()
+                    )
+                    .attribute(
+                            "progressSource",
+                            quest.getProgressSource() == null
+                                    ? null
+                                    : quest.getProgressSource().name()
+                    )
+                    .attribute(
+                            "repeatPolicy",
+                            quest.repeatPolicyOrNull() == null
+                                    ? null
+                                    : quest.repeatPolicyOrNull().name()
+                    )
+                    .attribute(
+                            "roleTemplateCode",
+                            quest.roleTemplateCodeOrNull()
+                    )
                     .attribute("rewardLines", null)
                     .attribute("rewardProfileId", null);
             if (quest.usesRewardProfile()) {

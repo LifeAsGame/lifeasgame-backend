@@ -42,7 +42,13 @@ public final class QuestWebMapper {
                 result.rewardExp(),
                 result.rewardStats(),
                 result.dueAt(),
-                result.acceptance() == null ? null : toAcceptance(result.acceptance())
+                result.acceptance() == null
+                        ? null
+                        : toAcceptance(result.acceptance()),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 
@@ -64,7 +70,11 @@ public final class QuestWebMapper {
                 result.periodEnd(),
                 result.goalReachedAt(),
                 result.completedAt(),
-                result.dueAt()
+                result.dueAt(),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 
@@ -82,7 +92,11 @@ public final class QuestWebMapper {
                 result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
-                result.dueAt()
+                result.dueAt(),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 

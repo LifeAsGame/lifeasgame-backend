@@ -38,21 +38,21 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V10까지 적용되고 legacy Quest에 Definition 계약이 안전하게 추가된다")
+        @DisplayName("V1부터 V11까지 적용되고 legacy Quest에 semantic 계약이 안전하게 추가된다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
-            Flyway throughV9 = flyway(MigrationVersion.fromVersion("9"));
-            MigrateResult legacyResult = throughV9.migrate();
+            Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
+            MigrateResult legacyResult = throughV10.migrate();
             insertLegacyQuest();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
-            assertThat(legacyResult.migrationsExecuted).isEqualTo(9);
+            assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9", "10"
+                            "6", "7", "8", "9", "10", "11"
                     );
             assertThat(existingTables(
                     "users",
@@ -140,8 +140,34 @@ class FlywayMigrationTest {
                     )
             );
             assertThat(legacyQuestContract()).isEqualTo(
-                    new LegacyQuestContract(1, null, 7, 2)
+                    new LegacyQuestContract(
+                            1,
+                            null,
+                            7,
+                            2,
+                            null,
+                            null,
+                            "NONE",
+                            null
+                    )
             );
+            QuestSemanticColumns semanticColumns = questSemanticColumns();
+            assertThat(semanticColumns.semanticCategoryNullable())
+                    .isEqualTo("YES");
+            assertThat(semanticColumns.progressSourceNullable())
+                    .isEqualTo("YES");
+            assertThat(semanticColumns.roleTemplateCodeNullable())
+                    .isEqualTo("YES");
+            assertThat(semanticColumns.repeatPolicyColumnCount()).isZero();
+            assertThat(semanticColumns.repeatRuleNullable()).isEqualTo("NO");
+            assertThat(semanticColumns.repeatRuleColumnType())
+                    .contains(
+                            "'ONCE'",
+                            "'DAILY'",
+                            "'WEEKLY'",
+                            "'NONE'",
+                            "'MONTHLY'"
+                    );
             assertThat(rewardProfileForeignKeyCount()).isZero();
             assertThatThrownBy(FlywayMigrationTest.this::violateDefinitionVersionCheck)
                     .isInstanceOfSatisfying(SQLException.class, exception ->
@@ -405,7 +431,11 @@ class FlywayMigrationTest {
                          definition_version,
                          reward_profile_code,
                          reward_exp,
-                         JSON_EXTRACT(reward_stats, '$.strength') AS strength
+                         JSON_EXTRACT(reward_stats, '$.strength') AS strength,
+                         semantic_category,
+                         progress_source,
+                         repeat_rule,
+                         role_template_code
                      FROM quests
                      WHERE code = 'quest:test:v9-legacy'
                      """)) {
@@ -414,7 +444,44 @@ class FlywayMigrationTest {
                     resultSet.getInt("definition_version"),
                     resultSet.getString("reward_profile_code"),
                     resultSet.getInt("reward_exp"),
-                    resultSet.getInt("strength")
+                    resultSet.getInt("strength"),
+                    resultSet.getString("semantic_category"),
+                    resultSet.getString("progress_source"),
+                    resultSet.getString("repeat_rule"),
+                    resultSet.getString("role_template_code")
+            );
+        }
+    }
+
+    private QuestSemanticColumns questSemanticColumns() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         MAX(CASE WHEN column_name = 'semantic_category'
+                             THEN is_nullable END) AS semantic_nullable,
+                         MAX(CASE WHEN column_name = 'progress_source'
+                             THEN is_nullable END) AS progress_nullable,
+                         MAX(CASE WHEN column_name = 'role_template_code'
+                             THEN is_nullable END) AS role_nullable,
+                         SUM(column_name = 'repeat_policy')
+                             AS repeat_policy_count,
+                         MAX(CASE WHEN column_name = 'repeat_rule'
+                             THEN is_nullable END) AS repeat_rule_nullable,
+                         MAX(CASE WHEN column_name = 'repeat_rule'
+                             THEN column_type END) AS repeat_rule_type
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'quests'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new QuestSemanticColumns(
+                    resultSet.getString("semantic_nullable"),
+                    resultSet.getString("progress_nullable"),
+                    resultSet.getString("role_nullable"),
+                    resultSet.getInt("repeat_policy_count"),
+                    resultSet.getString("repeat_rule_nullable"),
+                    resultSet.getString("repeat_rule_type")
             );
         }
     }
@@ -462,7 +529,21 @@ class FlywayMigrationTest {
             int definitionVersion,
             String rewardProfileCode,
             int rewardExp,
-            int strength
+            int strength,
+            String semanticCategory,
+            String progressSource,
+            String repeatRule,
+            String roleTemplateCode
+    ) {
+    }
+
+    private record QuestSemanticColumns(
+            String semanticCategoryNullable,
+            String progressSourceNullable,
+            String roleTemplateCodeNullable,
+            int repeatPolicyColumnCount,
+            String repeatRuleNullable,
+            String repeatRuleColumnType
     ) {
     }
 }

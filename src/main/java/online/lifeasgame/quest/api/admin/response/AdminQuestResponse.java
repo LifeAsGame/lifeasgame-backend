@@ -22,7 +22,11 @@ public final class AdminQuestResponse {
             String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
     }
 
@@ -43,7 +47,11 @@ public final class AdminQuestResponse {
             String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
     }
 
@@ -67,7 +75,11 @@ public final class AdminQuestResponse {
             java.time.LocalDate periodEnd,
             Instant goalReachedAt,
             Instant completedAt,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
     }
 
@@ -88,7 +100,26 @@ public final class AdminQuestResponse {
             List<String> categories,
             List<String> targetTypes,
             List<String> repeatRules,
-            List<String> statuses
+            List<String> statuses,
+            List<String> semanticCategories,
+            List<String> progressSources,
+            List<String> repeatPolicies
     ) {
+        public Meta(
+                List<String> categories,
+                List<String> targetTypes,
+                List<String> repeatRules,
+                List<String> statuses
+        ) {
+            this(
+                    categories,
+                    targetTypes,
+                    repeatRules,
+                    statuses,
+                    List.of(),
+                    List.of(),
+                    List.of()
+            );
+        }
     }
 }

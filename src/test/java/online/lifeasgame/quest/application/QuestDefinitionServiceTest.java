@@ -170,18 +170,97 @@ class QuestDefinitionServiceTest {
         verify(domainEventPublisher).publishAll(any());
     }
 
+    @Nested
+    @DisplayName("Admin이 final Definition 계약을 수정할 때")
+    class UpdateSemanticContract {
+
+        @Test
+        @DisplayName("semantic/progress/repeat/Role partial update를 적용한다")
+        void updatesFinalContractFields() {
+            Quest quest = profileQuest(2, "RP_EXP_10");
+            stubExisting(quest);
+
+            QuestResult.Definition result = service.updateDefinition(
+                    semanticUpdate(
+                            3,
+                            "RECORD",
+                            "RECORD_CREATED",
+                            "ONCE",
+                            "  ROLE_READER  "
+                    )
+            );
+
+            assertThat(result.definitionVersion()).isEqualTo(3);
+            assertThat(result.semanticCategory()).isEqualTo("RECORD");
+            assertThat(result.progressSource()).isEqualTo("RECORD_CREATED");
+            assertThat(result.repeatPolicy()).isEqualTo("ONCE");
+            assertThat(result.repeatRule()).isEqualTo("ONCE");
+            assertThat(result.roleTemplateCode()).isEqualTo("ROLE_READER");
+            verify(domainEventPublisher).publishAll(any());
+        }
+
+        @Test
+        @DisplayName("invalid semantic enum은 mutation과 Event 없이 400 계약으로 거부한다")
+        void rejectsInvalidSemanticCategory() {
+            Quest quest = profileQuest(2, "RP_EXP_10");
+            stubExisting(quest);
+
+            assertQuestError(
+                    () -> service.updateDefinition(
+                            semanticUpdate(
+                                    3,
+                                    "DAILY",
+                                    "COUNT",
+                                    "ONCE",
+                                    null
+                            )
+                    ),
+                    QuestError.INVALID_QUEST_SEMANTIC_CATEGORY
+            );
+
+            assertThat(quest.getDefinitionVersion()).isEqualTo(2);
+            assertThat(quest.getSemanticCategory()).isNull();
+            verifyNoInteractions(domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("동일 final-contract 값은 Event 없는 no-op이다")
+        void keepsFinalContractNoOp() {
+            Quest quest = finalQuest();
+            stubExisting(quest);
+
+            QuestResult.Definition result = service.updateDefinition(
+                    semanticUpdate(
+                            2,
+                            "RECORD",
+                            "COUNT",
+                            "ONCE",
+                            " ROLE_READER "
+                    )
+            );
+
+            assertThat(result.semanticCategory()).isEqualTo("RECORD");
+            assertThat(result.progressSource()).isEqualTo("COUNT");
+            assertThat(result.repeatPolicy()).isEqualTo("ONCE");
+            verifyNoInteractions(domainEventPublisher);
+        }
+    }
+
     @Test
     @DisplayName("신규 계약 Blueprint materialization 전에 active profile을 조회한다")
     void validatesProfileBlueprintBeforeMaterialization() {
-        QuestBlueprint blueprint = QuestBlueprint.profileBased(
+        QuestBlueprint blueprint = QuestBlueprint.finalContract(
                 QuestCode.PLAYER_WELCOME,
                 4,
                 QuestCategory.MAIN,
+                QuestSemanticCategory.RECORD,
                 QuestTitle.of("Profile Blueprint"),
                 "profile blueprint",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.RECORD_CREATED,
                 RewardProfileRef.of("RP_EXP_30"),
-                QuestRepeatRule.NONE,
+                QuestRepeatRule.ONCE,
+                QuestRoleTemplateRef.of("ROLE_READER"),
                 null,
                 QuestCompletionPolicy.AUTO
         );
@@ -199,6 +278,13 @@ class QuestDefinitionServiceTest {
 
         assertThat(result.getDefinitionVersion()).isEqualTo(4);
         assertThat(result.rewardProfileCodeOrNull()).isEqualTo("RP_EXP_30");
+        assertThat(result.getSemanticCategory())
+                .isEqualTo(QuestSemanticCategory.RECORD);
+        assertThat(result.getProgressSource())
+                .isEqualTo(QuestProgressSource.RECORD_CREATED);
+        assertThat(result.repeatPolicyOrNull())
+                .isEqualTo(QuestRepeatRule.ONCE);
+        assertThat(result.roleTemplateCodeOrNull()).isEqualTo("ROLE_READER");
         verify(rewardProfileLookupApi).getActiveByCode("RP_EXP_30");
         verify(questWriter).create(any());
     }
@@ -231,6 +317,30 @@ class QuestDefinitionServiceTest {
         return new RewardProfileLookupApi.RewardProfileReference(code);
     }
 
+    private QuestCommand.UpdateDefinition semanticUpdate(
+            Integer definitionVersion,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
+    ) {
+        return new QuestCommand.UpdateDefinition(
+                QuestCode.PLAYER_WELCOME.name(),
+                definitionVersion,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                semanticCategory,
+                progressSource,
+                repeatPolicy,
+                roleTemplateCode
+        );
+    }
+
     private Quest legacyQuest() {
         return Quest.create(
                 QuestCode.PLAYER_WELCOME.value(),
@@ -255,6 +365,24 @@ class QuestDefinitionServiceTest {
                 QuestTarget.of(QuestTargetType.COUNT, 1),
                 RewardProfileRef.of(profileCode),
                 QuestRepeatRule.NONE,
+                QuestCompletionPolicy.AUTO,
+                null
+        );
+    }
+
+    private Quest finalQuest() {
+        return Quest.createDefinition(
+                QuestCode.PLAYER_WELCOME.value(),
+                2,
+                QuestCategory.MAIN,
+                QuestSemanticCategory.RECORD,
+                QuestTitle.of("Final Definition"),
+                "final",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
+                RewardProfileRef.of("RP_EXP_10"),
+                QuestRepeatRule.ONCE,
+                QuestRoleTemplateRef.of("ROLE_READER"),
                 QuestCompletionPolicy.AUTO,
                 null
         );

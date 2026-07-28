@@ -21,8 +21,36 @@ class QuestEventDefinitionSnapshotTest {
         assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
         assertThat(event.attributes())
                 .containsEntry("questDefinitionVersion", 3)
+                .containsEntry("questSemanticCategory", "GROWTH")
+                .containsEntry("progressSource", "COUNT")
+                .containsEntry("repeatPolicy", "ONCE")
+                .containsEntry("roleTemplateCode", "ROLE_WARRIOR")
                 .containsEntry("rewardProfileCode", "RP_EXP_30")
                 .doesNotContainKeys(
+                        "rewardExp",
+                        "rewardStats",
+                        "rewardLines",
+                        "rewardProfileId"
+                );
+    }
+
+    @Test
+    @DisplayName("QUEST_UPDATED final Snapshot은 null Role code를 제외한다")
+    void snapshotsUpdatedFinalDefinitionWithoutRole() {
+        QuestEvent event = QuestEvent.snapshot(
+                QuestEventType.QUEST_UPDATED,
+                profileQuest(null),
+                "quest:test:profile:updated"
+        );
+
+        assertThat(event.attributes())
+                .containsEntry("questDefinitionVersion", 3)
+                .containsEntry("questSemanticCategory", "GROWTH")
+                .containsEntry("progressSource", "COUNT")
+                .containsEntry("repeatPolicy", "ONCE")
+                .containsEntry("rewardProfileCode", "RP_EXP_30")
+                .doesNotContainKeys(
+                        "roleTemplateCode",
                         "rewardExp",
                         "rewardStats",
                         "rewardLines",
@@ -45,6 +73,10 @@ class QuestEventDefinitionSnapshotTest {
                 .containsEntry("rewardExp", 7)
                 .containsEntry("rewardStats", java.util.Map.of("strength", 2))
                 .doesNotContainKeys(
+                        "questSemanticCategory",
+                        "progressSource",
+                        "repeatPolicy",
+                        "roleTemplateCode",
                         "rewardProfileCode",
                         "rewardLines",
                         "rewardProfileId"
@@ -52,15 +84,22 @@ class QuestEventDefinitionSnapshotTest {
     }
 
     private Quest profileQuest() {
+        return profileQuest(QuestRoleTemplateRef.of("ROLE_WARRIOR"));
+    }
+
+    private Quest profileQuest(QuestRoleTemplateRef roleTemplateRef) {
         return Quest.createDefinition(
                 "quest:test:profile",
                 3,
                 QuestCategory.MAIN,
+                QuestSemanticCategory.GROWTH,
                 QuestTitle.of("Profile Quest"),
                 "profile",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
                 RewardProfileRef.of("RP_EXP_30"),
-                QuestRepeatRule.NONE,
+                QuestRepeatRule.ONCE,
+                roleTemplateRef,
                 QuestCompletionPolicy.AUTO,
                 null
         );
