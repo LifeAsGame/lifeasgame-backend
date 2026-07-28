@@ -38,21 +38,25 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V11까지 적용되고 legacy Quest에 semantic 계약이 안전하게 추가된다")
+        @DisplayName("V1부터 V12까지 적용되고 legacy 계약과 Item stable code가 공존한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
             insertLegacyQuest();
+            MigrateResult semanticResult =
+                    flyway(MigrationVersion.fromVersion("11")).migrate();
+            insertLegacyItemsWithoutCode();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
+            assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9", "10", "11"
+                            "6", "7", "8", "9", "10", "11", "12"
                     );
             assertThat(existingTables(
                     "users",
@@ -177,6 +181,28 @@ class FlywayMigrationTest {
                     "quick_record_request_receipts",
                     "uq_quick_record_request_receipt_identity"
             )).containsExactly("player_id", "idempotency_key");
+            assertThat(itemCodeColumn()).isEqualTo(new ItemCodeColumn("YES", 80));
+            assertThat(uniqueIndexColumns("items", "uq_item_code"))
+                    .containsExactly("code");
+            assertThat(legacyItemNullCodeCount()).isEqualTo(2);
+            assertThat(firstStepFragmentSeed()).isEqualTo(
+                    new FirstStepFragmentSeed(
+                            1,
+                            "IT_FIRST_STEP_FRAGMENT",
+                            "첫걸음의 조각",
+                            "QUEST",
+                            "ETC",
+                            "COMMON",
+                            0,
+                            true,
+                            99,
+                            null
+                    )
+            );
+            assertThatThrownBy(FlywayMigrationTest.this::insertDuplicateItemCode)
+                    .isInstanceOfSatisfying(SQLException.class, exception ->
+                            assertThat(exception.getSQLState()).startsWith("23")
+                    );
             insertSettlementIdentity();
             assertThatThrownBy(FlywayMigrationTest.this::insertSettlementIdentity)
                     .isInstanceOfSatisfying(SQLException.class, exception ->
@@ -393,6 +419,135 @@ class FlywayMigrationTest {
         }
     }
 
+    private void insertLegacyItemsWithoutCode() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO items (
+                        max_durability,
+                        max_stack,
+                        stackable,
+                        created_at,
+                        updated_at,
+                        name,
+                        base_attrs,
+                        category,
+                        rarity,
+                        type
+                    ) VALUES
+                        (
+                            NULL, 1, FALSE, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
+                            'Legacy Item One', JSON_OBJECT(), 'MISC', 'COMMON', 'ETC'
+                        ),
+                        (
+                            NULL, 1, FALSE, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
+                            'Legacy Item Two', JSON_OBJECT(), 'MISC', 'COMMON', 'ETC'
+                        )
+                    """);
+        }
+    }
+
+    private ItemCodeColumn itemCodeColumn() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT is_nullable, character_maximum_length
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'items'
+                       AND column_name = 'code'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new ItemCodeColumn(
+                    resultSet.getString("is_nullable"),
+                    resultSet.getInt("character_maximum_length")
+            );
+        }
+    }
+
+    private int legacyItemNullCodeCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM items
+                     WHERE name LIKE 'Legacy Item %'
+                       AND code IS NULL
+                     """)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private FirstStepFragmentSeed firstStepFragmentSeed() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         COUNT(*) OVER () AS seed_count,
+                         code,
+                         name,
+                         category,
+                         type,
+                         rarity,
+                         JSON_LENGTH(base_attrs) AS base_attr_count,
+                         stackable,
+                         max_stack,
+                         max_durability
+                     FROM items
+                     WHERE code = 'IT_FIRST_STEP_FRAGMENT'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            FirstStepFragmentSeed seed = new FirstStepFragmentSeed(
+                    resultSet.getInt("seed_count"),
+                    resultSet.getString("code"),
+                    resultSet.getString("name"),
+                    resultSet.getString("category"),
+                    resultSet.getString("type"),
+                    resultSet.getString("rarity"),
+                    resultSet.getInt("base_attr_count"),
+                    resultSet.getBoolean("stackable"),
+                    resultSet.getInt("max_stack"),
+                    resultSet.getObject("max_durability", Integer.class)
+            );
+            assertThat(resultSet.next()).isFalse();
+            return seed;
+        }
+    }
+
+    private void insertDuplicateItemCode() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO items (
+                        code,
+                        name,
+                        category,
+                        type,
+                        rarity,
+                        base_attrs,
+                        stackable,
+                        max_stack,
+                        max_durability,
+                        created_at,
+                        updated_at
+                    ) VALUES (
+                        'IT_FIRST_STEP_FRAGMENT',
+                        'Duplicate Stable Item',
+                        'QUEST',
+                        'ETC',
+                        'COMMON',
+                        JSON_OBJECT(),
+                        TRUE,
+                        99,
+                        NULL,
+                        CURRENT_TIMESTAMP(6),
+                        CURRENT_TIMESTAMP(6)
+                    )
+                    """);
+        }
+    }
+
     private QuestDefinitionColumns questDefinitionColumns() throws SQLException {
         try (Connection connection = MYSQL.createConnection("");
              var statement = connection.prepareStatement("""
@@ -544,6 +699,23 @@ class FlywayMigrationTest {
             int repeatPolicyColumnCount,
             String repeatRuleNullable,
             String repeatRuleColumnType
+    ) {
+    }
+
+    private record ItemCodeColumn(String nullable, int maximumLength) {
+    }
+
+    private record FirstStepFragmentSeed(
+            int count,
+            String code,
+            String name,
+            String category,
+            String type,
+            String rarity,
+            int baseAttrCount,
+            boolean stackable,
+            int maxStack,
+            Integer maxDurability
     ) {
     }
 }

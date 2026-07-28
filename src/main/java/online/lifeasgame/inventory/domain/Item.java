@@ -25,6 +25,9 @@ public class Item extends AbstractTime {
     private Long id;
 
     @Embedded
+    private ItemCode code;
+
+    @Embedded
     private ItemName name;
 
     @Enumerated(EnumType.STRING)
@@ -53,6 +56,7 @@ public class Item extends AbstractTime {
     private DurabilityPolicy durabilityPolicy;
 
     private Item(
+            ItemCode code,
             ItemName name,
             ItemCategory category,
             ItemType type,
@@ -62,6 +66,7 @@ public class Item extends AbstractTime {
             int maxStack,
             DurabilityPolicy durabilityPolicy
     ) {
+        this.code = code;
         this.name = Guard.notNull(name, "name");
         this.category = Guard.notNull(category, "category");
         this.type = Guard.notNull(type, "type");
@@ -84,7 +89,36 @@ public class Item extends AbstractTime {
     ) {
         int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
         DurabilityPolicy durabilityPolicy = (maxDurabilityOrNull == null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
-        return new Item(name, category, type, rarity, baseAttrs, stackable, ms, durabilityPolicy);
+        return new Item(null, name, category, type, rarity, baseAttrs, stackable, ms, durabilityPolicy);
+    }
+
+    public static Item createContentItem(
+            ItemCode code,
+            ItemName name,
+            ItemCategory category,
+            ItemType type,
+            Rarity rarity,
+            BaseAttrs baseAttrs,
+            boolean stackable,
+            Integer maxStack,
+            Integer maxDurabilityOrNull
+    ) {
+        ItemCode requiredCode = Guard.notNull(code, "code");
+        int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
+        DurabilityPolicy durabilityPolicy = (maxDurabilityOrNull == null)
+                ? null
+                : DurabilityPolicy.of(maxDurabilityOrNull);
+        return new Item(
+                requiredCode,
+                name,
+                category,
+                type,
+                rarity,
+                baseAttrs,
+                stackable,
+                ms,
+                durabilityPolicy
+        );
     }
 
     public void update(
@@ -116,6 +150,6 @@ public class Item extends AbstractTime {
     }
 
     public Integer maxDurability() {
-        return this.durabilityPolicy.max();
+        return (this.durabilityPolicy == null) ? null : this.durabilityPolicy.max();
     }
 }

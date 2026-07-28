@@ -1,6 +1,7 @@
 package online.lifeasgame.migration;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.output.MigrateResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,9 +33,12 @@ class FlywayHistoryChecksumTest {
     class MigrateAgain {
 
         @Test
-        @DisplayName("두 번째 실행은 no-op이고 V1부터 V11까지 checksum history를 유지한다")
+        @DisplayName("V1~V11 checksum을 보존하고 V12 이후 두 번째 실행은 no-op이다")
         void keepsMigrationHistory() throws Exception {
-            Flyway flyway = flyway();
+            Flyway throughV11 = flyway(MigrationVersion.fromVersion("11"));
+            MigrateResult legacy = throughV11.migrate();
+            List<HistoryRow> legacyHistory = successfulHistory();
+            Flyway flyway = flyway(null);
 
             MigrateResult first = flyway.migrate();
             List<HistoryRow> firstHistory = successfulHistory();
@@ -42,13 +46,16 @@ class FlywayHistoryChecksumTest {
             MigrateResult second = flyway.migrate();
             List<HistoryRow> secondHistory = successfulHistory();
 
-            assertThat(first.migrationsExecuted).isEqualTo(11);
+            assertThat(legacy.migrationsExecuted).isEqualTo(11);
+            assertThat(first.migrationsExecuted).isEqualTo(1);
             assertThat(second.migrationsExecuted).isZero();
             assertThat(secondHistory).isEqualTo(firstHistory);
+            assertThat(firstHistory.subList(0, legacyHistory.size()))
+                    .isEqualTo(legacyHistory);
             assertThat(secondHistory).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9", "10", "11"
+                            "6", "7", "8", "9", "10", "11", "12"
                     );
             assertThat(secondHistory).allSatisfy(history -> {
                 assertThat(history.checksum()).isNotNull();
@@ -57,12 +64,15 @@ class FlywayHistoryChecksumTest {
         }
     }
 
-    private Flyway flyway() {
-        return Flyway.configure()
+    private Flyway flyway(MigrationVersion target) {
+        var configuration = Flyway.configure()
                 .dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .locations("classpath:db/migration")
-                .baselineOnMigrate(false)
-                .load();
+                .baselineOnMigrate(false);
+        if (target != null) {
+            configuration.target(target);
+        }
+        return configuration.load();
     }
 
     private List<HistoryRow> successfulHistory() throws Exception {

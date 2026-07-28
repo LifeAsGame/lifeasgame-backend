@@ -2,6 +2,7 @@ package online.lifeasgame.inventory.domain.repository;
 
 import online.lifeasgame.inventory.domain.Item;
 import online.lifeasgame.inventory.domain.ItemCategory;
+import online.lifeasgame.inventory.domain.ItemCode;
 import online.lifeasgame.inventory.domain.ItemType;
 import online.lifeasgame.inventory.domain.Rarity;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,8 @@ import java.util.Optional;
 
 public interface ItemRepository {
     Optional<Item> findById(Long id);
+
+    Optional<Item> findByCode(ItemCode code);
 
     boolean existsById(Long id);
 

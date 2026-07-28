@@ -18,6 +18,7 @@ public final class ItemResult {
 
     public record Detail(
             Long id,
+            String code,
             String name,
             String category,
             String type,
@@ -30,6 +31,7 @@ public final class ItemResult {
         public static Detail from(Item item) {
             return new ItemResult.Detail(
                     item.getId(),
+                    item.getCode() == null ? null : item.getCode().value(),
                     item.getName().value(),
                     item.getCategory().name(),
                     item.getType().name(),
@@ -44,6 +46,7 @@ public final class ItemResult {
 
     public record Summary(
             Long id,
+            String code,
             String name,
             String category,
             String type,
@@ -54,6 +57,7 @@ public final class ItemResult {
         public static Summary from(Item item) {
             return new ItemResult.Summary(
                     item.getId(),
+                    item.getCode() == null ? null : item.getCode().value(),
                     item.getName().value(),
                     item.getCategory().name(),
                     item.getType().name(),
