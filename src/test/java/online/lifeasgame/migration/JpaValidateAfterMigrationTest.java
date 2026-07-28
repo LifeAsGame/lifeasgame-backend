@@ -1,5 +1,7 @@
 package online.lifeasgame.migration;
 
+import online.lifeasgame.inventory.application.internal.ItemLookupApi;
+import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import online.lifeasgame.reward.application.result.RewardProfileResult;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("V12 migration 이후 JPA schema validation")
+@DisplayName("V13 migration 이후 JPA schema validation")
 class JpaValidateAfterMigrationTest {
 
     @Container
@@ -55,20 +57,26 @@ class JpaValidateAfterMigrationTest {
     private RewardProfileQueryService rewardProfileQueryService;
 
     @Autowired
+    private RewardProfileLookupApi rewardProfileLookupApi;
+
+    @Autowired
+    private ItemLookupApi itemLookupApi;
+
+    @Autowired
     private RewardSettlementCreateService rewardSettlementCreateService;
 
     @Autowired
     private RewardSettlementReader rewardSettlementReader;
 
     @Nested
-    @DisplayName("V1부터 V12까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V13까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()
@@ -105,7 +113,80 @@ class JpaValidateAfterMigrationTest {
         void loadsActiveProfileSummariesWithProjection() {
             assertThat(rewardProfileQueryService.listActiveProfiles())
                     .extracting(RewardProfileResult.Summary::code)
-                    .containsExactly("RP_EXP_10", "RP_EXP_30", "RP_NONE");
+                    .containsExactly(
+                            "RP_EXP_10",
+                            "RP_EXP_30",
+                            "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                            "RP_EXP_TINY_10",
+                            "RP_NONE"
+                    );
+        }
+    }
+
+    @Nested
+    @DisplayName("V13 공식 TINY Reward Profile을 조회할 때")
+    class LoadTinyExpRewardProfile {
+
+        @Test
+        @DisplayName("기존 RD_EXP_10을 참조하는 ACTIVE EXP 10 line을 반환한다")
+        void loadsActiveTinyProfileWithLegacyDefinition() {
+            var reference = rewardProfileLookupApi.getActiveByCode("RP_EXP_TINY_10");
+            var detail = rewardProfileQueryService.getProfileView("RP_EXP_TINY_10");
+
+            assertThat(reference.code()).isEqualTo("RP_EXP_TINY_10");
+            assertThat(detail.code()).isEqualTo("RP_EXP_TINY_10");
+            assertThat(detail.name()).isEqualTo("소량 EXP");
+            assertThat(detail.status()).isEqualTo("ACTIVE");
+            assertThat(detail.lines()).hasSize(1);
+
+            RewardProfileResult.Line line = detail.lines().getFirst();
+            assertThat(line.sortOrder()).isZero();
+            assertThat(line.amountOverride()).isNull();
+            assertThat(line.effectiveAmount()).isEqualTo(10L);
+            assertThat(line.rewardDefinition().code()).isEqualTo("RD_EXP_10");
+            assertThat(line.rewardDefinition().rewardType()).isEqualTo("EXP");
+            assertThat(line.rewardDefinition().amount()).isEqualTo(10L);
+            assertThat(line.rewardDefinition().itemId()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("V13 first-step Reward Profile을 조회할 때")
+    class LoadFirstStepRewardProfile {
+
+        @Test
+        @DisplayName("기존 lookup과 상세 조회로 EXP 20 및 stable Item x1을 반환한다")
+        void loadsActiveProfileWithExpAndStableItemLines() {
+            var reference = rewardProfileLookupApi.getActiveByCode(
+                    "RP_EXP_AND_ITEM_FIRST_STEP_20"
+            );
+            var detail = rewardProfileQueryService.getProfileView(
+                    "RP_EXP_AND_ITEM_FIRST_STEP_20"
+            );
+            var item = itemLookupApi.getByCode("IT_FIRST_STEP_FRAGMENT");
+
+            assertThat(reference.code()).isEqualTo("RP_EXP_AND_ITEM_FIRST_STEP_20");
+            assertThat(detail.status()).isEqualTo("ACTIVE");
+            assertThat(detail.lines()).hasSize(2);
+
+            RewardProfileResult.Line expLine = detail.lines().get(0);
+            assertThat(expLine.sortOrder()).isZero();
+            assertThat(expLine.amountOverride()).isNull();
+            assertThat(expLine.effectiveAmount()).isEqualTo(20L);
+            assertThat(expLine.rewardDefinition().code()).isEqualTo("RD_EXP_20");
+            assertThat(expLine.rewardDefinition().rewardType()).isEqualTo("EXP");
+            assertThat(expLine.rewardDefinition().amount()).isEqualTo(20L);
+            assertThat(expLine.rewardDefinition().itemId()).isNull();
+
+            RewardProfileResult.Line itemLine = detail.lines().get(1);
+            assertThat(itemLine.sortOrder()).isEqualTo(1);
+            assertThat(itemLine.amountOverride()).isNull();
+            assertThat(itemLine.effectiveAmount()).isEqualTo(1L);
+            assertThat(itemLine.rewardDefinition().code())
+                    .isEqualTo("RD_ITEM_FIRST_STEP_FRAGMENT_1");
+            assertThat(itemLine.rewardDefinition().rewardType()).isEqualTo("ITEM");
+            assertThat(itemLine.rewardDefinition().amount()).isEqualTo(1L);
+            assertThat(itemLine.rewardDefinition().itemId()).isEqualTo(item.id());
         }
     }
 

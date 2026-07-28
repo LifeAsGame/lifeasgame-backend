@@ -38,7 +38,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V12까지 적용되고 legacy 계약과 Item stable code가 공존한다")
+        @DisplayName("V1부터 V13까지 적용되고 stable Item 기반 Reward Profile을 Seed한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -46,17 +46,20 @@ class FlywayMigrationTest {
             MigrateResult semanticResult =
                     flyway(MigrationVersion.fromVersion("11")).migrate();
             insertLegacyItemsWithoutCode();
+            MigrateResult itemResult =
+                    flyway(MigrationVersion.fromVersion("12")).migrate();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
 
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
+            assertThat(itemResult.migrationsExecuted).isEqualTo(1);
             assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9", "10", "11", "12"
+                            "6", "7", "8", "9", "10", "11", "12", "13"
                     );
             assertThat(existingTables(
                     "users",
@@ -94,8 +97,40 @@ class FlywayMigrationTest {
                     "quick_lifelog_entry_tags",
                     "quick_lifelog_request_receipts"
             )).isEmpty();
-            assertThat(seedProfileCodes()).containsExactly("RP_EXP_10", "RP_EXP_30");
+            assertThat(seedProfileCodes()).containsExactly(
+                    "RP_EXP_10",
+                    "RP_EXP_30",
+                    "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                    "RP_EXP_TINY_10"
+            );
             assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
+            assertThat(expTenDefinitionCount()).isEqualTo(1);
+            assertThat(expTenProfiles()).containsExactly(
+                    new ExpTenProfileSeed(
+                            "RP_EXP_10",
+                            "EXP 10 Profile",
+                            "ACTIVE",
+                            0,
+                            null,
+                            "RD_EXP_10",
+                            "EXP",
+                            10,
+                            null,
+                            10
+                    ),
+                    new ExpTenProfileSeed(
+                            "RP_EXP_TINY_10",
+                            "소량 EXP",
+                            "ACTIVE",
+                            0,
+                            null,
+                            "RD_EXP_10",
+                            "EXP",
+                            10,
+                            null,
+                            10
+                    )
+            );
             assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
                     .containsExactly("player_id", "source_type", "source_id");
             assertThat(uniqueIndexColumns(
@@ -185,10 +220,13 @@ class FlywayMigrationTest {
             assertThat(uniqueIndexColumns("items", "uq_item_code"))
                     .containsExactly("code");
             assertThat(legacyItemNullCodeCount()).isEqualTo(2);
-            assertThat(firstStepFragmentSeed()).isEqualTo(
+            FirstStepFragmentSeed itemSeed = firstStepFragmentSeed();
+            assertThat(itemSeed.id()).isPositive();
+            assertThat(itemSeed).isEqualTo(
                     new FirstStepFragmentSeed(
                             1,
                             "IT_FIRST_STEP_FRAGMENT",
+                            itemSeed.id(),
                             "첫걸음의 조각",
                             "QUEST",
                             "ETC",
@@ -197,6 +235,36 @@ class FlywayMigrationTest {
                             true,
                             99,
                             null
+                    )
+            );
+            assertThat(firstStepRewardSeed()).containsExactly(
+                    new FirstStepRewardSeed(
+                            "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                            "EXP 20 + First Step Fragment",
+                            "ACTIVE",
+                            0,
+                            null,
+                            "RD_EXP_20",
+                            "EXP 20",
+                            "EXP",
+                            20,
+                            null,
+                            true,
+                            null
+                    ),
+                    new FirstStepRewardSeed(
+                            "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                            "EXP 20 + First Step Fragment",
+                            "ACTIVE",
+                            1,
+                            null,
+                            "RD_ITEM_FIRST_STEP_FRAGMENT_1",
+                            "First Step Fragment x1",
+                            "ITEM",
+                            1,
+                            itemSeed.id(),
+                            true,
+                            "IT_FIRST_STEP_FRAGMENT"
                     )
             );
             assertThatThrownBy(FlywayMigrationTest.this::insertDuplicateItemCode)
@@ -304,6 +372,62 @@ class FlywayMigrationTest {
             );
             assertThat(resultSet.next()).isFalse();
             return result;
+        }
+    }
+
+    private int expTenDefinitionCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM reward_definitions
+                     WHERE code = 'RD_EXP_10'
+                     """)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private List<ExpTenProfileSeed> expTenProfiles() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         profile.code AS profile_code,
+                         profile.name AS profile_name,
+                         profile.status,
+                         line.sort_order,
+                         line.amount_override,
+                         definition.code AS definition_code,
+                         definition.reward_type,
+                         definition.amount,
+                         definition.item_id,
+                         COALESCE(line.amount_override, definition.amount)
+                             AS effective_amount
+                     FROM reward_profiles profile
+                     JOIN reward_profile_lines line
+                       ON line.reward_profile_id = profile.id
+                     JOIN reward_definitions definition
+                       ON definition.id = line.reward_definition_id
+                     WHERE profile.code IN ('RP_EXP_10', 'RP_EXP_TINY_10')
+                     ORDER BY profile.code
+                     """)) {
+            List<ExpTenProfileSeed> seeds = new ArrayList<>();
+            while (resultSet.next()) {
+                seeds.add(new ExpTenProfileSeed(
+                        resultSet.getString("profile_code"),
+                        resultSet.getString("profile_name"),
+                        resultSet.getString("status"),
+                        resultSet.getInt("sort_order"),
+                        resultSet.getObject("amount_override", Long.class),
+                        resultSet.getString("definition_code"),
+                        resultSet.getString("reward_type"),
+                        resultSet.getLong("amount"),
+                        resultSet.getObject("item_id", Long.class),
+                        resultSet.getLong("effective_amount")
+                ));
+            }
+            return seeds;
         }
     }
 
@@ -486,6 +610,7 @@ class FlywayMigrationTest {
                      SELECT
                          COUNT(*) OVER () AS seed_count,
                          code,
+                         id,
                          name,
                          category,
                          type,
@@ -501,6 +626,7 @@ class FlywayMigrationTest {
             FirstStepFragmentSeed seed = new FirstStepFragmentSeed(
                     resultSet.getInt("seed_count"),
                     resultSet.getString("code"),
+                    resultSet.getLong("id"),
                     resultSet.getString("name"),
                     resultSet.getString("category"),
                     resultSet.getString("type"),
@@ -512,6 +638,54 @@ class FlywayMigrationTest {
             );
             assertThat(resultSet.next()).isFalse();
             return seed;
+        }
+    }
+
+    private List<FirstStepRewardSeed> firstStepRewardSeed() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         profile.code AS profile_code,
+                         profile.name AS profile_name,
+                         profile.status,
+                         line.sort_order,
+                         line.amount_override,
+                         definition.code AS definition_code,
+                         definition.name AS definition_name,
+                         definition.reward_type,
+                         definition.amount,
+                         definition.item_id,
+                         definition.active,
+                         item.code AS item_code
+                     FROM reward_profiles profile
+                     JOIN reward_profile_lines line
+                       ON line.reward_profile_id = profile.id
+                     JOIN reward_definitions definition
+                       ON definition.id = line.reward_definition_id
+                     LEFT JOIN items item
+                       ON item.id = definition.item_id
+                     WHERE profile.code = 'RP_EXP_AND_ITEM_FIRST_STEP_20'
+                     ORDER BY line.sort_order
+                     """)) {
+            List<FirstStepRewardSeed> seeds = new ArrayList<>();
+            while (resultSet.next()) {
+                seeds.add(new FirstStepRewardSeed(
+                        resultSet.getString("profile_code"),
+                        resultSet.getString("profile_name"),
+                        resultSet.getString("status"),
+                        resultSet.getInt("sort_order"),
+                        resultSet.getObject("amount_override", Long.class),
+                        resultSet.getString("definition_code"),
+                        resultSet.getString("definition_name"),
+                        resultSet.getString("reward_type"),
+                        resultSet.getLong("amount"),
+                        resultSet.getObject("item_id", Long.class),
+                        resultSet.getBoolean("active"),
+                        resultSet.getString("item_code")
+                ));
+            }
+            return seeds;
         }
     }
 
@@ -671,6 +845,20 @@ class FlywayMigrationTest {
     private record NoRewardProfile(String status, int lineCount) {
     }
 
+    private record ExpTenProfileSeed(
+            String profileCode,
+            String profileName,
+            String status,
+            int sortOrder,
+            Long amountOverride,
+            String definitionCode,
+            String rewardType,
+            long amount,
+            Long itemId,
+            long effectiveAmount
+    ) {
+    }
+
     private record QuestDefinitionColumns(
             String versionNullable,
             String versionDefault,
@@ -708,6 +896,7 @@ class FlywayMigrationTest {
     private record FirstStepFragmentSeed(
             int count,
             String code,
+            long id,
             String name,
             String category,
             String type,
@@ -716,6 +905,22 @@ class FlywayMigrationTest {
             boolean stackable,
             int maxStack,
             Integer maxDurability
+    ) {
+    }
+
+    private record FirstStepRewardSeed(
+            String profileCode,
+            String profileName,
+            String status,
+            int sortOrder,
+            Long amountOverride,
+            String definitionCode,
+            String definitionName,
+            String rewardType,
+            long amount,
+            Long itemId,
+            boolean active,
+            String itemCode
     ) {
     }
 }
