@@ -22,7 +22,11 @@ public final class QuestResult {
             String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
         public static Blueprint from(QuestBlueprint blueprint) {
             return new Blueprint(
@@ -41,7 +45,17 @@ public final class QuestResult {
                     blueprint.usesRewardProfile()
                             ? null
                             : blueprint.reward().stats().stats(),
-                    blueprint.dueAt()
+                    blueprint.dueAt(),
+                    blueprint.semanticCategory() == null
+                            ? null
+                            : blueprint.semanticCategory().name(),
+                    blueprint.progressSource() == null
+                            ? null
+                            : blueprint.progressSource().name(),
+                    blueprint.repeatPolicy() == null
+                            ? null
+                            : blueprint.repeatPolicy().name(),
+                    blueprint.roleTemplateCodeOrNull()
             );
         }
     }
@@ -64,7 +78,11 @@ public final class QuestResult {
             LocalDate periodEnd,
             Instant goalReachedAt,
             Instant completedAt,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
         public static Acceptance from(QuestAcceptance acceptance, Quest quest) {
             return new Acceptance(
@@ -85,7 +103,11 @@ public final class QuestResult {
                     acceptance.getPeriod().end(),
                     acceptance.getGoalReachedAt(),
                     acceptance.getCompletedAt(),
-                    quest.getDueAt()
+                    quest.getDueAt(),
+                    QuestResult.semanticCategory(quest),
+                    QuestResult.progressSource(quest),
+                    QuestResult.repeatPolicy(quest),
+                    quest.roleTemplateCodeOrNull()
             );
         }
     }
@@ -104,7 +126,11 @@ public final class QuestResult {
             String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
         public static Definition from(Quest quest) {
             return new Definition(
@@ -121,7 +147,11 @@ public final class QuestResult {
                     quest.rewardProfileCodeOrNull(),
                     legacyRewardExp(quest),
                     legacyRewardStats(quest),
-                    quest.getDueAt()
+                    quest.getDueAt(),
+                    QuestResult.semanticCategory(quest),
+                    QuestResult.progressSource(quest),
+                    QuestResult.repeatPolicy(quest),
+                    quest.roleTemplateCodeOrNull()
             );
         }
     }
@@ -140,7 +170,11 @@ public final class QuestResult {
             Integer rewardExp,
             Map<String, Integer> rewardStats,
             Instant dueAt,
-            Acceptance acceptance
+            Acceptance acceptance,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
         public static PlayerQuest from(Quest quest, QuestAcceptance acceptance) {
             return new PlayerQuest(
@@ -157,7 +191,13 @@ public final class QuestResult {
                     legacyRewardExp(quest),
                     legacyRewardStats(quest),
                     quest.getDueAt(),
-                    acceptance == null ? null : Acceptance.from(acceptance, quest)
+                    acceptance == null
+                            ? null
+                            : Acceptance.from(acceptance, quest),
+                    QuestResult.semanticCategory(quest),
+                    QuestResult.progressSource(quest),
+                    QuestResult.repeatPolicy(quest),
+                    quest.roleTemplateCodeOrNull()
             );
         }
     }
@@ -177,5 +217,23 @@ public final class QuestResult {
         return quest.isLegacyInlineReward()
                 ? quest.getReward().stats().stats()
                 : null;
+    }
+
+    private static String semanticCategory(Quest quest) {
+        return quest.getSemanticCategory() == null
+                ? null
+                : quest.getSemanticCategory().name();
+    }
+
+    private static String progressSource(Quest quest) {
+        return quest.getProgressSource() == null
+                ? null
+                : quest.getProgressSource().name();
+    }
+
+    private static String repeatPolicy(Quest quest) {
+        return quest.repeatPolicyOrNull() == null
+                ? null
+                : quest.repeatPolicyOrNull().name();
     }
 }

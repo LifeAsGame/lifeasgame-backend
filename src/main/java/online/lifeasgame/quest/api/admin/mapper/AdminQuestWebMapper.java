@@ -33,7 +33,11 @@ public final class AdminQuestWebMapper {
                 result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
-                result.dueAt()
+                result.dueAt(),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 
@@ -62,7 +66,11 @@ public final class AdminQuestWebMapper {
                 request.rewardExp(),
                 request.rewardStats(),
                 request.repeatRule(),
-                request.dueAt()
+                request.dueAt(),
+                request.semanticCategory(),
+                request.progressSource(),
+                request.repeatPolicy(),
+                request.roleTemplateCode()
         );
     }
 
@@ -81,7 +89,11 @@ public final class AdminQuestWebMapper {
                 result.rewardProfileCode(),
                 result.rewardExp(),
                 result.rewardStats(),
-                result.dueAt()
+                result.dueAt(),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 
@@ -118,7 +130,11 @@ public final class AdminQuestWebMapper {
                 result.periodEnd(),
                 result.goalReachedAt(),
                 result.completedAt(),
-                result.dueAt()
+                result.dueAt(),
+                result.semanticCategory(),
+                result.progressSource(),
+                result.repeatPolicy(),
+                result.roleTemplateCode()
         );
     }
 

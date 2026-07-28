@@ -23,8 +23,39 @@ public final class QuestCommand {
             Integer rewardExp,
             Map<String, Integer> rewardStats,
             String repeatRule,
-            Instant dueAt
+            Instant dueAt,
+            String semanticCategory,
+            String progressSource,
+            String repeatPolicy,
+            String roleTemplateCode
     ) {
+        public UpdateDefinition(
+                String questCode,
+                Integer definitionVersion,
+                String targetType,
+                Integer targetValue,
+                String rewardProfileCode,
+                Integer rewardExp,
+                Map<String, Integer> rewardStats,
+                String repeatRule,
+                Instant dueAt
+        ) {
+            this(
+                    questCode,
+                    definitionVersion,
+                    targetType,
+                    targetValue,
+                    rewardProfileCode,
+                    rewardExp,
+                    rewardStats,
+                    repeatRule,
+                    dueAt,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
     }
 
     public record Acceptances(String questCode, String status) {

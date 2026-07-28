@@ -104,6 +104,10 @@ class QuestSignalProcessingAttemptTest {
             QuestEvent completed = events.getLast();
             assertThat(completed.attributes())
                     .containsEntry("questDefinitionVersion", 5)
+                    .containsEntry("questSemanticCategory", "GROWTH")
+                    .containsEntry("progressSource", "COUNT")
+                    .containsEntry("repeatPolicy", "ONCE")
+                    .containsEntry("roleTemplateCode", "ROLE_WARRIOR")
                     .containsEntry("rewardProfileCode", "RP_EXP_10")
                     .doesNotContainKeys(
                             "rewardExp",
@@ -314,6 +318,94 @@ class QuestSignalProcessingAttemptTest {
         }
     }
 
+    @Nested
+    @DisplayName("repeat policy 기간과 TTL을 계산할 때")
+    class RepeatPolicyBoundary {
+
+        @Test
+        @DisplayName("ONCE와 legacy NONE은 TTL 없는 one-time 의미를 공유한다")
+        void keepsOneTimeTtlCompatibility() {
+            LocalDate today = LocalDate.now();
+
+            Duration onceTtl = ReflectionTestUtils.invokeMethod(
+                    attempt,
+                    "ttlFor",
+                    finalRepeatQuest(QuestRepeatRule.ONCE),
+                    today
+            );
+            Duration noneTtl = ReflectionTestUtils.invokeMethod(
+                    attempt,
+                    "ttlFor",
+                    quest(
+                            QuestCompletionPolicy.AUTO,
+                            QuestRepeatRule.NONE
+                    ),
+                    today
+            );
+
+            assertThat(onceTtl).isNull();
+            assertThat(noneTtl).isNull();
+        }
+
+        @Test
+        @DisplayName("DAILY/WEEKLY와 legacy MONTHLY는 기간 종료 기반 TTL을 유지한다")
+        void keepsRepeatingTtl() {
+            LocalDate today = LocalDate.now();
+
+            Duration dailyTtl = ReflectionTestUtils.invokeMethod(
+                    attempt,
+                    "ttlFor",
+                    finalRepeatQuest(QuestRepeatRule.DAILY),
+                    today
+            );
+            Duration weeklyTtl = ReflectionTestUtils.invokeMethod(
+                    attempt,
+                    "ttlFor",
+                    finalRepeatQuest(QuestRepeatRule.WEEKLY),
+                    today
+            );
+            Duration monthlyTtl = ReflectionTestUtils.invokeMethod(
+                    attempt,
+                    "ttlFor",
+                    quest(
+                            QuestCompletionPolicy.AUTO,
+                            QuestRepeatRule.MONTHLY
+                    ),
+                    today
+            );
+
+            assertThat(dailyTtl).isPositive();
+            assertThat(weeklyTtl).isPositive();
+            assertThat(monthlyTtl).isPositive();
+        }
+
+        @Test
+        @DisplayName("완료된 ONCE Acceptance에는 새 Acceptance를 만들지 않는다")
+        void doesNotRepeatOnceAcceptance() {
+            Quest quest = finalRepeatQuest(QuestRepeatRule.ONCE);
+            QuestAcceptance completed = acceptance(
+                    quest,
+                    TimePeriod.forever(),
+                    903L
+            );
+            completed.reachGoal(OCCURRED_AT.minusSeconds(60));
+            completed.complete(OCCURRED_AT.minusSeconds(30));
+            QuestSignal signal = signal(OCCURRED_AT);
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(completed));
+
+            attempt.process(signal, FINGERPRINT);
+
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+    }
+
     private void stubReceipt(QuestSignal signal) {
         given(receiptRepository.saveAndFlush(any())).willAnswer(invocation -> {
             QuestSignalReceipt receipt = invocation.getArgument(0);
@@ -422,11 +514,34 @@ class QuestSignalProcessingAttemptTest {
                 QuestCode.PLAYER_WELCOME.value(),
                 5,
                 QuestCategory.MAIN,
+                QuestSemanticCategory.GROWTH,
                 QuestTitle.of("Profile Signal 계약"),
                 "RewardProfile Quest Signal 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
                 RewardProfileRef.of("RP_EXP_10"),
-                QuestRepeatRule.NONE,
+                QuestRepeatRule.ONCE,
+                QuestRoleTemplateRef.of("ROLE_WARRIOR"),
+                QuestCompletionPolicy.AUTO,
+                null
+        );
+        ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+        return quest;
+    }
+
+    private Quest finalRepeatQuest(QuestRepeatRule repeatPolicy) {
+        Quest quest = Quest.createDefinition(
+                QuestCode.PLAYER_WELCOME.value(),
+                5,
+                QuestCategory.MAIN,
+                QuestSemanticCategory.GROWTH,
+                QuestTitle.of("Repeat policy 계약"),
+                "Quest repeat policy 계약 테스트",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.COUNT,
+                RewardProfileRef.of("RP_EXP_10"),
+                repeatPolicy,
+                null,
                 QuestCompletionPolicy.AUTO,
                 null
         );

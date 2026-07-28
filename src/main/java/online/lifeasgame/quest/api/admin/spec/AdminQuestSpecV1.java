@@ -15,13 +15,13 @@ public interface AdminQuestSpecV1 {
 
     @Operation(
             summary = "Quest Blueprint 목록",
-            description = "서버에 정의된 Blueprint 목록입니다. rewardProfileCode가 있으면 신규 Profile 계약, null이면 legacy inline reward 계약입니다."
+            description = "서버에 정의된 Blueprint 목록입니다. semanticCategory/progressSource/repeatPolicy는 final 계약에만 존재하며, legacy repeatRule은 호환을 위해 유지됩니다."
     )
     ResponseEntity<AdminQuestResponse.Blueprints> catalog();
 
     @Operation(
             summary = "Quest Definition 목록",
-            description = "DB Definition 목록입니다. rewardProfileCode가 있으면 신규 Profile 계약, null이면 legacy inline reward 계약입니다."
+            description = "DB Definition 목록입니다. repeatPolicy는 ONCE/DAILY/WEEKLY final 계약이고 repeatRule은 NONE/MONTHLY를 포함한 legacy 호환 필드입니다."
     )
     ResponseEntity<AdminQuestResponse.Definitions> definitions();
 
@@ -33,7 +33,7 @@ public interface AdminQuestSpecV1 {
 
     @Operation(
             summary = "Quest Definition 수정",
-            description = "타겟/버전/Profile 참조/legacy 보상/반복/마감일을 부분 수정합니다. Profile 참조와 legacy 보상은 동시에 변경할 수 없습니다."
+            description = "타겟/버전/Profile 참조/semantic category/progress source/repeat policy/선택적 Role 맥락을 부분 수정합니다. null은 no-change이며 repeatRule은 legacy 호환 필드입니다."
     )
     ResponseEntity<AdminQuestResponse.Definition> update(
             String questCode,

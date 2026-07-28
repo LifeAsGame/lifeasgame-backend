@@ -127,13 +127,13 @@ public class QuestSignalProcessingAttempt {
                 return Optional.empty();
             }
             if (current.isCompleted()) {
-                if (quest.getRepeatRule() == QuestRepeatRule.NONE
+                if (quest.getRepeatRule().isOneTime()
                         || current.getPeriod().contains(eventDate)) {
                     return Optional.empty();
                 }
             }
             if (current.isCanceled()
-                    && (quest.getRepeatRule() == QuestRepeatRule.NONE
+                    && (quest.getRepeatRule().isOneTime()
                     || current.getPeriod().contains(eventDate))) {
                 return Optional.empty();
             }
@@ -150,16 +150,11 @@ public class QuestSignalProcessingAttempt {
     }
 
     private TimePeriod periodFor(Quest quest, LocalDate eventDate) {
-        return switch (quest.getRepeatRule()) {
-            case NONE -> TimePeriod.forever();
-            case DAILY -> TimePeriod.daily(eventDate);
-            case WEEKLY -> TimePeriod.weekly(eventDate);
-            case MONTHLY -> TimePeriod.monthly(eventDate);
-        };
+        return quest.getRepeatRule().periodFor(eventDate);
     }
 
     private Duration ttlFor(Quest quest, LocalDate eventDate) {
-        if (quest.getRepeatRule() == QuestRepeatRule.NONE) {
+        if (quest.getRepeatRule().isOneTime()) {
             return null;
         }
         TimePeriod period = periodFor(quest, eventDate);

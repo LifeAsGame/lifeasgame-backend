@@ -39,6 +39,17 @@ public class Quest extends AbstractTime {
     @Column(length = 20, nullable = false)
     private QuestCategory category;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "semantic_category", length = 20)
+    private QuestSemanticCategory semanticCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "progress_source", length = 30)
+    private QuestProgressSource progressSource;
+
+    @Embedded
+    private QuestRoleTemplateRef roleTemplateRef;
+
     @Embedded
     private QuestTitle title;
 
@@ -56,7 +67,7 @@ public class Quest extends AbstractTime {
     private RewardProfileRef rewardProfileRef;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "repeat_rule", length = 20)
+    @Column(name = "repeat_rule", length = 20, nullable = false)
     private QuestRepeatRule repeatRule = QuestRepeatRule.NONE;
 
     @Enumerated(EnumType.STRING)
@@ -72,13 +83,16 @@ public class Quest extends AbstractTime {
     private Quest(
             String code,
             QuestCategory category,
+            QuestSemanticCategory semanticCategory,
             QuestTitle title,
             String descriptionMd,
             QuestTarget target,
+            QuestProgressSource progressSource,
             QuestReward reward,
             int definitionVersion,
             RewardProfileRef rewardProfileRef,
             QuestRepeatRule repeatRule,
+            QuestRoleTemplateRef roleTemplateRef,
             QuestCompletionPolicy completionPolicy,
             Instant dueAt
     ) {
@@ -89,17 +103,28 @@ public class Quest extends AbstractTime {
         if (rewardProfileRef != null && reward != null) {
             throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
         }
+        QuestRepeatRule normalizedRepeatRule =
+                repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
+        validateCreationContract(
+                semanticCategory,
+                progressSource,
+                normalizedRepeatRule,
+                roleTemplateRef
+        );
         this.definitionVersion = definitionVersion;
         this.code = Guard.notBlank(code, "code").trim();
         this.category = Guard.notNull(category, "category");
+        this.semanticCategory = semanticCategory;
         this.title = Guard.notNull(title, "title");
         this.descriptionMd = descriptionMd == null ? null : descriptionMd.trim();
         this.target = Guard.notNull(target, "target");
+        this.progressSource = progressSource;
         this.reward = rewardProfileRef == null
                 ? Guard.notNull(reward, "reward")
                 : QuestReward.empty();
         this.rewardProfileRef = rewardProfileRef;
-        this.repeatRule = repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
+        this.repeatRule = normalizedRepeatRule;
+        this.roleTemplateRef = roleTemplateRef;
         this.completionPolicy = QuestCompletionPolicy.defaultIfNull(completionPolicy);
         this.dueAt = dueAt;
     }
@@ -141,13 +166,16 @@ public class Quest extends AbstractTime {
         return new Quest(
                 code,
                 category,
+                null,
                 title,
                 descriptionMd,
                 target,
+                null,
                 reward,
                 1,
                 null,
                 repeatRule,
+                null,
                 completionPolicy,
                 dueAt
         );
@@ -168,13 +196,54 @@ public class Quest extends AbstractTime {
         return new Quest(
                 code,
                 category,
+                null,
                 title,
                 descriptionMd,
                 target,
                 null,
+                null,
                 definitionVersion,
                 rewardProfileRef,
                 repeatRule,
+                null,
+                completionPolicy,
+                dueAt
+        );
+    }
+
+    public static Quest createDefinition(
+            String code,
+            int definitionVersion,
+            QuestCategory category,
+            QuestSemanticCategory semanticCategory,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            QuestProgressSource progressSource,
+            RewardProfileRef rewardProfileRef,
+            QuestRepeatRule repeatPolicy,
+            QuestRoleTemplateRef roleTemplateRef,
+            QuestCompletionPolicy completionPolicy,
+            Instant dueAt
+    ) {
+        validateFinalContract(
+                semanticCategory,
+                progressSource,
+                repeatPolicy
+        );
+        return new Quest(
+                code,
+                category,
+                semanticCategory,
+                title,
+                descriptionMd,
+                target,
+                progressSource,
+                null,
+                definitionVersion,
+                rewardProfileRef,
+                repeatPolicy,
+                roleTemplateRef,
                 completionPolicy,
                 dueAt
         );
@@ -188,7 +257,46 @@ public class Quest extends AbstractTime {
             Integer nextDefinitionVersion,
             RewardProfileRef nextRewardProfileRef
     ) {
-        validateUpdate(nextDefinitionVersion, questReward, nextRewardProfileRef);
+        updateDefinition(
+                questTarget,
+                questReward,
+                questRepeatRule,
+                dueAt,
+                nextDefinitionVersion,
+                nextRewardProfileRef,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public void updateDefinition(
+            QuestTarget questTarget,
+            QuestReward questReward,
+            QuestRepeatRule questRepeatRule,
+            Instant dueAt,
+            Integer nextDefinitionVersion,
+            RewardProfileRef nextRewardProfileRef,
+            QuestSemanticCategory nextSemanticCategory,
+            QuestProgressSource nextProgressSource,
+            QuestRepeatRule nextRepeatPolicy,
+            QuestRoleTemplateRef nextRoleTemplateRef
+    ) {
+        QuestRepeatRule requestedRepeatRule = resolveRequestedRepeatRule(
+                questRepeatRule,
+                nextRepeatPolicy
+        );
+        validateUpdate(
+                nextDefinitionVersion,
+                questReward,
+                nextRewardProfileRef,
+                requestedRepeatRule,
+                nextSemanticCategory,
+                nextProgressSource,
+                nextRepeatPolicy,
+                nextRoleTemplateRef
+        );
         boolean changed = false;
 
         if (questTarget != null && !questTarget.equals(target)) {
@@ -199,8 +307,9 @@ public class Quest extends AbstractTime {
             changeReward(questReward);
             changed = true;
         }
-        if (questRepeatRule != null && questRepeatRule != repeatRule) {
-            changeRepeatRule(questRepeatRule);
+        if (requestedRepeatRule != null
+                && requestedRepeatRule != repeatRule) {
+            repeatRule = requestedRepeatRule;
             changed = true;
         }
         if (dueAt != null && !Objects.equals(dueAt, this.dueAt)) {
@@ -216,6 +325,21 @@ public class Quest extends AbstractTime {
                 && !nextRewardProfileRef.equals(rewardProfileRef)) {
             rewardProfileRef = nextRewardProfileRef;
             reward = QuestReward.empty();
+            changed = true;
+        }
+        if (nextSemanticCategory != null
+                && nextSemanticCategory != semanticCategory) {
+            semanticCategory = nextSemanticCategory;
+            changed = true;
+        }
+        if (nextProgressSource != null
+                && nextProgressSource != progressSource) {
+            progressSource = nextProgressSource;
+            changed = true;
+        }
+        if (nextRoleTemplateRef != null
+                && !nextRoleTemplateRef.equals(roleTemplateRef)) {
+            roleTemplateRef = nextRoleTemplateRef;
             changed = true;
         }
 
@@ -241,7 +365,12 @@ public class Quest extends AbstractTime {
     private void validateUpdate(
             Integer nextDefinitionVersion,
             QuestReward questReward,
-            RewardProfileRef nextRewardProfileRef
+            RewardProfileRef nextRewardProfileRef,
+            QuestRepeatRule requestedRepeatRule,
+            QuestSemanticCategory nextSemanticCategory,
+            QuestProgressSource nextProgressSource,
+            QuestRepeatRule nextRepeatPolicy,
+            QuestRoleTemplateRef nextRoleTemplateRef
     ) {
         if (nextDefinitionVersion != null) {
             validateDefinitionVersion(nextDefinitionVersion);
@@ -254,6 +383,106 @@ public class Quest extends AbstractTime {
         if (questReward != null
                 && (nextRewardProfileRef != null || usesRewardProfile())) {
             throw new DomainException(QuestError.QUEST_REWARD_CONTRACT_CONFLICT);
+        }
+        QuestSemanticCategory candidateSemanticCategory =
+                nextSemanticCategory == null
+                        ? semanticCategory
+                        : nextSemanticCategory;
+        QuestProgressSource candidateProgressSource =
+                nextProgressSource == null
+                        ? progressSource
+                        : nextProgressSource;
+        QuestRepeatRule candidateRepeatRule =
+                requestedRepeatRule == null
+                        ? repeatRule
+                        : requestedRepeatRule;
+        QuestRoleTemplateRef candidateRoleTemplateRef =
+                nextRoleTemplateRef == null
+                        ? roleTemplateRef
+                        : nextRoleTemplateRef;
+        boolean requestsFinalContract = isFinalContract()
+                || nextSemanticCategory != null
+                || nextProgressSource != null
+                || nextRepeatPolicy != null
+                || nextRoleTemplateRef != null;
+        if (requestsFinalContract) {
+            if (nextRewardProfileRef == null && !usesRewardProfile()) {
+                throw new DomainException(
+                        QuestError.QUEST_REWARD_PROFILE_CODE_REQUIRED
+                );
+            }
+            validateFinalContract(
+                    candidateSemanticCategory,
+                    candidateProgressSource,
+                    candidateRepeatRule
+            );
+        } else if (candidateRepeatRule == QuestRepeatRule.ONCE) {
+            validateFinalContract(
+                    candidateSemanticCategory,
+                    candidateProgressSource,
+                    candidateRepeatRule
+            );
+        }
+        if (candidateRoleTemplateRef != null && !requestsFinalContract) {
+            throw new DomainException(
+                    QuestError.QUEST_SEMANTIC_CATEGORY_REQUIRED
+            );
+        }
+    }
+
+    private QuestRepeatRule resolveRequestedRepeatRule(
+            QuestRepeatRule questRepeatRule,
+            QuestRepeatRule nextRepeatPolicy
+    ) {
+        if (questRepeatRule != null
+                && nextRepeatPolicy != null
+                && questRepeatRule != nextRepeatPolicy) {
+            throw new DomainException(
+                    QuestError.QUEST_REPEAT_CONTRACT_CONFLICT
+            );
+        }
+        return nextRepeatPolicy == null ? questRepeatRule : nextRepeatPolicy;
+    }
+
+    private static void validateCreationContract(
+            QuestSemanticCategory semanticCategory,
+            QuestProgressSource progressSource,
+            QuestRepeatRule repeatRule,
+            QuestRoleTemplateRef roleTemplateRef
+    ) {
+        boolean finalContractRequested = semanticCategory != null
+                || progressSource != null
+                || roleTemplateRef != null
+                || repeatRule == QuestRepeatRule.ONCE;
+        if (finalContractRequested) {
+            validateFinalContract(
+                    semanticCategory,
+                    progressSource,
+                    repeatRule
+            );
+        }
+    }
+
+    private static void validateFinalContract(
+            QuestSemanticCategory semanticCategory,
+            QuestProgressSource progressSource,
+            QuestRepeatRule repeatPolicy
+    ) {
+        if (semanticCategory == null) {
+            throw new DomainException(
+                    QuestError.QUEST_SEMANTIC_CATEGORY_REQUIRED
+            );
+        }
+        if (progressSource == null) {
+            throw new DomainException(
+                    QuestError.QUEST_PROGRESS_SOURCE_REQUIRED
+            );
+        }
+        if (repeatPolicy == null) {
+            throw new DomainException(QuestError.QUEST_REPEAT_POLICY_REQUIRED);
+        }
+        if (!repeatPolicy.isFinalPolicy()) {
+            throw new DomainException(QuestError.INVALID_QUEST_REPEAT_POLICY);
         }
     }
 
@@ -289,7 +518,17 @@ public class Quest extends AbstractTime {
     }
 
     public void changeRepeatRule(QuestRepeatRule repeatRule) {
-        this.repeatRule = repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
+        QuestRepeatRule normalized =
+                repeatRule == null ? QuestRepeatRule.NONE : repeatRule;
+        if (isFinalContract() && !normalized.isFinalPolicy()) {
+            throw new DomainException(QuestError.INVALID_QUEST_REPEAT_POLICY);
+        }
+        if (!isFinalContract() && normalized == QuestRepeatRule.ONCE) {
+            throw new DomainException(
+                    QuestError.QUEST_SEMANTIC_CATEGORY_REQUIRED
+            );
+        }
+        this.repeatRule = normalized;
     }
 
     public void reschedule(Instant dueAt) {
@@ -314,6 +553,21 @@ public class Quest extends AbstractTime {
 
     public boolean isLegacyInlineReward() {
         return !usesRewardProfile();
+    }
+
+    public boolean isFinalContract() {
+        return semanticCategory != null
+                && progressSource != null
+                && repeatRule != null
+                && repeatRule.isFinalPolicy();
+    }
+
+    public QuestRepeatRule repeatPolicyOrNull() {
+        return isFinalContract() ? repeatRule : null;
+    }
+
+    public String roleTemplateCodeOrNull() {
+        return roleTemplateRef == null ? null : roleTemplateRef.code();
     }
 
     public String rewardProfileCodeOrNull() {
