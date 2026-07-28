@@ -4,6 +4,7 @@ public enum RewardProfileContentCode {
     RP_NONE("RP_NONE"),
     RP_EXP_10("RP_EXP_10"),
     RP_EXP_30("RP_EXP_30"),
+    RP_EXP_TINY_10("RP_EXP_TINY_10"),
     RP_EXP_AND_ITEM_FIRST_STEP_20("RP_EXP_AND_ITEM_FIRST_STEP_20");
 
     private final String value;

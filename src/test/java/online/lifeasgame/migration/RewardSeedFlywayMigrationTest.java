@@ -39,6 +39,8 @@ class RewardSeedFlywayMigrationTest {
         assertThat(firstStepDefinitionCount()).isZero();
         assertThat(firstStepProfileCount()).isZero();
         assertThat(firstStepProfileLineCount()).isZero();
+        assertThat(legacyExpTenDefinitionCount()).isEqualTo(1);
+        assertThat(legacyExpTenProfileCount()).isEqualTo(1);
     }
 
     private Flyway flyway(MigrationVersion target) {
@@ -77,7 +79,10 @@ class RewardSeedFlywayMigrationTest {
         return count("""
                 SELECT COUNT(*)
                 FROM reward_profiles
-                WHERE code = 'RP_EXP_AND_ITEM_FIRST_STEP_20'
+                WHERE code IN (
+                    'RP_EXP_TINY_10',
+                    'RP_EXP_AND_ITEM_FIRST_STEP_20'
+                )
                 """);
     }
 
@@ -87,7 +92,26 @@ class RewardSeedFlywayMigrationTest {
                 FROM reward_profile_lines line
                 JOIN reward_profiles profile
                   ON profile.id = line.reward_profile_id
-                WHERE profile.code = 'RP_EXP_AND_ITEM_FIRST_STEP_20'
+                WHERE profile.code IN (
+                    'RP_EXP_TINY_10',
+                    'RP_EXP_AND_ITEM_FIRST_STEP_20'
+                )
+                """);
+    }
+
+    private int legacyExpTenDefinitionCount() throws Exception {
+        return count("""
+                SELECT COUNT(*)
+                FROM reward_definitions
+                WHERE code = 'RD_EXP_10'
+                """);
+    }
+
+    private int legacyExpTenProfileCount() throws Exception {
+        return count("""
+                SELECT COUNT(*)
+                FROM reward_profiles
+                WHERE code = 'RP_EXP_10'
                 """);
     }
 

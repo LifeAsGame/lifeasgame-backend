@@ -117,8 +117,36 @@ class JpaValidateAfterMigrationTest {
                             "RP_EXP_10",
                             "RP_EXP_30",
                             "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                            "RP_EXP_TINY_10",
                             "RP_NONE"
                     );
+        }
+    }
+
+    @Nested
+    @DisplayName("V13 공식 TINY Reward Profile을 조회할 때")
+    class LoadTinyExpRewardProfile {
+
+        @Test
+        @DisplayName("기존 RD_EXP_10을 참조하는 ACTIVE EXP 10 line을 반환한다")
+        void loadsActiveTinyProfileWithLegacyDefinition() {
+            var reference = rewardProfileLookupApi.getActiveByCode("RP_EXP_TINY_10");
+            var detail = rewardProfileQueryService.getProfileView("RP_EXP_TINY_10");
+
+            assertThat(reference.code()).isEqualTo("RP_EXP_TINY_10");
+            assertThat(detail.code()).isEqualTo("RP_EXP_TINY_10");
+            assertThat(detail.name()).isEqualTo("소량 EXP");
+            assertThat(detail.status()).isEqualTo("ACTIVE");
+            assertThat(detail.lines()).hasSize(1);
+
+            RewardProfileResult.Line line = detail.lines().getFirst();
+            assertThat(line.sortOrder()).isZero();
+            assertThat(line.amountOverride()).isNull();
+            assertThat(line.effectiveAmount()).isEqualTo(10L);
+            assertThat(line.rewardDefinition().code()).isEqualTo("RD_EXP_10");
+            assertThat(line.rewardDefinition().rewardType()).isEqualTo("EXP");
+            assertThat(line.rewardDefinition().amount()).isEqualTo(10L);
+            assertThat(line.rewardDefinition().itemId()).isNull();
         }
     }
 

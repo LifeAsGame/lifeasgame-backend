@@ -15,20 +15,29 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeedLevel1RewardProfileTest {
 
     @Test
-    @DisplayName("P0 Reward Profile은 정확히 한 건이고 공식 문자열을 보존한다")
-    void containsExactlyOneOfficialProfile() {
+    @DisplayName("공식 P0 Reward Profile 두 건의 code와 이름을 보존한다")
+    void containsExactlyTwoOfficialProfiles() {
         assertThat(SeedLevel1RewardProfile.values())
-                .containsExactly(SeedLevel1RewardProfile.EXP_AND_ITEM_FIRST_STEP_20);
+                .containsExactly(
+                        SeedLevel1RewardProfile.EXP_TINY_10,
+                        SeedLevel1RewardProfile.EXP_AND_ITEM_FIRST_STEP_20
+                );
 
-        RewardProfileSeedDefinition definition =
+        RewardProfileSeedDefinition tiny =
+                SeedLevel1RewardProfile.EXP_TINY_10.definition();
+        RewardProfileSeedDefinition combined =
                 SeedLevel1RewardProfile.EXP_AND_ITEM_FIRST_STEP_20.definition();
 
-        assertThat(definition.code())
+        assertThat(tiny.code()).isEqualTo(RewardProfileContentCode.RP_EXP_TINY_10);
+        assertThat(tiny.code().value()).isEqualTo("RP_EXP_TINY_10");
+        assertThat(tiny.name()).isEqualTo("소량 EXP");
+        assertThat(tiny.status()).isEqualTo(RewardProfileStatus.ACTIVE);
+        assertThat(combined.code())
                 .isEqualTo(RewardProfileContentCode.RP_EXP_AND_ITEM_FIRST_STEP_20);
-        assertThat(definition.code().value())
+        assertThat(combined.code().value())
                 .isEqualTo("RP_EXP_AND_ITEM_FIRST_STEP_20");
-        assertThat(definition.name()).isEqualTo("EXP 20 + First Step Fragment");
-        assertThat(definition.status()).isEqualTo(RewardProfileStatus.ACTIVE);
+        assertThat(combined.name()).isEqualTo("EXP 20 + First Step Fragment");
+        assertThat(combined.status()).isEqualTo(RewardProfileStatus.ACTIVE);
     }
 
     @Test
@@ -46,8 +55,26 @@ class SeedLevel1RewardProfileTest {
 
         assertThat(RewardDefinitionContentCode.RD_EXP_20.value())
                 .isEqualTo("RD_EXP_20");
+        assertThat(RewardDefinitionContentCode.RD_EXP_10.value())
+                .isEqualTo("RD_EXP_10");
         assertThat(RewardDefinitionContentCode.RD_ITEM_FIRST_STEP_FRAGMENT_1.value())
                 .isEqualTo("RD_ITEM_FIRST_STEP_FRAGMENT_1");
+        assertThat(RewardProfileContentCode.RP_EXP_TINY_10.value())
+                .isEqualTo("RP_EXP_TINY_10");
+    }
+
+    @Test
+    @DisplayName("TINY Profile은 기존 RD_EXP_10을 sortOrder 0과 null override로 참조한다")
+    void keepsTinyExpLineContract() {
+        var lines = SeedLevel1RewardProfile.EXP_TINY_10.definition().lines();
+
+        assertThat(lines).containsExactly(
+                new RewardProfileLineSeedDefinition(
+                        RewardDefinitionContentCode.RD_EXP_10,
+                        0,
+                        null
+                )
+        );
     }
 
     @Test

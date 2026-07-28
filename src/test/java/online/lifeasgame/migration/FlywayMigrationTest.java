@@ -100,9 +100,37 @@ class FlywayMigrationTest {
             assertThat(seedProfileCodes()).containsExactly(
                     "RP_EXP_10",
                     "RP_EXP_30",
-                    "RP_EXP_AND_ITEM_FIRST_STEP_20"
+                    "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                    "RP_EXP_TINY_10"
             );
             assertThat(noRewardProfile()).isEqualTo(new NoRewardProfile("ACTIVE", 0));
+            assertThat(expTenDefinitionCount()).isEqualTo(1);
+            assertThat(expTenProfiles()).containsExactly(
+                    new ExpTenProfileSeed(
+                            "RP_EXP_10",
+                            "EXP 10 Profile",
+                            "ACTIVE",
+                            0,
+                            null,
+                            "RD_EXP_10",
+                            "EXP",
+                            10,
+                            null,
+                            10
+                    ),
+                    new ExpTenProfileSeed(
+                            "RP_EXP_TINY_10",
+                            "소량 EXP",
+                            "ACTIVE",
+                            0,
+                            null,
+                            "RD_EXP_10",
+                            "EXP",
+                            10,
+                            null,
+                            10
+                    )
+            );
             assertThat(uniqueIndexColumns("reward_settlements", "uq_reward_settlement_source"))
                     .containsExactly("player_id", "source_type", "source_id");
             assertThat(uniqueIndexColumns(
@@ -344,6 +372,62 @@ class FlywayMigrationTest {
             );
             assertThat(resultSet.next()).isFalse();
             return result;
+        }
+    }
+
+    private int expTenDefinitionCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM reward_definitions
+                     WHERE code = 'RD_EXP_10'
+                     """)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private List<ExpTenProfileSeed> expTenProfiles() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         profile.code AS profile_code,
+                         profile.name AS profile_name,
+                         profile.status,
+                         line.sort_order,
+                         line.amount_override,
+                         definition.code AS definition_code,
+                         definition.reward_type,
+                         definition.amount,
+                         definition.item_id,
+                         COALESCE(line.amount_override, definition.amount)
+                             AS effective_amount
+                     FROM reward_profiles profile
+                     JOIN reward_profile_lines line
+                       ON line.reward_profile_id = profile.id
+                     JOIN reward_definitions definition
+                       ON definition.id = line.reward_definition_id
+                     WHERE profile.code IN ('RP_EXP_10', 'RP_EXP_TINY_10')
+                     ORDER BY profile.code
+                     """)) {
+            List<ExpTenProfileSeed> seeds = new ArrayList<>();
+            while (resultSet.next()) {
+                seeds.add(new ExpTenProfileSeed(
+                        resultSet.getString("profile_code"),
+                        resultSet.getString("profile_name"),
+                        resultSet.getString("status"),
+                        resultSet.getInt("sort_order"),
+                        resultSet.getObject("amount_override", Long.class),
+                        resultSet.getString("definition_code"),
+                        resultSet.getString("reward_type"),
+                        resultSet.getLong("amount"),
+                        resultSet.getObject("item_id", Long.class),
+                        resultSet.getLong("effective_amount")
+                ));
+            }
+            return seeds;
         }
     }
 
@@ -759,6 +843,20 @@ class FlywayMigrationTest {
     }
 
     private record NoRewardProfile(String status, int lineCount) {
+    }
+
+    private record ExpTenProfileSeed(
+            String profileCode,
+            String profileName,
+            String status,
+            int sortOrder,
+            Long amountOverride,
+            String definitionCode,
+            String rewardType,
+            long amount,
+            Long itemId,
+            long effectiveAmount
+    ) {
     }
 
     private record QuestDefinitionColumns(

@@ -7,6 +7,21 @@ import java.util.List;
 
 public enum SeedLevel1RewardProfile {
 
+    EXP_TINY_10(
+            new RewardProfileSeedDefinition(
+                    RewardProfileContentCode.RP_EXP_TINY_10,
+                    "소량 EXP",
+                    RewardProfileStatus.ACTIVE,
+                    List.of(
+                            new RewardProfileLineSeedDefinition(
+                                    RewardDefinitionContentCode.RD_EXP_10,
+                                    0,
+                                    null
+                            )
+                    )
+            )
+    ),
+
     EXP_AND_ITEM_FIRST_STEP_20(
             new RewardProfileSeedDefinition(
                     RewardProfileContentCode.RP_EXP_AND_ITEM_FIRST_STEP_20,

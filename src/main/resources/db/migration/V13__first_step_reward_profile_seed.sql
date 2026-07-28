@@ -33,6 +33,40 @@ INSERT INTO reward_definitions (
 INSERT INTO reward_profiles (
     code, name, status, created_at, updated_at
 ) VALUES (
+    'RP_EXP_TINY_10',
+    '소량 EXP',
+    'ACTIVE',
+    CURRENT_TIMESTAMP(6),
+    CURRENT_TIMESTAMP(6)
+);
+
+INSERT INTO reward_profile_lines (
+    reward_profile_id,
+    reward_definition_id,
+    sort_order,
+    amount_override,
+    created_at,
+    updated_at
+) VALUES (
+    (
+        SELECT profile.id
+        FROM reward_profiles profile
+        WHERE profile.code = 'RP_EXP_TINY_10'
+    ),
+    (
+        SELECT definition.id
+        FROM reward_definitions definition
+        WHERE definition.code = 'RD_EXP_10'
+    ),
+    0,
+    NULL,
+    CURRENT_TIMESTAMP(6),
+    CURRENT_TIMESTAMP(6)
+);
+
+INSERT INTO reward_profiles (
+    code, name, status, created_at, updated_at
+) VALUES (
     'RP_EXP_AND_ITEM_FIRST_STEP_20',
     'EXP 20 + First Step Fragment',
     'ACTIVE',
