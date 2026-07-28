@@ -47,6 +47,13 @@ class SeedLevel1QuestTest {
                     assertThat(definition.allowedRoleTypes())
                             .containsExactly("ANY");
                     assertThat(definition.manualCheckRequiresMemo()).isFalse();
+                    assertThat(definition.availabilityStartAt()).isNull();
+                    assertThat(definition.availabilityEndAt()).isNull();
+                    assertThat(definition.completionPolicy()).isNotBlank();
+                    assertThat(definition.cancellationPolicy()).isNotBlank();
+                    assertThat(definition.failurePressurePolicy()).isNotBlank();
+                    assertThat(definition.recommendedNextAction()).isNotBlank();
+                    assertThat(definition.notes()).isNotBlank();
                 });
     }
 
@@ -75,6 +82,11 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.targetValue()).isEqualTo(1);
             softly.assertThat(definition.targetUnit())
                     .isEqualTo(QuestContentTargetUnit.DISTINCT_LIFELOG);
+            softly.assertThat(definition.completionPolicy()).isEqualTo(
+                    "허용 subtype의 사용자 작성 LifeLogRecorded 1건을 수신하면 goal reached와 "
+                            + "QuestCompleted를 한 번만 확정한다. 동일 eventId 또는 "
+                            + "lifeLogId 재전달은 무시한다."
+            );
             softly.assertThat(definition.repeatPolicy())
                     .isEqualTo(QuestRepeatRule.ONCE);
             softly.assertThat(definition.periodBoundary())
@@ -83,13 +95,18 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.rewardProfileCode())
                     .isEqualTo("RP_EXP_TINY_10");
             softly.assertThat(definition.cancellationPolicy()).isEqualTo(
-                    "완료 전 취소와 새 attempt 허용; 한 번 완료되면 재수락 불가"
+                    "완료 전 취소 가능; 재수락 시 새 attempt로 시작하며 새 acceptedAt 이후 "
+                            + "이벤트만 인정; 한 번 완료되면 재수락 불가"
             );
             softly.assertThat(definition.failurePressurePolicy())
-                    .isEqualTo("미완료/취소 페널티 없음");
-            softly.assertThat(definition.notes()).containsExactly(
-                    "허용 subtype의 사용자 작성 LifeLogRecorded 1건에서 자동 완료",
-                    "동일 eventId 또는 lifeLogId 재전달 무시"
+                    .isEqualTo("미완료·취소에 페널티, 연속 수행 손실, 죄책감 문구 없음");
+            softly.assertThat(definition.recommendedNextAction())
+                    .isEqualTo("Q_RECORD_THREE_TRACES 또는 방금 남긴 LifeLog 보기");
+            softly.assertThat(definition.notes()).isEqualTo(
+                    "허용 subtype: QUICK_NOTE|ACTIVITY|STUDY|PROJECT|MEMORY|REFLECTION|"
+                            + "MOOD|HEALTH_NOTE. SYSTEM_GENERATED는 제외. 기록 생성 후 "
+                            + "삭제되어도 이미 확정된 완료 사실과 보상은 되돌리지 않는다. "
+                            + "삭제 사실은 별도 정책이며 Quest 진행도 감소 원인이 아니다."
             );
             assertPresentation(
                     softly,
@@ -127,6 +144,11 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.targetValue()).isEqualTo(3);
             softly.assertThat(definition.targetUnit())
                     .isEqualTo(QuestContentTargetUnit.DISTINCT_LIFELOG);
+            softly.assertThat(definition.completionPolicy()).isEqualTo(
+                    "서로 다른 eventId이면서 서로 다른 lifeLogId인 LifeLogRecorded 세 건만 "
+                            + "누적한다. 세 번째 고유 기록에서 goal reached와 "
+                            + "QuestCompleted를 한 번만 확정한다."
+            );
             softly.assertThat(definition.repeatPolicy())
                     .isEqualTo(QuestRepeatRule.ONCE);
             softly.assertThat(definition.periodBoundary()).isEqualTo(
@@ -136,6 +158,20 @@ class SeedLevel1QuestTest {
             assertAutomaticNoTimezone(softly, definition);
             softly.assertThat(definition.rewardProfileCode())
                     .isEqualTo("RP_EXP_AND_ITEM_FIRST_STEP_20");
+            softly.assertThat(definition.cancellationPolicy()).isEqualTo(
+                    "완료 전 취소 가능; 재수락 시 진행도 0으로 새 attempt 시작; 이전 "
+                            + "attempt의 기록 이벤트는 새 attempt에 이월하지 않음"
+            );
+            softly.assertThat(definition.failurePressurePolicy())
+                    .isEqualTo("기간 만료와 연속 수행 압박 없음; 중단해도 실패 낙인 없음");
+            softly.assertThat(definition.recommendedNextAction()).isEqualTo(
+                    "Mailbox에서 첫걸음의 조각 확인 또는 ROUTE_RECORD_START 다음 단계 확인"
+            );
+            softly.assertThat(definition.notes()).isEqualTo(
+                    "수행 기간 제한 없음. 동일 LifeLog 수정 이벤트는 진행도 증가 없음. "
+                            + "동일 이벤트 재전달은 eventId 멱등 처리. 기록 삭제 후에도 "
+                            + "이미 누적·완료된 사실은 유지한다."
+            );
             assertPresentation(
                     softly,
                     definition,
@@ -174,6 +210,11 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.targetValue()).isEqualTo(1);
             softly.assertThat(definition.targetUnit())
                     .isEqualTo(QuestContentTargetUnit.WEEKLY_REFLECTION);
+            softly.assertThat(definition.completionPolicy()).isEqualTo(
+                    "해당 주기 안에 생성된 REFLECTION LifeLog 중 "
+                            + "reflectionScope=WEEKLY_LOOKBACK인 고유 기록 1건을 수신하면 "
+                            + "자동 완료한다. 본문 내용은 판정하지 않는다."
+            );
             softly.assertThat(definition.repeatPolicy())
                     .isEqualTo(QuestRepeatRule.WEEKLY);
             softly.assertThat(definition.periodBoundary()).isEqualTo(
@@ -186,6 +227,22 @@ class SeedLevel1QuestTest {
             assertAutomaticPlayerTimezone(softly, definition);
             softly.assertThat(definition.rewardProfileCode())
                     .isEqualTo("RP_NONE");
+            softly.assertThat(definition.cancellationPolicy()).isEqualTo(
+                    "해당 주기 내 완료 전 취소 가능; 다음 주기에 새 acceptance 생성 가능; "
+                            + "이전 주기 미완료는 EXPIRED가 아니라 CLOSED_INCOMPLETE로 "
+                            + "기록하되 사용자에게 실패로 표현하지 않음"
+            );
+            softly.assertThat(definition.failurePressurePolicy())
+                    .isEqualTo("미완료 페널티·연속 주차 손실·재촉 알림 없음");
+            softly.assertThat(definition.recommendedNextAction()).isEqualTo(
+                    "ROUTE_RECORD_START의 준비된 마지막 Step을 직접 advance하거나 "
+                            + "회고 LifeLog 보기"
+            );
+            softly.assertThat(definition.notes()).isEqualTo(
+                    "회고 전용 subtype 신설 불필요. REFLECTION + reflectionScope로 구분. "
+                            + "Quick LifeLog는 인정하지 않음. 다음 주기 재수행 가능. "
+                            + "주기당 Player별 완료 1회."
+            );
             assertPresentation(
                     softly,
                     definition,
@@ -217,14 +274,28 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.semanticCategory())
                     .isEqualTo(QuestSemanticCategory.GROWTH);
             softly.assertThat(definition.targetValue()).isEqualTo(25);
+            softly.assertThat(definition.completionPolicy()).isEqualTo(
+                    "focusLabel 필수, memo 선택. 사용자가 약 25분의 집중을 마쳤다고 확인하면 "
+                            + "완료한다. 타이머 증빙·성과 검증·텍스트 분석은 하지 않는다."
+            );
             softly.assertThat(definition.repeatPolicy())
                     .isEqualTo(QuestRepeatRule.DAILY);
             softly.assertThat(definition.rewardProfileCode())
                     .isEqualTo("RP_NONE");
-            softly.assertThat(definition.notes()).containsExactly(
-                    "Focus enum 신설 금지",
-                    "focusLabel은 후속 Manual API에서 1~80자 필수",
-                    "추천 Role은 optional이며 현재 single roleTemplateCode로 축약 금지"
+            softly.assertThat(definition.cancellationPolicy()).isEqualTo(
+                    "당일 완료 전 취소 가능; 같은 일자 재수락 시 새 attempt로 시작; "
+                            + "완료 후 같은 periodKey 재완료 불가"
+            );
+            softly.assertThat(definition.failurePressurePolicy())
+                    .isEqualTo("미완료·짧게 끝냄·성과 없음에 페널티나 평가 문구 없음");
+            softly.assertThat(definition.recommendedNextAction()).isEqualTo(
+                    "집중 중 알게 된 점을 짧은 LifeLog로 남기거나 오늘은 여기서 마치기"
+            );
+            softly.assertThat(definition.notes()).isEqualTo(
+                    "Focus 유형 domain enum은 P0에 만들지 않는다. 선택형 preset은 FE "
+                            + "제안값일 뿐 저장·판정 필수값이 아니다. 필수 입력은 "
+                            + "focusLabel 하나. 추천 Role Template: "
+                            + "ROLE_JOB_SEEKER|ROLE_BACKEND_DEVELOPER."
             );
             assertPresentation(
                     softly,
@@ -256,16 +327,31 @@ class SeedLevel1QuestTest {
             softly.assertThat(definition.semanticCategory())
                     .isEqualTo(QuestSemanticCategory.RECOVERY);
             softly.assertThat(definition.targetValue()).isEqualTo(10);
+            softly.assertThat(definition.completionPolicy()).isEqualTo(
+                    "한 번의 휴식 세션을 사용자가 직접 확인하면 완료한다. 부분 수행 시간은 "
+                            + "누적하지 않으며 메모와 휴식 이유는 요구하지 않는다."
+            );
             softly.assertThat(definition.repeatPolicy())
                     .isEqualTo(QuestRepeatRule.DAILY);
             softly.assertThat(definition.rewardProfileCode())
                     .isEqualTo("RP_NONE");
+            softly.assertThat(definition.cancellationPolicy()).isEqualTo(
+                    "언제든 완료 전 취소 가능; 같은 일자 재수락 가능; 미완료 attempt는 "
+                            + "일자 경계에서 CLOSED_INCOMPLETE 처리"
+            );
             softly.assertThat(definition.failurePressurePolicy())
-                    .isEqualTo("미완료 불이익/연속 수행 압박 금지");
-            softly.assertThat(definition.notes()).containsExactly(
-                    "Timer 증빙 강제 금지",
-                    "부분 시간 누적 금지",
-                    "미완료 불이익/연속 수행 압박 금지"
+                    .isEqualTo(
+                            "실패·연속 수행·손실·마감 압박 없음. 미완료 상태에서도 휴식을 "
+                                    + "권리처럼 표현하며 재촉하지 않음"
+                    );
+            softly.assertThat(definition.recommendedNextAction()).isEqualTo(
+                    "조금 더 쉬거나, 상태가 괜찮다면 짧은 LifeLog를 남기기"
+            );
+            softly.assertThat(definition.notes()).isEqualTo(
+                    "10의 단위는 minute. P0 인정 원본은 수동 확인. Rest Timer는 P1 "
+                            + "보조 입력 후보이며 완료 증빙으로 강제하지 않는다. "
+                            + "Exercise와 일반 LifeLog는 이 Quest의 완료 원본으로 "
+                            + "사용하지 않는다."
             );
             assertPresentation(
                     softly,
@@ -290,9 +376,47 @@ class SeedLevel1QuestTest {
         assertThatThrownBy(() ->
                 definition.allowedRoleTypes().add("ROLE")
         ).isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() ->
-                definition.notes().add("changed")
-        ).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    @DisplayName("필수 정책 원문은 blank를 거부하고 availability null은 허용한다")
+    void validatesRequiredPolicyTextAndOptionalAvailability() {
+        SeedLevel1QuestDefinition source =
+                SeedLevel1Quest.RECORD_FIRST_TRACE.definition();
+
+        assertThatThrownBy(() -> copyWithPolicies(
+                source,
+                " ",
+                source.cancellationPolicy(),
+                source.failurePressurePolicy()
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("completionPolicy");
+        assertThatThrownBy(() -> copyWithPolicies(
+                source,
+                source.completionPolicy(),
+                " ",
+                source.failurePressurePolicy()
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cancellationPolicy");
+        assertThatThrownBy(() -> copyWithPolicies(
+                source,
+                source.completionPolicy(),
+                source.cancellationPolicy(),
+                " "
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("failurePressurePolicy");
+
+        SeedLevel1QuestDefinition copied = copyWithPolicies(
+                source,
+                source.completionPolicy(),
+                source.cancellationPolicy(),
+                source.failurePressurePolicy()
+        );
+        assertThat(copied.availabilityStartAt()).isNull();
+        assertThat(copied.availabilityEndAt()).isNull();
     }
 
     private void assertRecordFact(
@@ -385,6 +509,53 @@ class SeedLevel1QuestTest {
         softly.assertThat(definition.resultCopyKey()).isEqualTo(resultCopyKey);
         softly.assertThat(definition.emptyStateCopyKey())
                 .isEqualTo(emptyStateCopyKey);
-        softly.assertThat(definition.recommendedNextAction()).isNull();
+    }
+
+    private SeedLevel1QuestDefinition copyWithPolicies(
+            SeedLevel1QuestDefinition source,
+            String completionPolicy,
+            String cancellationPolicy,
+            String failurePressurePolicy
+    ) {
+        return new SeedLevel1QuestDefinition(
+                source.questCode(),
+                source.seedLevel(),
+                source.priority(),
+                source.definitionVersion(),
+                source.status(),
+                source.displayNameKo(),
+                source.shortDescriptionKo(),
+                source.longDescriptionKo(),
+                source.semanticCategory(),
+                source.progressMode(),
+                source.progressSourceType(),
+                source.sourceEventType(),
+                source.sourceEntityType(),
+                source.sourceOwnerRule(),
+                source.targetValue(),
+                source.targetUnit(),
+                completionPolicy,
+                source.autoComplete(),
+                source.repeatPolicy(),
+                source.periodBoundary(),
+                source.timezonePolicy(),
+                source.timezoneFallback(),
+                source.availabilityStartAt(),
+                source.availabilityEndAt(),
+                source.roleContextPolicy(),
+                source.allowedRoleTypes(),
+                source.rewardProfileCode(),
+                source.manualCheckAllowed(),
+                source.manualCheckRequiresMemo(),
+                cancellationPolicy,
+                failurePressurePolicy,
+                source.recommendedNextAction(),
+                source.sortOrder(),
+                source.iconKey(),
+                source.colorToken(),
+                source.resultCopyKey(),
+                source.emptyStateCopyKey(),
+                source.notes()
+        );
     }
 }

@@ -4,7 +4,7 @@ import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.QuestRepeatRule;
 import online.lifeasgame.quest.domain.QuestSemanticCategory;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
@@ -25,11 +25,14 @@ public record SeedLevel1QuestDefinition(
         String sourceOwnerRule,
         int targetValue,
         QuestContentTargetUnit targetUnit,
+        String completionPolicy,
         boolean autoComplete,
         QuestRepeatRule repeatPolicy,
         QuestContentPeriodBoundary periodBoundary,
         QuestContentTimezonePolicy timezonePolicy,
         String timezoneFallback,
+        Instant availabilityStartAt,
+        Instant availabilityEndAt,
         QuestRoleContextPolicy roleContextPolicy,
         Set<String> allowedRoleTypes,
         String rewardProfileCode,
@@ -43,7 +46,7 @@ public record SeedLevel1QuestDefinition(
         String colorToken,
         String resultCopyKey,
         String emptyStateCopyKey,
-        List<String> notes
+        String notes
 ) {
 
     public SeedLevel1QuestDefinition {
@@ -75,6 +78,7 @@ public record SeedLevel1QuestDefinition(
             throw new IllegalArgumentException("targetValue must be positive");
         }
         Objects.requireNonNull(targetUnit, "targetUnit");
+        requireText(completionPolicy, "completionPolicy");
         Objects.requireNonNull(repeatPolicy, "repeatPolicy");
         if (!repeatPolicy.isFinalPolicy()) {
             throw new IllegalArgumentException(
@@ -110,6 +114,9 @@ public record SeedLevel1QuestDefinition(
                     "autoComplete and manualCheckAllowed must be opposite"
             );
         }
+        requireText(cancellationPolicy, "cancellationPolicy");
+        requireText(failurePressurePolicy, "failurePressurePolicy");
+        requireText(recommendedNextAction, "recommendedNextAction");
         if (sortOrder <= 0) {
             throw new IllegalArgumentException("sortOrder must be positive");
         }
@@ -117,7 +124,7 @@ public record SeedLevel1QuestDefinition(
         requireText(colorToken, "colorToken");
         requireText(resultCopyKey, "resultCopyKey");
         requireText(emptyStateCopyKey, "emptyStateCopyKey");
-        notes = List.copyOf(Objects.requireNonNull(notes, "notes"));
+        requireText(notes, "notes");
     }
 
     private static void requireText(String value, String field) {
