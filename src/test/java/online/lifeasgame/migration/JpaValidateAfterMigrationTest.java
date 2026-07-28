@@ -1,6 +1,10 @@
 package online.lifeasgame.migration;
 
 import online.lifeasgame.inventory.application.internal.ItemLookupApi;
+import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.bootstrap.QuestDefinitionBootstrapper;
+import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import online.lifeasgame.reward.application.result.RewardProfileResult;
 import org.flywaydb.core.Flyway;
@@ -27,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("V13 migration 이후 JPA schema validation")
+@DisplayName("V14 migration 이후 JPA schema validation")
 class JpaValidateAfterMigrationTest {
 
     @Container
@@ -68,20 +72,65 @@ class JpaValidateAfterMigrationTest {
     @Autowired
     private RewardSettlementReader rewardSettlementReader;
 
+    @Autowired
+    private QuestService questService;
+
+    @Autowired
+    private QuestDefinitionBootstrapper questDefinitionBootstrapper;
+
     @Nested
-    @DisplayName("V1부터 V13까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V14까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()
                     .getProperty("spring.flyway.baseline-on-migrate", Boolean.class))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("신규 Seed Quest 5개를 nullable category로 Bootstrap하고 재실행은 no-op이다")
+        void bootstrapsSeedQuestsIdempotently() throws Exception {
+            var codes = java.util.List.of(
+                    QuestCode.Q_RECORD_FIRST_TRACE,
+                    QuestCode.Q_RECORD_THREE_TRACES,
+                    QuestCode.Q_RECORD_WEEKLY_LOOKBACK,
+                    QuestCode.Q_GROWTH_ONE_FOCUS,
+                    QuestCode.Q_RECOVERY_REST_TEN
+            );
+            var before = codes.stream()
+                    .map(code -> questService.getDefinition(
+                            new QuestCommand.Definition(code.value())
+                    ))
+                    .toList();
+
+            assertThat(before).allSatisfy(definition -> {
+                assertThat(definition.category()).isNull();
+                assertThat(definition.semanticCategory()).isNotNull();
+                assertThat(definition.progressSource()).isNotNull();
+                assertThat(definition.roleTemplateCode()).isNull();
+            });
+
+            questDefinitionBootstrapper.run(null);
+
+            var after = codes.stream()
+                    .map(code -> questService.getDefinition(
+                            new QuestCommand.Definition(code.value())
+                    ))
+                    .toList();
+            assertThat(after)
+                    .extracting(definition -> definition.id())
+                    .containsExactlyElementsOf(
+                            before.stream()
+                                    .map(definition -> definition.id())
+                                    .toList()
+                    );
         }
     }
 

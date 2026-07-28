@@ -32,7 +32,7 @@ public final class QuestResult {
             return new Blueprint(
                     blueprint.code().value(),
                     blueprint.title().value(),
-                    blueprint.category().name(),
+                    QuestResult.category(blueprint.category()),
                     blueprint.descriptionMd(),
                     blueprint.target(),
                     blueprint.repeatRule().name(),
@@ -91,7 +91,7 @@ public final class QuestResult {
                     acceptance.getPlayerId(),
                     quest.getCode(),
                     quest.getTitle().value(),
-                    quest.getCategory().name(),
+                    QuestResult.category(quest.getCategory()),
                     quest.getDescriptionMd(),
                     quest.target().type(),
                     quest.target().value(),
@@ -137,7 +137,7 @@ public final class QuestResult {
                     quest.getId(),
                     quest.getCode(),
                     quest.getTitle().value(),
-                    quest.getCategory().name(),
+                    QuestResult.category(quest.getCategory()),
                     quest.getDescriptionMd(),
                     quest.target().type(),
                     quest.target().value(),
@@ -180,7 +180,7 @@ public final class QuestResult {
             return new PlayerQuest(
                     quest.getCode(),
                     quest.getTitle().value(),
-                    quest.getCategory().name(),
+                    QuestResult.category(quest.getCategory()),
                     quest.getDescriptionMd(),
                     quest.target().type(),
                     quest.target().value(),
@@ -235,5 +235,9 @@ public final class QuestResult {
         return quest.repeatPolicyOrNull() == null
                 ? null
                 : quest.repeatPolicyOrNull().name();
+    }
+
+    private static String category(QuestCategory category) {
+        return category == null ? null : category.name();
     }
 }

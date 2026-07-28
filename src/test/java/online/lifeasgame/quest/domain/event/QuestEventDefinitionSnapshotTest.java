@@ -59,6 +59,38 @@ class QuestEventDefinitionSnapshotTest {
     }
 
     @Test
+    @DisplayName("legacy category 없는 final Snapshot은 category를 제외하고 semantic category를 유지한다")
+    void omitsNullLegacyCategoryFromFinalSnapshot() {
+        Quest quest = Quest.createDefinition(
+                "Q_TEST_FINAL_EVENT",
+                1,
+                QuestSemanticCategory.RECORD,
+                QuestTitle.of("Final Event Quest"),
+                "final event",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestProgressSource.RECORD_CREATED,
+                RewardProfileRef.of("RP_NONE"),
+                QuestRepeatRule.ONCE,
+                null,
+                QuestCompletionPolicy.AUTO,
+                null
+        );
+
+        QuestEvent event = QuestEvent.snapshot(
+                QuestEventType.QUEST_COMPLETED,
+                quest,
+                "quest:test:final-event:completed"
+        );
+
+        assertThat(event.attributes())
+                .containsEntry("questSemanticCategory", "RECORD")
+                .containsEntry("progressSource", "RECORD_CREATED")
+                .containsEntry("repeatPolicy", "ONCE")
+                .containsEntry("rewardProfileCode", "RP_NONE")
+                .doesNotContainKey("category");
+    }
+
+    @Test
     @DisplayName("legacy QuestCompleted는 version 1과 inline reward Snapshot을 유지한다")
     void snapshotsLegacyDefinition() {
         QuestEvent event = QuestEvent.snapshot(
@@ -69,6 +101,7 @@ class QuestEventDefinitionSnapshotTest {
 
         assertThat(event.type()).isEqualTo(QuestEventType.QUEST_COMPLETED);
         assertThat(event.attributes())
+                .containsEntry("category", "MAIN")
                 .containsEntry("questDefinitionVersion", 1)
                 .containsEntry("rewardExp", 7)
                 .containsEntry("rewardStats", java.util.Map.of("strength", 2))

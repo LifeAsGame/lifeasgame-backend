@@ -34,6 +34,30 @@ class QuestSemanticDefinitionContractTest {
         }
 
         @Test
+        @DisplayName("final-contract는 legacy category 없이 semantic category로 생성한다")
+        void allowsNullLegacyCategory() {
+            Quest quest = Quest.createDefinition(
+                    "Q_TEST_FINAL_WITHOUT_LEGACY_CATEGORY",
+                    1,
+                    QuestSemanticCategory.RECORD,
+                    QuestTitle.of("Final without legacy category"),
+                    "final category contract",
+                    QuestTarget.of(QuestTargetType.COUNT, 1),
+                    QuestProgressSource.RECORD_CREATED,
+                    RewardProfileRef.of("RP_NONE"),
+                    QuestRepeatRule.ONCE,
+                    null,
+                    QuestCompletionPolicy.AUTO,
+                    null
+            );
+
+            assertThat(quest.isFinalContract()).isTrue();
+            assertThat(quest.getCategory()).isNull();
+            assertThat(quest.getSemanticCategory())
+                    .isEqualTo(QuestSemanticCategory.RECORD);
+        }
+
+        @Test
         @DisplayName("semantic category는 필수다")
         void requiresSemanticCategory() {
             assertQuestError(
@@ -215,6 +239,23 @@ class QuestSemanticDefinitionContractTest {
         assertThat(quest.roleTemplateCodeOrNull()).isNull();
         assertThat(quest.getCategory()).isEqualTo(QuestCategory.REPEAT);
         assertThat(quest.getRepeatRule()).isEqualTo(QuestRepeatRule.MONTHLY);
+    }
+
+    @Test
+    @DisplayName("legacy 생성은 기존 category를 계속 필수로 요구한다")
+    void requiresLegacyCategory() {
+        assertThatThrownBy(() -> Quest.create(
+                "quest:test:legacy-without-category",
+                null,
+                QuestTitle.of("Legacy without category"),
+                "invalid legacy",
+                QuestTarget.of(QuestTargetType.COUNT, 1),
+                QuestReward.of(0, RewardStats.empty()),
+                QuestRepeatRule.NONE,
+                null
+        ))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("category must not be null");
     }
 
     private Quest finalQuest(QuestRoleTemplateRef roleTemplateRef) {

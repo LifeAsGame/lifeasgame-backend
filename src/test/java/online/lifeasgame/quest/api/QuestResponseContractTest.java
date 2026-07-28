@@ -229,6 +229,56 @@ class QuestResponseContractTest {
             assertThat(player.repeatPolicy()).isEqualTo("DAILY");
             assertThat(player.roleTemplateCode()).isNull();
         }
+
+        @Test
+        @DisplayName("final-contract의 nullable legacy category를 Admin/Player 응답에 그대로 노출한다")
+        void exposesNullLegacyCategoryForFinalContract() {
+            QuestBlueprint blueprint = QuestBlueprint.finalContract(
+                    QuestCode.Q_RECORD_FIRST_TRACE,
+                    1,
+                    QuestSemanticCategory.RECORD,
+                    QuestTitle.of("첫 흔적 남기기"),
+                    "사용자가 직접 작성한 LifeLog 한 건을 남기면 완료됩니다.",
+                    QuestTarget.of(QuestTargetType.COUNT, 1),
+                    QuestProgressSource.RECORD_CREATED,
+                    RewardProfileRef.of("RP_EXP_TINY_10"),
+                    QuestRepeatRule.ONCE,
+                    null,
+                    null,
+                    QuestCompletionPolicy.AUTO
+            );
+            Quest quest = blueprint.instantiate();
+
+            AdminQuestResponse.Blueprint adminCatalog =
+                    AdminQuestWebMapper.toBlueprints(List.of(
+                                    QuestResult.Blueprint.from(blueprint)
+                            ))
+                            .blueprints()
+                            .getFirst();
+            AdminQuestResponse.Definition adminDefinition =
+                    AdminQuestWebMapper.toDefinition(
+                            QuestResult.Definition.from(quest)
+                    );
+            QuestResponse.Blueprint playerCatalog =
+                    QuestWebMapper.toBlueprint(
+                            QuestResult.Blueprint.from(blueprint)
+                    );
+            QuestResponse.PlayerQuest playerDetail =
+                    QuestWebMapper.toPlayerQuest(
+                            QuestResult.PlayerQuest.from(quest, null)
+                    );
+
+            assertThat(adminCatalog.category()).isNull();
+            assertThat(adminDefinition.category()).isNull();
+            assertThat(playerCatalog.category()).isNull();
+            assertThat(playerDetail.category()).isNull();
+            assertThat(adminDefinition.semanticCategory()).isEqualTo("RECORD");
+            assertThat(playerDetail.progressSource())
+                    .isEqualTo("RECORD_CREATED");
+            assertThat(playerDetail.rewardProfileCode())
+                    .isEqualTo("RP_EXP_TINY_10");
+            assertThat(playerDetail.roleTemplateCode()).isNull();
+        }
     }
 
     private Quest quest() {

@@ -28,6 +28,10 @@ lifeasgame:
     base-url: http://localhost:8080
 
 app:
+  quest:
+    definition-bootstrap:
+      enabled: false
+
   error:
     docs:
       base: "/errors"

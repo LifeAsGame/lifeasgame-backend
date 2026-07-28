@@ -3,6 +3,7 @@ package online.lifeasgame.quest.application;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
@@ -233,6 +234,42 @@ class QuestServiceStateContractTest {
                                                     .QUEST_ACCEPTANCE_ALREADY_EXISTS
                                     )
                     );
+        }
+
+        @Test
+        @DisplayName("신규 Seed Quest를 nullable category와 공식 code로 수락한다")
+        void acceptsSeedLevel1Quest() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_FIRST_TRACE)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            given(questReader.getByCode(
+                    QuestCode.Q_RECORD_FIRST_TRACE
+            )).willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(null);
+            given(questWriter.accept(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            QuestResult.Acceptance result = service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            "Q_RECORD_FIRST_TRACE",
+                            null,
+                            null
+                    )
+            );
+
+            assertThat(result.code()).isEqualTo("Q_RECORD_FIRST_TRACE");
+            assertThat(result.category()).isNull();
+            assertThat(result.semanticCategory()).isEqualTo("RECORD");
+            assertThat(result.progressSource())
+                    .isEqualTo("RECORD_CREATED");
+            assertThat(result.targetType())
+                    .isEqualTo(QuestTargetType.COUNT);
+            assertThat(result.targetValue()).isEqualTo(1);
+            assertThat(result.repeatPolicy()).isEqualTo("ONCE");
         }
     }
 
