@@ -38,7 +38,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V13까지 적용되고 stable Item 기반 Reward Profile을 Seed한다")
+        @DisplayName("V1부터 V14까지 적용되고 final Quest category를 nullable로 보정한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -55,11 +55,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(1);
+            assertThat(result.migrationsExecuted).isEqualTo(2);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
-                            "6", "7", "8", "9", "10", "11", "12", "13"
+                            "6", "7", "8", "9", "10", "11", "12", "13",
+                            "14"
                     );
             assertThat(existingTables(
                     "users",
@@ -187,8 +188,15 @@ class FlywayMigrationTest {
                             null,
                             null,
                             "NONE",
-                            null
+                            null,
+                            "MAIN"
                     )
+            );
+            QuestLegacyCategoryColumn categoryColumn =
+                    questLegacyCategoryColumn();
+            assertThat(categoryColumn.nullable()).isEqualTo("YES");
+            assertThat(categoryColumn.columnType()).isEqualTo(
+                    "enum('GUILD','MAIN','PARTY','RECOMMENDED','REPEAT')"
             );
             QuestSemanticColumns semanticColumns = questSemanticColumns();
             assertThat(semanticColumns.semanticCategoryNullable())
@@ -764,7 +772,8 @@ class FlywayMigrationTest {
                          semantic_category,
                          progress_source,
                          repeat_rule,
-                         role_template_code
+                         role_template_code,
+                         category
                      FROM quests
                      WHERE code = 'quest:test:v9-legacy'
                      """)) {
@@ -777,7 +786,27 @@ class FlywayMigrationTest {
                     resultSet.getString("semantic_category"),
                     resultSet.getString("progress_source"),
                     resultSet.getString("repeat_rule"),
-                    resultSet.getString("role_template_code")
+                    resultSet.getString("role_template_code"),
+                    resultSet.getString("category")
+            );
+        }
+    }
+
+    private QuestLegacyCategoryColumn questLegacyCategoryColumn()
+            throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT is_nullable, column_type
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'quests'
+                       AND column_name = 'category'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new QuestLegacyCategoryColumn(
+                    resultSet.getString("is_nullable"),
+                    resultSet.getString("column_type")
             );
         }
     }
@@ -876,7 +905,14 @@ class FlywayMigrationTest {
             String semanticCategory,
             String progressSource,
             String repeatRule,
-            String roleTemplateCode
+            String roleTemplateCode,
+            String category
+    ) {
+    }
+
+    private record QuestLegacyCategoryColumn(
+            String nullable,
+            String columnType
     ) {
     }
 

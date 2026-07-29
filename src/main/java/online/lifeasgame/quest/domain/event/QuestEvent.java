@@ -51,7 +51,12 @@ public record QuestEvent(
                 .questId(quest.getId())
                 .questCode(quest.getCode())
                 .attribute("title", quest.getTitle().value())
-                .attribute("category", quest.getCategory().name())
+                .attribute(
+                        "category",
+                        quest.getCategory() == null
+                                ? null
+                                : quest.getCategory().name()
+                )
                 .attribute("targetType", quest.target().type().name())
                 .attribute("targetValue", quest.target().value())
                 .attribute("repeatRule", quest.getRepeatRule().name())

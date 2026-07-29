@@ -17,3 +17,8 @@ spring:
     redis:
       repositories:
         enabled: false
+
+app:
+  quest:
+    definition-bootstrap:
+      enabled: true

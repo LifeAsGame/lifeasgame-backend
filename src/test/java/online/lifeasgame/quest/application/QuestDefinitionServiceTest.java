@@ -2,10 +2,12 @@ package online.lifeasgame.quest.application;
 
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
+import online.lifeasgame.quest.domain.seed.SeedLevel1Quest;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import online.lifeasgame.reward.domain.error.RewardError;
 import org.junit.jupiter.api.BeforeEach;
@@ -287,6 +289,107 @@ class QuestDefinitionServiceTest {
         assertThat(result.roleTemplateCodeOrNull()).isEqualTo("ROLE_READER");
         verify(rewardProfileLookupApi).getActiveByCode("RP_EXP_30");
         verify(questWriter).create(any());
+    }
+
+    @Test
+    @DisplayName("Seed Level 1 신규 5개를 materialize하며 세 공식 Reward Profile을 active 조회한다")
+    void materializesSeedLevel1BlueprintsWithActiveProfiles() {
+        StaticQuestBlueprintCatalog staticCatalog =
+                new StaticQuestBlueprintCatalog();
+        QuestService seedService = new QuestService(
+                staticCatalog,
+                questReader,
+                questWriter,
+                rewardProfileLookupApi,
+                domainEventPublisher
+        );
+        given(questReader.findByCode(any(QuestCode.class)))
+                .willReturn(Optional.empty());
+        given(rewardProfileLookupApi.getActiveByCode(anyString()))
+                .willAnswer(invocation ->
+                        reference(invocation.getArgument(0))
+                );
+        given(questWriter.create(any())).willAnswer(
+                invocation -> invocation.getArgument(0)
+        );
+
+        var quests = SeedLevel1Quest.definitions().stream()
+                .map(definition ->
+                        seedService.ensureQuest(definition.questCode()))
+                .toList();
+
+        assertThat(quests).hasSize(5)
+                .allSatisfy(quest -> {
+                    assertThat(quest.getCategory()).isNull();
+                    assertThat(quest.getSemanticCategory()).isNotNull();
+                    assertThat(quest.roleTemplateCodeOrNull()).isNull();
+                });
+        verify(rewardProfileLookupApi)
+                .getActiveByCode("RP_EXP_TINY_10");
+        verify(rewardProfileLookupApi)
+                .getActiveByCode("RP_EXP_AND_ITEM_FIRST_STEP_20");
+        verify(rewardProfileLookupApi, times(3))
+                .getActiveByCode("RP_NONE");
+        verify(questWriter, times(5)).create(any());
+    }
+
+    @Test
+    @DisplayName("Seed Level 1 Reward Profile이 missing/inactive이면 Quest를 저장하지 않는다")
+    void doesNotMaterializeSeedWithUnavailableProfile() {
+        StaticQuestBlueprintCatalog staticCatalog =
+                new StaticQuestBlueprintCatalog();
+        QuestService seedService = new QuestService(
+                staticCatalog,
+                questReader,
+                questWriter,
+                rewardProfileLookupApi,
+                domainEventPublisher
+        );
+        given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
+                .willReturn(Optional.empty());
+        given(rewardProfileLookupApi.getActiveByCode("RP_EXP_TINY_10"))
+                .willThrow(new DomainException(
+                        RewardError.REWARD_PROFILE_INACTIVE
+                ));
+
+        assertRewardError(
+                () -> seedService.ensureQuest(
+                        QuestCode.Q_RECORD_FIRST_TRACE
+                ),
+                RewardError.REWARD_PROFILE_INACTIVE
+        );
+
+        verifyNoInteractions(questWriter);
+    }
+
+    @Test
+    @DisplayName("Bootstrap 재실행 시 이미 존재하는 Seed Quest를 그대로 반환한다")
+    void keepsExistingSeedQuestOnEnsureReplay() {
+        StaticQuestBlueprintCatalog staticCatalog =
+                new StaticQuestBlueprintCatalog();
+        Quest existing = staticCatalog
+                .require(QuestCode.Q_RECORD_FIRST_TRACE)
+                .instantiate();
+        QuestService seedService = new QuestService(
+                staticCatalog,
+                questReader,
+                questWriter,
+                rewardProfileLookupApi,
+                domainEventPublisher
+        );
+        given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
+                .willReturn(Optional.of(existing));
+
+        Quest replay = seedService.ensureQuest(
+                QuestCode.Q_RECORD_FIRST_TRACE
+        );
+
+        assertThat(replay).isSameAs(existing);
+        verifyNoInteractions(
+                questWriter,
+                rewardProfileLookupApi,
+                domainEventPublisher
+        );
     }
 
     private void stubExisting(Quest quest) {

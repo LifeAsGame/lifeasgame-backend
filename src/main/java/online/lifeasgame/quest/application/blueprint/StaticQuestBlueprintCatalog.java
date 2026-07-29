@@ -3,11 +3,13 @@ package online.lifeasgame.quest.application.blueprint;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.quest.domain.*;
+import online.lifeasgame.quest.domain.seed.SeedLevel1Quest;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +19,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class StaticQuestBlueprintCatalog implements QuestBlueprintCatalog {
 
-    private final Map<QuestCode, QuestBlueprint> blueprints = Map.copyOf(initialize());
+    private final Map<QuestCode, QuestBlueprint> blueprints =
+            Collections.unmodifiableMap(initialize());
 
     private static Map<QuestCode, QuestBlueprint> initialize() {
         EnumMap<QuestCode, QuestBlueprint> map = new EnumMap<>(QuestCode.class);
@@ -243,6 +246,13 @@ public class StaticQuestBlueprintCatalog implements QuestBlueprintCatalog {
                         QuestReward.of(500, new RewardStats(Map.of("dexterity", 2, "luck", 2))),
                         QuestRepeatRule.NONE,
                         Instant.now().plus(365, ChronoUnit.DAYS)
+                )
+        );
+
+        SeedLevel1Quest.definitions().forEach(definition ->
+                map.put(
+                        definition.questCode(),
+                        SeedLevel1QuestBlueprintAdapter.toBlueprint(definition)
                 )
         );
 

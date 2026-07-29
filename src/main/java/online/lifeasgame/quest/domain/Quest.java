@@ -36,7 +36,7 @@ public class Quest extends AbstractTime {
     private String code;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
+    @Column(length = 20)
     private QuestCategory category;
 
     @Enumerated(EnumType.STRING)
@@ -113,7 +113,9 @@ public class Quest extends AbstractTime {
         );
         this.definitionVersion = definitionVersion;
         this.code = Guard.notBlank(code, "code").trim();
-        this.category = Guard.notNull(category, "category");
+        this.category = semanticCategory == null
+                ? Guard.notNull(category, "category")
+                : category;
         this.semanticCategory = semanticCategory;
         this.title = Guard.notNull(title, "title");
         this.descriptionMd = descriptionMd == null ? null : descriptionMd.trim();
@@ -206,6 +208,37 @@ public class Quest extends AbstractTime {
                 rewardProfileRef,
                 repeatRule,
                 null,
+                completionPolicy,
+                dueAt
+        );
+    }
+
+    public static Quest createDefinition(
+            String code,
+            int definitionVersion,
+            QuestSemanticCategory semanticCategory,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            QuestProgressSource progressSource,
+            RewardProfileRef rewardProfileRef,
+            QuestRepeatRule repeatPolicy,
+            QuestRoleTemplateRef roleTemplateRef,
+            QuestCompletionPolicy completionPolicy,
+            Instant dueAt
+    ) {
+        return createDefinition(
+                code,
+                definitionVersion,
+                null,
+                semanticCategory,
+                title,
+                descriptionMd,
+                target,
+                progressSource,
+                rewardProfileRef,
+                repeatPolicy,
+                roleTemplateRef,
                 completionPolicy,
                 dueAt
         );

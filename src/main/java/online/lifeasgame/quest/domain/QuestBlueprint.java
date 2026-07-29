@@ -149,6 +149,37 @@ public record QuestBlueprint(
     public static QuestBlueprint finalContract(
             QuestCode code,
             int definitionVersion,
+            QuestSemanticCategory semanticCategory,
+            QuestTitle title,
+            String descriptionMd,
+            QuestTarget target,
+            QuestProgressSource progressSource,
+            RewardProfileRef rewardProfileRef,
+            QuestRepeatRule repeatPolicy,
+            QuestRoleTemplateRef roleTemplateRef,
+            Instant dueAt,
+            QuestCompletionPolicy completionPolicy
+    ) {
+        return finalContract(
+                code,
+                definitionVersion,
+                null,
+                semanticCategory,
+                title,
+                descriptionMd,
+                target,
+                progressSource,
+                rewardProfileRef,
+                repeatPolicy,
+                roleTemplateRef,
+                dueAt,
+                completionPolicy
+        );
+    }
+
+    public static QuestBlueprint finalContract(
+            QuestCode code,
+            int definitionVersion,
             QuestCategory category,
             QuestSemanticCategory semanticCategory,
             QuestTitle title,

@@ -22,7 +22,12 @@ public enum QuestCode {
     EXERCISE_MINUTES_300("quest:exercise:minutes-300"),
     COLLECTION_HUNTER_10("quest:collection:hunter-10"),
     MEDIA_BINGE_5("quest:media:binge-5"),
-    INVENTORY_COLLECTOR_100("quest:inventory:collector-100");
+    INVENTORY_COLLECTOR_100("quest:inventory:collector-100"),
+    Q_RECORD_FIRST_TRACE("Q_RECORD_FIRST_TRACE"),
+    Q_RECORD_THREE_TRACES("Q_RECORD_THREE_TRACES"),
+    Q_RECORD_WEEKLY_LOOKBACK("Q_RECORD_WEEKLY_LOOKBACK"),
+    Q_GROWTH_ONE_FOCUS("Q_GROWTH_ONE_FOCUS"),
+    Q_RECOVERY_REST_TEN("Q_RECOVERY_REST_TEN");
 
     private final String value;
 
