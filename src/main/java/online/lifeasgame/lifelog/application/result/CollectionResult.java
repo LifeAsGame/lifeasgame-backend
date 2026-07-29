@@ -12,6 +12,7 @@ public final class CollectionResult {
 
     public record Created(
             Long id,
+            Long lifeLogId,
             Instant recordedAt
     ) {
     }

@@ -4,15 +4,18 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
-import online.lifeasgame.lifelog.domain.event.LifeLogType;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogRecord;
+import online.lifeasgame.lifelog.domain.record.LifeLogSourceType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -22,11 +25,34 @@ public class CollectionLogService {
 
     private final CollectionLogReader collectionLogReader;
     private final CollectionLogWriter collectionLogWriter;
+    private final LifeLogRecordService lifeLogRecordService;
     private final DomainEventPublisher domainEventPublisher;
-    private final Clock clock;
 
     @Transactional
     public CollectionResult.Created create(Long playerId, CollectionCommand.Create command) {
+        return create(
+                playerId,
+                command,
+                LifeLogEntryMode.FULL,
+                command.lifeLogMetadata()
+        );
+    }
+
+    @Transactional
+    public CollectionResult.Created createQuick(
+            Long playerId,
+            CollectionCommand.Create command,
+            LifeLogRecordMetadataCommand metadata
+    ) {
+        return create(playerId, command, LifeLogEntryMode.QUICK, metadata);
+    }
+
+    private CollectionResult.Created create(
+            Long playerId,
+            CollectionCommand.Create command,
+            LifeLogEntryMode entryMode,
+            LifeLogRecordMetadataCommand metadata
+    ) {
         Title title = Title.of(command.title(), command.originalTitle());
 
         CollectionLog saved = collectionLogWriter.create(
@@ -41,7 +67,14 @@ public class CollectionLogService {
                 )
         );
 
-        Instant occurredAt = clock.instant();
+        LifeLogRecord record = lifeLogRecordService.create(
+                playerId,
+                LifeLogSourceType.COLLECTION,
+                saved.getId(),
+                entryMode,
+                metadata
+        );
+        Instant occurredAt = record.getOccurredAt();
         domainEventPublisher.publishAll(List.of(
                 new CollectionLogged(
                         playerId,
@@ -50,16 +83,17 @@ public class CollectionLogService {
                         saved.getQuantity().value(),
                         occurredAt
                 ),
-                LifeLogRecorded.of(
+                LifeLogRecorded.from(
                         IdGenerator.newEventId(),
-                        playerId,
-                        saved.getId(),
-                        LifeLogType.COLLECTION,
-                        occurredAt
+                        record
                 )
         ));
 
-        return new CollectionResult.Created(saved.getId(), occurredAt);
+        return new CollectionResult.Created(
+                saved.getId(),
+                record.getId(),
+                occurredAt
+        );
     }
 
     @Transactional

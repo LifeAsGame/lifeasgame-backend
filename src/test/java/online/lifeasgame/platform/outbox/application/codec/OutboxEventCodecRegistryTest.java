@@ -13,8 +13,9 @@ import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
-import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -90,12 +91,18 @@ class OutboxEventCodecRegistryTest {
                     ),
                     new LifeLogRecorded(
                             "2a294fd2-1e08-49b9-a9f2-a3a4e3c17cb6",
+                            "LifeLogRecorded",
                             1,
+                            OCCURRED_AT,
                             197L,
                             52L,
-                            LifeLogType.EXERCISE,
+                            1,
+                            LifeLogSubtype.ACTIVITY,
+                            LifeLogEntryMode.FULL,
                             null,
-                            OCCURRED_AT
+                            null,
+                            null,
+                            null
                     ),
                     new MediaLogAdvanced(
                             197L,

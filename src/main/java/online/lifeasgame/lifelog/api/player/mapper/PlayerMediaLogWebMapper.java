@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.mapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerMediaLogRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerMediaLogResponse;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 
 import java.util.List;
@@ -34,7 +35,11 @@ public final class PlayerMediaLogWebMapper {
                 request.currentEpisode(),
                 request.totalEpisode(),
                 request.status(),
-                request.tags()
+                request.tags(),
+                new LifeLogRecordMetadataCommand(
+                        request.lifeLogSubtype(),
+                        request.reflectionScope()
+                )
         );
     }
 

@@ -13,9 +13,19 @@ public final class QuickRecordRequest {
 
     public record Create(
             @NotBlank String type,
+            String lifeLogSubtype,
+            String reflectionScope,
             @Valid PlayerCollectionRequest.Create collection,
             @Valid PlayerExerciseRequest.Create exercise,
             @Valid PlayerMediaLogRequest.Create media
     ) {
+        public Create(
+                String type,
+                PlayerCollectionRequest.Create collection,
+                PlayerExerciseRequest.Create exercise,
+                PlayerMediaLogRequest.Create media
+        ) {
+            this(type, null, null, collection, exercise, media);
+        }
     }
 }

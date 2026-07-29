@@ -38,7 +38,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V14까지 적용되고 final Quest category를 nullable로 보정한다")
+        @DisplayName("V1부터 V15까지 적용되고 canonical LifeLog header를 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -48,6 +48,7 @@ class FlywayMigrationTest {
             insertLegacyItemsWithoutCode();
             MigrateResult itemResult =
                     flyway(MigrationVersion.fromVersion("12")).migrate();
+            insertLegacyLifeLogs();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
@@ -55,12 +56,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(2);
+            assertThat(result.migrationsExecuted).isEqualTo(3);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14"
+                            "14", "15"
                     );
             assertThat(existingTables(
                     "users",
@@ -76,7 +77,8 @@ class FlywayMigrationTest {
                     "player_growth_changes",
                     "quest_signal_receipts",
                     "outbox_events",
-                    "quick_record_request_receipts"
+                    "quick_record_request_receipts",
+                    "life_log_records"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -91,7 +93,8 @@ class FlywayMigrationTest {
                     "player_growth_changes",
                     "quest_signal_receipts",
                     "outbox_events",
-                    "quick_record_request_receipts"
+                    "quick_record_request_receipts",
+                    "life_log_records"
             );
             assertThat(existingTables(
                     "quick_lifelog_entries",
@@ -224,6 +227,54 @@ class FlywayMigrationTest {
                     "quick_record_request_receipts",
                     "uq_quick_record_request_receipt_identity"
             )).containsExactly("player_id", "idempotency_key");
+            assertThat(uniqueIndexColumns(
+                    "life_log_records",
+                    "uq_life_log_record_source"
+            )).containsExactly("source_type", "source_id");
+            assertThat(lifeLogRecordColumnNames()).containsExactlyInAnyOrder(
+                    "id",
+                    "player_id",
+                    "source_type",
+                    "source_id",
+                    "source_definition_version",
+                    "subtype",
+                    "entry_mode",
+                    "reflection_scope",
+                    "period_key",
+                    "primary_role_id",
+                    "occurred_at",
+                    "created_at",
+                    "updated_at"
+            );
+            assertThat(lifeLogRecordColumnNames()).doesNotContain(
+                    "title",
+                    "body",
+                    "content",
+                    "memo",
+                    "tags",
+                    "attachment",
+                    "location"
+            );
+            assertThat(lifeLogRecordCheckConstraints()).containsExactlyInAnyOrder(
+                    "ck_life_log_record_source_type",
+                    "ck_life_log_record_definition_version",
+                    "ck_life_log_record_subtype",
+                    "ck_life_log_record_entry_mode",
+                    "ck_life_log_record_reflection_scope",
+                    "ck_life_log_record_reflection_pairing",
+                    "ck_life_log_record_non_reflection_metadata",
+                    "ck_life_log_record_primary_role"
+            );
+            assertThat(lifeLogRecordCount()).isZero();
+            insertCanonicalHeadersWithSameSourceId();
+            assertThat(canonicalLifeLogIds()).hasSize(2)
+                    .doesNotHaveDuplicates();
+            assertThatThrownBy(
+                    FlywayMigrationTest.this
+                            ::insertDuplicateCanonicalSource
+            ).isInstanceOfSatisfying(SQLException.class, exception ->
+                    assertThat(exception.getSQLState()).startsWith("23")
+            );
             assertThat(itemCodeColumn()).isEqualTo(new ItemCodeColumn("YES", 80));
             assertThat(uniqueIndexColumns("items", "uq_item_code"))
                     .containsExactly("code");
@@ -549,6 +600,161 @@ class FlywayMigrationTest {
                     )
                     """);
         }
+    }
+
+    private void insertLegacyLifeLogs() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO collection_logs (
+                        quantity_value,
+                        created_at,
+                        player_id,
+                        updated_at,
+                        title_value,
+                        category
+                    ) VALUES (
+                        1,
+                        CURRENT_TIMESTAMP(6),
+                        213,
+                        CURRENT_TIMESTAMP(6),
+                        'Legacy collection',
+                        'BOOK'
+                    )
+                    """);
+            statement.executeUpdate("""
+                    INSERT INTO exercise_logs (
+                        duration_minutes,
+                        exercised_on,
+                        created_at,
+                        player_id,
+                        updated_at,
+                        category
+                    ) VALUES (
+                        10,
+                        '2026-07-29',
+                        CURRENT_TIMESTAMP(6),
+                        213,
+                        CURRENT_TIMESTAMP(6),
+                        'WALKING'
+                    )
+                    """);
+        }
+    }
+
+    private List<String> lifeLogRecordColumnNames() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT column_name
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'life_log_records'
+                     ORDER BY ordinal_position
+                     """)) {
+            List<String> columns = new ArrayList<>();
+            while (resultSet.next()) {
+                columns.add(resultSet.getString("column_name"));
+            }
+            return columns;
+        }
+    }
+
+    private List<String> lifeLogRecordCheckConstraints()
+            throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT constraint_name
+                     FROM information_schema.table_constraints
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'life_log_records'
+                       AND constraint_type = 'CHECK'
+                     ORDER BY constraint_name
+                     """)) {
+            List<String> constraints = new ArrayList<>();
+            while (resultSet.next()) {
+                constraints.add(resultSet.getString("constraint_name"));
+            }
+            return constraints;
+        }
+    }
+
+    private int lifeLogRecordCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM life_log_records
+                     """)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private void insertCanonicalHeadersWithSameSourceId()
+            throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(canonicalHeaderInsert("COLLECTION"));
+            statement.executeUpdate(canonicalHeaderInsert("EXERCISE"));
+        }
+    }
+
+    private List<Long> canonicalLifeLogIds() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT id
+                     FROM life_log_records
+                     WHERE source_id = 1
+                     ORDER BY id
+                     """)) {
+            List<Long> ids = new ArrayList<>();
+            while (resultSet.next()) {
+                ids.add(resultSet.getLong("id"));
+            }
+            return ids;
+        }
+    }
+
+    private void insertDuplicateCanonicalSource() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(canonicalHeaderInsert("COLLECTION"));
+        }
+    }
+
+    private String canonicalHeaderInsert(String sourceType) {
+        return """
+                INSERT INTO life_log_records (
+                    player_id,
+                    source_type,
+                    source_id,
+                    source_definition_version,
+                    subtype,
+                    entry_mode,
+                    reflection_scope,
+                    period_key,
+                    primary_role_id,
+                    occurred_at,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    213,
+                    '%s',
+                    1,
+                    1,
+                    NULL,
+                    'FULL',
+                    NULL,
+                    NULL,
+                    NULL,
+                    CURRENT_TIMESTAMP(6),
+                    CURRENT_TIMESTAMP(6),
+                    CURRENT_TIMESTAMP(6)
+                )
+                """.formatted(sourceType);
     }
 
     private void insertLegacyItemsWithoutCode() throws SQLException {

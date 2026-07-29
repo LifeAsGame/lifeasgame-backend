@@ -12,6 +12,7 @@ public final class ExerciseResult {
 
     public record Created(
             Long id,
+            Long lifeLogId,
             Instant recordedAt
     ) {
     }

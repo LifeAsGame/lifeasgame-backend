@@ -16,6 +16,8 @@ public final class QuickRecordWebMapper {
     ) {
         return new QuickRecordCommand.Create(
                 request.type(),
+                request.lifeLogSubtype(),
+                request.reflectionScope(),
                 request.collection() == null
                         ? null
                         : PlayerCollectionWebMapper.toCreateCommand(

@@ -13,6 +13,7 @@ public final class MediaLogResult {
 
     public record Created(
             Long id,
+            Long lifeLogId,
             Instant recordedAt
     ) {
     }

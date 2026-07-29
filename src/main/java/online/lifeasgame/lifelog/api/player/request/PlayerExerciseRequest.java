@@ -17,8 +17,30 @@ public final class PlayerExerciseRequest {
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
             @NotNull LocalDate exercisedOn,
-            String memo
-    ) {}
+            String memo,
+            String lifeLogSubtype,
+            String reflectionScope
+    ) {
+        public Create(
+                String category,
+                Integer durationMinutes,
+                Double distanceKm,
+                Integer calories,
+                LocalDate exercisedOn,
+                String memo
+        ) {
+            this(
+                    category,
+                    durationMinutes,
+                    distanceKm,
+                    calories,
+                    exercisedOn,
+                    memo,
+                    null,
+                    null
+            );
+        }
+    }
 
     public record Update(
             String category,

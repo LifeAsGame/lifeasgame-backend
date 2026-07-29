@@ -85,9 +85,10 @@ public class QuickRecordService {
         return switch (selected.type()) {
             case COLLECTION -> {
                 CollectionResult.Created created =
-                        collectionLogService.create(
+                        collectionLogService.createQuick(
                                 playerId,
-                                selected.collection()
+                                selected.collection(),
+                                selected.lifeLogMetadata()
                         );
                 yield new SourceSnapshot(
                         LifeLogType.COLLECTION,
@@ -97,9 +98,10 @@ public class QuickRecordService {
             }
             case EXERCISE -> {
                 ExerciseResult.Created created =
-                        exerciseLogService.create(
+                        exerciseLogService.createQuick(
                                 playerId,
-                                selected.exercise()
+                                selected.exercise(),
+                                selected.lifeLogMetadata()
                         );
                 yield new SourceSnapshot(
                         LifeLogType.EXERCISE,
@@ -109,9 +111,10 @@ public class QuickRecordService {
             }
             case MEDIA -> {
                 MediaLogResult.Created created =
-                        mediaLogService.create(
+                        mediaLogService.createQuick(
                                 playerId,
-                                selected.media()
+                                selected.media(),
+                                selected.lifeLogMetadata()
                         );
                 yield new SourceSnapshot(
                         LifeLogType.MEDIA,

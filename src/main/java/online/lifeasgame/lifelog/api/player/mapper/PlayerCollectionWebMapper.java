@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.mapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerCollectionResponse;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 
 import java.util.List;
@@ -33,7 +34,11 @@ public final class PlayerCollectionWebMapper {
                 request.quantity(),
                 request.conditionNote(),
                 request.acquiredFrom(),
-                request.tags()
+                request.tags(),
+                new LifeLogRecordMetadataCommand(
+                        request.lifeLogSubtype(),
+                        request.reflectionScope()
+                )
         );
     }
 

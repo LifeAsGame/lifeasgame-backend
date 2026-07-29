@@ -4,6 +4,7 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 
@@ -19,10 +20,21 @@ public final class QuickRecordCommand {
 
     public record Create(
             String type,
+            String lifeLogSubtype,
+            String reflectionScope,
             CollectionCommand.Create collection,
             ExerciseCommand.Create exercise,
             MediaLogCommand.Create media
     ) {
+        public Create(
+                String type,
+                CollectionCommand.Create collection,
+                ExerciseCommand.Create exercise,
+                MediaLogCommand.Create media
+        ) {
+            this(type, null, null, collection, exercise, media);
+        }
+
         public Create {
             collection = copy(collection);
             exercise = copy(exercise);
@@ -43,8 +55,21 @@ public final class QuickRecordCommand {
                     && media == null) {
                 throw invalid();
             }
+            LifeLogRecordMetadataCommand nestedMetadata =
+                    switch (selectedType) {
+                        case COLLECTION -> collection.lifeLogMetadata();
+                        case EXERCISE -> exercise.lifeLogMetadata();
+                        case MEDIA -> media.lifeLogMetadata();
+                    };
+            if (nestedMetadata != null && nestedMetadata.isPresent()) {
+                throw invalid();
+            }
             return new Selected(
                     selectedType,
+                    new LifeLogRecordMetadataCommand(
+                            lifeLogSubtype,
+                            reflectionScope
+                    ),
                     collection,
                     exercise,
                     media
@@ -54,6 +79,7 @@ public final class QuickRecordCommand {
 
     public record Selected(
             LifeLogType type,
+            LifeLogRecordMetadataCommand lifeLogMetadata,
             CollectionCommand.Create collection,
             ExerciseCommand.Create exercise,
             MediaLogCommand.Create media
@@ -90,7 +116,8 @@ public final class QuickRecordCommand {
                 value.quantity(),
                 value.conditionNote(),
                 value.acquiredFrom(),
-                copyTags(value.tags())
+                copyTags(value.tags()),
+                value.lifeLogMetadata()
         );
     }
 
@@ -106,7 +133,8 @@ public final class QuickRecordCommand {
                 value.distanceKm(),
                 value.calories(),
                 value.exercisedOn(),
-                value.memo()
+                value.memo(),
+                value.lifeLogMetadata()
         );
     }
 
@@ -123,7 +151,8 @@ public final class QuickRecordCommand {
                 value.currentEpisode(),
                 value.totalEpisode(),
                 value.status(),
-                copyTags(value.tags())
+                copyTags(value.tags()),
+                value.lifeLogMetadata()
         );
     }
 

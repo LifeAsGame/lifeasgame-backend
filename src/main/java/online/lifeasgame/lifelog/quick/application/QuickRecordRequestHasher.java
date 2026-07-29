@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.quick.application;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.domain.CollectionCategory;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.MediaCategory;
@@ -24,6 +25,7 @@ public class QuickRecordRequestHasher {
     public String hash(QuickRecordCommand.Selected selected) {
         StringBuilder canonical = new StringBuilder();
         appendText(canonical, "type", selected.type().name());
+        appendLifeLogMetadata(canonical, selected.lifeLogMetadata());
         switch (selected.type()) {
             case COLLECTION ->
                     appendCollection(canonical, selected.collection());
@@ -32,6 +34,31 @@ public class QuickRecordRequestHasher {
             case MEDIA -> appendMedia(canonical, selected.media());
         }
         return sha256(canonical.toString());
+    }
+
+    private void appendLifeLogMetadata(
+            StringBuilder target,
+            LifeLogRecordMetadataCommand metadata
+    ) {
+        if (!metadata.isPresent()) {
+            return;
+        }
+        LifeLogRecordMetadataCommand.Resolved resolved =
+                metadata.resolve();
+        appendOptionalText(
+                target,
+                "lifeLogSubtype",
+                resolved.subtype() == null
+                        ? null
+                        : resolved.subtype().name()
+        );
+        appendOptionalText(
+                target,
+                "reflectionScope",
+                resolved.reflectionScope() == null
+                        ? null
+                        : resolved.reflectionScope().name()
+        );
     }
 
     private void appendCollection(

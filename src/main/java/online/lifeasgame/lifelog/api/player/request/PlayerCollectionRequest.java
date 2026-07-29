@@ -18,8 +18,31 @@ public final class PlayerCollectionRequest {
             @NotNull @Min(1) Integer quantity,
             String conditionNote,
             String acquiredFrom,
-            Set<String> tags
+            Set<String> tags,
+            String lifeLogSubtype,
+            String reflectionScope
     ) {
+        public Create(
+                String category,
+                String title,
+                String originalTitle,
+                Integer quantity,
+                String conditionNote,
+                String acquiredFrom,
+                Set<String> tags
+        ) {
+            this(
+                    category,
+                    title,
+                    originalTitle,
+                    quantity,
+                    conditionNote,
+                    acquiredFrom,
+                    tags,
+                    null,
+                    null
+            );
+        }
     }
 
     public record Update(
