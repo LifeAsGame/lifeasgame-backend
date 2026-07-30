@@ -140,6 +140,42 @@ class LifeLogRecordedCodecTest {
         assertCodecFailure("{\"eventId\":\"incomplete\"}");
     }
 
+    @Test
+    @DisplayName("new와 legacy payload의 int 범위 밖 eventVersion을 거부한다")
+    void rejectsOutOfRangeEventVersion() {
+        String newPayload = registry.encode(contentReadyEvent()).payload()
+                .replace(
+                        "\"eventVersion\":1",
+                        "\"eventVersion\":4294967297"
+                );
+        String legacyPayload = """
+                {
+                  "eventId": "d05c05d8-75a8-436d-b2f6-e0d63107927d",
+                  "eventVersion": 4294967297,
+                  "playerId": 197,
+                  "lifeLogId": 51,
+                  "lifeLogType": "EXERCISE",
+                  "primaryRoleId": null,
+                  "occurredAt": "2026-07-24T09:15:30.123456Z"
+                }
+                """;
+
+        assertCodecFailure(newPayload);
+        assertCodecFailure(legacyPayload);
+    }
+
+    @Test
+    @DisplayName("int 범위 안의 unsupported eventVersion도 stable codec error로 거부한다")
+    void rejectsUnsupportedInRangeEventVersion() {
+        String payload = registry.encode(contentReadyEvent()).payload()
+                .replace(
+                        "\"eventVersion\":1",
+                        "\"eventVersion\":2147483647"
+                );
+
+        assertCodecFailure(payload);
+    }
+
     private void assertCodecFailure(String payload) {
         assertThatThrownBy(() -> registry.decode(
                 "lifelog.recorded.v1",

@@ -202,7 +202,9 @@ final class LifeLogRecordedOutboxCodec
 
     private static int requiredInt(JsonNode root, String field) {
         JsonNode value = root.get(field);
-        if (value == null || !value.isIntegralNumber()) {
+        if (value == null
+                || !value.isIntegralNumber()
+                || !value.canConvertToInt()) {
             throw new IllegalArgumentException(field + " must be integer");
         }
         return value.intValue();

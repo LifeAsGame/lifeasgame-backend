@@ -266,6 +266,7 @@ class FlywayMigrationTest {
                     "ck_life_log_record_primary_role"
             );
             assertThat(lifeLogRecordCount()).isZero();
+            assertLifeLogRecordReflectionCheckContract();
             insertCanonicalHeadersWithSameSourceId();
             assertThat(canonicalLifeLogIds()).hasSize(2)
                     .doesNotHaveDuplicates();
@@ -689,6 +690,108 @@ class FlywayMigrationTest {
                      """)) {
             resultSet.next();
             return resultSet.getInt(1);
+        }
+    }
+
+    private void assertLifeLogRecordReflectionCheckContract()
+            throws SQLException {
+        insertLifeLogRecord(21301, null, null, null);
+        insertLifeLogRecord(21302, "REFLECTION", null, null);
+        insertLifeLogRecord(
+                21303,
+                "REFLECTION",
+                "WEEKLY_LOOKBACK",
+                "2026-W31"
+        );
+        insertLifeLogRecord(21304, "ACTIVITY", null, null);
+        assertThat(lifeLogRecordCount()).isEqualTo(4);
+
+        assertLifeLogRecordInsertRejected(
+                21305,
+                "REFLECTION",
+                "WEEKLY_LOOKBACK",
+                null
+        );
+        assertLifeLogRecordInsertRejected(
+                21306,
+                null,
+                "WEEKLY_LOOKBACK",
+                null
+        );
+        assertLifeLogRecordInsertRejected(
+                21307,
+                "ACTIVITY",
+                "WEEKLY_LOOKBACK",
+                "2026-W31"
+        );
+        assertLifeLogRecordInsertRejected(
+                21308,
+                "REFLECTION",
+                "WEEKLY_LOOKBACK",
+                "invalid"
+        );
+        assertThat(lifeLogRecordCount()).isEqualTo(4);
+    }
+
+    private void assertLifeLogRecordInsertRejected(
+            long sourceId,
+            String subtype,
+            String reflectionScope,
+            String periodKey
+    ) throws SQLException {
+        int countBefore = lifeLogRecordCount();
+
+        assertThatThrownBy(() -> insertLifeLogRecord(
+                sourceId,
+                subtype,
+                reflectionScope,
+                periodKey
+        )).isInstanceOf(SQLException.class);
+
+        assertThat(lifeLogRecordCount()).isEqualTo(countBefore);
+    }
+
+    private void insertLifeLogRecord(
+            long sourceId,
+            String subtype,
+            String reflectionScope,
+            String periodKey
+    ) throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             var statement = connection.prepareStatement("""
+                     INSERT INTO life_log_records (
+                         player_id,
+                         source_type,
+                         source_id,
+                         source_definition_version,
+                         subtype,
+                         entry_mode,
+                         reflection_scope,
+                         period_key,
+                         primary_role_id,
+                         occurred_at,
+                         created_at,
+                         updated_at
+                     ) VALUES (
+                         213,
+                         'COLLECTION',
+                         ?,
+                         1,
+                         ?,
+                         'FULL',
+                         ?,
+                         ?,
+                         NULL,
+                         CURRENT_TIMESTAMP(6),
+                         CURRENT_TIMESTAMP(6),
+                         CURRENT_TIMESTAMP(6)
+                     )
+                     """)) {
+            statement.setLong(1, sourceId);
+            statement.setString(2, subtype);
+            statement.setString(3, reflectionScope);
+            statement.setString(4, periodKey);
+            statement.executeUpdate();
         }
     }
 

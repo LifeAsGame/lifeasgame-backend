@@ -382,15 +382,21 @@ class LifeLogRecordedOutboxIntegrationTest {
         assertThat(event.sourceDefinitionVersion()).isEqualTo(1);
         assertThat(event.entryMode()).isEqualTo(LifeLogEntryMode.FULL);
         assertThat(event.legacyLifeLogType()).isNull();
-        if (type == LifeLogType.COLLECTION) {
-            assertThat(event.subtype()).isNull();
-            assertThat(event.isContentReady()).isFalse();
-        } else {
-            assertThat(event.subtype()).isIn(
-                    LifeLogSubtype.ACTIVITY,
-                    LifeLogSubtype.STUDY
-            );
-            assertThat(event.isContentReady()).isTrue();
+        switch (type) {
+            case COLLECTION -> {
+                assertThat(event.subtype()).isNull();
+                assertThat(event.isContentReady()).isFalse();
+            }
+            case EXERCISE -> {
+                assertThat(event.subtype())
+                        .isEqualTo(LifeLogSubtype.ACTIVITY);
+                assertThat(event.isContentReady()).isTrue();
+            }
+            case MEDIA -> {
+                assertThat(event.subtype())
+                        .isEqualTo(LifeLogSubtype.STUDY);
+                assertThat(event.isContentReady()).isTrue();
+            }
         }
         assertThat(event.primaryRoleId()).isNull();
         assertThat(event.occurredAt()).isEqualTo(OCCURRED_AT);

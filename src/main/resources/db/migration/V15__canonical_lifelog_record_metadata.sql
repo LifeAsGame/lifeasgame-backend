@@ -45,13 +45,18 @@ CREATE TABLE life_log_records (
         )
         OR
         (
-            subtype = 'REFLECTION'
+            subtype IS NOT NULL
+            AND subtype = 'REFLECTION'
             AND reflection_scope = 'WEEKLY_LOOKBACK'
+            AND period_key IS NOT NULL
             AND period_key REGEXP '^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-3])$'
         )
     ),
     CONSTRAINT ck_life_log_record_non_reflection_metadata CHECK (
-        subtype = 'REFLECTION'
+        (
+            subtype IS NOT NULL
+            AND subtype = 'REFLECTION'
+        )
         OR (
             reflection_scope IS NULL
             AND period_key IS NULL
