@@ -1,6 +1,7 @@
 package online.lifeasgame.lifelog.application.command;
 
 import jakarta.validation.constraints.Min;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 
 import java.util.Set;
 
@@ -16,8 +17,29 @@ public final class MediaLogCommand {
             Integer currentEpisode,
             Integer totalEpisode,
             String status,
-            Set<String> tags
+            Set<String> tags,
+            LifeLogRecordMetadataCommand lifeLogMetadata
     ) {
+        public Create(
+                String category,
+                String title,
+                String originalTitle,
+                Integer currentEpisode,
+                Integer totalEpisode,
+                String status,
+                Set<String> tags
+        ) {
+            this(
+                    category,
+                    title,
+                    originalTitle,
+                    currentEpisode,
+                    totalEpisode,
+                    status,
+                    tags,
+                    LifeLogRecordMetadataCommand.none()
+            );
+        }
     }
 
     public record Rate(Double score) {

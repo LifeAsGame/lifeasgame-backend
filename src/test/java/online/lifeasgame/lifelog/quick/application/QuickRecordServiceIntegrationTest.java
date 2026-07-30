@@ -9,6 +9,10 @@ import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogRecord;
+import online.lifeasgame.lifelog.domain.record.LifeLogSourceType;
+import online.lifeasgame.lifelog.domain.record.repository.LifeLogRecordRepository;
 import online.lifeasgame.lifelog.quick.domain.QuickRecordRequestReceipt;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 import online.lifeasgame.lifelog.quick.domain.repository.QuickRecordRequestReceiptRepository;
@@ -106,6 +110,9 @@ class QuickRecordServiceIntegrationTest {
     private FailingQuickRecordReceiptRepository receiptRepository;
 
     @Autowired
+    private FailingLifeLogRecordRepository lifeLogRecordRepository;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     private ExecutorService executor;
@@ -115,12 +122,14 @@ class QuickRecordServiceIntegrationTest {
         jdbcTemplate.update("DELETE FROM quick_record_request_receipts");
         jdbcTemplate.update("DELETE FROM collection_log_tags");
         jdbcTemplate.update("DELETE FROM media_log_tags");
+        jdbcTemplate.update("DELETE FROM life_log_records");
         jdbcTemplate.update("DELETE FROM collection_logs");
         jdbcTemplate.update("DELETE FROM exercise_logs");
         jdbcTemplate.update("DELETE FROM media_logs");
         jdbcTemplate.update("DELETE FROM outbox_events");
         eventPublisher.reset();
         receiptRepository.reset();
+        lifeLogRecordRepository.reset();
         executor = Executors.newFixedThreadPool(2);
     }
 
@@ -146,6 +155,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(count("exercise_logs")).isZero();
         assertThat(count("media_logs")).isZero();
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount(COLLECTION_ALIAS)).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(2);
@@ -174,6 +184,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(count("exercise_logs")).isEqualTo(1);
         assertThat(count("media_logs")).isZero();
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount(EXERCISE_ALIAS)).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(2);
@@ -195,6 +206,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(count("media_logs")).isEqualTo(1);
         assertThat(count("media_log_tags")).isEqualTo(1);
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount(MEDIA_ADVANCED_ALIAS)).isZero();
         assertThat(outboxCount()).isEqualTo(1);
@@ -222,6 +234,7 @@ class QuickRecordServiceIntegrationTest {
         assertSameSnapshot(first, replay);
         assertThat(count("collection_logs")).isEqualTo(1);
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount(COLLECTION_ALIAS)).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(2);
@@ -256,6 +269,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(count("collection_logs")).isEqualTo(1);
         assertThat(count("media_logs")).isZero();
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(2);
     }
 
@@ -276,6 +290,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(first.sourceId()).isNotEqualTo(second.sourceId());
         assertThat(count("media_logs")).isEqualTo(2);
         assertThat(receiptCount()).isEqualTo(2);
+        assertThat(count("life_log_records")).isEqualTo(2);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(2);
     }
 
@@ -304,6 +319,7 @@ class QuickRecordServiceIntegrationTest {
         assertSameSnapshot(results.getFirst(), results.getLast());
         assertThat(count("media_logs")).isEqualTo(1);
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(1);
     }
@@ -344,6 +360,7 @@ class QuickRecordServiceIntegrationTest {
                 .isIn("Concurrent first", "Concurrent second");
         assertThat(count("collection_logs")).isEqualTo(1);
         assertThat(receiptCount()).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
         assertThat(outboxCount(COLLECTION_ALIAS)).isEqualTo(1);
         assertThat(outboxCount()).isEqualTo(2);
@@ -389,6 +406,87 @@ class QuickRecordServiceIntegrationTest {
                 .hasMessage("forced outbox failure");
 
         assertNoQuickRecordMutation();
+    }
+
+    @Test
+    @DisplayName("canonical header 저장 실패는 Source와 Receipt/Outbox를 함께 rollback한다")
+    void rollsBackHeaderFailure() {
+        lifeLogRecordRepository.failNext();
+
+        assertThatThrownBy(() -> quickRecordService.record(
+                PLAYER_ID,
+                "header-failure",
+                mediaCommand("Header rollback")
+        )).isInstanceOf(IllegalStateException.class)
+                .hasMessage("forced header failure");
+
+        assertNoQuickRecordMutation();
+    }
+
+    @Test
+    @DisplayName("Content-ready Quick metadata는 QUICK weekly Snapshot으로 저장한다")
+    void recordsContentReadyWeeklyMetadata() throws Exception {
+        QuickRecordCommand.Create command = new QuickRecordCommand.Create(
+                "MEDIA",
+                "REFLECTION",
+                "WEEKLY_LOOKBACK",
+                null,
+                null,
+                new MediaLogCommand.Create(
+                        "MOVIE",
+                        "Weekly reflection",
+                        null,
+                        0,
+                        1,
+                        "PLANNED",
+                        Set.of()
+                )
+        );
+
+        QuickRecordResult.Recorded result = quickRecordService.record(
+                PLAYER_ID,
+                "weekly-reflection",
+                command
+        );
+        QuickRecordResult.Recorded replay = quickRecordService.record(
+                PLAYER_ID,
+                "weekly-reflection",
+                command
+        );
+        QuickRecordCommand.Create changedMetadata =
+                new QuickRecordCommand.Create(
+                        "MEDIA",
+                        "STUDY",
+                        null,
+                        null,
+                        null,
+                        command.media()
+                );
+        assertConflict(() -> quickRecordService.record(
+                PLAYER_ID,
+                "weekly-reflection",
+                changedMetadata
+        ));
+        JsonNode json = recordedPayload();
+
+        assertThat(replay.replay()).isTrue();
+        assertSameSnapshot(result, replay);
+        assertThat(count("life_log_records")).isEqualTo(1);
+        assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
+        assertThat(json.get("lifeLogId").asLong())
+                .isEqualTo(headerId(result));
+        assertThat(json.get("sourceDefinitionVersion").asInt())
+                .isEqualTo(1);
+        assertThat(json.get("subtype").asText())
+                .isEqualTo("REFLECTION");
+        assertThat(json.get("entryMode").asText())
+                .isEqualTo(LifeLogEntryMode.QUICK.name());
+        assertThat(json.get("reflectionScope").asText())
+                .isEqualTo("WEEKLY_LOOKBACK");
+        assertThat(json.get("periodKey").asText())
+                .isEqualTo("2026-W30");
+        assertThat(json.has("lifeLogType")).isFalse();
+        assertThat(json.has("sourceType")).isFalse();
     }
 
     @Test
@@ -489,6 +587,7 @@ class QuickRecordServiceIntegrationTest {
         assertThat(count("collection_logs")).isZero();
         assertThat(count("exercise_logs")).isZero();
         assertThat(count("media_logs")).isZero();
+        assertThat(count("life_log_records")).isZero();
         assertThat(receiptCount()).isZero();
         assertThat(outboxCount()).isZero();
     }
@@ -532,6 +631,25 @@ class QuickRecordServiceIntegrationTest {
     private void assertRecordedPayload(
             QuickRecordResult.Recorded result
     ) throws Exception {
+        JsonNode json = recordedPayload();
+        assertThat(json.get("eventType").asText())
+                .isEqualTo("LifeLogRecorded");
+        assertThat(json.get("eventVersion").asInt()).isEqualTo(1);
+        assertThat(json.get("playerId").asLong()).isEqualTo(PLAYER_ID);
+        assertThat(json.get("lifeLogId").asLong())
+                .isEqualTo(headerId(result));
+        assertThat(json.get("sourceDefinitionVersion").asInt())
+                .isEqualTo(1);
+        assertThat(json.get("subtype").isNull()).isTrue();
+        assertThat(json.get("entryMode").asText())
+                .isEqualTo(LifeLogEntryMode.QUICK.name());
+        assertThat(json.has("lifeLogType")).isFalse();
+        assertThat(json.has("sourceType")).isFalse();
+        assertThat(json.get("occurredAt").asText())
+                .isEqualTo(RECORDED_AT.toString());
+    }
+
+    private JsonNode recordedPayload() throws Exception {
         String payload = jdbcTemplate.queryForObject(
                 """
                 SELECT payload
@@ -541,14 +659,21 @@ class QuickRecordServiceIntegrationTest {
                 String.class,
                 RECORDED_ALIAS
         );
-        JsonNode json = objectMapper.readTree(payload);
-        assertThat(json.get("playerId").asLong()).isEqualTo(PLAYER_ID);
-        assertThat(json.get("lifeLogId").asLong())
-                .isEqualTo(result.sourceId());
-        assertThat(json.get("lifeLogType").asText())
-                .isEqualTo(result.sourceType().name());
-        assertThat(json.get("occurredAt").asText())
-                .isEqualTo(RECORDED_AT.toString());
+        return objectMapper.readTree(payload);
+    }
+
+    private Long headerId(QuickRecordResult.Recorded result) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT id
+                FROM life_log_records
+                WHERE source_type = ?
+                  AND source_id = ?
+                """,
+                Long.class,
+                result.sourceType().name(),
+                result.sourceId()
+        );
     }
 
     private int count(String table) {
@@ -656,6 +781,15 @@ class QuickRecordServiceIntegrationTest {
         ) {
             return new FailingQuickRecordReceiptRepository(delegate);
         }
+
+        @Bean
+        @Primary
+        FailingLifeLogRecordRepository lifeLogRecordRepository(
+                @Qualifier("lifeLogRecordRepositoryAdapter")
+                LifeLogRecordRepository delegate
+        ) {
+            return new FailingLifeLogRecordRepository(delegate);
+        }
     }
 
     static class FailingDomainEventPublisher
@@ -745,6 +879,45 @@ class QuickRecordServiceIntegrationTest {
 
         void reset() {
             failNextCompletion.set(false);
+        }
+    }
+
+    static class FailingLifeLogRecordRepository
+            implements LifeLogRecordRepository {
+
+        private final LifeLogRecordRepository delegate;
+        private final AtomicBoolean failNext = new AtomicBoolean();
+
+        FailingLifeLogRecordRepository(
+                LifeLogRecordRepository delegate
+        ) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public LifeLogRecord saveAndFlush(LifeLogRecord record) {
+            if (failNext.getAndSet(false)) {
+                throw new IllegalStateException(
+                        "forced header failure"
+                );
+            }
+            return delegate.saveAndFlush(record);
+        }
+
+        @Override
+        public Optional<LifeLogRecord> findBySource(
+                LifeLogSourceType sourceType,
+                Long sourceId
+        ) {
+            return delegate.findBySource(sourceType, sourceId);
+        }
+
+        void failNext() {
+            failNext.set(true);
+        }
+
+        void reset() {
+            failNext.set(false);
         }
     }
 }

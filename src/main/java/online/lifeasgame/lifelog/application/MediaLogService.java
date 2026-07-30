@@ -4,15 +4,18 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
-import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogRecord;
+import online.lifeasgame.lifelog.domain.record.LifeLogSourceType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -22,11 +25,34 @@ public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
     private final MediaLogWriter mediaLogWriter;
+    private final LifeLogRecordService lifeLogRecordService;
     private final DomainEventPublisher domainEventPublisher;
-    private final Clock clock;
 
     @Transactional
     public MediaLogResult.Created create(Long playerId, MediaLogCommand.Create command) {
+        return create(
+                playerId,
+                command,
+                LifeLogEntryMode.FULL,
+                command.lifeLogMetadata()
+        );
+    }
+
+    @Transactional
+    public MediaLogResult.Created createQuick(
+            Long playerId,
+            MediaLogCommand.Create command,
+            LifeLogRecordMetadataCommand metadata
+    ) {
+        return create(playerId, command, LifeLogEntryMode.QUICK, metadata);
+    }
+
+    private MediaLogResult.Created create(
+            Long playerId,
+            MediaLogCommand.Create command,
+            LifeLogEntryMode entryMode,
+            LifeLogRecordMetadataCommand metadata
+    ) {
         MediaLog saved = mediaLogWriter.create(
                 MediaLog.create(
                         playerId,
@@ -38,18 +64,26 @@ public class MediaLogService {
                 )
         );
 
-        Instant recordedAt = clock.instant();
+        LifeLogRecord record = lifeLogRecordService.create(
+                playerId,
+                LifeLogSourceType.MEDIA,
+                saved.getId(),
+                entryMode,
+                metadata
+        );
+        Instant recordedAt = record.getOccurredAt();
         domainEventPublisher.publish(
-                LifeLogRecorded.of(
+                LifeLogRecorded.from(
                         IdGenerator.newEventId(),
-                        playerId,
-                        saved.getId(),
-                        LifeLogType.MEDIA,
-                        recordedAt
+                        record
                 )
         );
 
-        return new MediaLogResult.Created(saved.getId(), recordedAt);
+        return new MediaLogResult.Created(
+                saved.getId(),
+                record.getId(),
+                recordedAt
+        );
     }
 
     @Transactional

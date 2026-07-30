@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.mapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerExerciseResponse;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 
 import java.time.LocalDate;
@@ -34,7 +35,11 @@ public final class PlayerExerciseWebMapper {
                 request.distanceKm(),
                 request.calories(),
                 request.exercisedOn(),
-                request.memo()
+                request.memo(),
+                new LifeLogRecordMetadataCommand(
+                        request.lifeLogSubtype(),
+                        request.reflectionScope()
+                )
         );
     }
 

@@ -16,8 +16,31 @@ public final class PlayerMediaLogRequest {
             @Min(0) Integer currentEpisode,
             @Min(1) Integer totalEpisode,
             @NotBlank String status,
-            Set<String> tags
+            Set<String> tags,
+            String lifeLogSubtype,
+            String reflectionScope
     ) {
+        public Create(
+                String category,
+                String title,
+                String originalTitle,
+                Integer currentEpisode,
+                Integer totalEpisode,
+                String status,
+                Set<String> tags
+        ) {
+            this(
+                    category,
+                    title,
+                    originalTitle,
+                    currentEpisode,
+                    totalEpisode,
+                    status,
+                    tags,
+                    null,
+                    null
+            );
+        }
     }
 
     public record Update(

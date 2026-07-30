@@ -63,11 +63,7 @@ public class OutboxEventCodecRegistry {
                         ExerciseLogged.class,
                         objectMapper
                 ),
-                codec(
-                        "lifelog.recorded.v1",
-                        LifeLogRecorded.class,
-                        objectMapper
-                ),
+                new LifeLogRecordedOutboxCodec(objectMapper),
                 codec(
                         "lifelog.media-advanced.v1",
                         MediaLogAdvanced.class,

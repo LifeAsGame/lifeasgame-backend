@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
-import online.lifeasgame.lifelog.domain.event.LifeLogType;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogRecord;
+import online.lifeasgame.lifelog.domain.record.LifeLogSourceType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -24,11 +27,34 @@ public class ExerciseLogService {
 
     private final ExerciseLogReader exerciseLogReader;
     private final ExerciseLogWriter exerciseLogWriter;
+    private final LifeLogRecordService lifeLogRecordService;
     private final DomainEventPublisher domainEventPublisher;
-    private final Clock clock;
 
     @Transactional
     public ExerciseResult.Created create(Long playerId, ExerciseCommand.Create command) {
+        return create(
+                playerId,
+                command,
+                LifeLogEntryMode.FULL,
+                command.lifeLogMetadata()
+        );
+    }
+
+    @Transactional
+    public ExerciseResult.Created createQuick(
+            Long playerId,
+            ExerciseCommand.Create command,
+            LifeLogRecordMetadataCommand metadata
+    ) {
+        return create(playerId, command, LifeLogEntryMode.QUICK, metadata);
+    }
+
+    private ExerciseResult.Created create(
+            Long playerId,
+            ExerciseCommand.Create command,
+            LifeLogEntryMode entryMode,
+            LifeLogRecordMetadataCommand metadata
+    ) {
         ExerciseLog saved = exerciseLogWriter.create(
                 ExerciseLog.create(
                         playerId,
@@ -39,7 +65,14 @@ public class ExerciseLogService {
                 )
         );
 
-        Instant occurredAt = clock.instant();
+        LifeLogRecord record = lifeLogRecordService.create(
+                playerId,
+                LifeLogSourceType.EXERCISE,
+                saved.getId(),
+                entryMode,
+                metadata
+        );
+        Instant occurredAt = record.getOccurredAt();
         domainEventPublisher.publishAll(List.of(
                 new ExerciseLogged(
                         playerId,
@@ -50,16 +83,17 @@ public class ExerciseLogService {
                         saved.getMetrics().calories(),
                         occurredAt
                 ),
-                LifeLogRecorded.of(
+                LifeLogRecorded.from(
                         IdGenerator.newEventId(),
-                        playerId,
-                        saved.getId(),
-                        LifeLogType.EXERCISE,
-                        occurredAt
+                        record
                 )
         ));
 
-        return new ExerciseResult.Created(saved.getId(), occurredAt);
+        return new ExerciseResult.Created(
+                saved.getId(),
+                record.getId(),
+                occurredAt
+        );
     }
 
     @Transactional

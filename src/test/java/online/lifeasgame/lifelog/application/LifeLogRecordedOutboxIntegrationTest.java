@@ -6,8 +6,11 @@ import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.platform.outbox.OutboxProperties;
 import online.lifeasgame.platform.outbox.application.OutboxRelayResult;
 import online.lifeasgame.platform.outbox.application.OutboxRelayScheduler;
@@ -61,12 +64,17 @@ class LifeLogRecordedOutboxIntegrationTest {
             Instant.parse("2026-07-24T11:00:00.123456Z");
     private static final Set<String> PAYLOAD_FIELDS = Set.of(
             "eventId",
+            "eventType",
             "eventVersion",
+            "occurredAt",
             "playerId",
             "lifeLogId",
-            "lifeLogType",
-            "primaryRoleId",
-            "occurredAt"
+            "sourceDefinitionVersion",
+            "subtype",
+            "entryMode",
+            "reflectionScope",
+            "periodKey",
+            "primaryRoleId"
     );
     private static final List<String> FORBIDDEN_FIELDS = List.of(
             "title",
@@ -143,6 +151,7 @@ class LifeLogRecordedOutboxIntegrationTest {
     void setUp() {
         jdbcTemplate.update("DELETE FROM collection_log_tags");
         jdbcTemplate.update("DELETE FROM media_log_tags");
+        jdbcTemplate.update("DELETE FROM life_log_records");
         jdbcTemplate.update("DELETE FROM collection_logs");
         jdbcTemplate.update("DELETE FROM exercise_logs");
         jdbcTemplate.update("DELETE FROM media_logs");
@@ -165,6 +174,7 @@ class LifeLogRecordedOutboxIntegrationTest {
         ).id();
 
         assertThat(count("collection_logs")).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(countByAlias()).isEqualTo(1);
         assertRecorded(sourceId, LifeLogType.COLLECTION);
         assertThat(countByAlias("lifelog.collection-logged.v1"))
@@ -180,6 +190,7 @@ class LifeLogRecordedOutboxIntegrationTest {
         ).id();
 
         assertThat(count("exercise_logs")).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(countByAlias()).isEqualTo(1);
         assertRecorded(sourceId, LifeLogType.EXERCISE);
         assertThat(countByAlias("lifelog.exercise-logged.v1"))
@@ -195,6 +206,7 @@ class LifeLogRecordedOutboxIntegrationTest {
         ).id();
 
         assertThat(count("media_logs")).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
         assertThat(countByAlias()).isEqualTo(1);
         assertRecorded(sourceId, LifeLogType.MEDIA);
         assertThat(count("outbox_events")).isEqualTo(1);
@@ -209,6 +221,7 @@ class LifeLogRecordedOutboxIntegrationTest {
         });
 
         assertThat(count("collection_logs")).isZero();
+        assertThat(count("life_log_records")).isZero();
         assertThat(countByAlias()).isZero();
         assertThat(count("outbox_events")).isZero();
     }
@@ -230,11 +243,12 @@ class LifeLogRecordedOutboxIntegrationTest {
             assertThat(fields).containsExactlyInAnyOrderElementsOf(
                     PAYLOAD_FIELDS
             );
+            assertThat(json.get("eventType").asText())
+                    .isEqualTo("LifeLogRecorded");
             assertThat(json.get("eventVersion").asInt()).isEqualTo(1);
             assertThat(json.get("primaryRoleId").isNull()).isTrue();
             assertThat(payload)
                     .doesNotContain(LifeLogRecorded.class.getName())
-                    .doesNotContain(LifeLogRecorded.class.getSimpleName())
                     .doesNotContain("Private collection title")
                     .doesNotContain("Private original title")
                     .doesNotContain("Private condition")
@@ -260,6 +274,51 @@ class LifeLogRecordedOutboxIntegrationTest {
         assertThat(result.published()).isEqualTo(1);
         assertThat(result.failed()).isZero();
         assertThat(probe.events()).containsExactly(expected);
+    }
+
+    @Test
+    @DisplayName("Relay는 저장돼 있던 legacy v1 JSON도 decode해 전달한다")
+    void relaysLegacyPayload() {
+        mediaLogService.create(PLAYER_ID, mediaCommand());
+        String eventId = "21300000-0000-0000-0000-000000000001";
+        String payload = """
+                {
+                  "eventId": "%s",
+                  "eventVersion": 1,
+                  "playerId": 199,
+                  "lifeLogId": 51,
+                  "lifeLogType": "EXERCISE",
+                  "primaryRoleId": null,
+                  "occurredAt": "2026-07-24T11:00:00.123456Z"
+                }
+                """.formatted(eventId);
+        int updated = jdbcTemplate.update(
+                """
+                UPDATE outbox_events
+                SET payload = ?
+                WHERE event_type = ?
+                """,
+                payload,
+                ALIAS
+        );
+        assertThat(updated).isEqualTo(1);
+        LifeLogRecorded decoded = (LifeLogRecorded) codecRegistry.decode(
+                ALIAS,
+                payload
+        );
+        assertThat(decoded.legacyLifeLogType())
+                .isEqualTo(LifeLogType.EXERCISE);
+
+        OutboxRelayResult result = relayService.relayBatch();
+
+        assertThat(result.published())
+                .as("relay=%s, lastError=%s", result, lastError())
+                .isEqualTo(1);
+        assertThat(probe.events()).singleElement().satisfies(event -> {
+            assertThat(event.legacyLifeLogType())
+                    .isEqualTo(LifeLogType.EXERCISE);
+            assertThat(event.isContentReady()).isFalse();
+        });
     }
 
     @Test
@@ -291,7 +350,11 @@ class LifeLogRecordedOutboxIntegrationTest {
                 5.0,
                 250,
                 LocalDate.of(2026, 7, 24),
-                "Private exercise memo"
+                "Private exercise memo",
+                new LifeLogRecordMetadataCommand(
+                        "ACTIVITY",
+                        null
+                )
         );
     }
 
@@ -303,19 +366,54 @@ class LifeLogRecordedOutboxIntegrationTest {
                 0,
                 1,
                 "PLANNED",
-                Set.of("private-tag")
+                Set.of("private-tag"),
+                new LifeLogRecordMetadataCommand("STUDY", null)
         );
     }
 
     private void assertRecorded(Long sourceId, LifeLogType type) {
         LifeLogRecorded event = onlyRecordedEvent();
+        Long headerId = headerId(type, sourceId);
         assertThat(event.eventId()).isNotBlank();
+        assertThat(event.eventType()).isEqualTo("LifeLogRecorded");
         assertThat(event.eventVersion()).isEqualTo(1);
         assertThat(event.playerId()).isEqualTo(PLAYER_ID);
-        assertThat(event.lifeLogId()).isEqualTo(sourceId);
-        assertThat(event.lifeLogType()).isEqualTo(type);
+        assertThat(event.lifeLogId()).isEqualTo(headerId);
+        assertThat(event.sourceDefinitionVersion()).isEqualTo(1);
+        assertThat(event.entryMode()).isEqualTo(LifeLogEntryMode.FULL);
+        assertThat(event.legacyLifeLogType()).isNull();
+        switch (type) {
+            case COLLECTION -> {
+                assertThat(event.subtype()).isNull();
+                assertThat(event.isContentReady()).isFalse();
+            }
+            case EXERCISE -> {
+                assertThat(event.subtype())
+                        .isEqualTo(LifeLogSubtype.ACTIVITY);
+                assertThat(event.isContentReady()).isTrue();
+            }
+            case MEDIA -> {
+                assertThat(event.subtype())
+                        .isEqualTo(LifeLogSubtype.STUDY);
+                assertThat(event.isContentReady()).isTrue();
+            }
+        }
         assertThat(event.primaryRoleId()).isNull();
         assertThat(event.occurredAt()).isEqualTo(OCCURRED_AT);
+    }
+
+    private Long headerId(LifeLogType type, Long sourceId) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT id
+                FROM life_log_records
+                WHERE source_type = ?
+                  AND source_id = ?
+                """,
+                Long.class,
+                type.name(),
+                sourceId
+        );
     }
 
     private LifeLogRecorded onlyRecordedEvent() {
@@ -371,6 +469,13 @@ class LifeLogRecordedOutboxIntegrationTest {
                 """,
                 Integer.class,
                 alias
+        );
+    }
+
+    private String lastError() {
+        return jdbcTemplate.queryForObject(
+                "SELECT last_error FROM outbox_events",
+                String.class
         );
     }
 

@@ -4,6 +4,7 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +57,21 @@ class QuickRecordRequestHasherTest {
         assertInvalid(new QuickRecordCommand.Create(
                 "DIARY",
                 collection("title", Set.of()),
+                null,
+                null
+        ));
+        assertInvalid(new QuickRecordCommand.Create(
+                "COLLECTION",
+                new CollectionCommand.Create(
+                        "BOOK",
+                        "title",
+                        null,
+                        1,
+                        null,
+                        null,
+                        Set.of(),
+                        new LifeLogRecordMetadataCommand("MEMORY", null)
+                ),
                 null,
                 null
         ));
@@ -135,6 +151,39 @@ class QuickRecordRequestHasherTest {
                 exercise,
                 media
         )).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Content metadata는 hash에 포함되고 legacy null metadata hash는 유지한다")
+    void hashesContentMetadataWithoutChangingLegacyShape() {
+        QuickRecordCommand.Create legacy = new QuickRecordCommand.Create(
+                "COLLECTION",
+                collection("title", Set.of("tag")),
+                null,
+                null
+        );
+        QuickRecordCommand.Create activity = new QuickRecordCommand.Create(
+                "COLLECTION",
+                "ACTIVITY",
+                null,
+                collection("title", Set.of("tag")),
+                null,
+                null
+        );
+        QuickRecordCommand.Create memory = new QuickRecordCommand.Create(
+                "COLLECTION",
+                "MEMORY",
+                null,
+                collection("title", Set.of("tag")),
+                null,
+                null
+        );
+
+        assertThat(Set.of(
+                hash(legacy),
+                hash(activity),
+                hash(memory)
+        )).hasSize(3);
     }
 
     @Test
