@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.Clock;
 
 @Slf4j
 @Component
@@ -18,6 +18,7 @@ import java.time.Instant;
 public class QuestRewardSaga {
 
     private final DomainEventPublisher domainEventPublisher;
+    private final Clock clock;
 
     @EventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -38,7 +39,7 @@ public class QuestRewardSaga {
                         .questCode(event.questCode())
                         .playerId(event.playerId())
                         .attributes(event.attributes())
-                        .occurredAt(Instant.now())
+                        .occurredAt(clock.instant())
                         .correlationId(correlation)
                         .build()
         );

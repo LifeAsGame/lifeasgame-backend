@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.PlayerTimezoneResolver;
 import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -30,6 +31,7 @@ public class QuestSignalProcessingAttempt {
     private final QuestAcceptanceRepository questAcceptanceRepository;
     private final QuestProgressStore questProgressStore;
     private final DomainEventPublisher domainEventPublisher;
+    private final QuestCompletionEventFactory completionEventFactory;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
 
@@ -89,7 +91,7 @@ public class QuestSignalProcessingAttempt {
             if (quest.isAutoCompletion()
                     && acceptance.complete(signal.occurredAt())) {
                 acceptance = questAcceptanceRepository.save(acceptance);
-                publishCompleted(signal, quest, acceptance, progressValue);
+                publishCompleted(signal, quest, acceptance);
             }
         }
 
@@ -348,32 +350,15 @@ public class QuestSignalProcessingAttempt {
     private void publishCompleted(
             QuestSignal signal,
             Quest quest,
-            QuestAcceptance acceptance,
-            int progressValue
+            QuestAcceptance acceptance
     ) {
         domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_COMPLETED)
-                        .attributes(signal.attributes())
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(signal.playerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", progressValue)
-                        .attribute("target", quest.target().value())
-                        .attribute("repeatRule", quest.getRepeatRule().name())
-                        .attribute(
-                                "completionPolicy",
-                                quest.getCompletionPolicy().name()
-                        )
-                        .attribute(
-                                "goalReachedAt",
-                                acceptance.getGoalReachedAt()
-                        )
-                        .attribute("completedAt", acceptance.getCompletedAt())
-                        .definitionSnapshot(quest)
-                        .occurredAt(acceptance.getCompletedAt())
-                        .correlationId(correlation(signal, "completed"))
-                        .build()
+                completionEventFactory.create(
+                        acceptance,
+                        quest,
+                        correlation(signal, "completed"),
+                        signal.attributes()
+                )
         );
     }
 

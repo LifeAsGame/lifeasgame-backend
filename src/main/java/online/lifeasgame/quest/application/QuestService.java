@@ -285,7 +285,7 @@ public class QuestService {
     public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
-        Instant transitionAt = Instant.now();
+        Instant transitionAt = clock.instant();
         acceptance.addProgress(command.delta(), quest, transitionAt);
         publishProgress(acceptance, quest, transitionAt, "admin-progress");
         if (acceptance.isGoalReached()) {
@@ -303,7 +303,7 @@ public class QuestService {
         QuestStatus questStatus = QuestStatus.parse(command.status());
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
-        Instant transitionAt = Instant.now();
+        Instant transitionAt = clock.instant();
         boolean changed = acceptance.changeStatus(questStatus, transitionAt);
         if (changed && acceptance.isGoalReached()) {
             publishGoalReached(acceptance, quest, transitionAt, "admin-goal-reached");

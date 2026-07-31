@@ -3,6 +3,7 @@ package online.lifeasgame.quest.application;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -56,6 +57,7 @@ class QuestAcceptanceCompletionServiceTest {
                 questReader,
                 questWriter,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 Clock.fixed(COMPLETED_AT, ZoneOffset.UTC)
         );
     }
