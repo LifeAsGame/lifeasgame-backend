@@ -176,7 +176,7 @@ class FlywayMigrationTest {
                     new QuestAcceptanceFactContextColumns(
                             "NO",
                             "YES",
-                            20
+                            16
                     )
             );
             assertThat(legacyQuestAcceptedAt()).isEqualTo(

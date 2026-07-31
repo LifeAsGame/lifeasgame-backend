@@ -227,6 +227,17 @@ public class QuestService {
                 playerId
         );
         if (latest != null && latest.getPeriod().contains(acceptedDate)) {
+            if (latest.isCanceled()) {
+                latest.restart(
+                        command.partyId(),
+                        command.guildId(),
+                        acceptedAt,
+                        periodKey
+                );
+                QuestAcceptance restarted =
+                        questWriter.saveAcceptance(latest);
+                return QuestResult.Acceptance.from(restarted, quest);
+            }
             throw new DomainException(
                     QuestError.QUEST_ACCEPTANCE_ALREADY_EXISTS
             );

@@ -248,8 +248,10 @@ public class QuestSignalProcessingAttempt {
         if (signal.occurredAt().isBefore(acceptance.getAcceptedAt())) {
             return false;
         }
-        return signal.periodKey() == null
-                || signal.periodKey().equals(acceptance.getPeriodKey());
+        return Objects.equals(
+                signal.periodKey(),
+                acceptance.getPeriodKey()
+        );
     }
 
     private void publishAccepted(

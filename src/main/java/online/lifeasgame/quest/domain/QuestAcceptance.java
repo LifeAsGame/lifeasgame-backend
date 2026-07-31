@@ -55,10 +55,10 @@ public class QuestAcceptance extends AbstractTime {
     @Embedded
     private TimePeriod period;
 
-    @Column(name = "accepted_at", nullable = false, updatable = false)
+    @Column(name = "accepted_at", nullable = false)
     private Instant acceptedAt;
 
-    @Column(name = "period_key", length = 20)
+    @Column(name = "period_key", length = 16)
     private String periodKey;
 
     @Enumerated(EnumType.STRING)
@@ -204,6 +204,30 @@ public class QuestAcceptance extends AbstractTime {
         }
         this.status = QuestStatus.CANCELED;
         return true;
+    }
+
+    public void restart(
+            Long partyId,
+            Long guildId,
+            Instant acceptedAt,
+            String periodKey
+    ) {
+        if (status != QuestStatus.CANCELED) {
+            throw new DomainException(
+                    QuestError.QUEST_ACCEPTANCE_STATUS_TRANSITION_NOT_ALLOWED
+            );
+        }
+        Guard.notNull(acceptedAt, "acceptedAt");
+        String validatedPeriodKey = validatePeriodKey(periodKey);
+        this.partyId = partyId;
+        this.guildId = guildId;
+        this.acceptedAt = acceptedAt;
+        this.periodKey = validatedPeriodKey;
+        this.status = QuestStatus.IN_PROGRESS;
+        this.progressValue = 0;
+        this.goalReachedAt = null;
+        this.completedAt = null;
+        this.idempotencyKey = null;
     }
 
     public boolean changeStatus(QuestStatus questStatus, Instant changedAt) {

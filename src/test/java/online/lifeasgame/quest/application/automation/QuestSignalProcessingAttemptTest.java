@@ -4,6 +4,7 @@ import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.DefaultPlayerTimezoneResolver;
 import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -302,6 +303,76 @@ class QuestSignalProcessingAttemptTest {
             verify(questAcceptanceRepository, never()).save(any());
             verifyNoInteractions(questProgressStore, domainEventPublisher);
         }
+
+        @Test
+        @DisplayName("Acceptance periodKey가 있는데 Signal periodKey가 null이면 진행하지 않는다")
+        void rejectsMissingSignalPeriodKey() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.WEEKLY
+            );
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.weekly(LocalDate.of(2026, 7, 24)),
+                    OCCURRED_AT.minusSeconds(1),
+                    "2026-W30"
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 906L);
+            QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("FIRST/THREE의 null periodKey끼리는 정상 진행한다")
+        void acceptsMatchingNullPeriodKeys() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_THREE_TRACES)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    OCCURRED_AT.minusSeconds(1),
+                    null
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 907L);
+            QuestSignal signal = existingOnlySignal(
+                    QuestCode.Q_RECORD_THREE_TRACES,
+                    OCCURRED_AT,
+                    null
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+            given(questAcceptanceRepository.save(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isEqualTo(1);
+            assertThat(acceptance.getStatus())
+                    .isEqualTo(QuestStatus.IN_PROGRESS);
+            verify(questAcceptanceRepository).save(acceptance);
+        }
     }
 
     @Nested
@@ -575,8 +646,20 @@ class QuestSignalProcessingAttemptTest {
             Instant occurredAt,
             String periodKey
     ) {
+        return existingOnlySignal(
+                QuestCode.PLAYER_WELCOME,
+                occurredAt,
+                periodKey
+        );
+    }
+
+    private QuestSignal existingOnlySignal(
+            QuestCode questCode,
+            Instant occurredAt,
+            String periodKey
+    ) {
         return QuestSignal.addProgress(
-                        QuestCode.PLAYER_WELCOME,
+                        questCode,
                         PLAYER_ID,
                         1
                 )

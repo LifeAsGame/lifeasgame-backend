@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,6 +20,8 @@ class QuestAcceptanceTest {
     private static final Instant COMPLETED_AT = Instant.parse("2026-07-23T01:01:00Z");
     private static final Instant ACCEPTED_AT =
             Instant.parse("2026-07-23T00:00:00Z");
+    private static final Instant RESTARTED_AT =
+            Instant.parse("2026-07-23T02:00:00Z");
 
     @Nested
     @DisplayName("Fact context로 시작할 때")
@@ -54,6 +58,100 @@ class QuestAcceptanceTest {
                     10L,
                     TimePeriod.forever(),
                     ACCEPTED_AT,
+                    "2026-W54"
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("periodKey");
+        }
+    }
+
+    @Nested
+    @DisplayName("취소 후 재수락할 때")
+    class Restart {
+
+        @Test
+        @DisplayName("기존 식별자와 period는 유지하고 새 attempt 상태로 초기화한다")
+        void restartsCanceledAcceptance() {
+            Quest quest = quest(QuestCompletionPolicy.USER_CONFIRM);
+            TimePeriod period = TimePeriod.weekly(
+                    LocalDate.of(2026, 7, 23)
+            );
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    1L,
+                    10L,
+                    11L,
+                    12L,
+                    period,
+                    ACCEPTED_AT,
+                    "2026-W30"
+            );
+            acceptance.setProgress(3, quest, GOAL_REACHED_AT);
+            acceptance.assignIdempotencyKey("old-attempt");
+            acceptance.cancel();
+
+            acceptance.restart(
+                    21L,
+                    22L,
+                    RESTARTED_AT,
+                    "2026-W31"
+            );
+
+            assertThat(acceptance.getQuestId()).isEqualTo(1L);
+            assertThat(acceptance.getPlayerId()).isEqualTo(10L);
+            assertThat(acceptance.getPeriod()).isSameAs(period);
+            assertThat(acceptance.getPartyId()).isEqualTo(21L);
+            assertThat(acceptance.getGuildId()).isEqualTo(22L);
+            assertThat(acceptance.getAcceptedAt()).isEqualTo(RESTARTED_AT);
+            assertThat(acceptance.getPeriodKey()).isEqualTo("2026-W31");
+            assertThat(acceptance.getStatus())
+                    .isEqualTo(QuestStatus.IN_PROGRESS);
+            assertThat(acceptance.getProgressValue()).isZero();
+            assertThat(acceptance.getGoalReachedAt()).isNull();
+            assertThat(acceptance.getCompletedAt()).isNull();
+            assertThat(acceptance.getIdempotencyKey()).isNull();
+        }
+
+        @Test
+        @DisplayName("CANCELED가 아닌 상태에서는 restart를 거부한다")
+        void rejectsNonCanceledAcceptance() {
+            QuestAcceptance inProgress = acceptance();
+            QuestAcceptance goalReached = goalReachedAcceptance();
+            QuestAcceptance completed = goalReachedAcceptance();
+            completed.complete(COMPLETED_AT);
+
+            for (QuestAcceptance acceptance :
+                    List.of(inProgress, goalReached, completed)) {
+                assertQuestError(
+                        () -> acceptance.restart(
+                                null,
+                                null,
+                                RESTARTED_AT,
+                                null
+                        ),
+                        QuestError
+                                .QUEST_ACCEPTANCE_STATUS_TRANSITION_NOT_ALLOWED
+                );
+            }
+        }
+
+        @Test
+        @DisplayName("acceptedAt null과 잘못된 periodKey를 거부한다")
+        void rejectsInvalidFactContext() {
+            QuestAcceptance nullAcceptedAt = acceptance();
+            nullAcceptedAt.cancel();
+            QuestAcceptance invalidPeriodKey = acceptance();
+            invalidPeriodKey.cancel();
+
+            assertThatThrownBy(() -> nullAcceptedAt.restart(
+                    null,
+                    null,
+                    null,
+                    null
+            )).isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("acceptedAt");
+            assertThatThrownBy(() -> invalidPeriodKey.restart(
+                    null,
+                    null,
+                    RESTARTED_AT,
                     "2026-W54"
             )).isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("periodKey");

@@ -35,6 +35,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -50,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles({"test", "migration-test"})
 @Import(
         LifeLogRecordedQuestProgressIntegrationTest
-                .FixedClockConfiguration.class
+                .MutableClockConfiguration.class
 )
 @DisplayName("LifeLogRecorded Level 1 Quest MySQL 진행")
 class LifeLogRecordedQuestProgressIntegrationTest {
@@ -102,6 +103,9 @@ class LifeLogRecordedQuestProgressIntegrationTest {
     @Autowired
     private OutboxProperties outboxProperties;
 
+    @Autowired
+    private MutableClock clock;
+
     @MockitoBean
     private QuestProgressStore questProgressStore;
 
@@ -109,6 +113,7 @@ class LifeLogRecordedQuestProgressIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        clock.set(ACCEPTED_AT);
         jdbcTemplate.update("DELETE FROM outbox_events");
         jdbcTemplate.update(
                 "DELETE FROM quest_signal_receipts WHERE player_id = ?",
@@ -170,6 +175,67 @@ class LifeLogRecordedQuestProgressIntegrationTest {
         assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
         assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
                 .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("취소 후 같은 period 재수락은 기존 row를 초기화하고 old Fact를 이월하지 않는다")
+    void restartsCanceledAcceptanceWithoutCarryingOldFacts() {
+        accept(QuestCode.Q_RECORD_THREE_TRACES);
+        appendAndRelay(regular(
+                "215-reaccept-before-cancel",
+                215108L,
+                ACCEPTED_AT.plusSeconds(1)
+        ));
+        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
+        LifeLogRecorded oldFact = regular(
+                "215-reaccept-old-a",
+                215109L,
+                ACCEPTED_AT.plusSeconds(2)
+        );
+
+        questService.cancel(
+                PLAYER_ID,
+                new QuestCommand.Cancel(
+                        QuestCode.Q_RECORD_THREE_TRACES.value(),
+                        "restart integration test"
+                )
+        );
+        Instant restartedAt = ACCEPTED_AT.plusSeconds(10);
+        clock.set(restartedAt);
+        accept(QuestCode.Q_RECORD_THREE_TRACES);
+
+        assertThat(acceptanceCount()).isEqualTo(1);
+        assertThat(acceptedAt(QuestCode.Q_RECORD_THREE_TRACES))
+                .isEqualTo(restartedAt);
+        assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
+                .isEqualTo(QuestStatus.IN_PROGRESS.name());
+        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+
+        appendAndRelay(oldFact);
+
+        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                .isEqualTo(2);
+
+        appendAndRelay(regular(
+                "215-reaccept-new",
+                215110L,
+                restartedAt.plusSeconds(1)
+        ));
+
+        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
+        assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
+                .isEqualTo(QuestStatus.IN_PROGRESS.name());
+
+        appendAndRelay(regular(
+                "215-reaccept-old-b",
+                oldFact.lifeLogId(),
+                oldFact.occurredAt()
+        ));
+
+        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
+        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                .isEqualTo(3);
     }
 
     @Test
@@ -508,12 +574,36 @@ class LifeLogRecordedQuestProgressIntegrationTest {
     }
 
     @TestConfiguration(proxyBeanMethods = false)
-    static class FixedClockConfiguration {
+    static class MutableClockConfiguration {
 
         @Bean
         @Primary
-        Clock lifeLogQuestClock() {
-            return Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC);
+        MutableClock lifeLogQuestClock() {
+            return new MutableClock();
+        }
+    }
+
+    static final class MutableClock extends Clock {
+
+        private volatile Instant current = ACCEPTED_AT;
+
+        void set(Instant instant) {
+            this.current = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return Clock.fixed(current, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return current;
         }
     }
 }

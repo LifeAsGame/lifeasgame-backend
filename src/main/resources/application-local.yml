@@ -61,5 +61,3 @@ app:
       base: "/errors"
       ext: ""
       fallback: "NOT-FOUND"
-  outbox:
-    fixed-delay-ms: 2000
