@@ -23,13 +23,18 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("QuestService 상태 계약")
@@ -38,6 +43,9 @@ class QuestServiceStateContractTest {
     private static final Long QUEST_ID = 193L;
     private static final Long ACCEPTANCE_ID = 1930L;
     private static final Long PLAYER_ID = 19300L;
+    private static final Instant ACCEPTED_AT =
+            Instant.parse("2026-07-30T01:00:00Z");
+    private static final ZoneId PLAYER_ZONE = ZoneId.of("Asia/Seoul");
 
     @Mock
     private QuestBlueprintCatalog questBlueprintCatalog;
@@ -63,7 +71,9 @@ class QuestServiceStateContractTest {
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
-                domainEventPublisher
+                domainEventPublisher,
+                ignored -> PLAYER_ZONE,
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC)
         );
     }
 
@@ -175,11 +185,13 @@ class QuestServiceStateContractTest {
         @DisplayName("DAILY는 이전 기간 완료 후 현재 기간 재수락을 허용한다")
         void acceptsNextDailyPeriod() {
             Quest quest = finalQuest(QuestRepeatRule.DAILY);
-            LocalDate today = LocalDate.now();
+            LocalDate today = ACCEPTED_AT.atZone(PLAYER_ZONE).toLocalDate();
             QuestAcceptance previous = QuestAcceptance.start(
                     QUEST_ID,
                     PLAYER_ID,
-                    TimePeriod.daily(today.minusDays(1))
+                    TimePeriod.daily(today.minusDays(1)),
+                    ACCEPTED_AT.minusSeconds(86_400),
+                    null
             );
             previous.reachGoal(Instant.now().minusSeconds(60));
             previous.complete(Instant.now().minusSeconds(30));
@@ -211,7 +223,9 @@ class QuestServiceStateContractTest {
             QuestAcceptance previous = QuestAcceptance.start(
                     QUEST_ID,
                     PLAYER_ID,
-                    TimePeriod.forever()
+                    TimePeriod.forever(),
+                    ACCEPTED_AT.minusSeconds(60),
+                    null
             );
             given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
                     .willReturn(quest);
@@ -234,6 +248,123 @@ class QuestServiceStateContractTest {
                                                     .QUEST_ACCEPTANCE_ALREADY_EXISTS
                                     )
                     );
+        }
+
+        @Test
+        @DisplayName("같은 period의 CANCELED Acceptance는 기존 row에서 restart한다")
+        void restartsCanceledAcceptanceInSamePeriod() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_WEEKLY_LOOKBACK)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            LocalDate today = ACCEPTED_AT.atZone(PLAYER_ZONE).toLocalDate();
+            QuestAcceptance previous = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    1L,
+                    2L,
+                    TimePeriod.weekly(today),
+                    ACCEPTED_AT.minusSeconds(60),
+                    "2026-W30"
+            );
+            ReflectionTestUtils.setField(
+                    previous,
+                    "id",
+                    ACCEPTANCE_ID
+            );
+            previous.setProgress(
+                    1,
+                    quest,
+                    ACCEPTED_AT.minusSeconds(30)
+            );
+            previous.assignIdempotencyKey("old-attempt");
+            previous.cancel();
+            given(questReader.getByCode(
+                    QuestCode.Q_RECORD_WEEKLY_LOOKBACK
+            )).willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(previous);
+            given(questWriter.saveAcceptance(previous))
+                    .willReturn(previous);
+
+            QuestResult.Acceptance result = service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.Q_RECORD_WEEKLY_LOOKBACK.value(),
+                            3L,
+                            4L
+                    )
+            );
+
+            assertThat(result.id()).isEqualTo(ACCEPTANCE_ID);
+            assertThat(result.acceptedAt()).isEqualTo(ACCEPTED_AT);
+            assertThat(result.periodKey()).isEqualTo("2026-W31");
+            assertThat(result.status())
+                    .isEqualTo(QuestStatus.IN_PROGRESS.name());
+            assertThat(result.progressValue()).isZero();
+            assertThat(result.goalReachedAt()).isNull();
+            assertThat(result.completedAt()).isNull();
+            assertThat(previous.getPartyId()).isEqualTo(3L);
+            assertThat(previous.getGuildId()).isEqualTo(4L);
+            assertThat(previous.getIdempotencyKey()).isNull();
+            verify(questWriter).saveAcceptance(previous);
+            verify(questWriter, never()).accept(any());
+        }
+
+        @Test
+        @DisplayName("같은 period의 active, goal reached, completed Acceptance는 거부한다")
+        void rejectsNonCanceledAcceptanceInSamePeriod() {
+            Quest quest = finalQuest(QuestRepeatRule.ONCE);
+            QuestAcceptance inProgress = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    ACCEPTED_AT.minusSeconds(60),
+                    null
+            );
+            QuestAcceptance goalReached = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    ACCEPTED_AT.minusSeconds(60),
+                    null
+            );
+            goalReached.reachGoal(ACCEPTED_AT.minusSeconds(30));
+            QuestAcceptance completed = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    ACCEPTED_AT.minusSeconds(60),
+                    null
+            );
+            completed.reachGoal(ACCEPTED_AT.minusSeconds(30));
+            completed.complete(ACCEPTED_AT.minusSeconds(20));
+            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+                    .willReturn(quest);
+
+            for (QuestAcceptance previous :
+                    List.of(inProgress, goalReached, completed)) {
+                given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                        .willReturn(previous);
+
+                assertThatThrownBy(() -> service.accept(
+                        PLAYER_ID,
+                        new QuestCommand.Accept(
+                                QuestCode.PLAYER_WELCOME.name(),
+                                null,
+                                null
+                        )
+                )).isInstanceOfSatisfying(
+                        DomainException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(
+                                        QuestError
+                                                .QUEST_ACCEPTANCE_ALREADY_EXISTS
+                                )
+                );
+            }
+
+            verifyNoInteractions(questWriter);
         }
 
         @Test
@@ -270,6 +401,41 @@ class QuestServiceStateContractTest {
                     .isEqualTo(QuestTargetType.COUNT);
             assertThat(result.targetValue()).isEqualTo(1);
             assertThat(result.repeatPolicy()).isEqualTo("ONCE");
+            assertThat(result.acceptedAt()).isEqualTo(ACCEPTED_AT);
+            assertThat(result.periodKey()).isNull();
+        }
+
+        @Test
+        @DisplayName("주간 기록 Quest는 Player timezone의 ISO periodKey를 저장한다")
+        void acceptsWeeklyLookbackWithServerPeriodKey() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_WEEKLY_LOOKBACK)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            given(questReader.getByCode(
+                    QuestCode.Q_RECORD_WEEKLY_LOOKBACK
+            )).willReturn(quest);
+            given(questReader.findLatest(QUEST_ID, PLAYER_ID))
+                    .willReturn(null);
+            given(questWriter.accept(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            QuestResult.Acceptance result = service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            "Q_RECORD_WEEKLY_LOOKBACK",
+                            null,
+                            null
+                    )
+            );
+
+            assertThat(result.acceptedAt()).isEqualTo(ACCEPTED_AT);
+            assertThat(result.periodKey()).isEqualTo("2026-W31");
+            assertThat(result.periodStart())
+                    .isEqualTo(LocalDate.of(2026, 7, 27));
+            assertThat(result.periodEnd())
+                    .isEqualTo(LocalDate.of(2026, 8, 2));
         }
     }
 
@@ -277,7 +443,9 @@ class QuestServiceStateContractTest {
         QuestAcceptance acceptance = QuestAcceptance.start(
                 QUEST_ID,
                 PLAYER_ID,
-                TimePeriod.forever()
+                TimePeriod.forever(),
+                ACCEPTED_AT,
+                null
         );
         ReflectionTestUtils.setField(acceptance, "id", ACCEPTANCE_ID);
         acceptance.setProgress(1, quest, Instant.parse("2026-07-23T03:00:00Z"));

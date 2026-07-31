@@ -49,6 +49,8 @@ public final class QuestResponse {
             String repeatRule,
             LocalDate periodStart,
             LocalDate periodEnd,
+            Instant acceptedAt,
+            String periodKey,
             Instant goalReachedAt,
             Instant completedAt,
             Instant dueAt,

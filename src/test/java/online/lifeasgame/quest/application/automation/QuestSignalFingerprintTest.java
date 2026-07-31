@@ -51,6 +51,33 @@ class QuestSignalFingerprintTest {
                     .hasSize(64)
                     .matches("[0-9a-f]{64}")
                     .isEqualTo(second);
+            assertThat(fingerprint.legacyFingerprint(
+                    signal(firstAttributes, 1)
+            )).isEqualTo(fingerprint.legacyFingerprint(
+                    signal(secondAttributes, 1)
+            ));
+        }
+    }
+
+    @Nested
+    @DisplayName("Legacy Receipt와 비교할 때")
+    class LegacyCompatibility {
+
+        @Test
+        @DisplayName("PR 이전 canonical schema의 고정 SHA-256을 재현한다")
+        void matchesLegacyFixture() {
+            QuestSignal signal = signal(
+                    Map.of("category", "BOOK"),
+                    1
+            );
+            String legacy = fingerprint.legacyFingerprint(signal);
+
+            assertThat(legacy)
+                    .isEqualTo(
+                            "506fb834d4304f55afbb1660ebbd1cd90"
+                                    + "eeb0663e7b417425138090addcc2b4d"
+                    )
+                    .isNotEqualTo(fingerprint.fingerprint(signal));
         }
     }
 
@@ -91,6 +118,42 @@ class QuestSignalFingerprintTest {
 
             assertThat(fingerprint.fingerprint(first))
                     .isNotEqualTo(fingerprint.fingerprint(second));
+        }
+
+        @Test
+        @DisplayName("Acceptance policy와 periodKey를 각각 semantic 값에 포함한다")
+        void includesAcceptanceContext() {
+            QuestSignal autoCreate = signal(Map.of(), 1);
+            QuestSignal existingOnly = QuestSignal.addProgress(
+                            QuestCode.COLLECTION_HUNTER_10,
+                            195L,
+                            1
+                    )
+                    .occurredAt(OCCURRED_AT)
+                    .correlationId("source:collection:195")
+                    .acceptancePolicy(
+                            QuestSignalAcceptancePolicy.EXISTING_ONLY
+                    )
+                    .build();
+            QuestSignal withPeriodKey = QuestSignal.addProgress(
+                            QuestCode.COLLECTION_HUNTER_10,
+                            195L,
+                            1
+                    )
+                    .occurredAt(OCCURRED_AT)
+                    .correlationId("source:collection:195")
+                    .periodKey("2026-W30")
+                    .build();
+
+            assertThat(fingerprint.fingerprint(existingOnly))
+                    .isNotEqualTo(fingerprint.fingerprint(autoCreate));
+            assertThat(fingerprint.fingerprint(withPeriodKey))
+                    .isNotEqualTo(fingerprint.fingerprint(autoCreate));
+            assertThat(fingerprint.legacyFingerprint(existingOnly))
+                    .isEqualTo(fingerprint.legacyFingerprint(autoCreate))
+                    .isEqualTo(
+                            fingerprint.legacyFingerprint(withPeriodKey)
+                    );
         }
     }
 

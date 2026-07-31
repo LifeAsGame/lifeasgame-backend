@@ -16,6 +16,7 @@ import java.util.Optional;
 public class QuestSignalReceiptReplayRecovery {
 
     private final QuestSignalReceiptRepository receiptRepository;
+    private final QuestSignalFingerprint signalFingerprint;
 
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public Optional<QuestSignalProcessingResult> recover(
@@ -27,18 +28,31 @@ public class QuestSignalReceiptReplayRecovery {
                         signal.playerId(),
                         signal.correlationId()
                 )
-                .map(receipt -> replay(receipt, payloadFingerprint));
+                .map(receipt -> replay(
+                        receipt,
+                        signal,
+                        payloadFingerprint
+                ));
     }
 
     private QuestSignalProcessingResult replay(
             QuestSignalReceipt receipt,
+            QuestSignal signal,
             String payloadFingerprint
     ) {
-        if (!receipt.hasFingerprint(payloadFingerprint)) {
-            throw new DomainException(
-                    QuestError.QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT
-            );
+        if (receipt.hasFingerprint(payloadFingerprint)) {
+            return QuestSignalProcessingResult.replayed(receipt.getId());
         }
-        return QuestSignalProcessingResult.replayed(receipt.getId());
+        if (signal.acceptancePolicy()
+                == QuestSignalAcceptancePolicy.AUTO_CREATE
+                && signal.periodKey() == null
+                && receipt.hasFingerprint(
+                        signalFingerprint.legacyFingerprint(signal)
+                )) {
+            return QuestSignalProcessingResult.replayed(receipt.getId());
+        }
+        throw new DomainException(
+                QuestError.QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT
+        );
     }
 }

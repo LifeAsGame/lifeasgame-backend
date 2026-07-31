@@ -20,4 +20,8 @@ final class QuestSignalCorrelation {
                 occurredAt
         );
     }
+
+    static String lifeLog(Long lifeLogId) {
+        return "lifelog:%d".formatted(lifeLogId);
+    }
 }

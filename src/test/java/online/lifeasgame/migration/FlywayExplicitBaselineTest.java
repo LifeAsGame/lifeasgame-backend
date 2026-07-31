@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V15까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V16까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,12 +72,12 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(14);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(15);
             assertThat(history).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15"
+                            "14", "15", "16"
                     );
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
@@ -102,7 +102,8 @@ class FlywayExplicitBaselineTest {
                             "V12__item_stable_code_and_first_step_seed.sql",
                             "V13__first_step_reward_profile_seed.sql",
                             "V14__final_quest_legacy_category_nullable.sql",
-                            "V15__canonical_lifelog_record_metadata.sql"
+                            "V15__canonical_lifelog_record_metadata.sql",
+                            "V16__quest_acceptance_fact_context.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -122,7 +123,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("15");
+                        .isEqualTo("16");
             }
         }
     }

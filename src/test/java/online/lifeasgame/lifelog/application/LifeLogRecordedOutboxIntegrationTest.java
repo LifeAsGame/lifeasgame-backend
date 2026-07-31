@@ -16,6 +16,7 @@ import online.lifeasgame.platform.outbox.application.OutboxRelayResult;
 import online.lifeasgame.platform.outbox.application.OutboxRelayScheduler;
 import online.lifeasgame.platform.outbox.application.OutboxRelayService;
 import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegistry;
+import online.lifeasgame.quest.application.automation.QuestSignalProcessingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
@@ -47,6 +49,9 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
 
 @Testcontainers
 @SpringBootTest
@@ -145,6 +150,9 @@ class LifeLogRecordedOutboxIntegrationTest {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @MockitoSpyBean
+    private QuestSignalProcessingService questSignalProcessingService;
+
     private TransactionTemplate transactionTemplate;
 
     @BeforeEach
@@ -162,6 +170,7 @@ class LifeLogRecordedOutboxIntegrationTest {
         outboxProperties.setLeaseDurationMs(30_000);
         outboxProperties.setInstanceId("lifelog-recorded-integration");
         probe.reset();
+        reset(questSignalProcessingService);
         transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -319,6 +328,22 @@ class LifeLogRecordedOutboxIntegrationTest {
                     .isEqualTo(LifeLogType.EXERCISE);
             assertThat(event.isContentReady()).isFalse();
         });
+    }
+
+    @Test
+    @DisplayName("Quest consumer 실패는 이미 commit된 LifeLog transaction을 rollback하지 않는다")
+    void keepsLifeLogCommitWhenQuestConsumerFails() {
+        mediaLogService.create(PLAYER_ID, mediaCommand());
+        doThrow(new IllegalStateException("forced quest consumer failure"))
+                .when(questSignalProcessingService)
+                .process(any());
+
+        OutboxRelayResult result = relayService.relayBatch();
+
+        assertThat(result.failed()).isEqualTo(1);
+        assertThat(count("media_logs")).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
+        assertThat(countByAlias()).isEqualTo(1);
     }
 
     @Test

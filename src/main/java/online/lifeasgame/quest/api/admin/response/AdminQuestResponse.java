@@ -73,6 +73,8 @@ public final class AdminQuestResponse {
             String repeatRule,
             java.time.LocalDate periodStart,
             java.time.LocalDate periodEnd,
+            Instant acceptedAt,
+            String periodKey,
             Instant goalReachedAt,
             Instant completedAt,
             Instant dueAt,

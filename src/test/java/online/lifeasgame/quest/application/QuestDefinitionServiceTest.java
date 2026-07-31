@@ -18,6 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
@@ -55,7 +57,9 @@ class QuestDefinitionServiceTest {
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
-                domainEventPublisher
+                domainEventPublisher,
+                ignored -> ZoneId.of("Asia/Seoul"),
+                Clock.systemUTC()
         );
     }
 
@@ -301,7 +305,9 @@ class QuestDefinitionServiceTest {
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
-                domainEventPublisher
+                domainEventPublisher,
+                ignored -> ZoneId.of("Asia/Seoul"),
+                Clock.systemUTC()
         );
         given(questReader.findByCode(any(QuestCode.class)))
                 .willReturn(Optional.empty());
@@ -343,7 +349,9 @@ class QuestDefinitionServiceTest {
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
-                domainEventPublisher
+                domainEventPublisher,
+                ignored -> ZoneId.of("Asia/Seoul"),
+                Clock.systemUTC()
         );
         given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                 .willReturn(Optional.empty());
@@ -375,7 +383,9 @@ class QuestDefinitionServiceTest {
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
-                domainEventPublisher
+                domainEventPublisher,
+                ignored -> ZoneId.of("Asia/Seoul"),
+                Clock.systemUTC()
         );
         given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                 .willReturn(Optional.of(existing));

@@ -2,7 +2,9 @@ package online.lifeasgame.quest.application.automation;
 
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.quest.application.DefaultPlayerTimezoneResolver;
 import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -20,9 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,7 +71,9 @@ class QuestSignalProcessingAttemptTest {
                 questService,
                 questAcceptanceRepository,
                 questProgressStore,
-                domainEventPublisher
+                domainEventPublisher,
+                new DefaultPlayerTimezoneResolver(),
+                Clock.fixed(OCCURRED_AT, ZoneOffset.UTC)
         );
     }
 
@@ -204,6 +210,172 @@ class QuestSignalProcessingAttemptTest {
     }
 
     @Nested
+    @DisplayName("EXISTING_ONLY Signal을 적용할 때")
+    class ApplyExistingOnlySignal {
+
+        @Test
+        @DisplayName("Acceptance가 없으면 Receipt만 저장하고 자동 생성하지 않는다")
+        void doesNotAutoCreateAcceptance() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE
+            );
+            QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.empty());
+
+            QuestSignalProcessingResult result =
+                    attempt.process(signal, FINGERPRINT);
+
+            assertThat(result).isEqualTo(
+                    QuestSignalProcessingResult.applied(RECEIPT_ID)
+            );
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("acceptedAt 이전 Fact는 Receipt만 저장하고 진행하지 않는다")
+        void ignoresPreAcceptanceFact() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE
+            );
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    OCCURRED_AT.plusSeconds(1),
+                    null
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 904L);
+            QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("Signal periodKey가 Acceptance와 다르면 진행하지 않는다")
+        void requiresExactPeriodKey() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.WEEKLY
+            );
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.weekly(LocalDate.of(2026, 7, 24)),
+                    OCCURRED_AT.minusSeconds(1),
+                    "2026-W30"
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 905L);
+            QuestSignal signal = existingOnlySignal(
+                    OCCURRED_AT,
+                    "2026-W29"
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("Acceptance periodKey가 있는데 Signal periodKey가 null이면 진행하지 않는다")
+        void rejectsMissingSignalPeriodKey() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.WEEKLY
+            );
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.weekly(LocalDate.of(2026, 7, 24)),
+                    OCCURRED_AT.minusSeconds(1),
+                    "2026-W30"
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 906L);
+            QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("FIRST/THREE의 null periodKey끼리는 정상 진행한다")
+        void acceptsMatchingNullPeriodKeys() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_THREE_TRACES)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    OCCURRED_AT.minusSeconds(1),
+                    null
+            );
+            ReflectionTestUtils.setField(acceptance, "id", 907L);
+            QuestSignal signal = existingOnlySignal(
+                    QuestCode.Q_RECORD_THREE_TRACES,
+                    OCCURRED_AT,
+                    null
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+            given(questAcceptanceRepository.save(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isEqualTo(1);
+            assertThat(acceptance.getStatus())
+                    .isEqualTo(QuestStatus.IN_PROGRESS);
+            verify(questAcceptanceRepository).save(acceptance);
+        }
+    }
+
+    @Nested
     @DisplayName("이미 전이가 끝난 Acceptance에 새 Signal이 들어올 때")
     class IgnoreTerminalAcceptance {
 
@@ -331,7 +503,8 @@ class QuestSignalProcessingAttemptTest {
                     attempt,
                     "ttlFor",
                     finalRepeatQuest(QuestRepeatRule.ONCE),
-                    today
+                    today,
+                    DefaultPlayerTimezoneResolver.FALLBACK
             );
             Duration noneTtl = ReflectionTestUtils.invokeMethod(
                     attempt,
@@ -340,7 +513,8 @@ class QuestSignalProcessingAttemptTest {
                             QuestCompletionPolicy.AUTO,
                             QuestRepeatRule.NONE
                     ),
-                    today
+                    today,
+                    DefaultPlayerTimezoneResolver.FALLBACK
             );
 
             assertThat(onceTtl).isNull();
@@ -356,13 +530,15 @@ class QuestSignalProcessingAttemptTest {
                     attempt,
                     "ttlFor",
                     finalRepeatQuest(QuestRepeatRule.DAILY),
-                    today
+                    today,
+                    DefaultPlayerTimezoneResolver.FALLBACK
             );
             Duration weeklyTtl = ReflectionTestUtils.invokeMethod(
                     attempt,
                     "ttlFor",
                     finalRepeatQuest(QuestRepeatRule.WEEKLY),
-                    today
+                    today,
+                    DefaultPlayerTimezoneResolver.FALLBACK
             );
             Duration monthlyTtl = ReflectionTestUtils.invokeMethod(
                     attempt,
@@ -371,7 +547,8 @@ class QuestSignalProcessingAttemptTest {
                             QuestCompletionPolicy.AUTO,
                             QuestRepeatRule.MONTHLY
                     ),
-                    today
+                    today,
+                    DefaultPlayerTimezoneResolver.FALLBACK
             );
 
             assertThat(dailyTtl).isPositive();
@@ -465,6 +642,37 @@ class QuestSignalProcessingAttemptTest {
                 .build();
     }
 
+    private QuestSignal existingOnlySignal(
+            Instant occurredAt,
+            String periodKey
+    ) {
+        return existingOnlySignal(
+                QuestCode.PLAYER_WELCOME,
+                occurredAt,
+                periodKey
+        );
+    }
+
+    private QuestSignal existingOnlySignal(
+            QuestCode questCode,
+            Instant occurredAt,
+            String periodKey
+    ) {
+        return QuestSignal.addProgress(
+                        questCode,
+                        PLAYER_ID,
+                        1
+                )
+                .occurredAt(occurredAt)
+                .correlationId("lifelog:195")
+                .acceptancePolicy(
+                        QuestSignalAcceptancePolicy.EXISTING_ONLY
+                )
+                .periodKey(periodKey)
+                .attribute("lifeLogId", 195L)
+                .build();
+    }
+
     private QuestAcceptance acceptance(
             Quest quest,
             TimePeriod period,
@@ -473,7 +681,9 @@ class QuestSignalProcessingAttemptTest {
         QuestAcceptance acceptance = QuestAcceptance.start(
                 quest.getId(),
                 PLAYER_ID,
-                period
+                period,
+                OCCURRED_AT.minusSeconds(300),
+                null
         );
         ReflectionTestUtils.setField(acceptance, "id", id);
         return acceptance;
