@@ -11,6 +11,8 @@ public interface QuestAcceptanceRepository {
 
     Optional<QuestAcceptance> findById(Long acceptanceId);
 
+    Optional<QuestAcceptance> findByIdForUpdate(Long acceptanceId);
+
     List<QuestAcceptance> findAllByPlayerId(Long playerId);
 
     List<QuestAcceptance> findAllByPlayerIdAndStatus(Long playerId, QuestStatus status);

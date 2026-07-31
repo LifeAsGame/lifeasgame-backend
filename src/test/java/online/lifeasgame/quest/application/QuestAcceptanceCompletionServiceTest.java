@@ -18,7 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,6 +36,8 @@ class QuestAcceptanceCompletionServiceTest {
     private static final Instant GOAL_REACHED_AT = Instant.parse("2026-07-23T03:00:00Z");
     private static final Instant ACCEPTED_AT =
             Instant.parse("2026-07-23T02:00:00Z");
+    private static final Instant COMPLETED_AT =
+            Instant.parse("2026-07-23T04:00:00Z");
 
     @Mock
     private QuestReader questReader;
@@ -51,7 +55,8 @@ class QuestAcceptanceCompletionServiceTest {
         service = new QuestAcceptanceCompletionService(
                 questReader,
                 questWriter,
-                domainEventPublisher
+                domainEventPublisher,
+                Clock.fixed(COMPLETED_AT, ZoneOffset.UTC)
         );
     }
 
@@ -64,7 +69,8 @@ class QuestAcceptanceCompletionServiceTest {
         void completesAndPublishesEvent() {
             Quest quest = profileQuest(QuestCompletionPolicy.USER_CONFIRM);
             QuestAcceptance acceptance = goalReachedAcceptance(quest);
-            given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 
             QuestResult.Acceptance result = service.complete(ACCEPTANCE_ID);
@@ -74,8 +80,9 @@ class QuestAcceptanceCompletionServiceTest {
             assertThat(result.completionPolicy())
                     .isEqualTo(QuestCompletionPolicy.USER_CONFIRM.name());
             assertThat(result.goalReachedAt()).isEqualTo(GOAL_REACHED_AT);
-            assertThat(result.completedAt()).isNotNull();
+            assertThat(result.completedAt()).isEqualTo(COMPLETED_AT);
             verify(questWriter).saveAcceptance(acceptance);
+            verify(questReader).getAcceptanceForUpdate(ACCEPTANCE_ID);
 
             ArgumentCaptor<DomainEvent> eventCaptor = ArgumentCaptor.forClass(DomainEvent.class);
             verify(domainEventPublisher).publish(eventCaptor.capture());
@@ -106,7 +113,8 @@ class QuestAcceptanceCompletionServiceTest {
         void isIdempotent() {
             Quest quest = quest(QuestCompletionPolicy.USER_CONFIRM);
             QuestAcceptance acceptance = goalReachedAcceptance(quest);
-            given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 
             QuestResult.Acceptance first = service.complete(ACCEPTANCE_ID);
@@ -146,7 +154,8 @@ class QuestAcceptanceCompletionServiceTest {
         void rejectsAutoPolicy() {
             Quest quest = quest(QuestCompletionPolicy.AUTO);
             QuestAcceptance acceptance = goalReachedAcceptance(quest);
-            given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 
             assertQuestError(
@@ -168,13 +177,31 @@ class QuestAcceptanceCompletionServiceTest {
                     null
             );
             ReflectionTestUtils.setField(acceptance, "id", ACCEPTANCE_ID);
-            given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 
             assertQuestError(
                     () -> service.complete(ACCEPTANCE_ID),
                     QuestError.QUEST_ACCEPTANCE_COMPLETION_NOT_ALLOWED
             );
+            verifyNoInteractions(questWriter, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("Public 완료는 다른 Player Acceptance를 not found로 숨긴다")
+        void rejectsOtherPlayer() {
+            Quest quest = quest(QuestCompletionPolicy.USER_CONFIRM);
+            QuestAcceptance acceptance = goalReachedAcceptance(quest);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
+
+            assertQuestError(
+                    () -> service.completeForPlayer(99L, ACCEPTANCE_ID),
+                    QuestError.QUEST_ACCEPTANCE_NOT_FOUND
+            );
+
+            verify(questReader, never()).getById(anyLong());
             verifyNoInteractions(questWriter, domainEventPublisher);
         }
     }

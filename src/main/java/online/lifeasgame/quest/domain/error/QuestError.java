@@ -57,6 +57,11 @@ public enum QuestError implements ErrorCode {
             "Quest does not require user confirmation",
             409
     ),
+    QUEST_MANUAL_CHECK_NOT_ALLOWED(
+            "QUE-409-QUEST-MANUAL-CHECK-NOT-ALLOWED",
+            "Quest does not support manual check",
+            409
+    ),
     QUEST_TRANSITION_TIME_REQUIRED(
             "QUE-400-QUEST-TRANSITION-TIME-REQUIRED",
             "Quest transition time is required",

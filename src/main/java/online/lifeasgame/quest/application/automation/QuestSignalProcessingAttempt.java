@@ -248,9 +248,16 @@ public class QuestSignalProcessingAttempt {
         if (signal.occurredAt().isBefore(acceptance.getAcceptedAt())) {
             return false;
         }
-        return Objects.equals(
+        if (!Objects.equals(
                 signal.periodKey(),
                 acceptance.getPeriodKey()
+        )) {
+            return false;
+        }
+        return !signal.hasAcceptanceAttemptContext()
+                || signal.matchesAcceptanceAttempt(
+                acceptance.getId(),
+                acceptance.getAcceptedAt()
         );
     }
 

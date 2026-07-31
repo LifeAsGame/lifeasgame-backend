@@ -59,6 +59,11 @@ class QuestReader {
                 .orElseThrow(() -> new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND));
     }
 
+    QuestAcceptance getAcceptanceForUpdate(Long acceptanceId) {
+        return questAcceptanceRepository.findByIdForUpdate(acceptanceId)
+                .orElseThrow(() -> new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND));
+    }
+
     List<QuestAcceptance> findQuestAcceptances(Long questId, QuestStatus status) {
         if (status == null) {
             return questAcceptanceRepository.findAllByQuestId(questId);

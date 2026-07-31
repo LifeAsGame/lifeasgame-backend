@@ -36,6 +36,14 @@ public interface QuestSpecV1 {
             @Valid @RequestBody QuestRequest.Accept request
     );
 
+    @Operation(
+            summary = "Level 1 Manual Check Quest 완료",
+            description = "수락한 Level 1 Manual Check Quest를 확인하고 완료합니다."
+    )
+    ResponseEntity<ApiResponse<QuestResponse.Acceptance>> manualCheck(
+            @PathVariable String questCode
+    );
+
     @Operation(summary = "퀘스트 포기", description = "진행중 퀘스트를 포기(CANCELED) 처리합니다. (멱등키 권장)")
     ResponseEntity<ApiResponse<QuestResponse.Canceled>> cancel(
             @PathVariable String questCode,

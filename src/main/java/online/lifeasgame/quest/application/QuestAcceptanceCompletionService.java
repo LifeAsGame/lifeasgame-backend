@@ -12,7 +12,7 @@ import online.lifeasgame.quest.domain.event.QuestEventType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.Clock;
 
 @Service
 @RequiredArgsConstructor
@@ -21,16 +21,36 @@ public class QuestAcceptanceCompletionService {
     private final QuestReader questReader;
     private final QuestWriter questWriter;
     private final DomainEventPublisher domainEventPublisher;
+    private final Clock clock;
 
     @Transactional
     public QuestResult.Acceptance complete(Long acceptanceId) {
-        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        return complete(null, acceptanceId);
+    }
+
+    @Transactional
+    public QuestResult.Acceptance completeForPlayer(
+            Long playerId,
+            Long acceptanceId
+    ) {
+        return complete(playerId, acceptanceId);
+    }
+
+    private QuestResult.Acceptance complete(
+            Long playerId,
+            Long acceptanceId
+    ) {
+        QuestAcceptance acceptance =
+                questReader.getAcceptanceForUpdate(acceptanceId);
+        if (playerId != null && !playerId.equals(acceptance.getPlayerId())) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND);
+        }
         Quest quest = questReader.getById(acceptance.getQuestId());
         if (!quest.requiresUserConfirmation()) {
             throw new DomainException(QuestError.QUEST_COMPLETION_POLICY_NOT_USER_CONFIRM);
         }
 
-        boolean changed = acceptance.complete(Instant.now());
+        boolean changed = acceptance.complete(clock.instant());
         if (changed) {
             questWriter.saveAcceptance(acceptance);
             publishCompleted(acceptance, quest);

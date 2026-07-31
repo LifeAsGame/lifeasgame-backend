@@ -55,6 +55,17 @@ public class QuestController implements QuestSpecV1 {
     }
 
     @Override
+    @PostMapping("/{questCode}/manual-check")
+    public ResponseEntity<ApiResponse<QuestResponse.Acceptance>> manualCheck(
+            @PathVariable String questCode
+    ) {
+        QuestResult.Acceptance result = questFacade.manualCheck(
+                QuestWebMapper.toManualCheckCommand(questCode)
+        );
+        return ApiResponses.ok(QuestWebMapper.toAcceptance(result));
+    }
+
+    @Override
     @DeleteMapping("/{questCode}")
     public ResponseEntity<ApiResponse<QuestResponse.Canceled>> cancel(
             @PathVariable String questCode,

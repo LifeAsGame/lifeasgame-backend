@@ -83,6 +83,9 @@ public final class QuestCommand {
     ) {
     }
 
+    public record ManualCheck(String questCode) {
+    }
+
     public record AdjustProgress(
             Integer delta
     ) {

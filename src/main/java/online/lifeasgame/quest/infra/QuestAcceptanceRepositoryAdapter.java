@@ -26,6 +26,11 @@ public class QuestAcceptanceRepositoryAdapter implements QuestAcceptanceReposito
     }
 
     @Override
+    public Optional<QuestAcceptance> findByIdForUpdate(Long acceptanceId) {
+        return jpaQuestAcceptanceRepository.findByIdForUpdate(acceptanceId);
+    }
+
+    @Override
     public List<QuestAcceptance> findAllByPlayerId(Long playerId) {
         return jpaQuestAcceptanceRepository.findAllByPlayerId(playerId);
     }

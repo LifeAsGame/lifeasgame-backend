@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -28,6 +29,12 @@ class QuestSignalReceiptReplayRecoveryTest {
     private static final String CURRENT_FINGERPRINT = "a".repeat(64);
     private static final String LEGACY_FINGERPRINT = "b".repeat(64);
     private static final Long RECEIPT_ID = 195L;
+    private static final Instant STORED_AT =
+            Instant.parse("2026-07-24T01:00:00Z");
+    private static final Instant RETRIED_AT =
+            Instant.parse("2026-07-24T01:00:01Z");
+    private static final Instant ACCEPTED_AT =
+            Instant.parse("2026-07-24T00:00:00Z");
 
     @Mock
     private QuestSignalReceiptRepository receiptRepository;
@@ -135,6 +142,132 @@ class QuestSignalReceiptReplayRecoveryTest {
         verifyNoInteractions(signalFingerprint);
     }
 
+    @Test
+    @DisplayName("같은 Manual Check는 stored occurredAt으로 재계산해 replay한다")
+    void replaysManualCheckWithDifferentOccurredAt() {
+        QuestSignal stored = manualSignal(
+                STORED_AT,
+                25,
+                ACCEPTED_AT,
+                null
+        );
+        QuestSignal retried = manualSignal(
+                RETRIED_AT,
+                25,
+                ACCEPTED_AT,
+                null
+        );
+        QuestSignalFingerprint realFingerprint =
+                new QuestSignalFingerprint();
+        QuestSignalReceiptReplayRecovery realRecovery =
+                realRecovery(stored, realFingerprint);
+
+        assertThat(realRecovery.recover(
+                retried,
+                realFingerprint.fingerprint(retried)
+        )).contains(
+                QuestSignalProcessingResult.replayed(RECEIPT_ID)
+        );
+    }
+
+    @Test
+    @DisplayName("Manual Check라도 progressValue가 다르면 conflict다")
+    void rejectsDifferentManualCheckProgress() {
+        assertManualConflict(
+                manualSignal(STORED_AT, 25, ACCEPTED_AT, null),
+                manualSignal(RETRIED_AT, 10, ACCEPTED_AT, null)
+        );
+    }
+
+    @Test
+    @DisplayName("Manual Check attempt acceptedAt이 다르면 conflict다")
+    void rejectsDifferentManualCheckAttempt() {
+        assertManualConflict(
+                manualSignal(STORED_AT, 25, ACCEPTED_AT, null),
+                manualSignal(
+                        RETRIED_AT,
+                        25,
+                        ACCEPTED_AT.plusSeconds(1),
+                        null
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("Manual Check periodKey가 다르면 conflict다")
+    void rejectsDifferentManualCheckPeriodKey() {
+        assertManualConflict(
+                manualSignal(
+                        STORED_AT,
+                        25,
+                        ACCEPTED_AT,
+                        "2026-W30"
+                ),
+                manualSignal(
+                        RETRIED_AT,
+                        25,
+                        ACCEPTED_AT,
+                        "2026-W31"
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("manualCheck/source marker가 다르면 conflict다")
+    void rejectsDifferentManualCheckMarkers() {
+        QuestSignal stored = manualSignal(
+                STORED_AT,
+                25,
+                ACCEPTED_AT,
+                null
+        );
+        assertManualConflict(
+                stored,
+                manualSignal(
+                        RETRIED_AT,
+                        25,
+                        ACCEPTED_AT,
+                        null,
+                        false,
+                        "USER_CONFIRMATION"
+                )
+        );
+        assertManualConflict(
+                stored,
+                manualSignal(
+                        RETRIED_AT,
+                        25,
+                        ACCEPTED_AT,
+                        null,
+                        true,
+                        "OTHER"
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("일반 EXISTING_ONLY의 occurredAt 차이는 계속 conflict다")
+    void rejectsDifferentOccurredAtForGeneralExistingOnlySignal() {
+        QuestSignal stored = existingOnlySignal(STORED_AT);
+        QuestSignal retried = existingOnlySignal(RETRIED_AT);
+        QuestSignalFingerprint realFingerprint =
+                new QuestSignalFingerprint();
+        QuestSignalReceiptReplayRecovery realRecovery =
+                realRecovery(stored, realFingerprint);
+
+        assertThatThrownBy(() -> realRecovery.recover(
+                retried,
+                realFingerprint.fingerprint(retried)
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                QuestError
+                                        .QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT
+                        )
+        );
+    }
+
     private void stubReceipt(QuestSignal signal) {
         given(receiptRepository.findByIdentity(
                 signal.questCode().value(),
@@ -165,6 +298,56 @@ class QuestSignalReceiptReplayRecoveryTest {
         );
     }
 
+    private void assertManualConflict(
+            QuestSignal stored,
+            QuestSignal retried
+    ) {
+        QuestSignalFingerprint realFingerprint =
+                new QuestSignalFingerprint();
+        QuestSignalReceiptReplayRecovery realRecovery =
+                realRecovery(stored, realFingerprint);
+
+        assertThatThrownBy(() -> realRecovery.recover(
+                retried,
+                realFingerprint.fingerprint(retried)
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                QuestError
+                                        .QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT
+                        )
+        );
+    }
+
+    private QuestSignalReceiptReplayRecovery realRecovery(
+            QuestSignal stored,
+            QuestSignalFingerprint realFingerprint
+    ) {
+        QuestSignalReceipt storedReceipt = QuestSignalReceipt.create(
+                stored.questCode().value(),
+                stored.playerId(),
+                stored.correlationId(),
+                stored.type().name(),
+                realFingerprint.fingerprint(stored),
+                stored.occurredAt()
+        );
+        ReflectionTestUtils.setField(
+                storedReceipt,
+                "id",
+                RECEIPT_ID
+        );
+        given(receiptRepository.findByIdentity(
+                stored.questCode().value(),
+                stored.playerId(),
+                stored.correlationId()
+        )).willReturn(Optional.of(storedReceipt));
+        return new QuestSignalReceiptReplayRecovery(
+                receiptRepository,
+                realFingerprint
+        );
+    }
+
     private QuestSignal signal(
             QuestSignalAcceptancePolicy acceptancePolicy,
             String periodKey
@@ -178,6 +361,66 @@ class QuestSignalReceiptReplayRecoveryTest {
                 .correlationId("source:collection:195")
                 .acceptancePolicy(acceptancePolicy)
                 .periodKey(periodKey)
+                .build();
+    }
+
+    private QuestSignal manualSignal(
+            Instant occurredAt,
+            int progressValue,
+            Instant attemptAcceptedAt,
+            String periodKey
+    ) {
+        return manualSignal(
+                occurredAt,
+                progressValue,
+                attemptAcceptedAt,
+                periodKey,
+                true,
+                "USER_CONFIRMATION"
+        );
+    }
+
+    private QuestSignal manualSignal(
+            Instant occurredAt,
+            int progressValue,
+            Instant attemptAcceptedAt,
+            String periodKey,
+            boolean manualCheck,
+            String source
+    ) {
+        return QuestSignal.setProgress(
+                        QuestCode.Q_GROWTH_ONE_FOCUS,
+                        195L,
+                        progressValue
+                )
+                .occurredAt(occurredAt)
+                .correlationId(
+                        "manual-check:acceptance:1950:accepted-at:"
+                                + ACCEPTED_AT.toEpochMilli()
+                )
+                .acceptancePolicy(
+                        QuestSignalAcceptancePolicy.EXISTING_ONLY
+                )
+                .periodKey(periodKey)
+                .acceptanceAttempt(1950L, attemptAcceptedAt)
+                .attribute("acceptanceId", 1950L)
+                .attribute("manualCheck", manualCheck)
+                .attribute("source", source)
+                .build();
+    }
+
+    private QuestSignal existingOnlySignal(Instant occurredAt) {
+        return QuestSignal.addProgress(
+                        QuestCode.Q_RECORD_THREE_TRACES,
+                        195L,
+                        1
+                )
+                .occurredAt(occurredAt)
+                .correlationId("lifelog:195")
+                .acceptancePolicy(
+                        QuestSignalAcceptancePolicy.EXISTING_ONLY
+                )
+                .attribute("lifeLogId", 195L)
                 .build();
     }
 }
