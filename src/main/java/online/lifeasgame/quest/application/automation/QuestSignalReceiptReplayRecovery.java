@@ -51,6 +51,15 @@ public class QuestSignalReceiptReplayRecovery {
                 )) {
             return QuestSignalProcessingResult.replayed(receipt.getId());
         }
+        if (signal.isManualCheckReplayCandidate()
+                && receipt.hasFingerprint(
+                        signalFingerprint.fingerprintWithOccurredAt(
+                                signal,
+                                receipt.getOccurredAt()
+                        )
+                )) {
+            return QuestSignalProcessingResult.replayed(receipt.getId());
+        }
         throw new DomainException(
                 QuestError.QUEST_SIGNAL_RECEIPT_PAYLOAD_CONFLICT
         );

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -14,8 +15,15 @@ import java.util.*;
 public class QuestSignalFingerprint {
 
     public String fingerprint(QuestSignal signal) {
+        return fingerprintWithOccurredAt(signal, signal.occurredAt());
+    }
+
+    String fingerprintWithOccurredAt(
+            QuestSignal signal,
+            Instant occurredAt
+    ) {
         StringBuilder canonical = new StringBuilder();
-        appendCommon(canonical, signal);
+        appendCommon(canonical, signal, occurredAt);
         append(
                 canonical,
                 "acceptancePolicy",
@@ -28,14 +36,15 @@ public class QuestSignalFingerprint {
 
     String legacyFingerprint(QuestSignal signal) {
         StringBuilder canonical = new StringBuilder();
-        appendCommon(canonical, signal);
+        appendCommon(canonical, signal, signal.occurredAt());
         append(canonical, "attributes", signal.attributes());
         return sha256(canonical.toString());
     }
 
     private void appendCommon(
             StringBuilder canonical,
-            QuestSignal signal
+            QuestSignal signal,
+            Instant occurredAt
     ) {
         append(canonical, "questCode", signal.questCode().value());
         append(canonical, "playerId", signal.playerId());
@@ -45,7 +54,7 @@ public class QuestSignalFingerprint {
         } else {
             append(canonical, "progressDelta", signal.progressDelta());
         }
-        append(canonical, "occurredAt", signal.occurredAt());
+        append(canonical, "occurredAt", occurredAt);
     }
 
     private void append(StringBuilder target, String key, Object value) {

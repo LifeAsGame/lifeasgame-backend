@@ -13,6 +13,10 @@ import java.util.Map;
 public final class QuestSignal {
 
     public static final int MAX_CORRELATION_ID_LENGTH = 120;
+    static final String ACCEPTANCE_ATTEMPT_ID =
+            "acceptanceAttemptId";
+    static final String ACCEPTANCE_ATTEMPT_ACCEPTED_AT =
+            "acceptanceAttemptAcceptedAt";
 
     private final QuestCode questCode;
     private final Long playerId;
@@ -94,6 +98,42 @@ public final class QuestSignal {
         return type == QuestSignalType.SET_PROGRESS;
     }
 
+    boolean isManualCheckReplayCandidate() {
+        return acceptancePolicy
+                == QuestSignalAcceptancePolicy.EXISTING_ONLY
+                && isSetOperation()
+                && Boolean.TRUE.equals(attributes.get("manualCheck"))
+                && "USER_CONFIRMATION".equals(attributes.get("source"))
+                && hasCompleteAcceptanceAttemptContext();
+    }
+
+    boolean hasAcceptanceAttemptContext() {
+        return attributes.containsKey(ACCEPTANCE_ATTEMPT_ID)
+                || attributes.containsKey(
+                        ACCEPTANCE_ATTEMPT_ACCEPTED_AT
+                );
+    }
+
+    boolean matchesAcceptanceAttempt(Long id, Instant acceptedAt) {
+        return hasCompleteAcceptanceAttemptContext()
+                && id.equals(attributes.get(ACCEPTANCE_ATTEMPT_ID))
+                && acceptedAt.toString().equals(
+                        attributes.get(
+                                ACCEPTANCE_ATTEMPT_ACCEPTED_AT
+                        )
+                );
+    }
+
+    private boolean hasCompleteAcceptanceAttemptContext() {
+        Object id = attributes.get(ACCEPTANCE_ATTEMPT_ID);
+        Object acceptedAt =
+                attributes.get(ACCEPTANCE_ATTEMPT_ACCEPTED_AT);
+        return id instanceof Long value
+                && value > 0
+                && acceptedAt instanceof String text
+                && !text.isBlank();
+    }
+
     private String normalizeCorrelation(String raw) {
         if (raw == null || raw.isBlank()) {
             throw new DomainException(QuestError.QUEST_SIGNAL_CORRELATION_REQUIRED);
@@ -156,6 +196,24 @@ public final class QuestSignal {
 
         public Builder periodKey(String periodKey) {
             this.periodKey = periodKey;
+            return this;
+        }
+
+        public Builder acceptanceAttempt(
+                Long acceptanceId,
+                Instant acceptedAt
+        ) {
+            Guard.notNull(acceptanceId, "acceptanceId");
+            Guard.minValue(acceptanceId, 1L, "acceptanceId");
+            Guard.notNull(acceptedAt, "acceptedAt");
+            this.attributes.put(
+                    ACCEPTANCE_ATTEMPT_ID,
+                    acceptanceId
+            );
+            this.attributes.put(
+                    ACCEPTANCE_ATTEMPT_ACCEPTED_AT,
+                    acceptedAt.toString()
+            );
             return this;
         }
 

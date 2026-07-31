@@ -121,6 +121,22 @@ class QuestSignalFingerprintTest {
         }
 
         @Test
+        @DisplayName("override helper는 current schema에서 occurredAt만 바꾼다")
+        void overridesOnlyOccurredAt() {
+            QuestSignal stored = manualSignal(OCCURRED_AT);
+            QuestSignal replay = manualSignal(
+                    OCCURRED_AT.plusSeconds(1)
+            );
+
+            assertThat(fingerprint.fingerprint(replay))
+                    .isNotEqualTo(fingerprint.fingerprint(stored));
+            assertThat(fingerprint.fingerprintWithOccurredAt(
+                    replay,
+                    stored.occurredAt()
+            )).isEqualTo(fingerprint.fingerprint(stored));
+        }
+
+        @Test
         @DisplayName("Acceptance policy와 periodKey를 각각 semantic 값에 포함한다")
         void includesAcceptanceContext() {
             QuestSignal autoCreate = signal(Map.of(), 1);
@@ -169,6 +185,29 @@ class QuestSignalFingerprintTest {
                 .occurredAt(OCCURRED_AT)
                 .correlationId("source:collection:195")
                 .attributes(attributes)
+                .build();
+    }
+
+    private QuestSignal manualSignal(Instant occurredAt) {
+        Instant acceptedAt =
+                Instant.parse("2026-07-24T00:00:00Z");
+        return QuestSignal.setProgress(
+                        QuestCode.Q_GROWTH_ONE_FOCUS,
+                        195L,
+                        25
+                )
+                .occurredAt(occurredAt)
+                .correlationId(
+                        "manual-check:acceptance:1950:accepted-at:"
+                                + acceptedAt.toEpochMilli()
+                )
+                .acceptancePolicy(
+                        QuestSignalAcceptancePolicy.EXISTING_ONLY
+                )
+                .acceptanceAttempt(1950L, acceptedAt)
+                .attribute("acceptanceId", 1950L)
+                .attribute("manualCheck", true)
+                .attribute("source", "USER_CONFIRMATION")
                 .build();
     }
 }

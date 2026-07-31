@@ -154,6 +154,10 @@ public class QuestManualCheckService {
                 )
                 .occurredAt(checkedAt)
                 .periodKey(acceptance.getPeriodKey())
+                .acceptanceAttempt(
+                        acceptance.getId(),
+                        acceptance.getAcceptedAt()
+                )
                 .correlationId(
                         "manual-check:acceptance:%d:accepted-at:%d".formatted(
                                 acceptance.getId(),

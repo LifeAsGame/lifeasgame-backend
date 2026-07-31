@@ -373,6 +373,149 @@ class QuestSignalProcessingAttemptTest {
                     .isEqualTo(QuestStatus.IN_PROGRESS);
             verify(questAcceptanceRepository).save(acceptance);
         }
+
+        @Test
+        @DisplayName("expected attempt id와 acceptedAt이 일치하면 진행한다")
+        void acceptsMatchingAttemptContext() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE,
+                    2
+            );
+            QuestAcceptance acceptance = acceptance(
+                    quest,
+                    TimePeriod.forever(),
+                    908L
+            );
+            QuestSignal signal = manualAttemptSignal(
+                    908L,
+                    acceptance.getAcceptedAt()
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+            given(questAcceptanceRepository.save(any())).willAnswer(
+                    invocation -> invocation.getArgument(0)
+            );
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isEqualTo(1);
+            verify(questAcceptanceRepository).save(acceptance);
+            assertThat(publishedEvents(1)).extracting(QuestEvent::type)
+                    .containsExactly(QuestEventType.QUEST_PROGRESS);
+        }
+
+        @Test
+        @DisplayName("expected attempt acceptedAt이 다르면 Receipt만 저장한다")
+        void rejectsDifferentAttemptAcceptedAt() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE,
+                    2
+            );
+            QuestAcceptance acceptance = acceptance(
+                    quest,
+                    TimePeriod.forever(),
+                    909L
+            );
+            QuestSignal signal = manualAttemptSignal(
+                    909L,
+                    acceptance.getAcceptedAt().plusSeconds(1)
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("expected acceptance id가 다르면 Receipt만 저장한다")
+        void rejectsDifferentAttemptId() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE,
+                    2
+            );
+            QuestAcceptance acceptance = acceptance(
+                    quest,
+                    TimePeriod.forever(),
+                    910L
+            );
+            QuestSignal signal = manualAttemptSignal(
+                    911L,
+                    acceptance.getAcceptedAt()
+            );
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
+
+        @Test
+        @DisplayName("불완전한 attempt context는 parsing 없이 거부한다")
+        void rejectsMalformedAttemptContext() {
+            Quest quest = quest(
+                    QuestCompletionPolicy.AUTO,
+                    QuestRepeatRule.NONE,
+                    2
+            );
+            QuestAcceptance acceptance = acceptance(
+                    quest,
+                    TimePeriod.forever(),
+                    912L
+            );
+            QuestSignal signal = QuestSignal.setProgress(
+                            QuestCode.PLAYER_WELCOME,
+                            PLAYER_ID,
+                            1
+                    )
+                    .occurredAt(OCCURRED_AT)
+                    .correlationId("manual-check:malformed")
+                    .acceptancePolicy(
+                            QuestSignalAcceptancePolicy.EXISTING_ONLY
+                    )
+                    .attribute(
+                            QuestSignal.ACCEPTANCE_ATTEMPT_ID,
+                            acceptance.getId()
+                    )
+                    .build();
+            stubReceipt(signal);
+            given(questService.ensureQuest(signal.questCode()))
+                    .willReturn(quest);
+            given(questAcceptanceRepository.findLatestByQuestAndPlayer(
+                    QUEST_ID,
+                    PLAYER_ID
+            )).willReturn(Optional.of(acceptance));
+
+            attempt.process(signal, FINGERPRINT);
+
+            assertThat(acceptance.getProgressValue()).isZero();
+            verify(questAcceptanceRepository, never()).save(any());
+            verifyNoInteractions(questProgressStore, domainEventPublisher);
+        }
     }
 
     @Nested
@@ -670,6 +813,26 @@ class QuestSignalProcessingAttemptTest {
                 )
                 .periodKey(periodKey)
                 .attribute("lifeLogId", 195L)
+                .build();
+    }
+
+    private QuestSignal manualAttemptSignal(
+            Long acceptanceId,
+            Instant acceptedAt
+    ) {
+        return QuestSignal.setProgress(
+                        QuestCode.PLAYER_WELCOME,
+                        PLAYER_ID,
+                        1
+                )
+                .occurredAt(OCCURRED_AT)
+                .correlationId("manual-check:attempt:195")
+                .acceptancePolicy(
+                        QuestSignalAcceptancePolicy.EXISTING_ONLY
+                )
+                .acceptanceAttempt(acceptanceId, acceptedAt)
+                .attribute("manualCheck", true)
+                .attribute("source", "USER_CONFIRMATION")
                 .build();
     }
 

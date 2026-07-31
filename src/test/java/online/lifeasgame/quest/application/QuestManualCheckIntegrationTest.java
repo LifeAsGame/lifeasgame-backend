@@ -2,6 +2,8 @@ package online.lifeasgame.quest.application;
 
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.application.automation.QuestProgressStore;
+import online.lifeasgame.quest.application.automation.QuestSignal;
+import online.lifeasgame.quest.application.automation.QuestSignalProcessingService;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.QuestCode;
@@ -35,13 +37,16 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 
 @Testcontainers
@@ -84,6 +89,9 @@ class QuestManualCheckIntegrationTest {
 
     @MockitoSpyBean
     private QuestAcceptanceCompletionService completionService;
+
+    @MockitoSpyBean
+    private QuestSignalProcessingService signalProcessingService;
 
     @MockitoBean
     private QuestProgressStore questProgressStore;
@@ -142,26 +150,41 @@ class QuestManualCheckIntegrationTest {
     }
 
     @Test
-    @DisplayName("동시 중복도 row lock으로 Completed Event를 한 번만 남긴다")
+    @DisplayName("서로 다른 checkedAt의 동시 중복도 exact-once다")
     void appliesConcurrentDuplicateExactlyOnce() throws Exception {
         accept(QuestCode.Q_RECOVERY_REST_TEN);
-        clock.set(ACCEPTED_AT.plusSeconds(60));
+        Instant firstCheckedAt = ACCEPTED_AT.plusSeconds(60);
+        Instant secondCheckedAt = ACCEPTED_AT.plusSeconds(61);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch processingReady = new CountDownLatch(2);
+        CountDownLatch process = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            processingReady.countDown();
+            assertThat(process.await(5, TimeUnit.SECONDS)).isTrue();
+            return invocation.callRealMethod();
+        }).when(signalProcessingService).process(any(QuestSignal.class));
         try {
-            Future<QuestResult.Acceptance> first = executor.submit(() -> {
-                ready.countDown();
-                start.await();
-                return check(QuestCode.Q_RECOVERY_REST_TEN);
-            });
-            Future<QuestResult.Acceptance> second = executor.submit(() -> {
-                ready.countDown();
-                start.await();
-                return check(QuestCode.Q_RECOVERY_REST_TEN);
-            });
+            Future<QuestResult.Acceptance> first = submitCheck(
+                    executor,
+                    ready,
+                    start,
+                    QuestCode.Q_RECOVERY_REST_TEN,
+                    firstCheckedAt
+            );
+            Future<QuestResult.Acceptance> second = submitCheck(
+                    executor,
+                    ready,
+                    start,
+                    QuestCode.Q_RECOVERY_REST_TEN,
+                    secondCheckedAt
+            );
             assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
             start.countDown();
+            assertThat(processingReady.await(5, TimeUnit.SECONDS))
+                    .isTrue();
+            process.countDown();
 
             assertThat(List.of(
                     first.get(20, TimeUnit.SECONDS),
@@ -222,59 +245,102 @@ class QuestManualCheckIntegrationTest {
     }
 
     @Test
-    @DisplayName("cancel 후 같은 날 재수락은 acceptedAt으로 새 attempt가 된다")
-    void separatesCanceledAndReacceptedAttempt() {
+    @DisplayName("Signal 직전 cancel/reaccept된 새 attempt를 변경하지 않는다")
+    void isolatesCanceledAndReacceptedAttemptBeforeProcessing()
+            throws Exception {
         accept(QuestCode.Q_GROWTH_ONE_FOCUS);
-        clock.set(ACCEPTED_AT.plusSeconds(60));
-        doThrow(new RuntimeException("stop before completion"))
-                .doCallRealMethod()
-                .when(completionService)
-                .completeForPlayer(eq(PLAYER_ID), anyLong());
-        assertThatThrownBy(
-                () -> check(QuestCode.Q_GROWTH_ONE_FOCUS)
-        ).isInstanceOf(RuntimeException.class);
-
-        questService.cancel(
-                PLAYER_ID,
-                new QuestCommand.Cancel(
-                        QuestCode.Q_GROWTH_ONE_FOCUS.value(),
-                        "new manual attempt"
-                )
-        );
+        Instant oldAttemptCheckedAt = ACCEPTED_AT.plusSeconds(180);
         Instant restartedAt = ACCEPTED_AT.plusSeconds(120);
-        clock.set(restartedAt);
-        QuestResult.Acceptance restarted =
-                questService.accept(
-                        PLAYER_ID,
-                        new QuestCommand.Accept(
-                                QuestCode.Q_GROWTH_ONE_FOCUS.value(),
-                                null,
-                                null
-                        )
-                );
-        clock.set(restartedAt.plusSeconds(60));
+        CountDownLatch processingEntered = new CountDownLatch(1);
+        CountDownLatch process = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            processingEntered.countDown();
+            assertThat(process.await(5, TimeUnit.SECONDS)).isTrue();
+            return invocation.callRealMethod();
+        }).when(signalProcessingService).process(any(QuestSignal.class));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<QuestResult.Acceptance> oldAttempt =
+                    executor.submit(() -> checkWithThreadClock(
+                            QuestCode.Q_GROWTH_ONE_FOCUS,
+                            oldAttemptCheckedAt
+                    ));
+            assertThat(processingEntered.await(5, TimeUnit.SECONDS))
+                    .isTrue();
 
-        QuestResult.Acceptance completed = check(
-                QuestCode.Q_GROWTH_ONE_FOCUS
-        );
+            clock.set(restartedAt);
+            questService.cancel(
+                    PLAYER_ID,
+                    new QuestCommand.Cancel(
+                            QuestCode.Q_GROWTH_ONE_FOCUS.value(),
+                            "processing race"
+                    )
+            );
+            QuestResult.Acceptance restarted = questService.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.Q_GROWTH_ONE_FOCUS.value(),
+                            null,
+                            null
+                    )
+            );
+            assertThat(oldAttemptCheckedAt).isAfter(restartedAt);
+            assertThat(restarted.acceptedAt()).isEqualTo(restartedAt);
 
-        assertThat(restarted.id()).isEqualTo(completed.id());
-        assertThat(restarted.acceptedAt()).isEqualTo(restartedAt);
-        assertThat(completed.status()).isEqualTo(
-                QuestStatus.COMPLETED.name()
-        );
-        assertThat(receiptCount()).isEqualTo(2);
-        assertThat(correlations()).containsExactly(
-                correlation(restarted.id(), ACCEPTED_AT),
-                correlation(restarted.id(), restartedAt)
-        );
-        assertThat(eventTypes()).containsExactly(
-                QuestEventType.QUEST_PROGRESS.name(),
-                QuestEventType.QUEST_GOAL_REACHED.name(),
-                QuestEventType.QUEST_PROGRESS.name(),
-                QuestEventType.QUEST_GOAL_REACHED.name(),
-                QuestEventType.QUEST_COMPLETED.name()
-        );
+            process.countDown();
+            assertThatThrownBy(
+                    () -> oldAttempt.get(20, TimeUnit.SECONDS)
+            ).isInstanceOfSatisfying(
+                    ExecutionException.class,
+                    exception -> assertThat(exception.getCause())
+                            .isInstanceOfSatisfying(
+                                    DomainException.class,
+                                    cause -> assertThat(
+                                            cause.getErrorCode()
+                                    ).isEqualTo(
+                                            QuestError
+                                                    .QUEST_ACCEPTANCE_NOT_FOUND
+                                    )
+                            )
+            );
+
+            assertThat(status(QuestCode.Q_GROWTH_ONE_FOCUS))
+                    .isEqualTo(QuestStatus.IN_PROGRESS.name());
+            assertThat(progress(QuestCode.Q_GROWTH_ONE_FOCUS)).isZero();
+            assertThat(receiptCount()).isEqualTo(1);
+            assertThat(correlations()).containsExactly(
+                    correlation(restarted.id(), ACCEPTED_AT)
+            );
+            assertThat(eventTypes()).isEmpty();
+
+            Instant newAttemptCheckedAt =
+                    restartedAt.plusSeconds(120);
+            clock.set(newAttemptCheckedAt);
+            QuestResult.Acceptance completed = check(
+                    QuestCode.Q_GROWTH_ONE_FOCUS
+            );
+
+            assertThat(completed.id()).isEqualTo(restarted.id());
+            assertThat(completed.acceptedAt()).isEqualTo(restartedAt);
+            assertThat(completed.status()).isEqualTo(
+                    QuestStatus.COMPLETED.name()
+            );
+            assertThat(receiptCount()).isEqualTo(2);
+            assertThat(correlations()).containsExactly(
+                    correlation(restarted.id(), ACCEPTED_AT),
+                    correlation(restarted.id(), restartedAt)
+            );
+            assertThat(eventTypes()).containsExactly(
+                    QuestEventType.QUEST_PROGRESS.name(),
+                    QuestEventType.QUEST_GOAL_REACHED.name(),
+                    QuestEventType.QUEST_COMPLETED.name()
+            );
+        } finally {
+            process.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS))
+                    .isTrue();
+        }
     }
 
     @Test
@@ -331,6 +397,37 @@ class QuestManualCheckIntegrationTest {
                 PLAYER_ID,
                 new QuestCommand.ManualCheck(questCode.value())
         );
+    }
+
+    private Future<QuestResult.Acceptance> submitCheck(
+            ExecutorService executor,
+            CountDownLatch ready,
+            CountDownLatch start,
+            QuestCode questCode,
+            Instant checkedAt
+    ) {
+        return executor.submit(() -> {
+            clock.setForCurrentThread(checkedAt);
+            try {
+                ready.countDown();
+                start.await();
+                return check(questCode);
+            } finally {
+                clock.clearCurrentThread();
+            }
+        });
+    }
+
+    private QuestResult.Acceptance checkWithThreadClock(
+            QuestCode questCode,
+            Instant checkedAt
+    ) {
+        clock.setForCurrentThread(checkedAt);
+        try {
+            return check(questCode);
+        } finally {
+            clock.clearCurrentThread();
+        }
     }
 
     private int receiptCount() {
@@ -422,9 +519,19 @@ class QuestManualCheckIntegrationTest {
     static final class MutableClock extends Clock {
 
         private volatile Instant current = ACCEPTED_AT;
+        private final ThreadLocal<Instant> currentThread =
+                new ThreadLocal<>();
 
         void set(Instant instant) {
             current = instant;
+        }
+
+        void setForCurrentThread(Instant instant) {
+            currentThread.set(instant);
+        }
+
+        void clearCurrentThread() {
+            currentThread.remove();
         }
 
         @Override
@@ -434,12 +541,13 @@ class QuestManualCheckIntegrationTest {
 
         @Override
         public Clock withZone(ZoneId zone) {
-            return Clock.fixed(current, zone);
+            return Clock.fixed(instant(), zone);
         }
 
         @Override
         public Instant instant() {
-            return current;
+            Instant threadInstant = currentThread.get();
+            return threadInstant == null ? current : threadInstant;
         }
     }
 }

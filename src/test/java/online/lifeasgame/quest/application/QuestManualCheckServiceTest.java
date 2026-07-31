@@ -130,6 +130,14 @@ class QuestManualCheckServiceTest {
         );
         assertThat(signal.attributes())
                 .containsEntry("acceptanceId", ACCEPTANCE_ID)
+                .containsEntry(
+                        "acceptanceAttemptId",
+                        ACCEPTANCE_ID
+                )
+                .containsEntry(
+                        "acceptanceAttemptAcceptedAt",
+                        ACCEPTED_AT.toString()
+                )
                 .containsEntry("manualCheck", true)
                 .containsEntry("source", "USER_CONFIRMATION");
         verify(completionService).completeForPlayer(
