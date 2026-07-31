@@ -16,6 +16,49 @@ class QuestAcceptanceTest {
 
     private static final Instant GOAL_REACHED_AT = Instant.parse("2026-07-23T01:00:00Z");
     private static final Instant COMPLETED_AT = Instant.parse("2026-07-23T01:01:00Z");
+    private static final Instant ACCEPTED_AT =
+            Instant.parse("2026-07-23T00:00:00Z");
+
+    @Nested
+    @DisplayName("Fact context로 시작할 때")
+    class StartWithFactContext {
+
+        @Test
+        @DisplayName("acceptedAt과 유효한 nullable periodKey를 명시적으로 저장한다")
+        void storesAcceptedAtAndPeriodKey() {
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    1L,
+                    10L,
+                    TimePeriod.weekly(java.time.LocalDate.of(2026, 7, 30)),
+                    ACCEPTED_AT,
+                    "2026-W31"
+            );
+
+            assertThat(acceptance.getAcceptedAt()).isEqualTo(ACCEPTED_AT);
+            assertThat(acceptance.getPeriodKey()).isEqualTo("2026-W31");
+        }
+
+        @Test
+        @DisplayName("acceptedAt null과 잘못된 weekly periodKey를 거부한다")
+        void rejectsInvalidFactContext() {
+            assertThatThrownBy(() -> QuestAcceptance.start(
+                    1L,
+                    10L,
+                    TimePeriod.forever(),
+                    null,
+                    null
+            )).isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("acceptedAt");
+            assertThatThrownBy(() -> QuestAcceptance.start(
+                    1L,
+                    10L,
+                    TimePeriod.forever(),
+                    ACCEPTED_AT,
+                    "2026-W54"
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("periodKey");
+        }
+    }
 
     @Nested
     @DisplayName("진행도를 반영할 때")
@@ -193,7 +236,13 @@ class QuestAcceptanceTest {
     }
 
     private QuestAcceptance acceptance() {
-        return QuestAcceptance.start(1L, 10L, TimePeriod.forever());
+        return QuestAcceptance.start(
+                1L,
+                10L,
+                TimePeriod.forever(),
+                ACCEPTED_AT,
+                null
+        );
     }
 
     private Quest quest(QuestCompletionPolicy completionPolicy) {

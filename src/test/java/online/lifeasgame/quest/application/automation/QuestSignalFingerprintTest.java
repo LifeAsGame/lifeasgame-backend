@@ -92,6 +92,27 @@ class QuestSignalFingerprintTest {
             assertThat(fingerprint.fingerprint(first))
                     .isNotEqualTo(fingerprint.fingerprint(second));
         }
+
+        @Test
+        @DisplayName("Acceptance policy와 periodKey를 semantic 값에 포함한다")
+        void includesAcceptanceContext() {
+            QuestSignal autoCreate = signal(Map.of(), 1);
+            QuestSignal existingOnly = QuestSignal.addProgress(
+                            QuestCode.COLLECTION_HUNTER_10,
+                            195L,
+                            1
+                    )
+                    .occurredAt(OCCURRED_AT)
+                    .correlationId("source:collection:195")
+                    .acceptancePolicy(
+                            QuestSignalAcceptancePolicy.EXISTING_ONLY
+                    )
+                    .periodKey("2026-W30")
+                    .build();
+
+            assertThat(fingerprint.fingerprint(existingOnly))
+                    .isNotEqualTo(fingerprint.fingerprint(autoCreate));
+        }
     }
 
     private QuestSignal signal(

@@ -6,6 +6,7 @@ import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.error.QuestError;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,6 +21,8 @@ public final class QuestSignal {
     private final Integer progressValue;
     private final Instant occurredAt;
     private final String correlationId;
+    private final QuestSignalAcceptancePolicy acceptancePolicy;
+    private final String periodKey;
     private final Map<String, Object> attributes;
 
     private QuestSignal(Builder builder) {
@@ -30,7 +33,11 @@ public final class QuestSignal {
         this.progressValue = builder.progressValue;
         this.occurredAt = builder.occurredAt == null ? Instant.now() : builder.occurredAt;
         this.correlationId = normalizeCorrelation(builder.correlationId);
-        this.attributes = Map.copyOf(builder.attributes);
+        this.acceptancePolicy = builder.acceptancePolicy;
+        this.periodKey = builder.periodKey;
+        this.attributes = Collections.unmodifiableMap(
+                new LinkedHashMap<>(builder.attributes)
+        );
     }
 
     public QuestCode questCode() {
@@ -59,6 +66,14 @@ public final class QuestSignal {
 
     public String correlationId() {
         return correlationId;
+    }
+
+    public QuestSignalAcceptancePolicy acceptancePolicy() {
+        return acceptancePolicy;
+    }
+
+    public String periodKey() {
+        return periodKey;
     }
 
     public Map<String, Object> attributes() {
@@ -98,6 +113,9 @@ public final class QuestSignal {
         private Integer progressValue;
         private Instant occurredAt;
         private String correlationId;
+        private QuestSignalAcceptancePolicy acceptancePolicy =
+                QuestSignalAcceptancePolicy.AUTO_CREATE;
+        private String periodKey;
         private final Map<String, Object> attributes = new LinkedHashMap<>();
 
         private Builder(QuestCode questCode, Long playerId, QuestSignalType type) {
@@ -126,8 +144,31 @@ public final class QuestSignal {
             return this;
         }
 
+        public Builder acceptancePolicy(
+                QuestSignalAcceptancePolicy acceptancePolicy
+        ) {
+            this.acceptancePolicy = Guard.notNull(
+                    acceptancePolicy,
+                    "acceptancePolicy"
+            );
+            return this;
+        }
+
+        public Builder periodKey(String periodKey) {
+            this.periodKey = periodKey;
+            return this;
+        }
+
         public Builder attribute(String key, Object value) {
             if (key == null || key.isBlank() || value == null) {
+                return this;
+            }
+            this.attributes.put(key, value);
+            return this;
+        }
+
+        public Builder nullableAttribute(String key, Object value) {
+            if (key == null || key.isBlank()) {
                 return this;
             }
             this.attributes.put(key, value);

@@ -24,6 +24,12 @@ public class QuestSignalFingerprint {
             append(canonical, "progressDelta", signal.progressDelta());
         }
         append(canonical, "occurredAt", signal.occurredAt());
+        append(
+                canonical,
+                "acceptancePolicy",
+                signal.acceptancePolicy().name()
+        );
+        append(canonical, "periodKey", signal.periodKey());
         append(canonical, "attributes", signal.attributes());
         return sha256(canonical.toString());
     }

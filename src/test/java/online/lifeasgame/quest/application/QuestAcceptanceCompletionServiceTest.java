@@ -32,6 +32,8 @@ class QuestAcceptanceCompletionServiceTest {
     private static final Long QUEST_ID = 193L;
     private static final Long ACCEPTANCE_ID = 1930L;
     private static final Instant GOAL_REACHED_AT = Instant.parse("2026-07-23T03:00:00Z");
+    private static final Instant ACCEPTED_AT =
+            Instant.parse("2026-07-23T02:00:00Z");
 
     @Mock
     private QuestReader questReader;
@@ -161,7 +163,9 @@ class QuestAcceptanceCompletionServiceTest {
             QuestAcceptance acceptance = QuestAcceptance.start(
                     QUEST_ID,
                     10L,
-                    TimePeriod.forever()
+                    TimePeriod.forever(),
+                    ACCEPTED_AT,
+                    null
             );
             ReflectionTestUtils.setField(acceptance, "id", ACCEPTANCE_ID);
             given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
@@ -179,7 +183,9 @@ class QuestAcceptanceCompletionServiceTest {
         QuestAcceptance acceptance = QuestAcceptance.start(
                 quest.getId(),
                 10L,
-                TimePeriod.forever()
+                TimePeriod.forever(),
+                ACCEPTED_AT,
+                null
         );
         ReflectionTestUtils.setField(acceptance, "id", ACCEPTANCE_ID);
         acceptance.setProgress(1, quest, GOAL_REACHED_AT);

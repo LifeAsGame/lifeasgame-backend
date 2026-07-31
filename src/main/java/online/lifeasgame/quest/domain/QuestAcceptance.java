@@ -11,6 +11,9 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import online.lifeasgame.quest.domain.error.QuestError;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
+import java.util.regex.Pattern;
 
 @Getter
 @Entity
@@ -30,6 +33,9 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestAcceptance extends AbstractTime {
 
+    private static final Pattern WEEKLY_PERIOD_KEY =
+            Pattern.compile("\\d{4}-W\\d{2}");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,6 +54,12 @@ public class QuestAcceptance extends AbstractTime {
 
     @Embedded
     private TimePeriod period;
+
+    @Column(name = "accepted_at", nullable = false, updatable = false)
+    private Instant acceptedAt;
+
+    @Column(name = "period_key", length = 20)
+    private String periodKey;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
@@ -73,27 +85,62 @@ public class QuestAcceptance extends AbstractTime {
             Long playerId,
             Long partyId,
             Long guildId,
-            TimePeriod period
+            TimePeriod period,
+            Instant acceptedAt,
+            String periodKey
     ) {
         Guard.notNull(questId, "questId");
         Guard.minValue(questId, 1L, "questId");
         Guard.notNull(playerId, "playerId");
         Guard.minValue(playerId, 1L, "playerId");
         Guard.notNull(period, "period");
+        Guard.notNull(acceptedAt, "acceptedAt");
         this.questId = questId;
         this.playerId = playerId;
         this.partyId = partyId;
         this.guildId = guildId;
         this.period = period;
+        this.acceptedAt = acceptedAt;
+        this.periodKey = validatePeriodKey(periodKey);
         this.progressValue = 0;
     }
 
-    public static QuestAcceptance start(Long questId, Long playerId, TimePeriod period) {
-        return new QuestAcceptance(questId, playerId, null, null, period);
+    public static QuestAcceptance start(
+            Long questId,
+            Long playerId,
+            TimePeriod period,
+            Instant acceptedAt,
+            String periodKey
+    ) {
+        return new QuestAcceptance(
+                questId,
+                playerId,
+                null,
+                null,
+                period,
+                acceptedAt,
+                periodKey
+        );
     }
 
-    public static QuestAcceptance start(Long questId, Long playerId, Long partyId, Long guildId, TimePeriod period) {
-        return new QuestAcceptance(questId, playerId, partyId, guildId, period);
+    public static QuestAcceptance start(
+            Long questId,
+            Long playerId,
+            Long partyId,
+            Long guildId,
+            TimePeriod period,
+            Instant acceptedAt,
+            String periodKey
+    ) {
+        return new QuestAcceptance(
+                questId,
+                playerId,
+                partyId,
+                guildId,
+                period,
+                acceptedAt,
+                periodKey
+        );
     }
 
     public void addProgress(int delta, Quest quest) {
@@ -211,5 +258,26 @@ public class QuestAcceptance extends AbstractTime {
             throw new DomainException(QuestError.QUEST_TRANSITION_TIME_REQUIRED);
         }
         return transitionTime;
+    }
+
+    private static String validatePeriodKey(String periodKey) {
+        if (periodKey == null) {
+            return null;
+        }
+        if (!WEEKLY_PERIOD_KEY.matcher(periodKey).matches()) {
+            throw new IllegalArgumentException(
+                    "periodKey must use YYYY-Www format"
+            );
+        }
+        int year = Integer.parseInt(periodKey.substring(0, 4));
+        int week = Integer.parseInt(periodKey.substring(6));
+        int maximumWeek = LocalDate.of(year, 12, 28)
+                .get(WeekFields.ISO.weekOfWeekBasedYear());
+        if (week < 1 || week > maximumWeek) {
+            throw new IllegalArgumentException(
+                    "periodKey week is not valid for its ISO year"
+            );
+        }
+        return periodKey;
     }
 }

@@ -31,11 +31,14 @@ class QuestResponseContractTest {
         void exposesCompletedContract() {
             Instant reachedAt = Instant.parse("2026-07-23T03:00:00Z");
             Instant completedAt = reachedAt.plusSeconds(60);
+            Instant acceptedAt = reachedAt.minusSeconds(60);
             Quest quest = quest();
             QuestAcceptance acceptance = QuestAcceptance.start(
                     quest.getId(),
                     1930L,
-                    TimePeriod.forever()
+                    TimePeriod.forever(),
+                    acceptedAt,
+                    null
             );
             ReflectionTestUtils.setField(acceptance, "id", 19300L);
             acceptance.setProgress(1, quest, reachedAt);
@@ -54,6 +57,8 @@ class QuestResponseContractTest {
                     .isEqualTo(QuestCompletionPolicy.USER_CONFIRM.name());
             assertThat(playerResponse.goalReachedAt()).isEqualTo(reachedAt);
             assertThat(playerResponse.completedAt()).isEqualTo(completedAt);
+            assertThat(playerResponse.acceptedAt()).isEqualTo(acceptedAt);
+            assertThat(playerResponse.periodKey()).isNull();
 
             assertThat(adminResponse.status()).isEqualTo(QuestStatus.COMPLETED.name());
             assertThat(adminResponse.status()).isNotEqualTo("DONE");
@@ -62,6 +67,8 @@ class QuestResponseContractTest {
                     .isEqualTo(QuestCompletionPolicy.USER_CONFIRM.name());
             assertThat(adminResponse.goalReachedAt()).isEqualTo(reachedAt);
             assertThat(adminResponse.completedAt()).isEqualTo(completedAt);
+            assertThat(adminResponse.acceptedAt()).isEqualTo(acceptedAt);
+            assertThat(adminResponse.periodKey()).isNull();
         }
     }
 

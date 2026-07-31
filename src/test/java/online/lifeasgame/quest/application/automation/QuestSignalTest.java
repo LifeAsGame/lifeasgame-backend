@@ -53,6 +53,16 @@ class QuestSignalTest {
         }
     }
 
+    @Test
+    @DisplayName("legacy Builder는 AUTO_CREATE와 null periodKey를 기본으로 유지한다")
+    void keepsLegacyAcceptanceDefaults() {
+        QuestSignal signal = signal("source:event:195");
+
+        assertThat(signal.acceptancePolicy())
+                .isEqualTo(QuestSignalAcceptancePolicy.AUTO_CREATE);
+        assertThat(signal.periodKey()).isNull();
+    }
+
     private QuestSignal signal(String correlationId) {
         return QuestSignal.addProgress(
                         QuestCode.COLLECTION_HUNTER_10,

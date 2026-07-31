@@ -13,8 +13,12 @@ import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +35,8 @@ public class QuestService {
     private final QuestWriter questWriter;
     private final RewardProfileLookupApi rewardProfileLookupApi;
     private final DomainEventPublisher domainEventPublisher;
+    private final PlayerTimezoneResolver playerTimezoneResolver;
+    private final Clock clock;
 
     @Transactional
     public QuestResult.Definition ensureDefinition(QuestCommand.EnsureDefinition command) {
@@ -206,8 +212,16 @@ public class QuestService {
     public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
         Quest quest = questReader.getByCode(questCode);
-        LocalDate acceptedDate = LocalDate.now();
+        Instant acceptedAt = clock.instant();
+        ZoneId playerZone = Objects.requireNonNull(
+                playerTimezoneResolver.resolve(playerId),
+                "playerTimezone"
+        );
+        LocalDate acceptedDate = acceptedAt.atZone(playerZone).toLocalDate();
         TimePeriod period = quest.getRepeatRule().periodFor(acceptedDate);
+        String periodKey = questCode == QuestCode.Q_RECORD_WEEKLY_LOOKBACK
+                ? weeklyPeriodKey(acceptedAt, playerZone)
+                : null;
         QuestAcceptance latest = questReader.findLatest(
                 quest.getId(),
                 playerId
@@ -224,11 +238,22 @@ public class QuestService {
                         playerId,
                         command.partyId(),
                         command.guildId(),
-                        period
+                        period,
+                        acceptedAt,
+                        periodKey
                 )
         );
 
         return QuestResult.Acceptance.from(questAcceptance, quest);
+    }
+
+    private String weeklyPeriodKey(Instant acceptedAt, ZoneId playerZone) {
+        ZonedDateTime local = acceptedAt.atZone(playerZone);
+        WeekFields iso = WeekFields.ISO;
+        return "%04d-W%02d".formatted(
+                local.get(iso.weekBasedYear()),
+                local.get(iso.weekOfWeekBasedYear())
+        );
     }
 
     @Transactional

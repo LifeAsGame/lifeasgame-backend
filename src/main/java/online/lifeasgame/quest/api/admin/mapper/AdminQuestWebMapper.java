@@ -128,6 +128,8 @@ public final class AdminQuestWebMapper {
                 result.repeatRule(),
                 result.periodStart(),
                 result.periodEnd(),
+                result.acceptedAt(),
+                result.periodKey(),
                 result.goalReachedAt(),
                 result.completedAt(),
                 result.dueAt(),

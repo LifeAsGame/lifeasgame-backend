@@ -1,6 +1,12 @@
 package online.lifeasgame.quest.application.automation;
 
 import online.lifeasgame.LifeasgameApplication;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
+import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.trigger.LifeLogRecordedQuestTrigger;
 import online.lifeasgame.quest.domain.QuestCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class QuestSignalReceiptContextRestartTest {
 
     private static final Long PLAYER_ID = 195002L;
+    private static final Long CONTENT_PLAYER_ID = 215002L;
 
     @Container
     private static final MySQLContainer<?> MYSQL =
@@ -71,6 +78,69 @@ class QuestSignalReceiptContextRestartTest {
             assertThat(acceptanceCount()).isEqualTo(1);
             assertThat(progressValue()).isEqualTo(1);
         }
+
+        @Test
+        @DisplayName("LifeLog global id Receipt도 새 Context에서 REPLAYED를 반환한다")
+        void replaysLifeLogSignalFromDurableReceipt() throws Exception {
+            QuestSignal signal;
+            QuestSignalProcessingResult applied;
+
+            try (ConfigurableApplicationContext first = startContext()) {
+                Instant acceptedAt = first.getBean(QuestService.class)
+                        .accept(
+                                CONTENT_PLAYER_ID,
+                                new QuestCommand.Accept(
+                                        QuestCode.Q_RECORD_THREE_TRACES.value(),
+                                        null,
+                                        null
+                                )
+                        )
+                        .acceptedAt();
+                LifeLogRecorded event = new LifeLogRecorded(
+                        "215-context-restart-a",
+                        LifeLogRecorded.EVENT_TYPE,
+                        LifeLogRecorded.EVENT_VERSION,
+                        acceptedAt.plusSeconds(1),
+                        CONTENT_PLAYER_ID,
+                        215200L,
+                        1,
+                        LifeLogSubtype.STUDY,
+                        LifeLogEntryMode.FULL,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                signal = first.getBean(LifeLogRecordedQuestTrigger.class)
+                        .translate(event)
+                        .stream()
+                        .filter(candidate -> candidate.questCode()
+                                == QuestCode.Q_RECORD_THREE_TRACES)
+                        .findFirst()
+                        .orElseThrow();
+                applied = first.getBean(
+                                QuestSignalProcessingService.class
+                        )
+                        .process(signal);
+            }
+
+            QuestSignalProcessingResult replayed;
+            try (ConfigurableApplicationContext restarted = startContext()) {
+                replayed = restarted.getBean(
+                                QuestSignalProcessingService.class
+                        )
+                        .process(signal);
+            }
+
+            assertThat(applied.outcome())
+                    .isEqualTo(QuestSignalProcessingResult.Outcome.APPLIED);
+            assertThat(replayed.outcome())
+                    .isEqualTo(QuestSignalProcessingResult.Outcome.REPLAYED);
+            assertThat(replayed.receiptId()).isEqualTo(applied.receiptId());
+            assertThat(receiptCount(CONTENT_PLAYER_ID)).isEqualTo(1);
+            assertThat(acceptanceCount(CONTENT_PLAYER_ID)).isEqualTo(1);
+            assertThat(progressValue(CONTENT_PLAYER_ID)).isEqualTo(1);
+        }
     }
 
     private ConfigurableApplicationContext startContext() {
@@ -105,23 +175,35 @@ class QuestSignalReceiptContextRestartTest {
     }
 
     private int receiptCount() throws Exception {
+        return receiptCount(PLAYER_ID);
+    }
+
+    private int receiptCount(Long playerId) throws Exception {
         return count(
                 "SELECT COUNT(*) FROM quest_signal_receipts "
-                        + "WHERE player_id = " + PLAYER_ID
+                        + "WHERE player_id = " + playerId
         );
     }
 
     private int acceptanceCount() throws Exception {
+        return acceptanceCount(PLAYER_ID);
+    }
+
+    private int acceptanceCount(Long playerId) throws Exception {
         return count(
                 "SELECT COUNT(*) FROM quest_acceptances "
-                        + "WHERE player_id = " + PLAYER_ID
+                        + "WHERE player_id = " + playerId
         );
     }
 
     private int progressValue() throws Exception {
+        return progressValue(PLAYER_ID);
+    }
+
+    private int progressValue(Long playerId) throws Exception {
         return count(
                 "SELECT progress_value FROM quest_acceptances "
-                        + "WHERE player_id = " + PLAYER_ID
+                        + "WHERE player_id = " + playerId
         );
     }
 

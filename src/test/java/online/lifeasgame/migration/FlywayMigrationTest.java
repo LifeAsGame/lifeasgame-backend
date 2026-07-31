@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -38,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V15까지 적용되고 canonical LifeLog header를 추가한다")
+        @DisplayName("V1부터 V16까지 적용되고 Quest Fact context를 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -49,6 +50,7 @@ class FlywayMigrationTest {
             MigrateResult itemResult =
                     flyway(MigrationVersion.fromVersion("12")).migrate();
             insertLegacyLifeLogs();
+            insertLegacyQuestAcceptance();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
@@ -56,12 +58,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(3);
+            assertThat(result.migrationsExecuted).isEqualTo(4);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15"
+                            "14", "15", "16"
                     );
             assertThat(existingTables(
                     "users",
@@ -157,6 +159,37 @@ class FlywayMigrationTest {
                     "quest_signal_receipts",
                     "idx_quest_signal_receipt_created_at"
             )).containsExactly("created_at");
+            assertThat(uniqueIndexColumns(
+                    "quest_acceptances",
+                    "uq_repeat"
+            )).containsExactly(
+                    "player_id",
+                    "quest_id",
+                    "period_start",
+                    "period_end"
+            );
+            assertThat(indexColumns(
+                    "quest_acceptances",
+                    "idx_qa_status"
+            )).containsExactly("status");
+            assertThat(questAcceptanceFactContextColumns()).isEqualTo(
+                    new QuestAcceptanceFactContextColumns(
+                            "NO",
+                            "YES",
+                            20
+                    )
+            );
+            assertThat(legacyQuestAcceptedAt()).isEqualTo(
+                    LocalDateTime.of(
+                            2026,
+                            7,
+                            29,
+                            12,
+                            34,
+                            56,
+                            123_456_000
+                    )
+            );
             assertThat(uniqueIndexColumns(
                     "outbox_events",
                     "uq_outbox_event_event_id"
@@ -640,6 +673,78 @@ class FlywayMigrationTest {
                         'WALKING'
                     )
                     """);
+        }
+    }
+
+    private void insertLegacyQuestAcceptance() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO quest_acceptances (
+                        period_end,
+                        period_start,
+                        progress_value,
+                        created_at,
+                        updated_at,
+                        player_id,
+                        quest_id,
+                        status
+                    )
+                    SELECT
+                        '9999-12-31',
+                        '1970-01-01',
+                        0,
+                        '2026-07-29 12:34:56.123456',
+                        '2026-07-29 12:34:56.123456',
+                        21300,
+                        id,
+                        'IN_PROGRESS'
+                    FROM quests
+                    WHERE code = 'quest:test:v9-legacy'
+                    """);
+        }
+    }
+
+    private QuestAcceptanceFactContextColumns
+    questAcceptanceFactContextColumns() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT
+                         MAX(CASE WHEN column_name = 'accepted_at'
+                             THEN is_nullable END) AS accepted_at_nullable,
+                         MAX(CASE WHEN column_name = 'period_key'
+                             THEN is_nullable END) AS period_key_nullable,
+                         MAX(CASE WHEN column_name = 'period_key'
+                             THEN character_maximum_length END)
+                             AS period_key_length
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name = 'quest_acceptances'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new QuestAcceptanceFactContextColumns(
+                    resultSet.getString("accepted_at_nullable"),
+                    resultSet.getString("period_key_nullable"),
+                    resultSet.getInt("period_key_length")
+            );
+        }
+    }
+
+    private LocalDateTime legacyQuestAcceptedAt() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT accepted_at, period_key
+                     FROM quest_acceptances
+                     WHERE player_id = 21300
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            assertThat(resultSet.getString("period_key")).isNull();
+            LocalDateTime acceptedAt = resultSet.getTimestamp("accepted_at")
+                    .toLocalDateTime();
+            assertThat(resultSet.next()).isFalse();
+            return acceptedAt;
         }
     }
 
@@ -1232,6 +1337,13 @@ class FlywayMigrationTest {
             int repeatPolicyColumnCount,
             String repeatRuleNullable,
             String repeatRuleColumnType
+    ) {
+    }
+
+    private record QuestAcceptanceFactContextColumns(
+            String acceptedAtNullable,
+            String periodKeyNullable,
+            int periodKeyLength
     ) {
     }
 

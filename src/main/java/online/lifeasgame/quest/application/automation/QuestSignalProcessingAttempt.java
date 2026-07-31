@@ -3,6 +3,7 @@ package online.lifeasgame.quest.application.automation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.quest.application.PlayerTimezoneResolver;
 import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
@@ -16,6 +17,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.*;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -23,13 +25,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class QuestSignalProcessingAttempt {
 
-    private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
-
     private final QuestSignalReceiptRepository receiptRepository;
     private final QuestService questService;
     private final QuestAcceptanceRepository questAcceptanceRepository;
     private final QuestProgressStore questProgressStore;
     private final DomainEventPublisher domainEventPublisher;
+    private final PlayerTimezoneResolver playerTimezoneResolver;
+    private final Clock clock;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public QuestSignalProcessingResult process(
@@ -48,9 +50,13 @@ public class QuestSignalProcessingAttempt {
         );
 
         Quest quest = questService.ensureQuest(signal.questCode());
+        ZoneId playerZone = Objects.requireNonNull(
+                playerTimezoneResolver.resolve(signal.playerId()),
+                "playerTimezone"
+        );
         LocalDate eventDate = LocalDateTime.ofInstant(
                 signal.occurredAt(),
-                DEFAULT_ZONE
+                playerZone
         ).toLocalDate();
         Optional<QuestAcceptance> acceptanceOpt =
                 resolveAcceptance(signal, quest, eventDate);
@@ -66,6 +72,9 @@ public class QuestSignalProcessingAttempt {
         }
 
         if (!acceptance.isInProgress()) {
+            return QuestSignalProcessingResult.applied(receipt.getId());
+        }
+        if (!accepts(signal, acceptance)) {
             return QuestSignalProcessingResult.applied(receipt.getId());
         }
 
@@ -88,6 +97,7 @@ public class QuestSignalProcessingAttempt {
                 signal,
                 quest,
                 eventDate,
+                playerZone,
                 progressValue,
                 goalReached
         );
@@ -139,11 +149,18 @@ public class QuestSignalProcessingAttempt {
             }
         }
 
+        if (signal.acceptancePolicy()
+                == QuestSignalAcceptancePolicy.EXISTING_ONLY) {
+            return Optional.empty();
+        }
+
         TimePeriod period = periodFor(quest, eventDate);
         QuestAcceptance acceptance = QuestAcceptance.start(
                 quest.getId(),
                 signal.playerId(),
-                period
+                period,
+                signal.occurredAt(),
+                signal.periodKey()
         );
         acceptance.assignIdempotencyKey(signal.correlationId());
         return Optional.of(acceptance);
@@ -153,12 +170,19 @@ public class QuestSignalProcessingAttempt {
         return quest.getRepeatRule().periodFor(eventDate);
     }
 
-    private Duration ttlFor(Quest quest, LocalDate eventDate) {
+    private Duration ttlFor(
+            Quest quest,
+            LocalDate eventDate,
+            ZoneId playerZone
+    ) {
         if (quest.getRepeatRule().isOneTime()) {
             return null;
         }
         TimePeriod period = periodFor(quest, eventDate);
-        LocalDateTime now = LocalDateTime.now(DEFAULT_ZONE);
+        LocalDateTime now = LocalDateTime.ofInstant(
+                clock.instant(),
+                playerZone
+        );
         LocalDateTime endExclusive = period.end().plusDays(1).atStartOfDay();
         if (endExclusive.isBefore(now)) {
             return Duration.ZERO;
@@ -170,6 +194,7 @@ public class QuestSignalProcessingAttempt {
             QuestSignal signal,
             Quest quest,
             LocalDate eventDate,
+            ZoneId playerZone,
             int progressValue,
             boolean goalReached
     ) {
@@ -185,7 +210,7 @@ public class QuestSignalProcessingAttempt {
                             signal.questCode(),
                             signal.playerId(),
                             progressValue,
-                            ttlFor(quest, eventDate)
+                            ttlFor(quest, eventDate, playerZone)
                     );
                 }
             } catch (RuntimeException exception) {
@@ -210,6 +235,21 @@ public class QuestSignalProcessingAttempt {
                     }
                 }
         );
+    }
+
+    private boolean accepts(
+            QuestSignal signal,
+            QuestAcceptance acceptance
+    ) {
+        if (signal.acceptancePolicy()
+                != QuestSignalAcceptancePolicy.EXISTING_ONLY) {
+            return true;
+        }
+        if (signal.occurredAt().isBefore(acceptance.getAcceptedAt())) {
+            return false;
+        }
+        return signal.periodKey() == null
+                || signal.periodKey().equals(acceptance.getPeriodKey());
     }
 
     private void publishAccepted(

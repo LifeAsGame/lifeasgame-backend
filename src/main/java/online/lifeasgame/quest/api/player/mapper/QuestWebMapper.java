@@ -68,6 +68,8 @@ public final class QuestWebMapper {
                 result.repeatRule(),
                 result.periodStart(),
                 result.periodEnd(),
+                result.acceptedAt(),
+                result.periodKey(),
                 result.goalReachedAt(),
                 result.completedAt(),
                 result.dueAt(),
