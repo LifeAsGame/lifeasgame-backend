@@ -15,6 +15,28 @@ public class QuestSignalFingerprint {
 
     public String fingerprint(QuestSignal signal) {
         StringBuilder canonical = new StringBuilder();
+        appendCommon(canonical, signal);
+        append(
+                canonical,
+                "acceptancePolicy",
+                signal.acceptancePolicy().name()
+        );
+        append(canonical, "periodKey", signal.periodKey());
+        append(canonical, "attributes", signal.attributes());
+        return sha256(canonical.toString());
+    }
+
+    String legacyFingerprint(QuestSignal signal) {
+        StringBuilder canonical = new StringBuilder();
+        appendCommon(canonical, signal);
+        append(canonical, "attributes", signal.attributes());
+        return sha256(canonical.toString());
+    }
+
+    private void appendCommon(
+            StringBuilder canonical,
+            QuestSignal signal
+    ) {
         append(canonical, "questCode", signal.questCode().value());
         append(canonical, "playerId", signal.playerId());
         append(canonical, "signalType", signal.type().name());
@@ -24,14 +46,6 @@ public class QuestSignalFingerprint {
             append(canonical, "progressDelta", signal.progressDelta());
         }
         append(canonical, "occurredAt", signal.occurredAt());
-        append(
-                canonical,
-                "acceptancePolicy",
-                signal.acceptancePolicy().name()
-        );
-        append(canonical, "periodKey", signal.periodKey());
-        append(canonical, "attributes", signal.attributes());
-        return sha256(canonical.toString());
     }
 
     private void append(StringBuilder target, String key, Object value) {
