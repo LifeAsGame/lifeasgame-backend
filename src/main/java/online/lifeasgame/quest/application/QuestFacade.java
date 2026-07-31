@@ -13,6 +13,7 @@ import java.util.List;
 public class QuestFacade {
 
     private final QuestService questService;
+    private final QuestManualCheckService questManualCheckService;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     public List<QuestResult.Acceptance> list(QuestCommand.PlayerQuests command) {
@@ -33,5 +34,12 @@ public class QuestFacade {
     public QuestResult.Canceled cancel(QuestCommand.Cancel command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return questService.cancel(playerId, command);
+    }
+
+    public QuestResult.Acceptance manualCheck(
+            QuestCommand.ManualCheck command
+    ) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return questManualCheckService.check(playerId, command);
     }
 }

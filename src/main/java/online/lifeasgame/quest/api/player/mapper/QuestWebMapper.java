@@ -125,6 +125,12 @@ public final class QuestWebMapper {
         );
     }
 
+    public static QuestCommand.ManualCheck toManualCheckCommand(
+            String questCode
+    ) {
+        return new QuestCommand.ManualCheck(questCode);
+    }
+
     public static QuestResponse.Canceled toCanceled(QuestResult.Canceled result) {
         return new QuestResponse.Canceled(
                 result.playerId(),
