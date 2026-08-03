@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -35,6 +36,7 @@ public class QuestService {
     private final QuestWriter questWriter;
     private final RewardProfileLookupApi rewardProfileLookupApi;
     private final DomainEventPublisher domainEventPublisher;
+    private final QuestCompletionEventFactory completionEventFactory;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
 
@@ -364,20 +366,11 @@ public class QuestService {
             String suffix
     ) {
         domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_COMPLETED)
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(acceptance.getPlayerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", acceptance.getProgressValue())
-                        .attribute("target", quest.target().value())
-                        .attribute("goalReachedAt", acceptance.getGoalReachedAt())
-                        .attribute("completedAt", acceptance.getCompletedAt())
-                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                        .definitionSnapshot(quest)
-                        .occurredAt(acceptance.getCompletedAt())
-                        .correlationId(correlation(acceptance, suffix))
-                        .build()
+                completionEventFactory.create(
+                        acceptance,
+                        quest,
+                        correlation(acceptance, suffix)
+                )
         );
     }
 

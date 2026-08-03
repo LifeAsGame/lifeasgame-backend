@@ -47,8 +47,8 @@ public record QuestRewardReadyFact(
                 RewardError.REWARD_SETTLEMENT_SOURCE_ID_REQUIRED
         );
         Integer definitionVersion =
-                attributes.get("questDefinitionVersion") instanceof Integer value
-                        ? value
+                attributes.get("questDefinitionVersion") instanceof Number value
+                        ? value.intValue()
                         : null;
         return Optional.of(new QuestRewardReadyFact(
                 playerId,

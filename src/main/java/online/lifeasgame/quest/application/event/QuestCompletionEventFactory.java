@@ -7,6 +7,7 @@ import online.lifeasgame.quest.domain.event.QuestEventType;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class QuestCompletionEventFactory {
@@ -61,6 +62,10 @@ public class QuestCompletionEventFactory {
         require(
                 quest.getId() != null && quest.getId() > 0,
                 "quest must be persisted"
+        );
+        require(
+                Objects.equals(acceptance.getQuestId(), quest.getId()),
+                "acceptance must belong to quest"
         );
         require(acceptance.isCompleted(), "acceptance must be completed");
         require(

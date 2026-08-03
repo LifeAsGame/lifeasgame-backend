@@ -176,6 +176,13 @@ class QuestCompletionEventFactoryTest {
         assertThatThrownBy(() ->
                 factory.create(inProgress, quest, "correlation")
         ).isInstanceOf(IllegalArgumentException.class);
+
+        ReflectionTestUtils.setField(quest, "id", 220L);
+        assertThatThrownBy(() ->
+                factory.create(acceptance, quest, "correlation")
+        ).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("acceptance must belong to quest");
+        ReflectionTestUtils.setField(quest, "id", 219L);
         assertThatThrownBy(() ->
                 factory.create(acceptance, quest, " ")
         ).isInstanceOf(IllegalArgumentException.class);

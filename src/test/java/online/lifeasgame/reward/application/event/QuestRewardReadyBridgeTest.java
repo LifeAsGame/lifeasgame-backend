@@ -34,7 +34,7 @@ class QuestRewardReadyBridgeTest {
         bridge.onQuestEvent(event(Map.of(
                 "acceptanceId", 21900L,
                 "rewardProfileCode", "  RP_EXP_TINY_10  ",
-                "questDefinitionVersion", 7
+                "questDefinitionVersion", 7L
         )));
 
         var captor = forClass(QuestRewardReadyFact.class);

@@ -6,7 +6,6 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
 import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
-import online.lifeasgame.platform.outbox.OutboxProperties;
 import online.lifeasgame.platform.outbox.application.*;
 import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegistry;
 import online.lifeasgame.quest.application.QuestManualCheckService;
@@ -42,7 +41,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -87,6 +88,13 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
                 MYSQL::getDriverClassName
         );
         registry.add("app.outbox.enabled", () -> false);
+        registry.add("app.outbox.batch-size", () -> 50);
+        registry.add("app.outbox.max-attempts", () -> 3);
+        registry.add("app.outbox.retry-delay-ms", () -> 0);
+        registry.add(
+                "app.outbox.instance-id",
+                () -> "quest-reward-integration"
+        );
     }
 
     @Autowired
@@ -115,9 +123,6 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
 
     @Autowired
     private OutboxEventCodecRegistry codecRegistry;
-
-    @Autowired
-    private OutboxProperties outboxProperties;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -151,10 +156,6 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         );
         jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
         insertPlayer();
-        outboxProperties.setBatchSize(50);
-        outboxProperties.setMaxAttempts(3);
-        outboxProperties.setRetryDelayMs(0);
-        outboxProperties.setInstanceId("quest-reward-integration");
         clearInvocations(expProcessService);
         transactionTemplate = new TransactionTemplate(transactionManager);
         executor = Executors.newFixedThreadPool(2);
@@ -164,6 +165,18 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     void tearDown() throws InterruptedException {
         executor.shutdownNow();
         assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+    }
+
+    @Test
+    @DisplayName("MutableClock zoned view는 변경된 Instant를 공유한다")
+    void sharesMutableInstantWithZonedView() {
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        Clock zoned = clock.withZone(zone);
+
+        clock.set(COMPLETED_AT);
+
+        assertThat(zoned.getZone()).isEqualTo(zone);
+        assertThat(zoned.instant()).isEqualTo(COMPLETED_AT);
     }
 
     @Test
@@ -744,25 +757,38 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
 
     static final class MutableClock extends Clock {
 
-        private volatile Instant current = ACCEPTED_AT;
+        private final AtomicReference<Instant> current;
+        private final ZoneId zone;
+
+        MutableClock() {
+            this(new AtomicReference<>(ACCEPTED_AT), ZoneOffset.UTC);
+        }
+
+        private MutableClock(
+                AtomicReference<Instant> current,
+                ZoneId zone
+        ) {
+            this.current = current;
+            this.zone = Objects.requireNonNull(zone, "zone");
+        }
 
         void set(Instant instant) {
-            current = instant;
+            current.set(instant);
         }
 
         @Override
         public ZoneId getZone() {
-            return ZoneOffset.UTC;
+            return zone;
         }
 
         @Override
         public Clock withZone(ZoneId zone) {
-            return Clock.fixed(current, zone);
+            return new MutableClock(current, zone);
         }
 
         @Override
         public Instant instant() {
-            return current;
+            return current.get();
         }
     }
 }
