@@ -36,19 +36,6 @@ public class InventoryWebMapper {
         );
     }
 
-    public static InventoryCommand.Add toAddCommand(InventoryRequest.Add request) {
-        return new InventoryCommand.Add(
-                request.itemId(),
-                request.quantity(),
-                request.instanceAttrs(),
-                request.bound()
-        );
-    }
-
-    public static InventoryResponse.Slots toSlots(InventoryResult.Slots result) {
-        return new InventoryResponse.Slots(result.slots());
-    }
-
     public static InventoryCommand.Move toMoveCommand(InventoryRequest.Move request) {
         return new InventoryCommand.Move(
                 request.from(),

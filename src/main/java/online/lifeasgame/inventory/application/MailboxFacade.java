@@ -13,11 +13,6 @@ public class MailboxFacade {
     private final MailboxService mailboxService;
     private final CurrentPlayerAccessor currentPlayer;
 
-    public MailboxResult.Slot deliver(MailboxCommand.Deliver command) {
-        Long playerId = currentPlayer.currentPlayerIdOrThrow();
-        return mailboxService.deliver(playerId, command);
-    }
-
     public void claim(MailboxCommand.Claim command) {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         mailboxService.claim(playerId, command);
