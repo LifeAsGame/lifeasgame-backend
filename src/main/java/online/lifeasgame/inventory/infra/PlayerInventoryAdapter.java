@@ -25,6 +25,11 @@ public class PlayerInventoryAdapter implements PlayerInventoryRepository, Invent
     }
 
     @Override
+    public void insertIfAbsent(Long playerId, int capacitySlots) {
+        jpaRepository.insertIfAbsent(playerId, capacitySlots);
+    }
+
+    @Override
     public long countStacksExceeding(Long itemId, int limit) {
         return jpaRepository.countStacksExceeding(itemId, limit);
     }
