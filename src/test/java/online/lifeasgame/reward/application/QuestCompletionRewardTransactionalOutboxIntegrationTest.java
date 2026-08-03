@@ -1,43 +1,71 @@
 package online.lifeasgame.reward.application;
 
+import online.lifeasgame.character.domain.error.PlayerError;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
+import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
+import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.platform.outbox.OutboxProperties;
 import online.lifeasgame.platform.outbox.application.*;
+import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegistry;
+import online.lifeasgame.quest.application.QuestManualCheckService;
+import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.result.QuestResult;
+import online.lifeasgame.quest.domain.QuestCode;
+import online.lifeasgame.quest.domain.QuestStatus;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.reward.application.event.QuestRewardReadyBridge;
 import online.lifeasgame.reward.domain.RewardSettlementLineStatus;
 import online.lifeasgame.reward.domain.RewardSettlementStatus;
+import online.lifeasgame.reward.domain.error.RewardError;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
+@Import(
+        QuestCompletionRewardTransactionalOutboxIntegrationTest
+                .MutableClockConfiguration.class
+)
 @DisplayName("Quest completion Reward/Outbox MySQL 통합")
 class QuestCompletionRewardTransactionalOutboxIntegrationTest {
 
     private static final long PLAYER_ID = 219001L;
+    private static final Instant ACCEPTED_AT =
+            Instant.parse("2026-07-31T01:00:00Z");
     private static final Instant COMPLETED_AT =
-            Instant.parse("2026-07-30T03:00:00Z");
+            Instant.parse("2026-07-31T02:00:00Z");
 
     @Container
     private static final MySQLContainer<?> MYSQL =
@@ -65,7 +93,16 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     private QuestRewardReadyBridge bridge;
 
     @Autowired
+    private QuestService questService;
+
+    @Autowired
+    private QuestManualCheckService manualCheckService;
+
+    @Autowired
     private DomainEventPublisher eventPublisher;
+
+    @Autowired
+    private OutboxRelayService relayService;
 
     @Autowired
     private OutboxClaimService claimService;
@@ -77,6 +114,9 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     private OutboxCompletionService completionService;
 
     @Autowired
+    private OutboxEventCodecRegistry codecRegistry;
+
+    @Autowired
     private OutboxProperties outboxProperties;
 
     @Autowired
@@ -85,18 +125,37 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private MutableClock clock;
+
+    @MockitoSpyBean
+    private RewardSettlementExpProcessService expProcessService;
+
     private TransactionTemplate transactionTemplate;
     private ExecutorService executor;
 
     @BeforeEach
     void setUp() {
+        clock.set(ACCEPTED_AT);
         jdbcTemplate.update("DELETE FROM outbox_events");
         jdbcTemplate.update("DELETE FROM player_growth_changes");
         jdbcTemplate.update("DELETE FROM reward_settlement_lines");
         jdbcTemplate.update("DELETE FROM reward_settlements");
+        jdbcTemplate.update(
+                "DELETE FROM quest_signal_receipts WHERE player_id = ?",
+                PLAYER_ID
+        );
+        jdbcTemplate.update(
+                "DELETE FROM quest_acceptances WHERE player_id = ?",
+                PLAYER_ID
+        );
         jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
         insertPlayer();
         outboxProperties.setBatchSize(50);
+        outboxProperties.setMaxAttempts(3);
+        outboxProperties.setRetryDelayMs(0);
+        outboxProperties.setInstanceId("quest-reward-integration");
+        clearInvocations(expProcessService);
         transactionTemplate = new TransactionTemplate(transactionManager);
         executor = Executors.newFixedThreadPool(2);
     }
@@ -189,38 +248,255 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     }
 
     @Test
-    @DisplayName("LifeLog/Manual 완료의 두 단계 Outbox를 재전달해도 acceptance별 EXP는 한 번만 지급한다")
-    void redeliversTwoStageOutboxExactlyOnce() {
-        appendCompleted(
-                219106L,
-                "RP_EXP_TINY_10",
-                Map.of("lifeLogId", 901L)
-        );
-        appendCompleted(
+    @DisplayName("Player가 없으면 FAILED/failureCode를 durable 저장하고 중복 Event에서 Processor를 재호출하지 않는다")
+    void consumesOnlyDurableFailureAndSkipsFailedReplay() {
+        jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
+        QuestEvent event = rewardReady(219106L, "RP_EXP_TINY_10");
+
+        append(event);
+        OutboxRelayResult first = relayService.relayBatch();
+        append(event);
+        OutboxRelayResult duplicate = relayService.relayBatch();
+
+        assertThat(first.published()).isEqualTo(1);
+        assertThat(duplicate.published()).isEqualTo(1);
+        assertThat(lineStatus(219106L, "EXP"))
+                .isEqualTo(RewardSettlementLineStatus.FAILED.name());
+        assertThat(lineFailureCode(219106L, "EXP"))
+                .isEqualTo(PlayerError.PLAYER_NOT_FOUND.code());
+        assertThat(settlementStatus(219106L))
+                .isEqualTo(RewardSettlementStatus.FAILED.name());
+        assertThat(growthChangeCount()).isZero();
+        verify(expProcessService, times(1))
+                .process(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("동일 Settlement identity의 다른 profile은 Snapshot을 바꾸거나 추가 지급하지 않고 stable 409다")
+    void rejectsProfileSnapshotConflict() {
+        bridge.onQuestEvent(rewardReady(
                 219107L,
-                "RP_EXP_TINY_10",
-                Map.of("manualCheck", true)
+                "RP_EXP_TINY_10"
+        ));
+
+        assertThatThrownBy(() -> bridge.onQuestEvent(
+                rewardReady(219107L, "RP_NONE")
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                RewardError
+                                        .REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT
+                        )
         );
 
-        List<OutboxClaim> completionClaims = claimService.claimBatch();
-        assertThat(completionClaims).hasSize(2);
-        completionClaims.forEach(claim -> {
+        assertThat(settlementCount()).isEqualTo(1);
+        assertThat(settlementProfile(219107L))
+                .isEqualTo("RP_EXP_TINY_10");
+        assertThat(playerExp()).isEqualTo(10L);
+        assertThat(growthChangeCount()).isEqualTo(1);
+        verify(expProcessService, times(1))
+                .process(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("서로 다른 profile의 동시 unique 경쟁은 winner Snapshot 하나와 loser conflict로 끝난다")
+    void rejectsConcurrentProfileSnapshotLoser() throws Exception {
+        long acceptanceId = 219108L;
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<?>> futures = List.of(
+                submit(
+                        rewardReady(
+                                acceptanceId,
+                                "RP_EXP_TINY_10"
+                        ),
+                        ready,
+                        start
+                ),
+                submit(
+                        rewardReady(acceptanceId, "RP_NONE"),
+                        ready,
+                        start
+                )
+        );
+        assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+        start.countDown();
+
+        int succeeded = 0;
+        int conflicted = 0;
+        for (Future<?> future : futures) {
+            try {
+                future.get(
+                        Duration.ofSeconds(20).toMillis(),
+                        TimeUnit.MILLISECONDS
+                );
+                succeeded++;
+            } catch (ExecutionException exception) {
+                assertThat(exception.getCause())
+                        .isInstanceOfSatisfying(
+                                DomainException.class,
+                                cause -> assertThat(cause.getErrorCode())
+                                        .isEqualTo(
+                                                RewardError
+                                                        .REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT
+                                        )
+                        );
+                conflicted++;
+            }
+        }
+
+        assertThat(succeeded).isEqualTo(1);
+        assertThat(conflicted).isEqualTo(1);
+        assertThat(settlementCount()).isEqualTo(1);
+        String profile = settlementProfile(acceptanceId);
+        assertThat(profile).isIn("RP_EXP_TINY_10", "RP_NONE");
+        assertThat(playerExp()).isEqualTo(
+                profile.equals("RP_EXP_TINY_10") ? 10L : 0L
+        );
+        assertThat(growthChangeCount()).isEqualTo(
+                profile.equals("RP_EXP_TINY_10") ? 1 : 0
+        );
+    }
+
+    @Test
+    @DisplayName("actual LifeLog AUTO closed loop는 Q_RECORD_FIRST_TRACE를 완료하고 EXP 10을 지급한다")
+    void completesActualLifeLogAutoClosedLoop() {
+        QuestResult.Acceptance accepted =
+                accept(QuestCode.Q_RECORD_FIRST_TRACE);
+        append(lifeLog(
+                "219-auto-first",
+                219201L,
+                ACCEPTED_AT.plusSeconds(1)
+        ));
+
+        relayStages(3);
+
+        assertThat(acceptanceStatus(accepted.id()))
+                .isEqualTo(QuestStatus.COMPLETED.name());
+        assertThat(settlementSourceIds())
+                .containsExactly(accepted.id());
+        assertThat(settlementProfile(accepted.id()))
+                .isEqualTo("RP_EXP_TINY_10");
+        assertThat(lineStatus(accepted.id(), "EXP"))
+                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
+        assertThat(settlementStatus(accepted.id()))
+                .isEqualTo(RewardSettlementStatus.COMPLETED.name());
+        assertThat(playerExp()).isEqualTo(10L);
+        assertThat(growthChangeCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("actual Manual Check USER_CONFIRM closed loop는 Q_GROWTH_ONE_FOCUS와 RP_NONE을 완료한다")
+    void completesActualManualCheckClosedLoop() {
+        QuestResult.Acceptance accepted =
+                accept(QuestCode.Q_GROWTH_ONE_FOCUS);
+        clock.set(ACCEPTED_AT.plusSeconds(60));
+
+        QuestResult.Acceptance completed = manualCheckService.check(
+                PLAYER_ID,
+                new QuestCommand.ManualCheck(
+                        QuestCode.Q_GROWTH_ONE_FOCUS.value()
+                )
+        );
+
+        relayStages(2);
+
+        assertThat(completed.id()).isEqualTo(accepted.id());
+        assertThat(completed.status())
+                .isEqualTo(QuestStatus.COMPLETED.name());
+        assertThat(settlementProfile(accepted.id()))
+                .isEqualTo("RP_NONE");
+        assertThat(lineCount()).isZero();
+        assertThat(settlementStatus(accepted.id()))
+                .isEqualTo(RewardSettlementStatus.COMPLETED.name());
+        assertThat(playerExp()).isZero();
+        assertThat(growthChangeCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("actual 세 LifeLog closed loop는 EXP 20만 성공시키고 ITEM을 PENDING으로 둔다")
+    void completesActualExpAndItemClosedLoop() {
+        QuestResult.Acceptance accepted =
+                accept(QuestCode.Q_RECORD_THREE_TRACES);
+        append(lifeLog(
+                "219-three-a",
+                219211L,
+                ACCEPTED_AT.plusSeconds(1)
+        ));
+        append(lifeLog(
+                "219-three-b",
+                219212L,
+                ACCEPTED_AT.plusSeconds(2)
+        ));
+        append(lifeLog(
+                "219-three-c",
+                219213L,
+                ACCEPTED_AT.plusSeconds(3)
+        ));
+
+        relayStages(3);
+
+        assertThat(acceptanceStatus(accepted.id()))
+                .isEqualTo(QuestStatus.COMPLETED.name());
+        assertThat(settlementProfile(accepted.id()))
+                .isEqualTo("RP_EXP_AND_ITEM_FIRST_STEP_20");
+        assertThat(lineStatus(accepted.id(), "EXP"))
+                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
+        assertThat(lineStatus(accepted.id(), "ITEM"))
+                .isEqualTo(RewardSettlementLineStatus.PENDING.name());
+        assertThat(settlementStatus(accepted.id()))
+                .isEqualTo(RewardSettlementStatus.PENDING.name());
+        assertThat(playerExp()).isEqualTo(20L);
+        assertThat(growthChangeCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("actual AUTO QUEST_COMPLETED first-stage와 Reward Ready 중복 dispatch도 한 번만 지급한다")
+    void redeliversActualFirstStageExactlyOnce() {
+        QuestResult.Acceptance accepted =
+                accept(QuestCode.Q_RECORD_FIRST_TRACE);
+        append(lifeLog(
+                "219-first-stage",
+                219221L,
+                ACCEPTED_AT.plusSeconds(1)
+        ));
+        assertThat(relayService.relayBatch().published()).isEqualTo(1);
+
+        List<OutboxClaim> questClaims = claimService.claimBatch();
+        assertThat(questClaims).hasSize(3);
+        assertThat(questClaims.stream()
+                .map(this::decodeQuestEvent)
+                .filter(event ->
+                        event.type() == QuestEventType.QUEST_COMPLETED
+                )).hasSize(1);
+        questClaims.forEach(claim -> {
+            QuestEvent event = decodeQuestEvent(claim);
             dispatchAttempt.dispatch(claim);
+            if (event.type() == QuestEventType.QUEST_COMPLETED) {
+                dispatchAttempt.dispatch(claim);
+            }
             completionService.complete(claim);
         });
 
         List<OutboxClaim> rewardClaims = claimService.claimBatch();
         assertThat(rewardClaims).hasSize(2);
         rewardClaims.forEach(claim -> {
+            assertThat(decodeQuestEvent(claim).type())
+                    .isEqualTo(QuestEventType.QUEST_REWARD_READY);
             dispatchAttempt.dispatch(claim);
             dispatchAttempt.dispatch(claim);
             completionService.complete(claim);
         });
 
-        assertThat(settlementCount()).isEqualTo(2);
-        assertThat(playerExp()).isEqualTo(20L);
-        assertThat(growthChangeCount()).isEqualTo(2);
-        assertThat(publishedOutboxCount()).isEqualTo(4);
+        assertThat(settlementCount()).isEqualTo(1);
+        assertThat(settlementSourceIds())
+                .containsExactly(accepted.id());
+        assertThat(settlementProfile(accepted.id()))
+                .isEqualTo("RP_EXP_TINY_10");
+        assertThat(playerExp()).isEqualTo(10L);
+        assertThat(growthChangeCount()).isEqualTo(1);
+        assertThat(publishedOutboxCount()).isEqualTo(6);
     }
 
     private Future<?> submit(
@@ -236,30 +512,57 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         });
     }
 
-    private void appendCompleted(
-            long acceptanceId,
-            String profileCode,
-            Map<String, Object> sourceContext
-    ) {
-        Map<String, Object> attributes =
-                new java.util.LinkedHashMap<>(sourceContext);
-        attributes.put("acceptanceId", acceptanceId);
-        attributes.put("rewardProfileCode", profileCode);
-        attributes.put("questSemanticCategory", "GROWTH");
-        attributes.put("progressSource", "COUNT");
-        attributes.put("repeatPolicy", "ONCE");
+    private QuestResult.Acceptance accept(QuestCode questCode) {
+        return questService.accept(
+                PLAYER_ID,
+                new QuestCommand.Accept(
+                        questCode.value(),
+                        null,
+                        null
+                )
+        );
+    }
+
+    private void append(online.lifeasgame.core.event.DomainEvent event) {
         transactionTemplate.executeWithoutResult(status ->
-                eventPublisher.publish(new QuestEvent(
-                        QuestEventType.QUEST_COMPLETED,
-                        PLAYER_ID,
-                        219L,
-                        "Q_FIRST_STEP",
-                        attributes,
-                        COMPLETED_AT,
-                        "quest:219:acceptance:%d:completed".formatted(
-                                acceptanceId
-                        )
-                ))
+                eventPublisher.publish(event)
+        );
+    }
+
+    private void relayStages(int count) {
+        for (int stage = 0; stage < count; stage++) {
+            OutboxRelayResult result = relayService.relayBatch();
+            assertThat(result.failed()).isZero();
+            assertThat(result.published()).isPositive();
+        }
+    }
+
+    private LifeLogRecorded lifeLog(
+            String eventId,
+            Long lifeLogId,
+            Instant occurredAt
+    ) {
+        return new LifeLogRecorded(
+                eventId,
+                LifeLogRecorded.EVENT_TYPE,
+                LifeLogRecorded.EVENT_VERSION,
+                occurredAt,
+                PLAYER_ID,
+                lifeLogId,
+                1,
+                LifeLogSubtype.STUDY,
+                LifeLogEntryMode.FULL,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private QuestEvent decodeQuestEvent(OutboxClaim claim) {
+        return (QuestEvent) codecRegistry.decode(
+                claim.eventType(),
+                claim.payload()
         );
     }
 
@@ -348,6 +651,65 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         );
     }
 
+    private String lineFailureCode(
+            long acceptanceId,
+            String rewardType
+    ) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT line.failure_code
+                FROM reward_settlement_lines line
+                JOIN reward_settlements settlement
+                  ON settlement.id = line.reward_settlement_id
+                WHERE settlement.player_id = ?
+                  AND settlement.source_type = 'QUEST_COMPLETION'
+                  AND settlement.source_id = ?
+                  AND line.reward_type = ?
+                """,
+                String.class,
+                PLAYER_ID,
+                acceptanceId,
+                rewardType
+        );
+    }
+
+    private String settlementProfile(long acceptanceId) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT reward_profile_code
+                FROM reward_settlements
+                WHERE player_id = ?
+                  AND source_type = 'QUEST_COMPLETION'
+                  AND source_id = ?
+                """,
+                String.class,
+                PLAYER_ID,
+                acceptanceId
+        );
+    }
+
+    private List<Long> settlementSourceIds() {
+        return jdbcTemplate.queryForList(
+                """
+                SELECT source_id
+                FROM reward_settlements
+                WHERE player_id = ?
+                  AND source_type = 'QUEST_COMPLETION'
+                ORDER BY source_id
+                """,
+                Long.class,
+                PLAYER_ID
+        );
+    }
+
+    private String acceptanceStatus(long acceptanceId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT status FROM quest_acceptances WHERE id = ?",
+                String.class,
+                acceptanceId
+        );
+    }
+
     private long playerExp() {
         return jdbcTemplate.queryForObject(
                 "SELECT exp FROM player WHERE id = ?",
@@ -368,5 +730,39 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
                 "SELECT COUNT(*) FROM outbox_events WHERE status = 'PUBLISHED'",
                 Integer.class
         );
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class MutableClockConfiguration {
+
+        @Bean
+        @Primary
+        MutableClock questRewardClock() {
+            return new MutableClock();
+        }
+    }
+
+    static final class MutableClock extends Clock {
+
+        private volatile Instant current = ACCEPTED_AT;
+
+        void set(Instant instant) {
+            current = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return Clock.fixed(current, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return current;
+        }
     }
 }

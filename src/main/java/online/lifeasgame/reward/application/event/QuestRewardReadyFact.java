@@ -4,7 +4,6 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.reward.domain.error.RewardError;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Map;
@@ -64,10 +63,14 @@ public record QuestRewardReadyFact(
     }
 
     private static String profileCode(Object value) {
-        if (!(value instanceof String code) || code.isBlank()) {
+        if (!(value instanceof String code)) {
             throw invalid(RewardError.REWARD_PROFILE_CODE_REQUIRED);
         }
-        return code;
+        String normalized = code.strip();
+        if (normalized.isBlank()) {
+            throw invalid(RewardError.REWARD_PROFILE_CODE_REQUIRED);
+        }
+        return normalized;
     }
 
     private static Long positive(Long value, RewardError error) {
@@ -88,18 +91,13 @@ public record QuestRewardReadyFact(
                 case Integer item -> item.longValue();
                 case Long item -> item;
                 case BigInteger item -> item.longValueExact();
-                case BigDecimal item -> item.longValueExact();
-                case Float item ->
-                        BigDecimal.valueOf(item.doubleValue()).longValueExact();
-                case Double item ->
-                        BigDecimal.valueOf(item).longValueExact();
                 default -> throw invalid(error);
             };
             if (result <= 0) {
                 throw invalid(error);
             }
             return result;
-        } catch (ArithmeticException | NumberFormatException exception) {
+        } catch (ArithmeticException exception) {
             throw new DomainException(error, null, exception);
         }
     }

@@ -146,6 +146,26 @@ class RewardSettlementCreateServiceTest {
         }
 
         @Test
+        @DisplayName("기존 Settlement Snapshot과 다른 Profile은 stable 409로 거부한다")
+        void rejectsConflictingExistingProfile() {
+            RewardSettlement existing = settlement(activeEmptyProfile());
+            given(settlementReader.findByIdentity(
+                    PLAYER_ID,
+                    sourceType(),
+                    SOURCE_ID
+            )).willReturn(Optional.of(existing));
+
+            assertRewardError(
+                    RewardSettlementCreateServiceTest.this::create,
+                    RewardError.REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT
+            );
+            verify(profileReader, never())
+                    .getActiveByCodeOrThrow(anyString());
+            verify(settlementWriter, never())
+                    .saveAndFlush(any(RewardSettlement.class));
+        }
+
+        @Test
         @DisplayName("동시 생성 Unique 충돌 후 기존 Settlement를 다시 조회해 반환한다")
         void returnsWinnerAfterUniqueConflict() {
             RewardProfile profile = activeProfile();
@@ -163,6 +183,35 @@ class RewardSettlementCreateServiceTest {
             assertThat(result).isSameAs(winner);
             verify(settlementReader)
                     .findByIdentityInNewTransaction(PLAYER_ID, sourceType(), SOURCE_ID);
+        }
+
+        @Test
+        @DisplayName("동시 Unique winner의 Profile이 다르면 stable 409로 거부한다")
+        void rejectsConflictingWinnerAfterUniqueConflict() {
+            RewardProfile requested = activeProfile();
+            RewardSettlement winner = settlement(activeEmptyProfile());
+            given(settlementReader.findByIdentity(
+                    PLAYER_ID,
+                    sourceType(),
+                    SOURCE_ID
+            )).willReturn(Optional.empty());
+            given(settlementReader.findByIdentityInNewTransaction(
+                    PLAYER_ID,
+                    sourceType(),
+                    SOURCE_ID
+            )).willReturn(Optional.of(winner));
+            given(profileReader.getActiveByCodeOrThrow(PROFILE_CODE))
+                    .willReturn(requested);
+            given(settlementWriter.saveAndFlush(
+                    any(RewardSettlement.class)
+            )).willThrow(new DataIntegrityViolationException(
+                    "duplicate settlement identity"
+            ));
+
+            assertRewardError(
+                    RewardSettlementCreateServiceTest.this::create,
+                    RewardError.REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT
+            );
         }
 
         @Test

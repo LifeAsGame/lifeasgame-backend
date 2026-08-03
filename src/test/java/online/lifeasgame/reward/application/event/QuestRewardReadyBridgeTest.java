@@ -33,7 +33,7 @@ class QuestRewardReadyBridgeTest {
 
         bridge.onQuestEvent(event(Map.of(
                 "acceptanceId", 21900L,
-                "rewardProfileCode", "RP_EXP_TINY_10",
+                "rewardProfileCode", "  RP_EXP_TINY_10  ",
                 "questDefinitionVersion", 7
         )));
 
@@ -72,22 +72,52 @@ class QuestRewardReadyBridgeTest {
     }
 
     @Test
-    @DisplayName("acceptanceId는 integral exact positive long만 허용한다")
+    @DisplayName("acceptanceId는 정수 wrapper와 범위 내 BigInteger만 허용한다")
     void validatesAcceptanceIdentityExactly() {
-        assertThat(QuestRewardReadyFact.from(event(Map.of(
-                "acceptanceId", BigInteger.valueOf(21900L),
-                "rewardProfileCode", "RP_NONE"
-        ))).orElseThrow().acceptanceId()).isEqualTo(21900L);
-        assertThat(QuestRewardReadyFact.from(event(Map.of(
-                "acceptanceId", new BigDecimal("21900.0"),
-                "rewardProfileCode", "RP_NONE"
-        ))).orElseThrow().acceptanceId()).isEqualTo(21900L);
+        for (Number allowed : new Number[]{
+                (byte) 1,
+                (short) 2,
+                3,
+                4L,
+                BigInteger.valueOf(5L)
+        }) {
+            assertThat(QuestRewardReadyFact.from(event(Map.of(
+                    "acceptanceId", allowed,
+                    "rewardProfileCode", "RP_NONE"
+            ))).orElseThrow().acceptanceId())
+                    .isEqualTo(allowed.longValue());
+        }
 
         for (Object invalid : new Object[]{
                 "21900",
+                new BigDecimal("21900"),
+                21900.0F,
+                21900.0D,
                 21900.5,
                 BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE),
-                0L
+                0L,
+                -1L,
+                new Number() {
+                    @Override
+                    public int intValue() {
+                        return 21900;
+                    }
+
+                    @Override
+                    public long longValue() {
+                        return 21900L;
+                    }
+
+                    @Override
+                    public float floatValue() {
+                        return 21900.0F;
+                    }
+
+                    @Override
+                    public double doubleValue() {
+                        return 21900.0D;
+                    }
+                }
         }) {
             assertRewardError(
                     () -> QuestRewardReadyFact.from(event(Map.of(

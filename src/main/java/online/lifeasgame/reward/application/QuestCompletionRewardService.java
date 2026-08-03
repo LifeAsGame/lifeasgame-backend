@@ -6,6 +6,7 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.reward.application.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementLine;
+import online.lifeasgame.reward.domain.RewardSettlementLineStatus;
 import online.lifeasgame.reward.domain.RewardSettlementSourceType;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class QuestCompletionRewardService {
 
     private final RewardSettlementCreateService settlementCreateService;
+    private final RewardSettlementReader settlementReader;
     private final RewardSettlementExpProcessService expProcessService;
 
     public void process(QuestRewardReadyFact fact) {
@@ -27,7 +29,13 @@ public class QuestCompletionRewardService {
 
         for (RewardSettlementLine line : settlement.getLines()) {
             switch (line.getRewardType()) {
-                case EXP -> processExp(settlement.getId(), line.getId());
+                case EXP -> {
+                    if (line.getStatus() == RewardSettlementLineStatus.FAILED) {
+                        logFailed(settlement.getId(), line);
+                    } else {
+                        processExp(settlement.getId(), line.getId());
+                    }
+                }
                 case ITEM -> {
                     // ITEM settlement lines intentionally remain PENDING.
                 }
@@ -39,12 +47,29 @@ public class QuestCompletionRewardService {
         try {
             expProcessService.process(settlementId, lineId);
         } catch (DomainException exception) {
-            log.warn(
-                    "Quest reward EXP failed: settlementId={}, lineId={}, failureCode={}",
-                    settlementId,
-                    lineId,
-                    exception.getErrorCode().code()
-            );
+            RewardSettlement fresh =
+                    settlementReader.getByIdInNewTransactionOrThrow(
+                            settlementId
+                    );
+            RewardSettlementLine freshLine =
+                    fresh.getLineByIdOrThrow(lineId);
+            if (freshLine.getStatus()
+                    != RewardSettlementLineStatus.FAILED) {
+                throw exception;
+            }
+            logFailed(settlementId, freshLine);
         }
+    }
+
+    private void logFailed(
+            Long settlementId,
+            RewardSettlementLine line
+    ) {
+        log.warn(
+                "Quest reward EXP failed: settlementId={}, lineId={}, failureCode={}",
+                settlementId,
+                line.getId(),
+                line.getFailureCode()
+        );
     }
 }

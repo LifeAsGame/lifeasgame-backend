@@ -82,6 +82,11 @@ public enum RewardError implements ErrorCode {
     REWARD_SETTLEMENT_SOURCE_ID_REQUIRED(
             "RWD-400-SETTLEMENT-SOURCE-ID-REQUIRED", "Reward settlement source id must be positive", 400
     ),
+    REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT(
+            "RWD-409-SETTLEMENT-SOURCE-PROFILE-CONFLICT",
+            "Reward settlement source has a conflicting reward profile",
+            409
+    ),
     REWARD_SETTLEMENT_PROFILE_REQUIRED(
             "RWD-400-SETTLEMENT-PROFILE-REQUIRED", "Reward settlement requires a reward profile", 400
     ),
