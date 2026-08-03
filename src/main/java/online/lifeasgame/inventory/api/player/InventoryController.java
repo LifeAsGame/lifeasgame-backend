@@ -37,15 +37,6 @@ public class InventoryController implements InventoryApiSpecV1 {
         InventoryResult.Entry result = inventoryFacade.getEntry(itemInstanceId);
         return ApiResponses.ok(InventoryWebMapper.toEntryDetail(result));
     }
-
-
-    @Override
-    @PostMapping("/add")
-    public ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request) {
-        InventoryResult.Slots result = inventoryFacade.add(InventoryWebMapper.toAddCommand(request));
-        return ApiResponses.ok(InventoryWebMapper.toSlots(result));
-    }
-
     @Override
     @PatchMapping("/move")
     public ResponseEntity<ApiResponse<Void>> move(@Valid @RequestBody InventoryRequest.Move request) {

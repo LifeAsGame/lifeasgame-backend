@@ -9,9 +9,6 @@ public final class MailboxResponse {
     private MailboxResponse() {
     }
 
-    public record Slot(int slot) {
-    }
-
     public record Meta(
             int capacitySlots,
             int usedSlots,

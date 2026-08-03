@@ -36,19 +36,6 @@ public final class MailboxWebMapper {
         );
     }
 
-    public static MailboxCommand.Deliver toDeliverCommand(MailboxRequest.Deliver request) {
-        return new MailboxCommand.Deliver(
-                request.itemId(),
-                request.quantity(),
-                request.instanceAttrs(),
-                request.bound()
-        );
-    }
-
-    public static MailboxResponse.Slot toSlot(MailboxResult.Slot result) {
-        return new MailboxResponse.Slot(result.slot());
-    }
-
     public static MailboxCommand.Claim toClaimCommand(MailboxRequest.Claim request) {
         return new MailboxCommand.Claim(request.slotIndex(), request.quantity());
     }

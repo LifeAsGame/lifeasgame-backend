@@ -28,15 +28,6 @@ public class MailboxController implements MailboxApiSpecV1 {
     }
 
     @Override
-    @PostMapping("/deliver")
-    public ResponseEntity<ApiResponse<MailboxResponse.Slot>> deliver(
-            @Valid @RequestBody MailboxRequest.Deliver request
-    ) {
-        MailboxResult.Slot result = mailboxFacade.deliver(MailboxWebMapper.toDeliverCommand(request));
-        return ApiResponses.ok(MailboxWebMapper.toSlot(result));
-    }
-
-    @Override
     @PostMapping("/claim")
     public ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request) {
         mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));

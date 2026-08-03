@@ -13,11 +13,6 @@ public class InventoryFacade {
     private final InventoryService inventoryService;
     private final CurrentPlayerAccessor currentPlayer;
 
-    public InventoryResult.Slots add(InventoryCommand.Add cmd) {
-        Long playerId = currentPlayer.currentPlayerIdOrThrow();
-        return inventoryService.add(playerId, cmd);
-    }
-
     public InventoryResult.Entries list() {
         Long playerId = currentPlayer.currentPlayerIdOrThrow();
         return inventoryService.list(playerId);

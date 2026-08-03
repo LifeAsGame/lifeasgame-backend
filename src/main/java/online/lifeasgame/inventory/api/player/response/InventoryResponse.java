@@ -7,9 +7,6 @@ public final class InventoryResponse {
 
     private InventoryResponse() {}
 
-    public record Slots(List<Integer> slots) {
-    }
-
     public record Slot(int slot) {
     }
 

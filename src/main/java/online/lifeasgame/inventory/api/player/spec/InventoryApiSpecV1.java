@@ -26,9 +26,6 @@ public interface InventoryApiSpecV1 {
             @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
     );
 
-    @Operation(summary = "인벤토리 아이템 추가", description = "아이템을 인벤토리에 추가합니다.")
-    ResponseEntity<ApiResponse<InventoryResponse.Slots>> add(@Valid @RequestBody InventoryRequest.Add request);
-
     @Operation(summary = "인벤토리 슬롯 이동", description = "from 슬롯의 엔트리를 to 슬롯으로 이동합니다.")
     ResponseEntity<ApiResponse<Void>> move(@Valid @RequestBody InventoryRequest.Move request);
 
