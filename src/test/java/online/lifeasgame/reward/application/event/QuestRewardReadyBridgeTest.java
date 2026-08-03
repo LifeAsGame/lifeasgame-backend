@@ -53,6 +53,70 @@ class QuestRewardReadyBridgeTest {
     }
 
     @Test
+    @DisplayName("questDefinitionVersion은 양의 exact integer 타입만 coercion한다")
+    void coercesOptionalDefinitionVersionExactly() {
+        for (Object[] allowed : new Object[][]{
+                {(byte) 1, 1},
+                {(short) 2, 2},
+                {3, 3},
+                {4L, 4},
+                {BigInteger.valueOf(5L), 5},
+                {(long) Integer.MAX_VALUE, Integer.MAX_VALUE},
+                {BigInteger.valueOf(Integer.MAX_VALUE), Integer.MAX_VALUE}
+        }) {
+            assertThat(QuestRewardReadyFact.from(event(Map.of(
+                    "acceptanceId", 21900L,
+                    "rewardProfileCode", "RP_NONE",
+                    "questDefinitionVersion", allowed[0]
+            ))).orElseThrow().questDefinitionVersion())
+                    .isEqualTo(allowed[1]);
+        }
+
+        for (Object invalid : new Object[]{
+                0,
+                -1,
+                (long) Integer.MAX_VALUE + 1,
+                BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.ONE),
+                new BigDecimal("7"),
+                7.0F,
+                7.0D,
+                "7",
+                new Number() {
+                    @Override
+                    public int intValue() {
+                        return 7;
+                    }
+
+                    @Override
+                    public long longValue() {
+                        return 7L;
+                    }
+
+                    @Override
+                    public float floatValue() {
+                        return 7.0F;
+                    }
+
+                    @Override
+                    public double doubleValue() {
+                        return 7.0D;
+                    }
+                }
+        }) {
+            assertThat(QuestRewardReadyFact.from(event(Map.of(
+                    "acceptanceId", 21900L,
+                    "rewardProfileCode", "RP_NONE",
+                    "questDefinitionVersion", invalid
+            ))).orElseThrow().questDefinitionVersion()).isNull();
+        }
+
+        assertThat(QuestRewardReadyFact.from(event(Map.of(
+                "acceptanceId", 21900L,
+                "rewardProfileCode", "RP_NONE"
+        ))).orElseThrow().questDefinitionVersion()).isNull();
+    }
+
+    @Test
     @DisplayName("legacy Event는 no-op이고 final marker가 있는 profile 누락은 stable error다")
     void gatesLegacyAndMalformedFinalEvents() {
         QuestCompletionRewardService service =

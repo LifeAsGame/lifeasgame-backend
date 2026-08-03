@@ -46,10 +46,9 @@ public record QuestRewardReadyFact(
                 attributes.get("acceptanceId"),
                 RewardError.REWARD_SETTLEMENT_SOURCE_ID_REQUIRED
         );
-        Integer definitionVersion =
-                attributes.get("questDefinitionVersion") instanceof Number value
-                        ? value.intValue()
-                        : null;
+        Integer definitionVersion = positiveIntegerOrNull(
+                attributes.get("questDefinitionVersion")
+        );
         return Optional.of(new QuestRewardReadyFact(
                 playerId,
                 acceptanceId,
@@ -78,6 +77,25 @@ public record QuestRewardReadyFact(
             throw invalid(error);
         }
         return value;
+    }
+
+    private static Integer positiveIntegerOrNull(Object value) {
+        if (!(value instanceof Number number)) {
+            return null;
+        }
+        try {
+            Integer result = switch (number) {
+                case Byte item -> (int) item;
+                case Short item -> (int) item;
+                case Integer item -> item;
+                case Long item -> Math.toIntExact(item);
+                case BigInteger item -> item.intValueExact();
+                default -> null;
+            };
+            return result != null && result > 0 ? result : null;
+        } catch (ArithmeticException exception) {
+            return null;
+        }
     }
 
     private static Long positiveNumber(Object value, RewardError error) {
