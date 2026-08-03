@@ -33,10 +33,10 @@ class FlywayHistoryChecksumTest {
     class MigrateAgain {
 
         @Test
-        @DisplayName("V1~V15 checksum을 보존하고 V16 이후 두 번째 실행은 no-op이다")
+        @DisplayName("V1~V16 checksum을 보존하고 V17 이후 두 번째 실행은 no-op이다")
         void keepsMigrationHistory() throws Exception {
-            Flyway throughV15 = flyway(MigrationVersion.fromVersion("15"));
-            MigrateResult legacy = throughV15.migrate();
+            Flyway throughV16 = flyway(MigrationVersion.fromVersion("16"));
+            MigrateResult legacy = throughV16.migrate();
             List<HistoryRow> legacyHistory = successfulHistory();
             Flyway flyway = flyway(null);
 
@@ -46,7 +46,7 @@ class FlywayHistoryChecksumTest {
             MigrateResult second = flyway.migrate();
             List<HistoryRow> secondHistory = successfulHistory();
 
-            assertThat(legacy.migrationsExecuted).isEqualTo(15);
+            assertThat(legacy.migrationsExecuted).isEqualTo(16);
             assertThat(first.migrationsExecuted).isEqualTo(1);
             assertThat(second.migrationsExecuted).isZero();
             assertThat(secondHistory).isEqualTo(firstHistory);
@@ -56,7 +56,7 @@ class FlywayHistoryChecksumTest {
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16"
+                            "14", "15", "16", "17"
                     );
             assertThat(secondHistory).allSatisfy(history -> {
                 assertThat(history.checksum()).isNotNull();

@@ -22,12 +22,14 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerMailbox extends AbstractTime {
 
+    public static final int DEFAULT_CAPACITY = 100;
+
     @Id
     @Column(name = "player_id")
     private Long playerId;
 
     @Column(name = "capacity_slots", nullable = false)
-    private int capacitySlots = 100;
+    private int capacitySlots = DEFAULT_CAPACITY;
 
     @Version
     private Long version;
@@ -76,14 +78,20 @@ public class PlayerMailbox extends AbstractTime {
     public SlotIndex deliver(ItemCarryPolicy itemCarryPolicy, int quantity, InstanceAttrs attrs, boolean bound) {
         Guard.minValue(quantity, 1, "qty");
         InstanceAttrs safeAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
-
-        int remaining = quantity;
-
-        // 1) 기존 스택 채우기
         List<MailboxEntry> stacks = entries.stream()
                 .filter(e -> e.isSameStackKey(itemCarryPolicy, bound, safeAttrs))
                 .toList();
 
+        int capacityInExisting = stacks.stream()
+                .mapToInt(stack -> itemCarryPolicy.spaceInStack(stack.getQuantity().value()))
+                .sum();
+        int remainingAfterExisting = Math.max(0, quantity - capacityInExisting);
+        int neededNew = itemCarryPolicy.estimateNewStacksNeeded(remainingAfterExisting);
+        if (neededNew > freeSlots()) {
+            throw new DomainException(InventoryError.MAILBOX_FULL);
+        }
+
+        int remaining = quantity;
         SlotIndex firstExisting = null; // 기존 스택 중 처음으로 건드린 슬롯
         for (MailboxEntry stack : stacks) {
             if (remaining == 0) {
@@ -100,18 +108,6 @@ public class PlayerMailbox extends AbstractTime {
             }
         }
 
-        // 2) Pre-flight: 새 스택 필요 개수 계산
-        int capacityInExisting = stacks.stream()
-                .mapToInt(s -> itemCarryPolicy.spaceInStack(s.getQuantity().value()))
-                .sum();
-        int remainAfterExisting = Math.max(0, remaining - capacityInExisting);
-        int needNew = itemCarryPolicy.estimateNewStacksNeeded(remainAfterExisting);
-
-        if (needNew > freeSlots()) {
-            throw new DomainException(InventoryError.MAILBOX_FULL);
-        }
-
-        // 3) 신규 스택 생성
         SlotIndex firstNew = null;
         while (remaining > 0) {
             int put = itemCarryPolicy.stackable() ? Math.min(itemCarryPolicy.maxStack(), remaining) : 1;

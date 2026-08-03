@@ -20,8 +20,18 @@ public class PlayerMailboxRepositoryAdapter implements PlayerMailboxRepository, 
     }
 
     @Override
+    public Optional<PlayerMailbox> findByPlayerIdForUpdate(Long playerId) {
+        return jpaRepository.findByPlayerIdForUpdate(playerId);
+    }
+
+    @Override
     public PlayerMailbox save(PlayerMailbox box) {
         return jpaRepository.save(box);
+    }
+
+    @Override
+    public void insertIfAbsent(Long playerId, int capacitySlots) {
+        jpaRepository.insertIfAbsent(playerId, capacitySlots);
     }
 
     @Override

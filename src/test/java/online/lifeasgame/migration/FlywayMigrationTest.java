@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V16까지 적용되고 Quest Fact context를 추가한다")
+        @DisplayName("V1부터 V17까지 적용되고 Inventory reward delivery 기반을 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -58,12 +58,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(4);
+            assertThat(result.migrationsExecuted).isEqualTo(5);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16"
+                            "14", "15", "16", "17"
                     );
             assertThat(existingTables(
                     "users",
@@ -80,7 +80,8 @@ class FlywayMigrationTest {
                     "quest_signal_receipts",
                     "outbox_events",
                     "quick_record_request_receipts",
-                    "life_log_records"
+                    "life_log_records",
+                    "inventory_reward_deliveries"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -96,7 +97,8 @@ class FlywayMigrationTest {
                     "quest_signal_receipts",
                     "outbox_events",
                     "quick_record_request_receipts",
-                    "life_log_records"
+                    "life_log_records",
+                    "inventory_reward_deliveries"
             );
             assertThat(existingTables(
                     "quick_lifelog_entries",

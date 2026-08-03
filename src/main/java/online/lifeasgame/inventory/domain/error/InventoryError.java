@@ -16,7 +16,12 @@ public enum InventoryError implements ErrorCode {
     DURABILITY_POLICY("INV-DURABILITY-POLICY","Durability policy violation",400),
     ITEM_NOT_FOUND("INV-ITEM-NOT-FOUND","Item not found",404),
     CONTAINER_NOT_FOUND("INV-CONTAINER-NOT-FOUND","Container not found",404),
-    INVENTORY_ENTRY_NOT_FOUND("INV-ENTRY-NOT-FOUND","Inventory entry not found",404),;
+    INVENTORY_ENTRY_NOT_FOUND("INV-ENTRY-NOT-FOUND","Inventory entry not found",404),
+    REWARD_LINE_ID_INVALID("INV-REWARD-LINE-ID-INVALID","Reward line ID must be positive",400),
+    PLAYER_ID_INVALID("INV-PLAYER-ID-INVALID","Player ID must be positive",400),
+    REWARD_ITEM_CODE_INVALID("INV-REWARD-ITEM-CODE-INVALID","Reward item code is invalid",400),
+    REWARD_QUANTITY_INVALID("INV-REWARD-QUANTITY-INVALID","Reward quantity is invalid",400),
+    REWARD_DELIVERY_CONFLICT("INV-REWARD-DELIVERY-CONFLICT","Reward delivery payload conflict",409),;
 
 
     private final String code;

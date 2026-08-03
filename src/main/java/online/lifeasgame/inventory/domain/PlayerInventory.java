@@ -21,6 +21,8 @@ import java.util.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerInventory extends AbstractTime {
 
+    public static final int DEFAULT_CAPACITY = 60;
+
     @Id
     @Column(name = "player_id")
     private Long playerId;
@@ -49,7 +51,7 @@ public class PlayerInventory extends AbstractTime {
     }
 
     public static PlayerInventory create(Long playerId) {
-        return new PlayerInventory(playerId, 60);
+        return new PlayerInventory(playerId, DEFAULT_CAPACITY);
     }
 
     public static PlayerInventory of(Long playerId, int capacitySlots) {
