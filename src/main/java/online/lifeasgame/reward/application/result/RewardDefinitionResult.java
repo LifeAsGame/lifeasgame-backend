@@ -14,6 +14,7 @@ public final class RewardDefinitionResult {
             String rewardType,
             Long amount,
             Long itemId,
+            String itemCode,
             boolean active
     ) {
         public static Detail from(RewardDefinition definition) {
@@ -24,6 +25,7 @@ public final class RewardDefinitionResult {
                     definition.getRewardType().name(),
                     definition.getAmount(),
                     definition.getItemId(),
+                    definition.getItemCode(),
                     definition.isActive()
             );
         }

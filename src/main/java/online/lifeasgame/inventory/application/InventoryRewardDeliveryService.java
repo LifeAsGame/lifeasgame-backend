@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +86,21 @@ public class InventoryRewardDeliveryService implements InventoryRewardDeliveryAp
                 )
         );
         return result(saved, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    public Optional<RewardDeliveryReceipt> findRewardDelivery(Long rewardLineId) {
+        validateRewardLineId(rewardLineId);
+        return deliveryRepository.findByRewardLineId(rewardLineId)
+                .map(delivery -> new RewardDeliveryReceipt(
+                        delivery.getId(),
+                        delivery.getRewardLineId(),
+                        delivery.getPlayerId(),
+                        delivery.getItemId(),
+                        delivery.getItemCode(),
+                        delivery.getQuantity()
+                ));
     }
 
     private static RewardDeliveryResult result(

@@ -107,6 +107,11 @@ public class RewardSettlement extends AbstractTime {
         recalculateStatus();
     }
 
+    public void markItemLineSucceeded(Long lineId) {
+        findLineById(lineId).succeedItem();
+        recalculateStatus();
+    }
+
     public void markLineFailed(int sortOrder, ErrorCode errorCode) {
         findLine(sortOrder).fail(errorCode);
         recalculateStatus();

@@ -16,6 +16,13 @@ public class RewardDefinitionReader {
 
     private final RewardDefinitionRepository repository;
 
+    public RewardDefinition getByIdOrThrow(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new DomainException(
+                        RewardError.REWARD_DEFINITION_NOT_FOUND
+                ));
+    }
+
     public RewardDefinition getByCodeOrThrow(String code) {
         return repository.findByCode(code)
                 .orElseThrow(() -> new DomainException(RewardError.REWARD_DEFINITION_NOT_FOUND));

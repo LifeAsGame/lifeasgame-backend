@@ -8,5 +8,7 @@ public interface RewardDefinitionRepository {
 
     RewardDefinition save(RewardDefinition rewardDefinition);
 
+    Optional<RewardDefinition> findById(Long id);
+
     Optional<RewardDefinition> findByCode(String code);
 }

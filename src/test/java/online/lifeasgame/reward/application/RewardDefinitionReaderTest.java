@@ -41,7 +41,7 @@ class RewardDefinitionReaderTest {
         @DisplayName("존재하는 정의를 반환한다")
         void returnsDefinition() {
             RewardDefinition definition = RewardDefinition.create(
-                    "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, true
+                    "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, null, true
             );
             given(repository.findByCode("RD_EXP_10")).willReturn(Optional.of(definition));
 

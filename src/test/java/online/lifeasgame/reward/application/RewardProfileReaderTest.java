@@ -87,7 +87,7 @@ class RewardProfileReaderTest {
 
     private RewardDefinition expDefinition() {
         return RewardDefinition.create(
-                "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, true
+                "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, null, true
         );
     }
 

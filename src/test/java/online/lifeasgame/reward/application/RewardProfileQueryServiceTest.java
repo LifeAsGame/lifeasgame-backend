@@ -85,6 +85,6 @@ class RewardProfileQueryServiceTest {
     }
 
     private RewardDefinition expDefinition(String code, Long amount) {
-        return RewardDefinition.create(code, code, RewardType.EXP, amount, null, true);
+        return RewardDefinition.create(code, code, RewardType.EXP, amount, null, null, true);
     }
 }

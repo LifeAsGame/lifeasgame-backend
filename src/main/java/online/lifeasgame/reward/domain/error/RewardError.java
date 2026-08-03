@@ -46,11 +46,23 @@ public enum RewardError implements ErrorCode {
     REWARD_EXP_ITEM_ID_NOT_ALLOWED(
             "RWD-400-EXP-ITEM-ID-NOT-ALLOWED", "EXP reward must not have an item id", 400
     ),
+    REWARD_EXP_ITEM_CODE_NOT_ALLOWED(
+            "RWD-400-EXP-ITEM-CODE-NOT-ALLOWED", "EXP reward must not have an item code", 400
+    ),
     REWARD_ITEM_ID_REQUIRED(
             "RWD-400-ITEM-ID-REQUIRED", "Item reward requires an item id", 400
     ),
     REWARD_ITEM_ID_MUST_BE_POSITIVE(
             "RWD-400-ITEM-ID-NOT-POSITIVE", "Reward item id must be positive", 400
+    ),
+    REWARD_ITEM_CODE_REQUIRED(
+            "RWD-400-ITEM-CODE-REQUIRED", "Item reward requires an item code", 400
+    ),
+    REWARD_ITEM_CODE_TOO_LONG(
+            "RWD-400-ITEM-CODE-TOO-LONG", "Reward item code is too long", 400
+    ),
+    REWARD_ITEM_REFERENCE_INCONSISTENT(
+            "RWD-409-ITEM-REFERENCE-INCONSISTENT", "Resolved item reference is inconsistent", 409
     ),
     REWARD_ITEM_QUANTITY_MUST_BE_POSITIVE(
             "RWD-400-ITEM-QUANTITY-NOT-POSITIVE", "Item reward quantity must be positive", 400
@@ -102,6 +114,9 @@ public enum RewardError implements ErrorCode {
     REWARD_SETTLEMENT_LINE_NOT_EXP(
             "RWD-409-SETTLEMENT-LINE-NOT-EXP", "Reward settlement line is not an EXP reward", 409
     ),
+    REWARD_SETTLEMENT_LINE_NOT_ITEM(
+            "RWD-409-SETTLEMENT-LINE-NOT-ITEM", "Reward settlement line is not an ITEM reward", 409
+    ),
     REWARD_SETTLEMENT_LINE_ALREADY_FAILED(
             "RWD-409-SETTLEMENT-LINE-ALREADY-FAILED", "Failed reward settlement line cannot succeed", 409
     ),
@@ -116,6 +131,11 @@ public enum RewardError implements ErrorCode {
     ),
     REWARD_SETTLEMENT_EXP_GROWTH_INCONSISTENT(
             "RWD-409-SETTLEMENT-EXP-GROWTH-INCONSISTENT", "EXP line and player growth change are inconsistent", 409
+    ),
+    REWARD_SETTLEMENT_ITEM_DELIVERY_INCONSISTENT(
+            "RWD-409-SETTLEMENT-ITEM-DELIVERY-INCONSISTENT",
+            "ITEM line and inventory delivery receipt are inconsistent",
+            409
     );
 
     private final String code;

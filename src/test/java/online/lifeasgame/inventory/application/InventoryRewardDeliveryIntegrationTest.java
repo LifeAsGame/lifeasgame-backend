@@ -98,7 +98,7 @@ class InventoryRewardDeliveryIntegrationTest {
     @DisplayName("V17 receipt table은 JPA validate와 unique/check/index 계약을 만족한다")
     void validatesMigrationContract() {
         assertThat(flyway.info().current().getVersion().getVersion())
-                .isEqualTo("17");
+                .isEqualTo("18");
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto"))
                 .isEqualTo("validate");
 
@@ -151,6 +151,35 @@ class InventoryRewardDeliveryIntegrationTest {
         assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(2L);
         assertThat(mailboxEntryBound(PLAYER_ID)).isTrue();
         assertThat(mailboxEntryAttrs(PLAYER_ID)).isEqualTo("{}");
+
+        InventoryRewardDeliveryApi.RewardDeliveryReceipt receipt =
+                deliveryApi.findRewardDelivery(2241001L).orElseThrow();
+        assertThat(receipt.deliveryId()).isEqualTo(result.deliveryId());
+        assertThat(receipt.rewardLineId()).isEqualTo(2241001L);
+        assertThat(receipt.playerId()).isEqualTo(PLAYER_ID);
+        assertThat(receipt.itemId()).isEqualTo(result.itemId());
+        assertThat(receipt.itemCode()).isEqualTo(ITEM_CODE);
+        assertThat(receipt.quantity()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("receipt 조회 miss는 container, Mailbox, Catalog를 변경하지 않는다")
+    void findsMissingReceiptWithoutMutation() {
+        assertThat(deliveryApi.findRewardDelivery(2241099L)).isEmpty();
+
+        assertThat(receiptCountAll()).isZero();
+        assertThat(containerCount("player_inventory", PLAYER_ID)).isZero();
+        assertThat(containerCount("player_mailbox", PLAYER_ID)).isZero();
+        assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
+    }
+
+    @Test
+    @DisplayName("receipt 조회도 rewardLineId 양수 경계를 검증한다")
+    void validatesReceiptLookupRewardLineId() {
+        assertError(
+                () -> deliveryApi.findRewardDelivery(0L),
+                InventoryError.REWARD_LINE_ID_INVALID
+        );
     }
 
     @Test

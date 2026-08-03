@@ -43,6 +43,9 @@ public class RewardDefinition extends AbstractTime {
     @Column(name = "item_id")
     private Long itemId;
 
+    @Column(name = "item_code", length = 80)
+    private String itemCode;
+
     @Column(nullable = false)
     private boolean active;
 
@@ -52,28 +55,10 @@ public class RewardDefinition extends AbstractTime {
             RewardType rewardType,
             Long amount,
             Long itemId,
+            String itemCode,
             boolean active
     ) {
-        this.code = normalizeRequired(
-                code,
-                80,
-                RewardError.REWARD_DEFINITION_CODE_REQUIRED,
-                RewardError.REWARD_DEFINITION_CODE_TOO_LONG
-        );
-        this.name = normalizeRequired(
-                name,
-                120,
-                RewardError.REWARD_DEFINITION_NAME_REQUIRED,
-                RewardError.REWARD_DEFINITION_NAME_TOO_LONG
-        );
-        if (rewardType == null) {
-            throw new DomainException(RewardError.REWARD_LINE_TYPE_REQUIRED);
-        }
-        this.rewardType = rewardType;
-        validatePayload(rewardType, amount, itemId);
-        this.amount = amount;
-        this.itemId = itemId;
-        this.active = active;
+        apply(code, name, rewardType, amount, itemId, itemCode, active);
     }
 
     public static RewardDefinition create(
@@ -82,9 +67,60 @@ public class RewardDefinition extends AbstractTime {
             RewardType rewardType,
             Long amount,
             Long itemId,
+            String itemCode,
             boolean active
     ) {
-        return new RewardDefinition(code, name, rewardType, amount, itemId, active);
+        return new RewardDefinition(
+                code, name, rewardType, amount, itemId, itemCode, active
+        );
+    }
+
+    public void update(
+            String code,
+            String name,
+            RewardType rewardType,
+            Long amount,
+            Long itemId,
+            String itemCode,
+            boolean active
+    ) {
+        apply(code, name, rewardType, amount, itemId, itemCode, active);
+    }
+
+    private void apply(
+            String code,
+            String name,
+            RewardType rewardType,
+            Long amount,
+            Long itemId,
+            String itemCode,
+            boolean active
+    ) {
+        String normalizedCode = normalizeRequired(
+                code,
+                80,
+                RewardError.REWARD_DEFINITION_CODE_REQUIRED,
+                RewardError.REWARD_DEFINITION_CODE_TOO_LONG
+        );
+        String normalizedName = normalizeRequired(
+                name,
+                120,
+                RewardError.REWARD_DEFINITION_NAME_REQUIRED,
+                RewardError.REWARD_DEFINITION_NAME_TOO_LONG
+        );
+        if (rewardType == null) {
+            throw new DomainException(RewardError.REWARD_LINE_TYPE_REQUIRED);
+        }
+        String normalizedItemCode = validatePayload(
+                rewardType, amount, itemId, itemCode
+        );
+        this.code = normalizedCode;
+        this.name = normalizedName;
+        this.rewardType = rewardType;
+        this.amount = amount;
+        this.itemId = itemId;
+        this.itemCode = normalizedItemCode;
+        this.active = active;
     }
 
     public void activate() {
@@ -111,7 +147,12 @@ public class RewardDefinition extends AbstractTime {
         return normalized;
     }
 
-    private static void validatePayload(RewardType rewardType, Long amount, Long itemId) {
+    private static String validatePayload(
+            RewardType rewardType,
+            Long amount,
+            Long itemId,
+            String itemCode
+    ) {
         if (rewardType == RewardType.EXP) {
             if (amount == null || amount <= 0) {
                 throw new DomainException(RewardError.REWARD_AMOUNT_MUST_BE_POSITIVE);
@@ -119,7 +160,10 @@ public class RewardDefinition extends AbstractTime {
             if (itemId != null) {
                 throw new DomainException(RewardError.REWARD_EXP_ITEM_ID_NOT_ALLOWED);
             }
-            return;
+            if (itemCode != null) {
+                throw new DomainException(RewardError.REWARD_EXP_ITEM_CODE_NOT_ALLOWED);
+            }
+            return null;
         }
         if (amount == null || amount <= 0) {
             throw new DomainException(RewardError.REWARD_ITEM_QUANTITY_MUST_BE_POSITIVE);
@@ -130,5 +174,11 @@ public class RewardDefinition extends AbstractTime {
         if (itemId <= 0) {
             throw new DomainException(RewardError.REWARD_ITEM_ID_MUST_BE_POSITIVE);
         }
+        return normalizeRequired(
+                itemCode,
+                80,
+                RewardError.REWARD_ITEM_CODE_REQUIRED,
+                RewardError.REWARD_ITEM_CODE_TOO_LONG
+        );
     }
 }
