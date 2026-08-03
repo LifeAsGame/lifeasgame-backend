@@ -5,6 +5,7 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.DefaultPlayerTimezoneResolver;
 import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -72,6 +73,7 @@ class QuestSignalProcessingAttemptTest {
                 questAcceptanceRepository,
                 questProgressStore,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 new DefaultPlayerTimezoneResolver(),
                 Clock.fixed(OCCURRED_AT, ZoneOffset.UTC)
         );

@@ -143,10 +143,6 @@ public class QuestAcceptance extends AbstractTime {
         );
     }
 
-    public void addProgress(int delta, Quest quest) {
-        addProgress(delta, quest, Instant.now());
-    }
-
     public void addProgress(int delta, Quest quest, Instant reachedAt) {
         assertProgressAllowed();
         Guard.notNull(quest, "quest");
@@ -155,10 +151,6 @@ public class QuestAcceptance extends AbstractTime {
         if (quest.target().reachedBy(this.progressValue)) {
             reachGoal(reachedAt);
         }
-    }
-
-    public void setProgress(int value, Quest quest) {
-        setProgress(value, quest, Instant.now());
     }
 
     public void setProgress(int value, Quest quest, Instant reachedAt) {

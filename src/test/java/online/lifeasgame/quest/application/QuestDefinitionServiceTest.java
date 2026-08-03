@@ -4,6 +4,7 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -58,6 +59,7 @@ class QuestDefinitionServiceTest {
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
                 Clock.systemUTC()
         );
@@ -306,6 +308,7 @@ class QuestDefinitionServiceTest {
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
                 Clock.systemUTC()
         );
@@ -350,6 +353,7 @@ class QuestDefinitionServiceTest {
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
                 Clock.systemUTC()
         );
@@ -384,6 +388,7 @@ class QuestDefinitionServiceTest {
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
                 Clock.systemUTC()
         );

@@ -5,6 +5,7 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -72,6 +74,7 @@ class QuestServiceStateContractTest {
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
+                new QuestCompletionEventFactory(),
                 ignored -> PLAYER_ZONE,
                 Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC)
         );
@@ -115,6 +118,90 @@ class QuestServiceStateContractTest {
                     );
             assertThat(event.correlationId())
                     .isEqualTo("quest:193:acceptance:1930:admin-completed");
+        }
+    }
+
+    @Nested
+    @DisplayName("Admin이 AUTO Quest 진행도를 목표까지 조정할 때")
+    class AdjustAutoProgress {
+
+        @Test
+        @DisplayName("Factory canonical QUEST_COMPLETED를 admin-completed correlation으로 발행한다")
+        void publishesCanonicalCompletion() {
+            Quest quest = new StaticQuestBlueprintCatalog()
+                    .require(QuestCode.Q_RECORD_FIRST_TRACE)
+                    .instantiate();
+            ReflectionTestUtils.setField(quest, "id", QUEST_ID);
+            QuestAcceptance acceptance = QuestAcceptance.start(
+                    QUEST_ID,
+                    PLAYER_ID,
+                    TimePeriod.forever(),
+                    ACCEPTED_AT.minusSeconds(60),
+                    null
+            );
+            ReflectionTestUtils.setField(
+                    acceptance,
+                    "id",
+                    ACCEPTANCE_ID
+            );
+            given(questReader.getAcceptance(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
+            given(questReader.getById(QUEST_ID)).willReturn(quest);
+
+            QuestResult.Acceptance result =
+                    service.adjustAcceptanceProgress(
+                            ACCEPTANCE_ID,
+                            new QuestCommand.AdjustProgress(1)
+                    );
+
+            assertThat(result.status())
+                    .isEqualTo(QuestStatus.COMPLETED.name());
+            ArgumentCaptor<DomainEvent> eventCaptor =
+                    ArgumentCaptor.forClass(DomainEvent.class);
+            verify(domainEventPublisher, times(3))
+                    .publish(eventCaptor.capture());
+            List<QuestEvent> events = eventCaptor.getAllValues().stream()
+                    .map(QuestEvent.class::cast)
+                    .toList();
+            assertThat(events)
+                    .extracting(QuestEvent::type)
+                    .containsExactly(
+                            QuestEventType.QUEST_PROGRESS,
+                            QuestEventType.QUEST_GOAL_REACHED,
+                            QuestEventType.QUEST_COMPLETED
+                    );
+
+            QuestEvent completed = events.get(2);
+            assertThat(completed.questId()).isEqualTo(QUEST_ID);
+            assertThat(completed.questCode())
+                    .isEqualTo(QuestCode.Q_RECORD_FIRST_TRACE.value());
+            assertThat(completed.playerId()).isEqualTo(PLAYER_ID);
+            assertThat(completed.occurredAt()).isEqualTo(ACCEPTED_AT);
+            assertThat(completed.attributes())
+                    .containsEntry("acceptanceId", ACCEPTANCE_ID)
+                    .containsEntry("progress", 1)
+                    .containsEntry("target", 1)
+                    .containsEntry("repeatRule", "ONCE")
+                    .containsEntry("completionPolicy", "AUTO")
+                    .containsEntry("goalReachedAt", ACCEPTED_AT)
+                    .containsEntry("completedAt", ACCEPTED_AT)
+                    .containsEntry("questDefinitionVersion", 1)
+                    .containsEntry("questSemanticCategory", "RECORD")
+                    .containsEntry("progressSource", "RECORD_CREATED")
+                    .containsEntry("repeatPolicy", "ONCE")
+                    .containsEntry(
+                            "rewardProfileCode",
+                            "RP_EXP_TINY_10"
+                    )
+                    .doesNotContainKeys(
+                            "rewardExp",
+                            "rewardStats",
+                            "rewardLines",
+                            "rewardProfileId"
+                    );
+            assertThat(completed.correlationId()).isEqualTo(
+                    "quest:193:acceptance:1930:admin-completed"
+            );
         }
     }
 

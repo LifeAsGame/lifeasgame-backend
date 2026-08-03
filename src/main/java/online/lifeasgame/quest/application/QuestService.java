@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -35,6 +36,7 @@ public class QuestService {
     private final QuestWriter questWriter;
     private final RewardProfileLookupApi rewardProfileLookupApi;
     private final DomainEventPublisher domainEventPublisher;
+    private final QuestCompletionEventFactory completionEventFactory;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
 
@@ -285,7 +287,7 @@ public class QuestService {
     public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
-        Instant transitionAt = Instant.now();
+        Instant transitionAt = clock.instant();
         acceptance.addProgress(command.delta(), quest, transitionAt);
         publishProgress(acceptance, quest, transitionAt, "admin-progress");
         if (acceptance.isGoalReached()) {
@@ -303,7 +305,7 @@ public class QuestService {
         QuestStatus questStatus = QuestStatus.parse(command.status());
         QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
-        Instant transitionAt = Instant.now();
+        Instant transitionAt = clock.instant();
         boolean changed = acceptance.changeStatus(questStatus, transitionAt);
         if (changed && acceptance.isGoalReached()) {
             publishGoalReached(acceptance, quest, transitionAt, "admin-goal-reached");
@@ -364,20 +366,11 @@ public class QuestService {
             String suffix
     ) {
         domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_COMPLETED)
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(acceptance.getPlayerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", acceptance.getProgressValue())
-                        .attribute("target", quest.target().value())
-                        .attribute("goalReachedAt", acceptance.getGoalReachedAt())
-                        .attribute("completedAt", acceptance.getCompletedAt())
-                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                        .definitionSnapshot(quest)
-                        .occurredAt(acceptance.getCompletedAt())
-                        .correlationId(correlation(acceptance, suffix))
-                        .build()
+                completionEventFactory.create(
+                        acceptance,
+                        quest,
+                        correlation(acceptance, suffix)
+                )
         );
     }
 
