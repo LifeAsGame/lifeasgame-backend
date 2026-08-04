@@ -56,6 +56,9 @@ public class RewardSettlementLine extends AbstractTime {
     @Column(name = "item_id")
     private Long itemId;
 
+    @Column(name = "item_code", length = 80)
+    private String itemCode;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
@@ -81,6 +84,7 @@ public class RewardSettlementLine extends AbstractTime {
         this.rewardType = definition.getRewardType();
         this.amount = amount;
         this.itemId = definition.getItemId();
+        this.itemCode = definition.getItemCode();
         this.sortOrder = sortOrder;
         this.status = RewardSettlementLineStatus.PENDING;
     }
@@ -113,12 +117,30 @@ public class RewardSettlementLine extends AbstractTime {
         succeed();
     }
 
+    void succeedItem() {
+        assertItemSnapshot();
+        succeed();
+    }
+
     public boolean isExpProcessingRequired() {
         assertExp();
         if (status == RewardSettlementLineStatus.FAILED) {
             throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED);
         }
         return status == RewardSettlementLineStatus.PENDING;
+    }
+
+    public boolean isItemProcessingRequired() {
+        assertItemSnapshot();
+        if (status == RewardSettlementLineStatus.FAILED) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED);
+        }
+        return status == RewardSettlementLineStatus.PENDING;
+    }
+
+    public boolean isItemSucceeded() {
+        assertItemSnapshot();
+        return status == RewardSettlementLineStatus.SUCCEEDED;
     }
 
     boolean isPending() {
@@ -156,6 +178,21 @@ public class RewardSettlementLine extends AbstractTime {
     private void assertExp() {
         if (rewardType != RewardType.EXP) {
             throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_EXP);
+        }
+    }
+
+    private void assertItemSnapshot() {
+        if (rewardType != RewardType.ITEM) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_NOT_ITEM);
+        }
+        if (itemId == null || itemId <= 0) {
+            throw new DomainException(RewardError.REWARD_ITEM_ID_REQUIRED);
+        }
+        if (itemCode == null || itemCode.isBlank()) {
+            throw new DomainException(RewardError.REWARD_ITEM_CODE_REQUIRED);
+        }
+        if (itemCode.length() > 80) {
+            throw new DomainException(RewardError.REWARD_ITEM_CODE_TOO_LONG);
         }
     }
 

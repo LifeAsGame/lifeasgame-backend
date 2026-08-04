@@ -35,7 +35,7 @@ class RewardProfileTest {
         void includesItemLine() {
             RewardProfile profile = activeProfile();
             RewardDefinition definition = RewardDefinition.create(
-                    "RD_ITEM_1", "Item 1", RewardType.ITEM, 1L, 1L, true
+                    "RD_ITEM_1", "Item 1", RewardType.ITEM, 1L, 1L, "IT_ITEM_1", true
             );
 
             RewardProfileLine line = profile.addLine(definition, 0, 3L);
@@ -166,7 +166,7 @@ class RewardProfileTest {
     }
 
     private RewardDefinition expDefinition(String code, Long amount) {
-        return RewardDefinition.create(code, code, RewardType.EXP, amount, null, true);
+        return RewardDefinition.create(code, code, RewardType.EXP, amount, null, null, true);
     }
 
     private void assertRewardError(Runnable action, RewardError error) {

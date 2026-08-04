@@ -48,6 +48,9 @@ class ItemLookupIntegrationTest {
 
         assertThat(reference.id()).isPositive();
         assertThat(reference.code()).isEqualTo("IT_FIRST_STEP_FRAGMENT");
+
+        ItemLookupApi.ItemReference byId = itemLookupApi.getById(reference.id());
+        assertThat(byId).isEqualTo(reference);
     }
 
     @Test

@@ -136,6 +136,9 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @MockitoSpyBean
     private RewardSettlementExpProcessService expProcessService;
 
+    @MockitoSpyBean
+    private RewardSettlementItemProcessService itemProcessService;
+
     private TransactionTemplate transactionTemplate;
     private ExecutorService executor;
 
@@ -144,6 +147,11 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         clock.set(ACCEPTED_AT);
         jdbcTemplate.update("DELETE FROM outbox_events");
         jdbcTemplate.update("DELETE FROM player_growth_changes");
+        jdbcTemplate.update("DELETE FROM inventory_reward_deliveries");
+        jdbcTemplate.update("DELETE FROM inventory_entries");
+        jdbcTemplate.update("DELETE FROM mailbox_entries");
+        jdbcTemplate.update("DELETE FROM player_inventory");
+        jdbcTemplate.update("DELETE FROM player_mailbox");
         jdbcTemplate.update("DELETE FROM reward_settlement_lines");
         jdbcTemplate.update("DELETE FROM reward_settlements");
         jdbcTemplate.update(
@@ -156,7 +164,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         );
         jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
         insertPlayer();
-        clearInvocations(expProcessService);
+        clearInvocations(expProcessService, itemProcessService);
         transactionTemplate = new TransactionTemplate(transactionManager);
         executor = Executors.newFixedThreadPool(2);
     }
@@ -224,8 +232,8 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     }
 
     @Test
-    @DisplayName("RP_EXP_AND_ITEM_FIRST_STEP_20은 EXP만 성공시키고 ITEM과 Settlement를 PENDING으로 둔다")
-    void processesExpAndLeavesItemPending() {
+    @DisplayName("RP_EXP_AND_ITEM_FIRST_STEP_20은 EXP와 ITEM을 exact-once 지급하고 완료한다")
+    void processesExpAndItemToCompletion() {
         bridge.onQuestEvent(rewardReady(
                 219103L,
                 "RP_EXP_AND_ITEM_FIRST_STEP_20"
@@ -236,11 +244,13 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         assertThat(lineStatus(219103L, "EXP"))
                 .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
         assertThat(lineStatus(219103L, "ITEM"))
-                .isEqualTo(RewardSettlementLineStatus.PENDING.name());
+                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
         assertThat(settlementStatus(219103L))
-                .isEqualTo(RewardSettlementStatus.PENDING.name());
+                .isEqualTo(RewardSettlementStatus.COMPLETED.name());
         assertThat(playerExp()).isEqualTo(20L);
         assertThat(growthChangeCount()).isEqualTo(1);
+        assertThat(mailboxItemQuantity()).isEqualTo(1L);
+        assertThat(itemReceiptCount()).isEqualTo(1);
     }
 
     @Test
@@ -428,7 +438,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     }
 
     @Test
-    @DisplayName("actual 세 LifeLog closed loop는 EXP 20만 성공시키고 ITEM을 PENDING으로 둔다")
+    @DisplayName("actual 세 LifeLog closed loop는 EXP 20과 ITEM을 지급하고 완료한다")
     void completesActualExpAndItemClosedLoop() {
         QuestResult.Acceptance accepted =
                 accept(QuestCode.Q_RECORD_THREE_TRACES);
@@ -457,11 +467,13 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         assertThat(lineStatus(accepted.id(), "EXP"))
                 .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
         assertThat(lineStatus(accepted.id(), "ITEM"))
-                .isEqualTo(RewardSettlementLineStatus.PENDING.name());
+                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED.name());
         assertThat(settlementStatus(accepted.id()))
-                .isEqualTo(RewardSettlementStatus.PENDING.name());
+                .isEqualTo(RewardSettlementStatus.COMPLETED.name());
         assertThat(playerExp()).isEqualTo(20L);
         assertThat(growthChangeCount()).isEqualTo(1);
+        assertThat(mailboxItemQuantity()).isEqualTo(1L);
+        assertThat(itemReceiptCount()).isEqualTo(1);
     }
 
     @Test
@@ -734,6 +746,23 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     private int growthChangeCount() {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM player_growth_changes",
+                Integer.class
+        );
+    }
+
+    private long mailboxItemQuantity() {
+        return jdbcTemplate.queryForObject("""
+                SELECT COALESCE(SUM(entry.quantity), 0)
+                FROM mailbox_entries entry
+                JOIN items item ON item.id = entry.item_id
+                WHERE entry.player_id = ?
+                  AND item.code = 'IT_FIRST_STEP_FRAGMENT'
+                """, Long.class, PLAYER_ID);
+    }
+
+    private int itemReceiptCount() {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM inventory_reward_deliveries",
                 Integer.class
         );
     }

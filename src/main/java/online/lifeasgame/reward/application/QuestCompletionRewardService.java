@@ -18,6 +18,7 @@ public class QuestCompletionRewardService {
     private final RewardSettlementCreateService settlementCreateService;
     private final RewardSettlementReader settlementReader;
     private final RewardSettlementExpProcessService expProcessService;
+    private final RewardSettlementItemProcessService itemProcessService;
 
     public void process(QuestRewardReadyFact fact) {
         RewardSettlement settlement = settlementCreateService.create(
@@ -37,9 +38,27 @@ public class QuestCompletionRewardService {
                     }
                 }
                 case ITEM -> {
-                    // ITEM settlement lines intentionally remain PENDING.
+                    if (line.getStatus() == RewardSettlementLineStatus.FAILED) {
+                        logFailed(settlement.getId(), line);
+                    } else {
+                        processItem(settlement.getId(), line.getId());
+                    }
                 }
             }
+        }
+    }
+
+    private void processItem(Long settlementId, Long lineId) {
+        try {
+            itemProcessService.process(settlementId, lineId);
+        } catch (DomainException exception) {
+            RewardSettlement fresh = settlementReader
+                    .getByIdInNewTransactionOrThrow(settlementId);
+            RewardSettlementLine freshLine = fresh.getLineByIdOrThrow(lineId);
+            if (freshLine.getStatus() != RewardSettlementLineStatus.FAILED) {
+                throw exception;
+            }
+            logFailed(settlementId, freshLine);
         }
     }
 
@@ -66,7 +85,8 @@ public class QuestCompletionRewardService {
             RewardSettlementLine line
     ) {
         log.warn(
-                "Quest reward EXP failed: settlementId={}, lineId={}, failureCode={}",
+                "Quest reward {} failed: settlementId={}, lineId={}, failureCode={}",
+                line.getRewardType(),
                 settlementId,
                 line.getId(),
                 line.getFailureCode()

@@ -256,7 +256,9 @@ class RewardSettlementExpProcessConcurrencyTest {
             Long lineId = settlement.getLines().getFirst().getId();
             jdbcTemplate.update("""
                     UPDATE reward_settlement_lines
-                    SET reward_type = 'ITEM', item_id = 77
+                    SET reward_type = 'ITEM',
+                        item_id = 77,
+                        item_code = 'IT_FIRST_STEP_FRAGMENT'
                     WHERE id = ?
                     """, lineId);
 

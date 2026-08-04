@@ -196,7 +196,7 @@ class RewardSettlementExpProcessAttemptTest {
         RewardProfile profile = profile();
         profile.addLine(expDefinition(), 0, null);
         RewardDefinition item = RewardDefinition.create(
-                "RD_ITEM", "Item", RewardType.ITEM, 2L, 77L, true
+                "RD_ITEM", "Item", RewardType.ITEM, 2L, 77L, "IT_ITEM", true
         );
         ReflectionTestUtils.setField(item, "id", 3L);
         profile.addLine(item, 1, null);
@@ -211,7 +211,7 @@ class RewardSettlementExpProcessAttemptTest {
 
     private RewardDefinition expDefinition() {
         RewardDefinition definition = RewardDefinition.create(
-                "RD_EXP", "EXP", RewardType.EXP, 10L, null, true
+                "RD_EXP", "EXP", RewardType.EXP, 10L, null, null, true
         );
         ReflectionTestUtils.setField(definition, "id", 1L);
         return definition;

@@ -19,6 +19,11 @@ public class RewardDefinitionRepositoryAdapter implements RewardDefinitionReposi
     }
 
     @Override
+    public Optional<RewardDefinition> findById(Long id) {
+        return jpaRepository.findById(id);
+    }
+
+    @Override
     public Optional<RewardDefinition> findByCode(String code) {
         return jpaRepository.findByCode(code);
     }

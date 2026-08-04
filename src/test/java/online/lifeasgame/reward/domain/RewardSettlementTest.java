@@ -32,11 +32,12 @@ class RewardSettlementTest {
                             RewardSettlementLine::getRewardType,
                             RewardSettlementLine::getAmount,
                             RewardSettlementLine::getItemId,
+                            RewardSettlementLine::getItemCode,
                             RewardSettlementLine::getSortOrder
                     )
                     .containsExactly(
-                            org.assertj.core.groups.Tuple.tuple("RD_EXP", RewardType.EXP, 10L, null, 0),
-                            org.assertj.core.groups.Tuple.tuple("RD_ITEM", RewardType.ITEM, 2L, 77L, 1)
+                            org.assertj.core.groups.Tuple.tuple("RD_EXP", RewardType.EXP, 10L, null, null, 0),
+                            org.assertj.core.groups.Tuple.tuple("RD_ITEM", RewardType.ITEM, 2L, 77L, "IT_RD_ITEM", 1)
                     );
             assertThat(settlement.getLines())
                     .extracting(RewardSettlementLine::getStatus)
@@ -59,18 +60,24 @@ class RewardSettlementTest {
         @DisplayName("원본 Profile과 Definition이 변경돼도 스냅샷 값은 유지된다")
         void keepsSnapshotAfterSourceChanges() {
             RewardProfile profile = persistedProfile("RP_SNAPSHOT");
-            RewardDefinition definition = persistedExpDefinition(1L, "RD_EXP_10", 10L);
+            RewardDefinition definition = persistedItemDefinition(
+                    1L, "RD_ITEM", 77L, 2L
+            );
             profile.addLine(definition, 0, null);
             RewardSettlement settlement = settlement(profile);
 
             ReflectionTestUtils.setField(profile, "code", "RP_CHANGED");
             ReflectionTestUtils.setField(definition, "code", "RD_CHANGED");
             ReflectionTestUtils.setField(definition, "amount", 999L);
+            ReflectionTestUtils.setField(definition, "itemId", 88L);
+            ReflectionTestUtils.setField(definition, "itemCode", "IT_CHANGED");
 
             RewardSettlementLine line = settlement.getLines().getFirst();
             assertThat(settlement.getRewardProfileCode()).isEqualTo("RP_SNAPSHOT");
-            assertThat(line.getRewardDefinitionCode()).isEqualTo("RD_EXP_10");
-            assertThat(line.getAmount()).isEqualTo(10L);
+            assertThat(line.getRewardDefinitionCode()).isEqualTo("RD_ITEM");
+            assertThat(line.getAmount()).isEqualTo(2L);
+            assertThat(line.getItemId()).isEqualTo(77L);
+            assertThat(line.getItemCode()).isEqualTo("IT_RD_ITEM");
         }
 
         @Test
@@ -84,6 +91,53 @@ class RewardSettlementTest {
             assertThat(settlement.getRewardProfileCode()).isEqualTo("RP_NONE");
             assertThat(settlement.getLines()).isEmpty();
             assertThat(settlement.getStatus()).isEqualTo(RewardSettlementStatus.COMPLETED);
+        }
+    }
+
+    @Nested
+    @DisplayName("ITEM Line 처리 가능 여부를 확인할 때")
+    class ValidateItemLineProcessing {
+
+        @Test
+        @DisplayName("PENDING ITEM은 처리 필요, SUCCEEDED ITEM은 receipt 검증 대상이다")
+        void distinguishesPendingAndSucceededItem() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            RewardSettlementLine item = settlement.getLineOrThrow(1);
+
+            assertThat(item.isItemProcessingRequired()).isTrue();
+            assertThat(item.isItemSucceeded()).isFalse();
+
+            settlement.markItemLineSucceeded(1001L);
+
+            assertThat(item.isItemProcessingRequired()).isFalse();
+            assertThat(item.isItemSucceeded()).isTrue();
+        }
+
+        @Test
+        @DisplayName("EXP Line을 ITEM 계약으로 처리할 수 없다")
+        void rejectsExpLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+
+            assertRewardError(
+                    () -> settlement.getLineOrThrow(0)
+                            .isItemProcessingRequired(),
+                    RewardError.REWARD_SETTLEMENT_LINE_NOT_ITEM
+            );
+        }
+
+        @Test
+        @DisplayName("FAILED ITEM은 explicit retry 준비 전 자동 처리할 수 없다")
+        void rejectsFailedItemLine() {
+            RewardSettlement settlement = settlement(profileWithExpAndItem());
+            settlement.markLineFailed(
+                    1, RewardError.REWARD_DEFINITION_NOT_FOUND
+            );
+
+            assertRewardError(
+                    () -> settlement.getLineOrThrow(1)
+                            .isItemProcessingRequired(),
+                    RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED
+            );
         }
     }
 
@@ -367,7 +421,7 @@ class RewardSettlementTest {
 
     private RewardDefinition persistedExpDefinition(Long id, String code, Long amount) {
         RewardDefinition definition = RewardDefinition.create(
-                code, code, RewardType.EXP, amount, null, true
+                code, code, RewardType.EXP, amount, null, null, true
         );
         ReflectionTestUtils.setField(definition, "id", id);
         return definition;
@@ -380,7 +434,7 @@ class RewardSettlementTest {
             Long quantity
     ) {
         RewardDefinition definition = RewardDefinition.create(
-                code, code, RewardType.ITEM, quantity, itemId, true
+                code, code, RewardType.ITEM, quantity, itemId, "IT_" + code, true
         );
         ReflectionTestUtils.setField(definition, "id", id);
         return definition;

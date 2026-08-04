@@ -20,12 +20,13 @@ class RewardDefinitionTest {
         @DisplayName("양수 amount와 itemId 없이 생성된다")
         void createsWithAmountAndWithoutItemId() {
             RewardDefinition definition = RewardDefinition.create(
-                    "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, true
+                    "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, null, true
             );
 
             assertThat(definition.getRewardType()).isEqualTo(RewardType.EXP);
             assertThat(definition.getAmount()).isEqualTo(10L);
             assertThat(definition.getItemId()).isNull();
+            assertThat(definition.getItemCode()).isNull();
             assertThat(definition.isActive()).isTrue();
         }
 
@@ -34,7 +35,7 @@ class RewardDefinitionTest {
         void throwsWhenAmountIsMissing() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_EXP", "EXP", RewardType.EXP, null, null, true
+                            "RD_EXP", "EXP", RewardType.EXP, null, null, null, true
                     ),
                     RewardError.REWARD_AMOUNT_MUST_BE_POSITIVE
             );
@@ -45,7 +46,7 @@ class RewardDefinitionTest {
         void throwsWhenItemIdExists() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_EXP", "EXP", RewardType.EXP, 10L, 1L, true
+                            "RD_EXP", "EXP", RewardType.EXP, 10L, 1L, null, true
                     ),
                     RewardError.REWARD_EXP_ITEM_ID_NOT_ALLOWED
             );
@@ -60,12 +61,13 @@ class RewardDefinitionTest {
         @DisplayName("itemId와 수량을 의미하는 amount로 생성된다")
         void createsWithItemIdAndAmount() {
             RewardDefinition definition = RewardDefinition.create(
-                    "RD_ITEM_1", "Item 1", RewardType.ITEM, 2L, 1L, true
+                    "RD_ITEM_1", "Item 1", RewardType.ITEM, 2L, 1L, "  IT_ITEM_1  ", true
             );
 
             assertThat(definition.getRewardType()).isEqualTo(RewardType.ITEM);
             assertThat(definition.getAmount()).isEqualTo(2L);
             assertThat(definition.getItemId()).isEqualTo(1L);
+            assertThat(definition.getItemCode()).isEqualTo("IT_ITEM_1");
         }
 
         @Test
@@ -73,7 +75,7 @@ class RewardDefinitionTest {
         void throwsWhenItemIdIsMissing() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_ITEM", "Item", RewardType.ITEM, 1L, null, true
+                            "RD_ITEM", "Item", RewardType.ITEM, 1L, null, "IT_ITEM", true
                     ),
                     RewardError.REWARD_ITEM_ID_REQUIRED
             );
@@ -84,7 +86,7 @@ class RewardDefinitionTest {
         void throwsWhenAmountIsNotPositive() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_ITEM", "Item", RewardType.ITEM, 0L, 1L, true
+                            "RD_ITEM", "Item", RewardType.ITEM, 0L, 1L, "IT_ITEM", true
                     ),
                     RewardError.REWARD_ITEM_QUANTITY_MUST_BE_POSITIVE
             );
@@ -95,9 +97,32 @@ class RewardDefinitionTest {
         void throwsWhenItemIdIsNotPositive() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_ITEM", "Item", RewardType.ITEM, 1L, 0L, true
+                            "RD_ITEM", "Item", RewardType.ITEM, 1L, 0L, "IT_ITEM", true
                     ),
                     RewardError.REWARD_ITEM_ID_MUST_BE_POSITIVE
+            );
+        }
+
+        @Test
+        @DisplayName("itemCode가 공백이면 REWARD_ITEM_CODE_REQUIRED 예외가 발생한다")
+        void throwsWhenItemCodeIsBlank() {
+            assertRewardError(
+                    () -> RewardDefinition.create(
+                            "RD_ITEM", "Item", RewardType.ITEM, 1L, 1L, " ", true
+                    ),
+                    RewardError.REWARD_ITEM_CODE_REQUIRED
+            );
+        }
+
+        @Test
+        @DisplayName("itemCode가 80자를 넘으면 REWARD_ITEM_CODE_TOO_LONG 예외가 발생한다")
+        void throwsWhenItemCodeIsTooLong() {
+            assertRewardError(
+                    () -> RewardDefinition.create(
+                            "RD_ITEM", "Item", RewardType.ITEM, 1L, 1L,
+                            "I".repeat(81), true
+                    ),
+                    RewardError.REWARD_ITEM_CODE_TOO_LONG
             );
         }
     }
@@ -110,7 +135,7 @@ class RewardDefinitionTest {
         @DisplayName("code와 name의 앞뒤 공백을 제거해 저장한다")
         void trimsCodeAndName() {
             RewardDefinition definition = RewardDefinition.create(
-                    "  RD_EXP  ", "  EXP  ", RewardType.EXP, 1L, null, true
+                    "  RD_EXP  ", "  EXP  ", RewardType.EXP, 1L, null, null, true
             );
 
             assertThat(definition.getCode()).isEqualTo("RD_EXP");
@@ -122,7 +147,7 @@ class RewardDefinitionTest {
         void throwsWhenCodeIsBlank() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            " ", "EXP", RewardType.EXP, 1L, null, true
+                            " ", "EXP", RewardType.EXP, 1L, null, null, true
                     ),
                     RewardError.REWARD_DEFINITION_CODE_REQUIRED
             );
@@ -133,7 +158,7 @@ class RewardDefinitionTest {
         void throwsWhenNameIsBlank() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_EXP", " ", RewardType.EXP, 1L, null, true
+                            "RD_EXP", " ", RewardType.EXP, 1L, null, null, true
                     ),
                     RewardError.REWARD_DEFINITION_NAME_REQUIRED
             );
@@ -144,7 +169,7 @@ class RewardDefinitionTest {
         void throwsWhenRewardTypeIsMissing() {
             assertRewardError(
                     () -> RewardDefinition.create(
-                            "RD_EXP", "EXP", null, 1L, null, true
+                            "RD_EXP", "EXP", null, 1L, null, null, true
                     ),
                     RewardError.REWARD_LINE_TYPE_REQUIRED
             );

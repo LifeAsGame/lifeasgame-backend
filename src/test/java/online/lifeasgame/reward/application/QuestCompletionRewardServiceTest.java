@@ -2,6 +2,7 @@ package online.lifeasgame.reward.application;
 
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.inventory.domain.error.InventoryError;
 import online.lifeasgame.reward.application.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.domain.*;
 import online.lifeasgame.reward.domain.error.RewardError;
@@ -24,6 +25,7 @@ class QuestCompletionRewardServiceTest {
     private RewardSettlementCreateService createService;
     private RewardSettlementReader settlementReader;
     private RewardSettlementExpProcessService expProcessService;
+    private RewardSettlementItemProcessService itemProcessService;
     private QuestCompletionRewardService service;
 
     @BeforeEach
@@ -32,10 +34,12 @@ class QuestCompletionRewardServiceTest {
         settlementReader = mock(RewardSettlementReader.class);
         expProcessService =
                 mock(RewardSettlementExpProcessService.class);
+        itemProcessService = mock(RewardSettlementItemProcessService.class);
         service = new QuestCompletionRewardService(
                 createService,
                 settlementReader,
-                expProcessService
+                expProcessService,
+                itemProcessService
         );
     }
 
@@ -72,6 +76,7 @@ class QuestCompletionRewardServiceTest {
 
         verify(expProcessService).process(700L, 701L);
         verify(expProcessService, never()).process(700L, 702L);
+        verify(itemProcessService).process(700L, 702L);
         verifyNoInteractions(settlementReader);
     }
 
@@ -82,7 +87,9 @@ class QuestCompletionRewardServiceTest {
 
         service.process(fact("RP_NONE"));
 
-        verifyNoInteractions(settlementReader, expProcessService);
+        verifyNoInteractions(
+                settlementReader, expProcessService, itemProcessService
+        );
     }
 
     @Test
@@ -102,7 +109,9 @@ class QuestCompletionRewardServiceTest {
 
         service.process(fact("RP_EXP_30"));
 
-        verifyNoInteractions(settlementReader, expProcessService);
+        verifyNoInteractions(
+                settlementReader, expProcessService, itemProcessService
+        );
     }
 
     @Test
@@ -144,6 +153,64 @@ class QuestCompletionRewardServiceTest {
         verify(settlementReader)
                 .getByIdInNewTransactionOrThrow(720L);
         verify(expProcessService).process(720L, 722L);
+    }
+
+    @Test
+    @DisplayName("ITEM DomainException 후 fresh FAILED를 확인하면 Event 처리를 완료한다")
+    void consumesDurableItemFailure() {
+        RewardSettlementLine item = line(
+                726L,
+                RewardType.ITEM,
+                RewardSettlementLineStatus.PENDING,
+                null
+        );
+        stubCreated(settlement(
+                725L,
+                "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                List.of(item)
+        ));
+        doThrow(new DomainException(InventoryError.MAILBOX_FULL))
+                .when(itemProcessService).process(725L, 726L);
+        RewardSettlement fresh = mock(RewardSettlement.class);
+        RewardSettlementLine failed = line(
+                726L,
+                RewardType.ITEM,
+                RewardSettlementLineStatus.FAILED,
+                InventoryError.MAILBOX_FULL.code()
+        );
+        when(fresh.getLineByIdOrThrow(726L)).thenReturn(failed);
+        when(settlementReader.getByIdInNewTransactionOrThrow(725L))
+                .thenReturn(fresh);
+
+        service.process(fact("RP_EXP_AND_ITEM_FIRST_STEP_20"));
+
+        verify(settlementReader)
+                .getByIdInNewTransactionOrThrow(725L);
+        verify(itemProcessService).process(725L, 726L);
+    }
+
+    @Test
+    @DisplayName("ITEM system failure는 fresh 조회 없이 Outbox retry로 전파한다")
+    void propagatesUnexpectedItemFailure() {
+        RewardSettlementLine item = line(
+                756L,
+                RewardType.ITEM,
+                RewardSettlementLineStatus.PENDING,
+                null
+        );
+        stubCreated(settlement(
+                755L,
+                "RP_EXP_AND_ITEM_FIRST_STEP_20",
+                List.of(item)
+        ));
+        doThrow(new IllegalStateException("item system"))
+                .when(itemProcessService).process(755L, 756L);
+
+        assertThatThrownBy(() -> service.process(fact(
+                "RP_EXP_AND_ITEM_FIRST_STEP_20"
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessage("item system");
+        verifyNoInteractions(settlementReader);
     }
 
     @ParameterizedTest
@@ -265,7 +332,9 @@ class QuestCompletionRewardServiceTest {
                                                 .REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT
                                 )
                 );
-        verifyNoInteractions(settlementReader, expProcessService);
+        verifyNoInteractions(
+                settlementReader, expProcessService, itemProcessService
+        );
     }
 
     private void stubCreated(RewardSettlement settlement) {

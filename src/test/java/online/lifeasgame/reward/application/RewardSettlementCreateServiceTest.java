@@ -250,7 +250,7 @@ class RewardSettlementCreateServiceTest {
         );
         ReflectionTestUtils.setField(profile, "id", 10L);
         RewardDefinition definition = RewardDefinition.create(
-                "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, true
+                "RD_EXP_10", "EXP 10", RewardType.EXP, 10L, null, null, true
         );
         ReflectionTestUtils.setField(definition, "id", 20L);
         profile.addLine(definition, 0, null);
