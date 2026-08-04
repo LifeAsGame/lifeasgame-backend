@@ -54,6 +54,6 @@ public class PlayerAchievementService {
         achievementReader.assertExistsById(achievementId);
 
         playerAchievementWriter.revoke(playerId, achievementId);
-        return new PlayerAchievementResult.Revoked(achievementId, achievementId);
+        return new PlayerAchievementResult.Revoked(playerId, achievementId);
     }
 }

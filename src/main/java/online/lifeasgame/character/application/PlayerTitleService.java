@@ -19,6 +19,7 @@ public class PlayerTitleService {
     private final PlayerTitleReader playerTitleReader;
     private final PlayerTitleWriter playerTitleWriter;
     private final TitleReader titleReader;
+    private final PlayerReader playerReader;
 
     public List<PlayerTitleResult.Info> getPlayerTitleInfos(Long playerId) {
         List<PlayerTitleView> playerTitleViews = playerTitleReader.getViewsByPlayerId(playerId);
@@ -38,7 +39,11 @@ public class PlayerTitleService {
         return PlayerTitleResult.Created.from(playerTitle, title);
     }
 
+    @Transactional
     public PlayerTitleResult.Revoked revokeTitle(Long playerId, Long titleId) {
+        var player = playerReader.getByIdForUpdateOrThrow(playerId);
+        playerTitleReader.assertHasTitle(playerId, titleId);
+        player.clearRepresentativeTitleIfMatches(titleId);
         playerTitleWriter.revoke(playerId, titleId);
         return new PlayerTitleResult.Revoked(playerId, titleId);
     }

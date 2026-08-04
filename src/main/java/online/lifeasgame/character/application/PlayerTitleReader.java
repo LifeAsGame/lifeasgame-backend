@@ -25,7 +25,7 @@ class PlayerTitleReader {
     }
 
     public void assertHasTitle(Long playerId, Long titleId) {
-        if (repository.existsByPlayerIdAndTitleId(playerId, titleId)) {
+        if (!repository.existsByPlayerIdAndTitleId(playerId, titleId)) {
             throw new DomainException(PlayerTitleError.PLAYER_TITLE_NOT_FOUND);
         }
     }

@@ -29,7 +29,7 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
     }
 
     @Override
-    @GetMapping("/{playerId}/titles/{titleId}")
+    @DeleteMapping("/{playerId}/titles/{titleId}")
     public ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Revoked>> revokeTitle(
             @PathVariable Long playerId,
             @PathVariable Long titleId

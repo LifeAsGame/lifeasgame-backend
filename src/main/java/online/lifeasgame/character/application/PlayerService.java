@@ -47,9 +47,8 @@ public class PlayerService {
 
     @Transactional
     public PlayerResult.UpdatedTitle changeRepresentativeTitle(Long playerId, Long titleId) {
+        Player player = playerReader.getByIdForUpdateOrThrow(playerId);
         playerTitleReader.assertHasTitle(playerId, titleId);
-
-        Player player = playerReader.getByIdOrThrow(playerId);
         player.changeRepresentativeTitle(titleId);
 
         return new PlayerResult.UpdatedTitle(player.getTitleId());
@@ -124,6 +123,7 @@ public class PlayerService {
         return PlayerResult.PlayerSummary.from(player);
     }
 
+    @Transactional
     public PlayerResult.Renamed rename(Long playerId, PlayerCommand.Renamed command) {
         Name name = Name.of(command.name());
         Player player = playerReader.getByIdOrThrow(playerId);
