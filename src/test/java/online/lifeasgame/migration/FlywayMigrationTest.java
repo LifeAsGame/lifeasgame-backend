@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V18까지 적용되고 Reward ITEM code snapshot을 추가한다")
+        @DisplayName("V1부터 V19까지 적용되고 persistence foundation을 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -58,12 +58,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(6);
+            assertThat(result.migrationsExecuted).isEqualTo(7);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16", "17", "18"
+                            "14", "15", "16", "17", "18", "19"
                     );
             assertThat(existingTables(
                     "users",
@@ -81,7 +81,10 @@ class FlywayMigrationTest {
                     "outbox_events",
                     "quick_record_request_receipts",
                     "life_log_records",
-                    "inventory_reward_deliveries"
+                    "inventory_reward_deliveries",
+                    "roles",
+                    "persons",
+                    "role_relations"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -98,7 +101,10 @@ class FlywayMigrationTest {
                     "outbox_events",
                     "quick_record_request_receipts",
                     "life_log_records",
-                    "inventory_reward_deliveries"
+                    "inventory_reward_deliveries",
+                    "roles",
+                    "persons",
+                    "role_relations"
             );
             assertThat(existingTables(
                     "quick_lifelog_entries",
