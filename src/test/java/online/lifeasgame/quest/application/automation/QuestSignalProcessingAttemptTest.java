@@ -26,7 +26,6 @@ import java.time.Duration;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -562,8 +561,10 @@ class QuestSignalProcessingAttemptTest {
         @Test
         @DisplayName("새 기간 Acceptance를 만들고 AUTO 완료 흐름을 유지한다")
         void createsNextAcceptance() {
-            Instant now = Instant.now();
-            LocalDate eventDate = now.atZone(ZoneId.systemDefault())
+            Instant now = Instant.parse("2026-08-03T16:07:00Z");
+            LocalDate eventDate = now.atZone(
+                            DefaultPlayerTimezoneResolver.FALLBACK
+                    )
                     .toLocalDate();
             Quest quest = quest(
                     QuestCompletionPolicy.AUTO,
