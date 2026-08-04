@@ -98,7 +98,7 @@ class InventoryRewardDeliveryIntegrationTest {
     @DisplayName("V17 receipt table은 JPA validate와 unique/check/index 계약을 만족한다")
     void validatesMigrationContract() {
         assertThat(flyway.info().current().getVersion().getVersion())
-                .isEqualTo("18");
+                .isEqualTo("19");
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto"))
                 .isEqualTo("validate");
 

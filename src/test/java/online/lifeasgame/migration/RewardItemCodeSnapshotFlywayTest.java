@@ -33,7 +33,7 @@ class RewardItemCodeSnapshotFlywayTest {
         JdbcTemplate jdbc = jdbc();
         insertLegacySettlement(jdbc);
 
-        Flyway flyway = flyway(null);
+        Flyway flyway = flyway(MigrationVersion.fromVersion("18"));
         flyway.migrate();
 
         assertThat(flyway.info().current().getVersion().getVersion())
