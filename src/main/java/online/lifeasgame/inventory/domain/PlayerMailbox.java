@@ -13,6 +13,7 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Getter
@@ -139,8 +140,10 @@ public class PlayerMailbox extends AbstractTime {
         throw new IllegalStateException("deliver() must return a slot when quantity > 0");
     }
 
-    public MailboxEntry getEntry(SlotIndex of) {
-        return entries.stream().filter(e -> e.slotIndex.equals(of)).findFirst().orElse(null);
+    public MailboxEntry getEntryOrThrow(SlotIndex slot) {
+        ensureValidSlot(slot);
+        return findBySlot(slot)
+                .orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
     }
 
     public void deleteEntry(SlotIndex slot) {
@@ -152,31 +155,56 @@ public class PlayerMailbox extends AbstractTime {
         entries.remove(entry);
     }
 
-    /**
-     * 수령 슬라이스 VO (인벤토리에 넣을 정보)
-     */
-    public record ClaimedSlice(int quantity, InstanceAttrs attrs, boolean bound) {
+    public record ClaimPlan(
+            SlotIndex slotIndex,
+            Long itemId,
+            int quantity,
+            InstanceAttrs attrs,
+            boolean bound,
+            ItemCarryPolicy policy
+    ) {
     }
 
-    /**
-     * 우편 수령: 메일함에서 차감만 하고, 인벤토리에 넣을 데이터를 반환
-     */
-    public ClaimedSlice claim(SlotIndex from, int qty, ItemCarryPolicy p) {
-        ensureValidSlot(from);
-        MailboxEntry src = findBySlot(from).orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
+    public ClaimPlan planClaim(
+            SlotIndex slot,
+            int quantity,
+            ItemCarryPolicy policy
+    ) {
+        MailboxEntry entry = getEntryOrThrow(slot);
+        if (quantity < 1) {
+            throw new DomainException(InventoryError.INVALID_QUANTITY);
+        }
+        if (quantity > entry.getQuantity().value()) {
+            throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
+        }
+        if (!policy.itemId().equals(entry.getItemId())) {
+            throw new DomainException(InventoryError.ITEM_NOT_FOUND);
+        }
+        return new ClaimPlan(
+                slot,
+                entry.getItemId(),
+                quantity,
+                entry.getInstAttrs(),
+                entry.isBound(),
+                policy
+        );
+    }
 
-        Guard.minValue(qty, 1, "qty");
-        if (qty > src.getQuantity().value()) throw new DomainException(InventoryError.NOT_ENOUGH_QUANTITY);
+    public void applyClaim(ClaimPlan plan) {
+        MailboxEntry entry = getEntryOrThrow(plan.slotIndex());
+        if (!Objects.equals(entry.getItemId(), plan.itemId())
+                || entry.getQuantity().value() < plan.quantity()
+                || !Objects.equals(entry.getInstAttrs(), plan.attrs())
+                || entry.isBound() != plan.bound()) {
+            throw new IllegalStateException(
+                    "Mailbox claim state changed after preflight"
+            );
+        }
 
-        // (정책 일관성 체크: 스택 규칙이 깨진 상태 방지용. 보통은 저장 당시 보장됨)
-        if (!p.itemId().equals(src.getItemId())) throw new DomainException(InventoryError.ITEM_NOT_FOUND);
-
-        // 먼저 메일함에서 차감
-        src.decreaseQuantity(qty);
-        if (src.getQuantity().value() == 0) entries.remove(src);
-
-        // 인벤토리에 넣을 페이로드 반환
-        return new ClaimedSlice(qty, src.getInstAttrs(), src.isBound());
+        entry.decreaseQuantity(plan.quantity());
+        if (entry.getQuantity().value() == 0) {
+            entries.remove(entry);
+        }
     }
 
     public List<MailboxEntry> getEntries() {

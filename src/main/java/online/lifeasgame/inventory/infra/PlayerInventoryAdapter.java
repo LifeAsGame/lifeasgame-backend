@@ -20,6 +20,11 @@ public class PlayerInventoryAdapter implements PlayerInventoryRepository, Invent
     }
 
     @Override
+    public Optional<PlayerInventory> findByPlayerIdForUpdate(Long playerId) {
+        return jpaRepository.findByPlayerIdForUpdate(playerId);
+    }
+
+    @Override
     public PlayerInventory save(PlayerInventory inv) {
         return jpaRepository.save(inv);
     }

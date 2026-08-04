@@ -74,24 +74,11 @@ public class PlayerInventory extends AbstractTime {
         }
     }
 
-    private int freeSlots() {
-        return capacitySlots - entries.size();
-    }
-
     public List<SlotIndex> add(ItemCarryPolicy itemCarryPolicy, int quantity, InstanceAttrs attrs, boolean bound) {
-        Guard.minValue(quantity, 1, "qty");
         InstanceAttrs instanceAttrs = (attrs == null) ? InstanceAttrs.empty() : attrs;
+        assertCanAdd(itemCarryPolicy, quantity, instanceAttrs, bound);
 
         List<InventoryEntry> stacks = stacksOf(itemCarryPolicy, bound, instanceAttrs);
-
-        int capacityInExisting = stacks.stream()
-                .mapToInt(s -> itemCarryPolicy.spaceInStack(s.getQuantity().value()))
-                .sum();
-        int remainingAfterExisting = Math.max(0, quantity - capacityInExisting);
-        int neededNew = itemCarryPolicy.estimateNewStacksNeeded(remainingAfterExisting);
-        if (neededNew > freeSlots()) {
-            throw new DomainException(InventoryError.INVENTORY_FULL);
-        }
 
         int remaining = quantity;
         for (InventoryEntry s : stacks) {
@@ -139,6 +126,100 @@ public class PlayerInventory extends AbstractTime {
         );
 
         return placed;
+    }
+
+    public record Addition(
+            ItemCarryPolicy policy,
+            int quantity,
+            InstanceAttrs attrs,
+            boolean bound
+    ) {
+    }
+
+    public void assertCanAdd(
+            ItemCarryPolicy policy,
+            int quantity,
+            InstanceAttrs attrs,
+            boolean bound
+    ) {
+        assertCanAddAll(List.of(new Addition(policy, quantity, attrs, bound)));
+    }
+
+    public void assertCanAddAll(List<Addition> additions) {
+        Objects.requireNonNull(additions, "additions must not be null");
+        List<SimulatedStack> simulated = entries.stream()
+                .map(entry -> new SimulatedStack(
+                        entry.getItemId(),
+                        entry.isBound(),
+                        safeAttrs(entry.getInstAttrs()),
+                        entry.getQuantity().value()
+                ))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+        for (Addition addition : additions) {
+            Objects.requireNonNull(addition, "addition must not be null");
+            if (addition.quantity() < 1) {
+                throw new DomainException(InventoryError.INVALID_QUANTITY);
+            }
+
+            ItemCarryPolicy policy = Objects.requireNonNull(
+                    addition.policy(),
+                    "policy must not be null"
+            );
+            Map<String, Object> attrs = safeAttrs(addition.attrs());
+            int remaining = addition.quantity();
+
+            for (int index = 0; index < simulated.size() && remaining > 0; index++) {
+                SimulatedStack stack = simulated.get(index);
+                if (!Objects.equals(stack.itemId(), policy.itemId())
+                        || !policy.sameStackKey(
+                        stack.bound(),
+                        stack.attrs(),
+                        addition.bound(),
+                        attrs
+                )) {
+                    continue;
+                }
+
+                int added = policy.clampAddToLimit(
+                        stack.quantity(),
+                        remaining
+                );
+                if (added > 0) {
+                    simulated.set(index, stack.withQuantity(
+                            stack.quantity() + added
+                    ));
+                    remaining -= added;
+                }
+            }
+
+            while (remaining > 0) {
+                if (simulated.size() >= capacitySlots) {
+                    throw new DomainException(InventoryError.INVENTORY_FULL);
+                }
+                int put = policy.stackable()
+                        ? Math.min(policy.maxStack(), remaining)
+                        : 1;
+                simulated.add(new SimulatedStack(
+                        policy.itemId(),
+                        addition.bound(),
+                        attrs,
+                        put
+                ));
+                remaining -= put;
+            }
+        }
+    }
+
+    private record SimulatedStack(
+            Long itemId,
+            boolean bound,
+            Map<String, Object> attrs,
+            int quantity
+    ) {
+        private SimulatedStack withQuantity(int nextQuantity) {
+            return new SimulatedStack(itemId, bound, attrs, nextQuantity);
+        }
     }
 
     /**

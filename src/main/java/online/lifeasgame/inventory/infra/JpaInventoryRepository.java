@@ -1,7 +1,9 @@
 package online.lifeasgame.inventory.infra;
 
+import jakarta.persistence.LockModeType;
 import online.lifeasgame.inventory.domain.PlayerInventory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,10 @@ import java.util.Optional;
 
 public interface JpaInventoryRepository extends JpaRepository<PlayerInventory, Long> {
     Optional<PlayerInventory> findByPlayerId(Long playerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT inventory FROM PlayerInventory inventory WHERE inventory.playerId = :playerId")
+    Optional<PlayerInventory> findByPlayerIdForUpdate(@Param("playerId") Long playerId);
 
     @Modifying
     @Query(value = """

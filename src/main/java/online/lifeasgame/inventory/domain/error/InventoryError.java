@@ -21,7 +21,10 @@ public enum InventoryError implements ErrorCode {
     PLAYER_ID_INVALID("INV-PLAYER-ID-INVALID","Player ID must be positive",400),
     REWARD_ITEM_CODE_INVALID("INV-REWARD-ITEM-CODE-INVALID","Reward item code is invalid",400),
     REWARD_QUANTITY_INVALID("INV-REWARD-QUANTITY-INVALID","Reward quantity is invalid",400),
-    REWARD_DELIVERY_CONFLICT("INV-REWARD-DELIVERY-CONFLICT","Reward delivery payload conflict",409),;
+    REWARD_DELIVERY_CONFLICT("INV-REWARD-DELIVERY-CONFLICT","Reward delivery payload conflict",409),
+    MAILBOX_CLAIM_EMPTY("INV-MAILBOX-CLAIM-EMPTY","Mailbox claims must not be empty",400),
+    MAILBOX_CLAIM_DUPLICATE_SLOT("INV-MAILBOX-CLAIM-DUPLICATE-SLOT","Mailbox claim slots must be unique",400),
+    MAILBOX_CLAIM_TOO_LARGE("INV-MAILBOX-CLAIM-TOO-LARGE","Too many mailbox claims",400),;
 
 
     private final String code;
