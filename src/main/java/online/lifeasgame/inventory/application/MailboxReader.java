@@ -20,4 +20,10 @@ class MailboxReader {
         return repository.findByPlayerId(playerId)
                 .orElseThrow(() -> new DomainException(InventoryError.CONTAINER_NOT_FOUND));
     }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public PlayerMailbox getByPlayerIdForUpdateOrThrow(Long playerId) {
+        return repository.findByPlayerIdForUpdate(playerId)
+                .orElseThrow(() -> new DomainException(InventoryError.CONTAINER_NOT_FOUND));
+    }
 }

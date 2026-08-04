@@ -42,9 +42,9 @@ public final class MailboxWebMapper {
 
     public static MailboxCommand.ClaimAll toClaimAllCommand(MailboxRequest.ClaimAll request) {
         return new MailboxCommand.ClaimAll(
-                request.claims().stream()
+                request.claims() == null ? null : request.claims().stream()
                         .map(
-                                claim -> new MailboxCommand.Claim(
+                                claim -> claim == null ? null : new MailboxCommand.Claim(
                                         claim.slotIndex(),
                                         claim.quantity()
                                 )

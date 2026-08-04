@@ -24,13 +24,13 @@ public class InventoryContainerProvisioningService {
             throw new DomainException(InventoryError.PLAYER_ID_INVALID);
         }
 
-        inventoryRepository.insertIfAbsent(
-                playerId,
-                PlayerInventory.DEFAULT_CAPACITY
-        );
         mailboxRepository.insertIfAbsent(
                 playerId,
                 PlayerMailbox.DEFAULT_CAPACITY
+        );
+        inventoryRepository.insertIfAbsent(
+                playerId,
+                PlayerInventory.DEFAULT_CAPACITY
         );
     }
 }
