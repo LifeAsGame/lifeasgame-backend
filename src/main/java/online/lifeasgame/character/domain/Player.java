@@ -19,6 +19,7 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -235,6 +236,12 @@ public class Player extends AbstractTime {
 
     public void changeRepresentativeTitle(Long titleId) {
         this.titleId = titleId;
+    }
+
+    public void clearRepresentativeTitleIfMatches(Long revokedTitleId) {
+        if (Objects.equals(this.titleId, revokedTitleId)) {
+            this.titleId = null;
+        }
     }
 
     public List<DomainEvent> pullEvents() {
