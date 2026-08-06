@@ -1,6 +1,8 @@
 package online.lifeasgame.role.application;
 
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.person.application.PersonQueryService;
 import online.lifeasgame.person.application.PersonService;
 import online.lifeasgame.person.application.command.PersonCommand;
 import online.lifeasgame.person.domain.Person;
@@ -21,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
@@ -31,6 +34,7 @@ import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 
 @Testcontainers
 @SpringBootTest
@@ -61,6 +65,15 @@ class RolePersonPersistenceIntegrationTest {
     private PersonService personService;
 
     @Autowired
+    private RoleQueryService roleQueryService;
+
+    @Autowired
+    private PersonQueryService personQueryService;
+
+    @MockitoBean
+    private CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Autowired
     private JpaRoleRepository roleRepository;
 
     @Autowired
@@ -77,6 +90,7 @@ class RolePersonPersistenceIntegrationTest {
 
     @BeforeEach
     void cleanState() {
+        asCurrent(OWNER);
         jdbc.update("DELETE FROM role_relations");
         jdbc.update("DELETE FROM roles");
         jdbc.update("DELETE FROM persons");
@@ -87,30 +101,28 @@ class RolePersonPersistenceIntegrationTest {
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("19");
 
         var role = roleService.create(
-                OWNER,
                 new RoleCommand.Create("work", "Developer", "Builds")
         );
+        asCurrent(OTHER_OWNER);
         var otherRole = roleService.create(
-                OTHER_OWNER,
                 new RoleCommand.Create("work", "Other", null)
         );
-        assertThat(roleService.list(OWNER)).extracting(result -> result.id())
+        asCurrent(OWNER);
+        assertThat(roleQueryService.list()).extracting(result -> result.id())
                 .containsExactly(role.id());
-        assertThatThrownBy(() -> roleService.detail(OWNER, otherRole.id()))
+        assertThatThrownBy(() -> roleQueryService.detail(otherRole.id()))
                 .isInstanceOfSatisfying(DomainException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(RoleError.ROLE_NOT_FOUND)
                 );
         roleService.update(
-                OWNER,
                 role.id(),
                 new RoleCommand.Update("family", "Parent", null)
         );
-        roleService.archive(OWNER, role.id());
-        roleService.archive(OWNER, role.id());
-        assertThat(roleService.list(OWNER)).isEmpty();
+        roleService.archive(role.id());
+        roleService.archive(role.id());
+        assertThat(roleQueryService.list()).isEmpty();
         assertThat(rowCount("roles", role.id())).isEqualTo(1);
         assertThatThrownBy(() -> roleService.update(
-                OWNER,
                 role.id(),
                 new RoleCommand.Update("SELF", "Self", null)
         )).isInstanceOfSatisfying(DomainException.class, exception ->
@@ -118,7 +130,6 @@ class RolePersonPersistenceIntegrationTest {
         );
 
         var person = personService.create(
-                OWNER,
                 new PersonCommand.Create(
                         "Alice",
                         "Friend",
@@ -126,28 +137,27 @@ class RolePersonPersistenceIntegrationTest {
                         "alice@example.com"
                 )
         );
+        asCurrent(OTHER_OWNER);
         var otherPerson = personService.create(
-                OTHER_OWNER,
                 new PersonCommand.Create("Other", null, null, null)
         );
+        asCurrent(OWNER);
         assertThat(person.linkedUserId()).isNull();
-        assertThat(personService.list(OWNER)).extracting(result -> result.id())
+        assertThat(personQueryService.list()).extracting(result -> result.id())
                 .containsExactly(person.id());
-        assertThatThrownBy(() -> personService.detail(OWNER, otherPerson.id()))
+        assertThatThrownBy(() -> personQueryService.detail(otherPerson.id()))
                 .isInstanceOfSatisfying(DomainException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(PersonError.PERSON_NOT_FOUND)
                 );
         personService.update(
-                OWNER,
                 person.id(),
                 new PersonCommand.Update("Bob", null, null, null)
         );
-        personService.archive(OWNER, person.id());
-        personService.archive(OWNER, person.id());
-        assertThat(personService.list(OWNER)).isEmpty();
+        personService.archive(person.id());
+        personService.archive(person.id());
+        assertThat(personQueryService.list()).isEmpty();
         assertThat(rowCount("persons", person.id())).isEqualTo(1);
         assertThatThrownBy(() -> personService.update(
-                OWNER,
                 person.id(),
                 new PersonCommand.Update("Carol", null, null, null)
         )).isInstanceOfSatisfying(DomainException.class, exception ->
@@ -158,7 +168,6 @@ class RolePersonPersistenceIntegrationTest {
     @Test
     void rejectsStaleRoleUpdate() {
         Long id = roleService.create(
-                OWNER,
                 new RoleCommand.Create("WORK", "Developer", null)
         ).id();
         Role first = detachedRole(id);
@@ -176,7 +185,6 @@ class RolePersonPersistenceIntegrationTest {
     @Test
     void rejectsStalePersonUpdate() {
         Long id = personService.create(
-                OWNER,
                 new PersonCommand.Create("Alice", null, null, null)
         ).id();
         Person first = detachedPerson(id);
@@ -209,5 +217,9 @@ class RolePersonPersistenceIntegrationTest {
                 Integer.class,
                 id
         );
+    }
+
+    private void asCurrent(Long playerId) {
+        given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(playerId);
     }
 }

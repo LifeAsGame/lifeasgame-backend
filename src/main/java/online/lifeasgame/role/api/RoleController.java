@@ -8,7 +8,8 @@ import online.lifeasgame.role.api.mapper.RoleWebMapper;
 import online.lifeasgame.role.api.request.RoleRequest;
 import online.lifeasgame.role.api.response.RoleResponse;
 import online.lifeasgame.role.api.spec.RoleApiSpecV1;
-import online.lifeasgame.role.application.RoleFacade;
+import online.lifeasgame.role.application.RoleQueryService;
+import online.lifeasgame.role.application.RoleService;
 import online.lifeasgame.role.application.result.RoleResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,14 +29,15 @@ import java.util.List;
 @RequestMapping("/api/v1/roles")
 public class RoleController implements RoleApiSpecV1 {
 
-    private final RoleFacade facade;
+    private final RoleService roleService;
+    private final RoleQueryService roleQueryService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<RoleResponse.Detail>> create(
             @Valid @RequestBody RoleRequest.Create request
     ) {
-        RoleResult.Detail result = facade.create(RoleWebMapper.toCreateCommand(request));
+        RoleResult.Detail result = roleService.create(RoleWebMapper.toCreateCommand(request));
         return ApiResponses.created(
                 URI.create("/api/v1/roles/" + result.id()),
                 RoleWebMapper.toDetail(result)
@@ -45,7 +47,7 @@ public class RoleController implements RoleApiSpecV1 {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<List<RoleResponse.Detail>>> list() {
-        return ApiResponses.ok(facade.list().stream()
+        return ApiResponses.ok(roleQueryService.list().stream()
                 .map(RoleWebMapper::toDetail)
                 .toList());
     }
@@ -55,7 +57,7 @@ public class RoleController implements RoleApiSpecV1 {
     public ResponseEntity<ApiResponse<RoleResponse.Detail>> detail(
             @PathVariable Long roleId
     ) {
-        return ApiResponses.ok(RoleWebMapper.toDetail(facade.detail(roleId)));
+        return ApiResponses.ok(RoleWebMapper.toDetail(roleQueryService.detail(roleId)));
     }
 
     @Override
@@ -65,14 +67,14 @@ public class RoleController implements RoleApiSpecV1 {
             @Valid @RequestBody RoleRequest.Update request
     ) {
         return ApiResponses.ok(RoleWebMapper.toDetail(
-                facade.update(roleId, RoleWebMapper.toUpdateCommand(request))
+                roleService.update(roleId, RoleWebMapper.toUpdateCommand(request))
         ));
     }
 
     @Override
     @DeleteMapping("/{roleId}")
     public ResponseEntity<ApiResponse<Void>> archive(@PathVariable Long roleId) {
-        facade.archive(roleId);
+        roleService.archive(roleId);
         return ApiResponses.noContent();
     }
 }

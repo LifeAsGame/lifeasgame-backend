@@ -4,11 +4,13 @@ import jakarta.validation.Validator;
 import online.lifeasgame.person.api.PersonController;
 import online.lifeasgame.person.api.mapper.PersonWebMapper;
 import online.lifeasgame.person.api.request.PersonRequest;
-import online.lifeasgame.person.application.PersonFacade;
+import online.lifeasgame.person.application.PersonQueryService;
+import online.lifeasgame.person.application.PersonService;
 import online.lifeasgame.person.application.result.PersonResult;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.role.api.request.RoleRequest;
-import online.lifeasgame.role.application.RoleFacade;
+import online.lifeasgame.role.application.RoleQueryService;
+import online.lifeasgame.role.application.RoleService;
 import online.lifeasgame.support.ControllerSliceTest;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import org.junit.jupiter.api.Test;
@@ -35,10 +37,16 @@ class RolePersonApiContractTest {
     private Validator validator;
 
     @MockitoBean
-    private RoleFacade roleFacade;
+    private RoleService roleService;
 
     @MockitoBean
-    private PersonFacade personFacade;
+    private RoleQueryService roleQueryService;
+
+    @MockitoBean
+    private PersonService personService;
+
+    @MockitoBean
+    private PersonQueryService personQueryService;
 
     @MockitoBean
     private AppErrorProperties appErrorProperties;

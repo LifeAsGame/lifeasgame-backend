@@ -7,7 +7,8 @@ import online.lifeasgame.person.api.mapper.PersonWebMapper;
 import online.lifeasgame.person.api.request.PersonRequest;
 import online.lifeasgame.person.api.response.PersonResponse;
 import online.lifeasgame.person.api.spec.PersonApiSpecV1;
-import online.lifeasgame.person.application.PersonFacade;
+import online.lifeasgame.person.application.PersonQueryService;
+import online.lifeasgame.person.application.PersonService;
 import online.lifeasgame.person.application.result.PersonResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +29,15 @@ import java.util.List;
 @RequestMapping("/api/v1/persons")
 public class PersonController implements PersonApiSpecV1 {
 
-    private final PersonFacade facade;
+    private final PersonService personService;
+    private final PersonQueryService personQueryService;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<PersonResponse.Detail>> create(
             @Valid @RequestBody PersonRequest.Create request
     ) {
-        PersonResult.Detail result = facade.create(
+        PersonResult.Detail result = personService.create(
                 PersonWebMapper.toCreateCommand(request)
         );
         return ApiResponses.created(
@@ -47,7 +49,7 @@ public class PersonController implements PersonApiSpecV1 {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<List<PersonResponse.Detail>>> list() {
-        return ApiResponses.ok(facade.list().stream()
+        return ApiResponses.ok(personQueryService.list().stream()
                 .map(PersonWebMapper::toDetail)
                 .toList());
     }
@@ -57,7 +59,7 @@ public class PersonController implements PersonApiSpecV1 {
     public ResponseEntity<ApiResponse<PersonResponse.Detail>> detail(
             @PathVariable Long personId
     ) {
-        return ApiResponses.ok(PersonWebMapper.toDetail(facade.detail(personId)));
+        return ApiResponses.ok(PersonWebMapper.toDetail(personQueryService.detail(personId)));
     }
 
     @Override
@@ -67,14 +69,14 @@ public class PersonController implements PersonApiSpecV1 {
             @Valid @RequestBody PersonRequest.Update request
     ) {
         return ApiResponses.ok(PersonWebMapper.toDetail(
-                facade.update(personId, PersonWebMapper.toUpdateCommand(request))
+                personService.update(personId, PersonWebMapper.toUpdateCommand(request))
         ));
     }
 
     @Override
     @DeleteMapping("/{personId}")
     public ResponseEntity<ApiResponse<Void>> archive(@PathVariable Long personId) {
-        facade.archive(personId);
+        personService.archive(personId);
         return ApiResponses.noContent();
     }
 }

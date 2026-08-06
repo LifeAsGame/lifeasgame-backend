@@ -1,6 +1,7 @@
 package online.lifeasgame.role.application;
 
 import online.lifeasgame.role.application.command.RoleCommand;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.role.domain.Role;
 import online.lifeasgame.role.domain.repository.RoleRepository;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +40,7 @@ class RoleTransactionContractTest {
 
     @Test
     void readerSupportsWithoutTransactionAndWriterRequiresOne() {
-        assertThat(reader.findActive(1L)).isEmpty();
+        assertThat(reader.getOwned(1L, 1L)).isNotNull();
         assertThatThrownBy(() -> writer.save(role()))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
@@ -47,7 +48,6 @@ class RoleTransactionContractTest {
     @Test
     void writeServiceOpensTransactionForMandatoryWriter() {
         assertThat(service.create(
-                1L,
                 new RoleCommand.Create("WORK", "Developer", null)
         ).status()).isEqualTo("ACTIVE");
     }
@@ -69,10 +69,24 @@ class RoleTransactionContractTest {
         @Bean
         RoleRepository repository() {
             RoleRepository repository = mock(RoleRepository.class);
-            given(repository.findAllByPlayerIdAndStatus(any(), any()))
-                    .willReturn(List.of());
+            given(repository.findByIdAndPlayerId(any(), any()))
+                    .willReturn(Optional.of(role()));
             given(repository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
             return repository;
+        }
+
+        private Role role() {
+            return Role.create(
+                    1L,
+                    online.lifeasgame.role.domain.RoleType.of("WORK"),
+                    "Developer",
+                    null
+            );
+        }
+
+        @Bean
+        CurrentPlayerAccessor currentPlayerAccessor() {
+            return () -> Optional.of(1L);
         }
 
         @Bean

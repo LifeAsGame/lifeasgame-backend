@@ -1,6 +1,7 @@
 package online.lifeasgame.person.application;
 
 import online.lifeasgame.person.application.command.PersonCommand;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.person.domain.Person;
 import online.lifeasgame.person.domain.repository.PersonRepository;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +40,7 @@ class PersonTransactionContractTest {
 
     @Test
     void readerSupportsWithoutTransactionAndWriterRequiresOne() {
-        assertThat(reader.findActive(1L)).isEmpty();
+        assertThat(reader.getOwned(1L, 1L)).isNotNull();
         assertThatThrownBy(() -> writer.save(person()))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
@@ -47,7 +48,6 @@ class PersonTransactionContractTest {
     @Test
     void writeServiceOpensTransactionForMandatoryWriter() {
         assertThat(service.create(
-                1L,
                 new PersonCommand.Create("Alice", null, null, null)
         ).status()).isEqualTo("ACTIVE");
     }
@@ -64,10 +64,19 @@ class PersonTransactionContractTest {
         @Bean
         PersonRepository repository() {
             PersonRepository repository = mock(PersonRepository.class);
-            given(repository.findAllByOwnerPlayerIdAndStatus(any(), any()))
-                    .willReturn(List.of());
+            given(repository.findByIdAndOwnerPlayerId(any(), any()))
+                    .willReturn(Optional.of(person()));
             given(repository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
             return repository;
+        }
+
+        private Person person() {
+            return Person.create(1L, "Alice", null, null, null);
+        }
+
+        @Bean
+        CurrentPlayerAccessor currentPlayerAccessor() {
+            return () -> Optional.of(1L);
         }
 
         @Bean
