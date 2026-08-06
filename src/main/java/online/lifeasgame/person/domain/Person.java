@@ -83,10 +83,10 @@ public class Person extends AbstractTime {
     ) {
         this.ownerPlayerId = positive(ownerPlayerId);
         this.linkedUserId = null;
-        this.displayName = required(displayName, 80, "displayName");
+        this.displayName = requiredDisplayName(displayName);
         this.notes = optional(notes, null, "notes");
         this.birthday = birthday;
-        this.contact = optional(contact, 120, "contact");
+        this.contact = optionalContact(contact);
         this.status = PersonStatus.ACTIVE;
     }
 
@@ -109,10 +109,10 @@ public class Person extends AbstractTime {
         if (status == PersonStatus.ARCHIVED) {
             throw new DomainException(PersonError.PERSON_ARCHIVED);
         }
-        this.displayName = required(displayName, 80, "displayName");
+        this.displayName = requiredDisplayName(displayName);
         this.notes = optional(notes, null, "notes");
         this.birthday = birthday;
-        this.contact = optional(contact, 120, "contact");
+        this.contact = optionalContact(contact);
     }
 
     public void archive() {
@@ -127,8 +127,26 @@ public class Person extends AbstractTime {
         );
     }
 
-    private static String required(String value, int max, String name) {
-        return Guard.maxLength(Guard.notBlank(value, name), max, name);
+    private static String requiredDisplayName(String value) {
+        if (value == null) {
+            throw new DomainException(PersonError.INVALID_PERSON_DISPLAY_NAME);
+        }
+        String normalized = value.strip();
+        if (normalized.isEmpty() || normalized.length() > 80) {
+            throw new DomainException(PersonError.INVALID_PERSON_DISPLAY_NAME);
+        }
+        return normalized;
+    }
+
+    private static String optionalContact(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.strip();
+        if (normalized.length() > 120) {
+            throw new DomainException(PersonError.INVALID_PERSON_CONTACT);
+        }
+        return normalized;
     }
 
     private static String optional(

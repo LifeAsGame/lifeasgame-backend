@@ -65,8 +65,8 @@ public class Role extends AbstractTime {
     private Role(Long playerId, RoleType roleType, String name, String description) {
         this.playerId = positive(playerId);
         this.roleType = Guard.notNull(roleType, "roleType");
-        this.name = required(name, 60, "name");
-        this.description = optional(description, 500, "description");
+        this.name = requiredName(name);
+        this.description = optionalDescription(description);
         this.status = RoleStatus.ACTIVE;
     }
 
@@ -84,8 +84,8 @@ public class Role extends AbstractTime {
             throw new DomainException(RoleError.ROLE_ARCHIVED);
         }
         this.roleType = Guard.notNull(roleType, "roleType");
-        this.name = required(name, 60, "name");
-        this.description = optional(description, 500, "description");
+        this.name = requiredName(name);
+        this.description = optionalDescription(description);
     }
 
     public void archive() {
@@ -96,13 +96,25 @@ public class Role extends AbstractTime {
         return Guard.minValue(Guard.notNull(value, "playerId"), 1, "playerId");
     }
 
-    private static String required(String value, int max, String name) {
-        return Guard.maxLength(Guard.notBlank(value, name), max, name);
+    private static String requiredName(String value) {
+        if (value == null) {
+            throw new DomainException(RoleError.INVALID_ROLE_NAME);
+        }
+        String normalized = value.strip();
+        if (normalized.isEmpty() || normalized.length() > 60) {
+            throw new DomainException(RoleError.INVALID_ROLE_NAME);
+        }
+        return normalized;
     }
 
-    private static String optional(String value, int max, String name) {
-        return value == null || value.isBlank()
-                ? null
-                : Guard.maxLength(value.strip(), max, name);
+    private static String optionalDescription(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.strip();
+        if (normalized.length() > 500) {
+            throw new DomainException(RoleError.INVALID_ROLE_DESCRIPTION);
+        }
+        return normalized;
     }
 }

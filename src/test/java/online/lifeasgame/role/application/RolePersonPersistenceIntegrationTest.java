@@ -6,10 +6,12 @@ import online.lifeasgame.person.application.PersonQueryService;
 import online.lifeasgame.person.application.PersonService;
 import online.lifeasgame.person.application.command.PersonCommand;
 import online.lifeasgame.person.domain.Person;
+import online.lifeasgame.person.domain.PersonStatus;
 import online.lifeasgame.person.domain.error.PersonError;
 import online.lifeasgame.person.infra.JpaPersonRepository;
 import online.lifeasgame.role.application.command.RoleCommand;
 import online.lifeasgame.role.domain.Role;
+import online.lifeasgame.role.domain.RoleStatus;
 import online.lifeasgame.role.domain.RoleType;
 import online.lifeasgame.role.domain.error.RoleError;
 import online.lifeasgame.role.infra.JpaRoleRepository;
@@ -166,6 +168,34 @@ class RolePersonPersistenceIntegrationTest {
     }
 
     @Test
+    void rejectsCrossOwnerRoleUpdateAndArchive() {
+        Long id = roleService.create(
+                new RoleCommand.Create("WORK", "Developer", null)
+        ).id();
+        asCurrent(OTHER_OWNER);
+
+        assertRoleNotFound(() -> roleService.update(
+                id,
+                new RoleCommand.Update("FAMILY", "Parent", null)
+        ));
+        assertRoleNotFound(() -> roleService.archive(id));
+    }
+
+    @Test
+    void rejectsCrossOwnerPersonUpdateAndArchive() {
+        Long id = personService.create(
+                new PersonCommand.Create("Alice", null, null, null)
+        ).id();
+        asCurrent(OTHER_OWNER);
+
+        assertPersonNotFound(() -> personService.update(
+                id,
+                new PersonCommand.Update("Bob", null, null, null)
+        ));
+        assertPersonNotFound(() -> personService.archive(id));
+    }
+
+    @Test
     void rejectsStaleRoleUpdate() {
         Long id = roleService.create(
                 new RoleCommand.Create("WORK", "Developer", null)
@@ -176,6 +206,23 @@ class RolePersonPersistenceIntegrationTest {
         first.update(RoleType.of("FAMILY"), "Parent", null);
         transaction().executeWithoutResult(status -> roleRepository.saveAndFlush(first));
         stale.update(RoleType.of("SELF"), "Self", null);
+
+        assertThatThrownBy(() -> transaction().executeWithoutResult(
+                status -> roleRepository.saveAndFlush(stale)
+        )).isInstanceOf(OptimisticLockingFailureException.class);
+    }
+
+    @Test
+    void rejectsStaleRoleArchive() {
+        Long id = roleService.create(
+                new RoleCommand.Create("WORK", "Developer", null)
+        ).id();
+        Role first = detachedRole(id);
+        Role stale = detachedRole(id);
+
+        first.archive();
+        transaction().executeWithoutResult(status -> roleRepository.saveAndFlush(first));
+        stale.archive();
 
         assertThatThrownBy(() -> transaction().executeWithoutResult(
                 status -> roleRepository.saveAndFlush(stale)
@@ -199,6 +246,69 @@ class RolePersonPersistenceIntegrationTest {
         )).isInstanceOf(OptimisticLockingFailureException.class);
     }
 
+    @Test
+    void rejectsStalePersonArchive() {
+        Long id = personService.create(
+                new PersonCommand.Create("Alice", null, null, null)
+        ).id();
+        Person first = detachedPerson(id);
+        Person stale = detachedPerson(id);
+
+        first.archive();
+        transaction().executeWithoutResult(status -> personRepository.saveAndFlush(first));
+        stale.archive();
+
+        assertThatThrownBy(() -> transaction().executeWithoutResult(
+                status -> personRepository.saveAndFlush(stale)
+        )).isInstanceOf(OptimisticLockingFailureException.class);
+    }
+
+    @Test
+    void rollsBackRoleCreateUpdateAndArchive() {
+        forceRollback(() -> roleService.create(
+                new RoleCommand.Create("WORK", "Rolled back", null)
+        ));
+        assertThat(roleRepository.count()).isZero();
+
+        Long id = roleService.create(
+                new RoleCommand.Create("WORK", "Developer", null)
+        ).id();
+
+        forceRollback(() -> roleService.update(
+                id,
+                new RoleCommand.Update("FAMILY", "Parent", null)
+        ));
+        assertThat(roleRepository.findById(id).orElseThrow().getName())
+                .isEqualTo("Developer");
+
+        forceRollback(() -> roleService.archive(id));
+        assertThat(roleRepository.findById(id).orElseThrow().getStatus())
+                .isEqualTo(RoleStatus.ACTIVE);
+    }
+
+    @Test
+    void rollsBackPersonCreateUpdateAndArchive() {
+        forceRollback(() -> personService.create(
+                new PersonCommand.Create("Rolled back", null, null, null)
+        ));
+        assertThat(personRepository.count()).isZero();
+
+        Long id = personService.create(
+                new PersonCommand.Create("Alice", null, null, null)
+        ).id();
+
+        forceRollback(() -> personService.update(
+                id,
+                new PersonCommand.Update("Bob", null, null, null)
+        ));
+        assertThat(personRepository.findById(id).orElseThrow().getDisplayName())
+                .isEqualTo("Alice");
+
+        forceRollback(() -> personService.archive(id));
+        assertThat(personRepository.findById(id).orElseThrow().getStatus())
+                .isEqualTo(PersonStatus.ACTIVE);
+    }
+
     private Role detachedRole(Long id) {
         return transaction().execute(status -> roleRepository.findById(id).orElseThrow());
     }
@@ -209,6 +319,27 @@ class RolePersonPersistenceIntegrationTest {
 
     private TransactionTemplate transaction() {
         return new TransactionTemplate(transactionManager);
+    }
+
+    private void forceRollback(Runnable action) {
+        assertThatThrownBy(() -> transaction().executeWithoutResult(status -> {
+            action.run();
+            throw new IllegalStateException("force rollback");
+        })).isInstanceOf(IllegalStateException.class);
+    }
+
+    private void assertRoleNotFound(Runnable action) {
+        assertThatThrownBy(action::run)
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(RoleError.ROLE_NOT_FOUND)
+                );
+    }
+
+    private void assertPersonNotFound(Runnable action) {
+        assertThatThrownBy(action::run)
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(PersonError.PERSON_NOT_FOUND)
+                );
     }
 
     private int rowCount(String table, Long id) {

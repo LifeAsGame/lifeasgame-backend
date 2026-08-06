@@ -10,6 +10,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RoleTest {
 
     @Test
+    void rejectsInvalidRoleTypeWithDomainError() {
+        assertRoleError(() -> RoleType.of(null), RoleError.INVALID_ROLE_TYPE);
+        assertRoleError(() -> RoleType.of("   "), RoleError.INVALID_ROLE_TYPE);
+        assertRoleError(() -> RoleType.of("x".repeat(41)), RoleError.INVALID_ROLE_TYPE);
+    }
+
+    @Test
+    void rejectsInvalidNameAndDescriptionWithDomainErrors() {
+        assertRoleError(
+                () -> Role.create(1L, RoleType.of("SELF"), null, null),
+                RoleError.INVALID_ROLE_NAME
+        );
+        assertRoleError(
+                () -> Role.create(1L, RoleType.of("SELF"), "   ", null),
+                RoleError.INVALID_ROLE_NAME
+        );
+        assertRoleError(
+                () -> Role.create(1L, RoleType.of("SELF"), "x".repeat(61), null),
+                RoleError.INVALID_ROLE_NAME
+        );
+        assertRoleError(
+                () -> Role.create(1L, RoleType.of("SELF"), "Self", "x".repeat(501)),
+                RoleError.INVALID_ROLE_DESCRIPTION
+        );
+    }
+
+    @Test
+    void validatesLengthsAfterTrimming() {
+        Role role = Role.create(
+                1L,
+                RoleType.of("  " + "x".repeat(40) + "  "),
+                "  " + "n".repeat(60) + "  ",
+                "  " + "d".repeat(500) + "  "
+        );
+
+        assertThat(role.getRoleType().value()).isEqualTo("X".repeat(40));
+        assertThat(role.getName()).hasSize(60);
+        assertThat(role.getDescription()).hasSize(500);
+    }
+
+    @Test
     void normalizesAndFullyUpdatesRole() {
         Role role = Role.create(1L, RoleType.of("  family  "), "  Parent  ", " note ");
 
@@ -33,6 +74,13 @@ class RoleTest {
         assertThatThrownBy(() -> role.update(RoleType.of("WORK"), "Work", null))
                 .isInstanceOfSatisfying(DomainException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(RoleError.ROLE_ARCHIVED)
+                );
+    }
+
+    private void assertRoleError(Runnable action, RoleError error) {
+        assertThatThrownBy(action::run)
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(error)
                 );
     }
 }

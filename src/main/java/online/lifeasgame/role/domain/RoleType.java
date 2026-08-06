@@ -5,7 +5,8 @@ import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.role.domain.error.RoleError;
 
 import java.util.Locale;
 
@@ -18,9 +19,14 @@ public class RoleType {
     private String value;
 
     private RoleType(String raw) {
-        String normalized = Guard.notBlank(raw, "roleType")
-                .toUpperCase(Locale.ROOT);
-        this.value = Guard.maxLength(normalized, 40, "roleType");
+        if (raw == null) {
+            throw new DomainException(RoleError.INVALID_ROLE_TYPE);
+        }
+        String normalized = raw.strip().toUpperCase(Locale.ROOT);
+        if (normalized.isEmpty() || normalized.length() > 40) {
+            throw new DomainException(RoleError.INVALID_ROLE_TYPE);
+        }
+        this.value = normalized;
     }
 
     public static RoleType of(String raw) {

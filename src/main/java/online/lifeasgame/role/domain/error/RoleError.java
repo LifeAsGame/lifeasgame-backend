@@ -3,6 +3,9 @@ package online.lifeasgame.role.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum RoleError implements ErrorCode {
+    INVALID_ROLE_TYPE("ROL-400-INVALID-ROLE-TYPE", "Invalid Role type", 400),
+    INVALID_ROLE_NAME("ROL-400-INVALID-ROLE-NAME", "Invalid Role name", 400),
+    INVALID_ROLE_DESCRIPTION("ROL-400-INVALID-ROLE-DESCRIPTION", "Invalid Role description", 400),
     ROLE_NOT_FOUND("ROL-404-NOT-FOUND", "Role not found", 404),
     ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409);
 
