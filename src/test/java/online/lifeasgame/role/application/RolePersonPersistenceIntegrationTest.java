@@ -1,0 +1,213 @@
+package online.lifeasgame.role.application;
+
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.person.application.PersonService;
+import online.lifeasgame.person.application.command.PersonCommand;
+import online.lifeasgame.person.domain.Person;
+import online.lifeasgame.person.domain.error.PersonError;
+import online.lifeasgame.person.infra.JpaPersonRepository;
+import online.lifeasgame.role.application.command.RoleCommand;
+import online.lifeasgame.role.domain.Role;
+import online.lifeasgame.role.domain.RoleType;
+import online.lifeasgame.role.domain.error.RoleError;
+import online.lifeasgame.role.infra.JpaRoleRepository;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@Testcontainers
+@SpringBootTest
+@ActiveProfiles({"test", "migration-test"})
+class RolePersonPersistenceIntegrationTest {
+
+    private static final Long OWNER = 23401L;
+    private static final Long OTHER_OWNER = 23402L;
+
+    @Container
+    private static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.39")
+            .withDatabaseName("lifeasgame_role_person_crud")
+            .withUsername("lifeasgame")
+            .withPassword("lifeasgame");
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
+        registry.add("spring.datasource.username", MYSQL::getUsername);
+        registry.add("spring.datasource.password", MYSQL::getPassword);
+        registry.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
+    }
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private PersonService personService;
+
+    @Autowired
+    private JpaRoleRepository roleRepository;
+
+    @Autowired
+    private JpaPersonRepository personRepository;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private Flyway flyway;
+
+    @BeforeEach
+    void cleanState() {
+        jdbc.update("DELETE FROM role_relations");
+        jdbc.update("DELETE FROM roles");
+        jdbc.update("DELETE FROM persons");
+    }
+
+    @Test
+    void persistsOwnerScopedCrudAndKeepsArchivedRows() {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("19");
+
+        var role = roleService.create(
+                OWNER,
+                new RoleCommand.Create("work", "Developer", "Builds")
+        );
+        var otherRole = roleService.create(
+                OTHER_OWNER,
+                new RoleCommand.Create("work", "Other", null)
+        );
+        assertThat(roleService.list(OWNER)).extracting(result -> result.id())
+                .containsExactly(role.id());
+        assertThatThrownBy(() -> roleService.detail(OWNER, otherRole.id()))
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(RoleError.ROLE_NOT_FOUND)
+                );
+        roleService.update(
+                OWNER,
+                role.id(),
+                new RoleCommand.Update("family", "Parent", null)
+        );
+        roleService.archive(OWNER, role.id());
+        roleService.archive(OWNER, role.id());
+        assertThat(roleService.list(OWNER)).isEmpty();
+        assertThat(rowCount("roles", role.id())).isEqualTo(1);
+        assertThatThrownBy(() -> roleService.update(
+                OWNER,
+                role.id(),
+                new RoleCommand.Update("SELF", "Self", null)
+        )).isInstanceOfSatisfying(DomainException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(RoleError.ROLE_ARCHIVED)
+        );
+
+        var person = personService.create(
+                OWNER,
+                new PersonCommand.Create(
+                        "Alice",
+                        "Friend",
+                        LocalDate.of(2000, 1, 1),
+                        "alice@example.com"
+                )
+        );
+        var otherPerson = personService.create(
+                OTHER_OWNER,
+                new PersonCommand.Create("Other", null, null, null)
+        );
+        assertThat(person.linkedUserId()).isNull();
+        assertThat(personService.list(OWNER)).extracting(result -> result.id())
+                .containsExactly(person.id());
+        assertThatThrownBy(() -> personService.detail(OWNER, otherPerson.id()))
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(PersonError.PERSON_NOT_FOUND)
+                );
+        personService.update(
+                OWNER,
+                person.id(),
+                new PersonCommand.Update("Bob", null, null, null)
+        );
+        personService.archive(OWNER, person.id());
+        personService.archive(OWNER, person.id());
+        assertThat(personService.list(OWNER)).isEmpty();
+        assertThat(rowCount("persons", person.id())).isEqualTo(1);
+        assertThatThrownBy(() -> personService.update(
+                OWNER,
+                person.id(),
+                new PersonCommand.Update("Carol", null, null, null)
+        )).isInstanceOfSatisfying(DomainException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(PersonError.PERSON_ARCHIVED)
+        );
+    }
+
+    @Test
+    void rejectsStaleRoleUpdate() {
+        Long id = roleService.create(
+                OWNER,
+                new RoleCommand.Create("WORK", "Developer", null)
+        ).id();
+        Role first = detachedRole(id);
+        Role stale = detachedRole(id);
+
+        first.update(RoleType.of("FAMILY"), "Parent", null);
+        transaction().executeWithoutResult(status -> roleRepository.saveAndFlush(first));
+        stale.update(RoleType.of("SELF"), "Self", null);
+
+        assertThatThrownBy(() -> transaction().executeWithoutResult(
+                status -> roleRepository.saveAndFlush(stale)
+        )).isInstanceOf(OptimisticLockingFailureException.class);
+    }
+
+    @Test
+    void rejectsStalePersonUpdate() {
+        Long id = personService.create(
+                OWNER,
+                new PersonCommand.Create("Alice", null, null, null)
+        ).id();
+        Person first = detachedPerson(id);
+        Person stale = detachedPerson(id);
+
+        first.update("Bob", null, null, null);
+        transaction().executeWithoutResult(status -> personRepository.saveAndFlush(first));
+        stale.update("Carol", null, null, null);
+
+        assertThatThrownBy(() -> transaction().executeWithoutResult(
+                status -> personRepository.saveAndFlush(stale)
+        )).isInstanceOf(OptimisticLockingFailureException.class);
+    }
+
+    private Role detachedRole(Long id) {
+        return transaction().execute(status -> roleRepository.findById(id).orElseThrow());
+    }
+
+    private Person detachedPerson(Long id) {
+        return transaction().execute(status -> personRepository.findById(id).orElseThrow());
+    }
+
+    private TransactionTemplate transaction() {
+        return new TransactionTemplate(transactionManager);
+    }
+
+    private int rowCount(String table, Long id) {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM " + table + " WHERE id = ?",
+                Integer.class,
+                id
+        );
+    }
+}
