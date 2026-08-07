@@ -7,4 +7,6 @@ public interface RoleRepository {
     Role save(Role role);
 
     Optional<Role> findByIdAndPlayerId(Long id, Long playerId);
+
+    Optional<Role> findByIdAndPlayerIdForUpdate(Long id, Long playerId);
 }

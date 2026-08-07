@@ -20,4 +20,9 @@ class RoleReader {
         return repository.findByIdAndPlayerId(roleId, playerId)
                 .orElseThrow(() -> new DomainException(RoleError.ROLE_NOT_FOUND));
     }
+
+    Role getOwnedForUpdate(Long roleId, Long playerId) {
+        return repository.findByIdAndPlayerIdForUpdate(roleId, playerId)
+                .orElseThrow(() -> new DomainException(RoleError.ROLE_NOT_FOUND));
+    }
 }

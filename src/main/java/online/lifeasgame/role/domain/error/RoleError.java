@@ -6,8 +6,12 @@ public enum RoleError implements ErrorCode {
     INVALID_ROLE_TYPE("ROL-400-INVALID-ROLE-TYPE", "Invalid Role type", 400),
     INVALID_ROLE_NAME("ROL-400-INVALID-ROLE-NAME", "Invalid Role name", 400),
     INVALID_ROLE_DESCRIPTION("ROL-400-INVALID-ROLE-DESCRIPTION", "Invalid Role description", 400),
+    INVALID_ROLE_RELATION_TYPE("ROL-400-INVALID-ROLE-RELATION-TYPE", "Invalid Role relation type", 400),
     ROLE_NOT_FOUND("ROL-404-NOT-FOUND", "Role not found", 404),
-    ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409);
+    ROLE_RELATION_NOT_FOUND("ROL-404-RELATION-NOT-FOUND", "Role relation not found", 404),
+    ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409),
+    ROLE_RELATION_ALREADY_EXISTS("ROL-409-RELATION-ALREADY-EXISTS", "Role relation already exists", 409),
+    ROLE_RELATION_ARCHIVED("ROL-409-RELATION-ARCHIVED", "Archived Role relation cannot be updated", 409);
 
     private final String code;
     private final String message;
