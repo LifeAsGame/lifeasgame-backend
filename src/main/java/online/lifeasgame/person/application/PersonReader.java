@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -19,5 +22,9 @@ class PersonReader {
     Person getOwned(Long personId, Long ownerPlayerId) {
         return repository.findByIdAndOwnerPlayerId(personId, ownerPlayerId)
                 .orElseThrow(() -> new DomainException(PersonError.PERSON_NOT_FOUND));
+    }
+
+    List<Person> findOwnedByIds(Set<Long> personIds, Long ownerPlayerId) {
+        return repository.findAllByIdInAndOwnerPlayerId(personIds, ownerPlayerId);
     }
 }

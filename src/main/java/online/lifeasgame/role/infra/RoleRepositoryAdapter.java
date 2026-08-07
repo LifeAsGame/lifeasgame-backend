@@ -22,4 +22,9 @@ public class RoleRepositoryAdapter implements RoleRepository {
     public Optional<Role> findByIdAndPlayerId(Long id, Long playerId) {
         return repository.findByIdAndPlayerId(id, playerId);
     }
+
+    @Override
+    public Optional<Role> findByIdAndPlayerIdForUpdate(Long id, Long playerId) {
+        return repository.findByIdAndPlayerIdForUpdate(id, playerId);
+    }
 }
