@@ -29,7 +29,6 @@ public final class RoleWebMapper {
     public static RoleResponse.Detail toDetail(RoleResult.Detail result) {
         return new RoleResponse.Detail(
                 result.id(),
-                result.playerId(),
                 result.roleType(),
                 result.name(),
                 result.description(),

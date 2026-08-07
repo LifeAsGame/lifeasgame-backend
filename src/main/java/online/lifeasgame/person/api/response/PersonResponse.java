@@ -10,7 +10,6 @@ public final class PersonResponse {
 
     public record Detail(
             Long id,
-            Long ownerPlayerId,
             Long linkedUserId,
             String displayName,
             String notes,

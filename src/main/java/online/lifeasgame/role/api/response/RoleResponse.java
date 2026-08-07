@@ -9,7 +9,6 @@ public final class RoleResponse {
 
     public record Detail(
             Long id,
-            Long playerId,
             String roleType,
             String name,
             String description,

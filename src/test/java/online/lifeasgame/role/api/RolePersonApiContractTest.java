@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -164,6 +165,7 @@ class RolePersonApiContractTest {
                         ))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.id").value(10L))
+                .andExpect(jsonPath("$.result.playerId").doesNotExist())
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"));
 
         mockMvc.perform(post("/api/v1/persons")
@@ -176,6 +178,7 @@ class RolePersonApiContractTest {
                         ))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result.id").value(20L))
+                .andExpect(jsonPath("$.result.ownerPlayerId").doesNotExist())
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"));
 
         verify(roleService).create(argThat(command -> command.name().strip().length() == 60));
@@ -186,6 +189,7 @@ class RolePersonApiContractTest {
                         .content(json(new RoleRequest.Update("SELF", "Self", null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.id").value(10L))
+                .andExpect(jsonPath("$.result.playerId").doesNotExist())
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"));
 
         mockMvc.perform(put("/api/v1/persons/20")
@@ -193,7 +197,23 @@ class RolePersonApiContractTest {
                         .content(json(new PersonRequest.Update("Alice", null, null, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.id").value(20L))
+                .andExpect(jsonPath("$.result.ownerPlayerId").doesNotExist())
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"));
+    }
+
+    @Test
+    void hidesOwnerIdentityAndKeepsLinkedUserInDetailJson() throws Exception {
+        given(roleQueryService.detail(10L)).willReturn(roleDetail(10L));
+        given(personQueryService.detail(20L)).willReturn(personDetail(20L, 30L));
+
+        mockMvc.perform(get("/api/v1/roles/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.playerId").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/persons/20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.ownerPlayerId").doesNotExist())
+                .andExpect(jsonPath("$.result.linkedUserId").value(30L));
     }
 
     @Test
@@ -266,8 +286,12 @@ class RolePersonApiContractTest {
     }
 
     private PersonResult.Detail personDetail(Long id) {
+        return personDetail(id, null);
+    }
+
+    private PersonResult.Detail personDetail(Long id, Long linkedUserId) {
         return new PersonResult.Detail(
-                id, 234L, null, "Alice", null, null, null, "ACTIVE", null, null, 0L
+                id, 234L, linkedUserId, "Alice", null, null, null, "ACTIVE", null, null, 0L
         );
     }
 }

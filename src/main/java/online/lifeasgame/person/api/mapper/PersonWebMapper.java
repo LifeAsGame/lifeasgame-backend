@@ -31,7 +31,6 @@ public final class PersonWebMapper {
     public static PersonResponse.Detail toDetail(PersonResult.Detail result) {
         return new PersonResponse.Detail(
                 result.id(),
-                result.ownerPlayerId(),
                 result.linkedUserId(),
                 result.displayName(),
                 result.notes(),
