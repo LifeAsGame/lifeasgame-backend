@@ -5,6 +5,7 @@ import online.lifeasgame.character.application.command.PlayerCommand;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.domain.*;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ public class PlayerService {
     private final PlayerTitleReader playerTitleReader;
     private final PlayerExpGrantService playerExpGrantService;
     private final DomainEventPublisher domainEventPublisher;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public PlayerResult.Created linkStart(Long userId, PlayerCommand.Register register) {
@@ -35,14 +37,9 @@ public class PlayerService {
         return new PlayerResult.Created(player.getId());
     }
 
-    public PlayerResult.PlayerInfo getPlayerInfo(Long playerId) {
-        Player player = playerReader.getByIdOrThrow(playerId);
-        return PlayerResult.PlayerInfo.from(player);
-    }
-
-    public Long findPlayerIdByUserId(Long userId) {
-        Player player = playerReader.getByUserId(userId);
-        return player == null ? null : player.getId();
+    @Transactional
+    public PlayerResult.UpdatedTitle changeRepresentativeTitle(Long titleId) {
+        return changeRepresentativeTitle(currentPlayerAccessor.currentPlayerIdOrThrow(), titleId);
     }
 
     @Transactional
@@ -116,11 +113,6 @@ public class PlayerService {
         );
 
         return PlayerResult.StatusEffectsGranted.from(player.getId(), player.getStatusEffects());
-    }
-
-    public PlayerResult.PlayerSummary getPlayerSummary(Long userId) {
-        Player player = playerReader.getByUserIdOrThrow(userId);
-        return PlayerResult.PlayerSummary.from(player);
     }
 
     @Transactional

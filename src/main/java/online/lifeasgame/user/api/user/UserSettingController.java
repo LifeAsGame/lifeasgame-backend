@@ -8,7 +8,7 @@ import online.lifeasgame.user.api.user.mapper.UserSettingWebMapper;
 import online.lifeasgame.user.api.user.request.UserSettingRequest;
 import online.lifeasgame.user.api.user.response.UserSettingResponse;
 import online.lifeasgame.user.api.user.spec.UserSettingApiSpecV1;
-import online.lifeasgame.user.application.UserSettingFacade;
+import online.lifeasgame.user.application.UserSettingService;
 import online.lifeasgame.user.application.result.UserSettingResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/users")
 public class UserSettingController implements UserSettingApiSpecV1 {
 
-    private final UserSettingFacade userSettingFacade;
+    private final UserSettingService userSettingService;
 
     @Override
     @GetMapping("/me/settings")
     public ResponseEntity<ApiResponse<UserSettingResponse.Settings>> getMySettings() {
-        UserSettingResult.Settings settings = userSettingFacade.getUserSettings();
+        UserSettingResult.Settings settings = userSettingService.getSettings();
         return ApiResponses.ok(UserSettingWebMapper.toSettings(settings));
     }
 
@@ -32,7 +32,7 @@ public class UserSettingController implements UserSettingApiSpecV1 {
     public ResponseEntity<ApiResponse<UserSettingResponse.Settings>> updateMySettings(
             @Valid @RequestBody UserSettingRequest.UpdateSettings request
     ) {
-        UserSettingResult.Settings settings = userSettingFacade.updateSettings(UserSettingWebMapper.toUpdateSettingsCommand(request));
+        UserSettingResult.Settings settings = userSettingService.updateSettings(UserSettingWebMapper.toUpdateSettingsCommand(request));
         return ApiResponses.ok(UserSettingWebMapper.toSettings(settings));
     }
 }

@@ -8,6 +8,7 @@ import online.lifeasgame.character.domain.error.PlayerTitleError;
 import online.lifeasgame.character.domain.repository.PlayerTitleRepository;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +64,9 @@ class CharacterApplicationBoundaryTest {
     @Mock
     private AchievementReader achievementReader;
 
+    @Mock
+    private CurrentPlayerAccessor currentPlayerAccessor;
+
     private PlayerTitleReader actualPlayerTitleReader;
 
     @BeforeEach
@@ -112,7 +116,8 @@ class CharacterApplicationBoundaryTest {
                 playerReader,
                 playerTitleReader,
                 playerExpGrantService,
-                domainEventPublisher
+                domainEventPublisher,
+                currentPlayerAccessor
         );
 
         var result = service.changeRepresentativeTitle(PLAYER_ID, TITLE_ID);
@@ -134,7 +139,8 @@ class CharacterApplicationBoundaryTest {
                 playerTitleReader,
                 playerTitleWriter,
                 titleReader,
-                playerReader
+                playerReader,
+                currentPlayerAccessor
         );
 
         var result = service.revokeTitle(PLAYER_ID, TITLE_ID);
@@ -158,7 +164,8 @@ class CharacterApplicationBoundaryTest {
                 playerAchievementReader,
                 playerAchievementWriter,
                 achievementReader,
-                playerReader
+                playerReader,
+                currentPlayerAccessor
         );
 
         var result = service.revokeAchievement(PLAYER_ID, 232L);

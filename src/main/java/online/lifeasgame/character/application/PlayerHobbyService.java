@@ -8,6 +8,7 @@ import online.lifeasgame.character.application.view.PlayerHobbyView;
 import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.PlayerHobby;
 import online.lifeasgame.character.domain.PlayerHobbyStatus;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,12 @@ public class PlayerHobbyService {
 
     private final HobbyReader hobbyReader;
     private final PlayerReader playerReader;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Transactional
+    public PlayerHobbyResult.Created createPlayerHobby(PlayerHobbyCommand.Create command) {
+        return createPlayerHobby(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
 
     @Transactional
     public PlayerHobbyResult.Created createPlayerHobby(Long playerId, PlayerHobbyCommand.Create command) {
@@ -45,11 +52,18 @@ public class PlayerHobbyService {
         return PlayerHobbyResult.Created.from(playerHobby, hobby);
     }
 
-    public List<PlayerHobbyResult.Info> getPlayerHobbyInfos(Long playerId) {
+    @Transactional(readOnly = true)
+    public List<PlayerHobbyResult.Info> getPlayerHobbyInfos() {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         List<PlayerHobbyView> playerHobbyViews = playerHobbyReader.getViewsByPlayerId(playerId);
         return playerHobbyViews.stream()
                 .map(PlayerHobbyResult.Info::from)
                 .toList();
+    }
+
+    @Transactional
+    public PlayerHobbyResult.Changed changePlayerHobby(PlayerHobbyCommand.Change command) {
+        return changePlayerHobby(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -65,6 +79,11 @@ public class PlayerHobbyService {
         );
 
         return PlayerHobbyResult.Changed.from(playerHobby);
+    }
+
+    @Transactional
+    public void deletePlayerHobby(Long hobbyId) {
+        deletePlayerHobby(currentPlayerAccessor.currentPlayerIdOrThrow(), hobbyId);
     }
 
     @Transactional

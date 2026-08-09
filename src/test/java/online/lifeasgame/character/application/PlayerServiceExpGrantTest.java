@@ -2,6 +2,7 @@ package online.lifeasgame.character.application;
 
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,6 +34,9 @@ class PlayerServiceExpGrantTest {
     @Mock
     private DomainEventPublisher domainEventPublisher;
 
+    @Mock
+    private CurrentPlayerAccessor currentPlayerAccessor;
+
     private PlayerService service;
 
     @BeforeEach
@@ -42,7 +46,8 @@ class PlayerServiceExpGrantTest {
                 playerReader,
                 playerTitleReader,
                 playerExpGrantService,
-                domainEventPublisher
+                domainEventPublisher,
+                currentPlayerAccessor
         );
     }
 

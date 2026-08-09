@@ -3,6 +3,7 @@ package online.lifeasgame.user.api.admin.mapper;
 import online.lifeasgame.user.api.admin.request.AdminUserRequest;
 import online.lifeasgame.user.api.admin.response.AdminUserResponse;
 import online.lifeasgame.user.application.command.UserCommand;
+import online.lifeasgame.user.application.query.UserQuery;
 import online.lifeasgame.user.application.result.UserResult;
 
 import java.util.List;
@@ -12,8 +13,8 @@ public final class AdminUserWebMapper {
     private AdminUserWebMapper() {}
 
 
-    public static UserCommand.Search toSearchCommand(String email, String nickname, String status, int page, int size) {
-        return new UserCommand.Search(email, nickname, status, page, size);
+    public static UserQuery.Search toSearchQuery(String email, String nickname, String status, int page, int size) {
+        return new UserQuery.Search(email, nickname, status, page, size);
     }
 
     public static AdminUserResponse.UserList toUserList(UserResult.UserList result) {

@@ -7,6 +7,7 @@ import online.lifeasgame.character.api.admin.request.AdminPlayerRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerApiSpecV1;
 import online.lifeasgame.character.application.PlayerService;
+import online.lifeasgame.character.application.PlayerQueryService;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPlayerController implements AdminPlayerApiSpecV1 {
 
     private final PlayerService playerService;
+    private final PlayerQueryService playerQueryService;
 
     @Override
     @PostMapping("/{playerId}/exp/grant")
@@ -122,7 +124,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerInfo>> get(
             @PathVariable Long playerId
     ) {
-        PlayerResult.PlayerInfo result = playerService.getPlayerInfo(playerId);
+        PlayerResult.PlayerInfo result = playerQueryService.getPlayerInfo(playerId);
         return ApiResponses.ok(AdminPlayerWebMapper.toPlayerInfo(result));
     }
 
@@ -131,7 +133,7 @@ public class AdminPlayerController implements AdminPlayerApiSpecV1 {
     public ResponseEntity<ApiResponse<AdminPlayerResponse.PlayerSummary>> getPlayerSummary(
             @RequestParam(required = false) Long userId
     ) {
-         PlayerResult.PlayerSummary result = playerService.getPlayerSummary(userId);
+         PlayerResult.PlayerSummary result = playerQueryService.getPlayerSummary(userId);
         return ApiResponses.ok(AdminPlayerWebMapper.toPlayerSummary(result));
     }
 }

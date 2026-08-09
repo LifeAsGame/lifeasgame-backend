@@ -14,15 +14,6 @@ public final class UserCommand {
     ) {
     }
 
-    public record Search(
-            String email,
-            String nickname,
-            String status,
-            int page,
-            int size
-    ) {
-    }
-
     public record ChangeStatus(
             String status,
             String reason

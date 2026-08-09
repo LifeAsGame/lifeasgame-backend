@@ -6,7 +6,7 @@ import online.lifeasgame.character.api.player.mapper.PlayerCertificationWebMappe
 import online.lifeasgame.character.api.player.request.PlayerCertificationRequest;
 import online.lifeasgame.character.api.player.response.PlayerCertificationResponse;
 import online.lifeasgame.character.api.player.spec.PlayerCertificationApiSpecV1;
-import online.lifeasgame.character.application.PlayerCertificationFacade;
+import online.lifeasgame.character.application.PlayerCertificationService;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -21,12 +21,12 @@ import java.util.List;
 @RequestMapping("/api/v1/players")
 public class PlayerCertificationController implements PlayerCertificationApiSpecV1 {
 
-    private final PlayerCertificationFacade playerCertificationFacade;
+    private final PlayerCertificationService playerCertificationService;
 
     @Override
     @GetMapping("/certifications")
     public ResponseEntity<ApiResponse<PlayerCertificationResponse.Infos>> playerCertificationInfos() {
-        List<PlayerCertificationResult.Info> results = playerCertificationFacade.getPlayerCertificationInfos();
+        List<PlayerCertificationResult.Info> results = playerCertificationService.getPlayerCertificationInfos();
         return ApiResponses.ok(PlayerCertificationWebMapper.toInfos(results));
     }
 
@@ -37,7 +37,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
             @Valid @RequestBody PlayerCertificationRequest.Create request
     ) {
         PlayerCertificationResult.Created result =
-                playerCertificationFacade.createPlayerCertification(
+                playerCertificationService.createCertification(
                         PlayerCertificationWebMapper.toCreateCommand(certificationId, request)
                 );
 
@@ -54,7 +54,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
             @Valid @RequestBody PlayerCertificationRequest.Update request
     ) {
         PlayerCertificationResult.Changed result =
-                playerCertificationFacade.changePlayerCertification(
+                playerCertificationService.changePlayerCertification(
                         PlayerCertificationWebMapper.toChangeCommand(certificationId, request)
                 );
 
@@ -64,7 +64,7 @@ public class PlayerCertificationController implements PlayerCertificationApiSpec
     @Override
     @DeleteMapping("/certifications/{certificationId}")
     public ResponseEntity<ApiResponse<Long>> delete(@PathVariable Long certificationId) {
-        playerCertificationFacade.deletePlayerCertification(certificationId);
+        playerCertificationService.deletePlayerCertification(certificationId);
         return ApiResponses.deleted(certificationId);
     }
 }

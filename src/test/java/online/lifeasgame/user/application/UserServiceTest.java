@@ -2,6 +2,7 @@ package online.lifeasgame.user.application;
 
 import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentUserAccessor;
 import online.lifeasgame.user.application.command.UserCommand;
 import online.lifeasgame.user.application.model.RawPassword;
 import online.lifeasgame.user.application.result.UserResult;
@@ -27,7 +28,10 @@ class UserServiceTest {
     @Mock UserWriter userWriter;
     @Mock UserReader userReader;
     @Mock PasswordHasher passwordHasher;
+    @Mock CurrentUserAccessor currentUserAccessor;
     @InjectMocks UserService userService;
+    @InjectMocks UserAuthService userAuthService;
+    @InjectMocks UserQueryService userQueryService;
 
     // ── register() ───────────────────────────────────────────────────────────
 
@@ -54,10 +58,10 @@ class UserServiceTest {
         }
     }
 
-    // ── findAuthCredential() ──────────────────────────────────────────────────
+    // ── authenticate() ────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("findAuthCredential()")
+    @DisplayName("authenticate()")
     class FindAuthCredential {
 
         @Test
@@ -66,7 +70,7 @@ class UserServiceTest {
             when(userReader.findByEmailOrElseThrow(anyString()))
                     .thenThrow(new DomainException(UserError.USER_NOT_FOUND));
 
-            assertThatThrownBy(() -> userService.findAuthCredential("x@x.com", "password1"))
+            assertThatThrownBy(() -> userAuthService.authenticate("x@x.com", "password1"))
                     .isInstanceOf(DomainException.class);
 
             // 비밀번호 검증까지 도달하지 않음
@@ -82,7 +86,7 @@ class UserServiceTest {
             when(passwordHasher.matches(any(RawPassword.class), any(HashedPassword.class)))
                     .thenReturn(false);
 
-            assertThatThrownBy(() -> userService.findAuthCredential("x@x.com", "wrongpass1"))
+            assertThatThrownBy(() -> userAuthService.authenticate("x@x.com", "wrongpass1"))
                     .isInstanceOf(AuthException.class);
         }
 
@@ -96,10 +100,9 @@ class UserServiceTest {
             when(passwordHasher.matches(any(RawPassword.class), any(HashedPassword.class)))
                     .thenReturn(true);
 
-            UserResult.AuthCredential cred =
-                    userService.findAuthCredential("x@x.com", "password1");
+            Long userId = userAuthService.authenticate("x@x.com", "password1");
 
-            assertThat(cred.userId()).isEqualTo(1L);
+            assertThat(userId).isEqualTo(1L);
         }
     }
 
@@ -114,7 +117,7 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(false);
 
-            assertThat(userService.checkEmailAvailability("e@e.com").isAvailable()).isTrue();
+            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isTrue();
         }
 
         @Test
@@ -122,7 +125,7 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(true);
 
-            assertThat(userService.checkEmailAvailability("e@e.com").isAvailable()).isFalse();
+            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isFalse();
         }
     }
 
@@ -137,7 +140,7 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(false);
 
-            assertThat(userService.checkNicknameAvailability("NewNick").isAvailable()).isTrue();
+            assertThat(userQueryService.checkNicknameAvailability("NewNick").isAvailable()).isTrue();
         }
 
         @Test
@@ -145,7 +148,7 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(true);
 
-            assertThat(userService.checkNicknameAvailability("Kirito").isAvailable()).isFalse();
+            assertThat(userQueryService.checkNicknameAvailability("Kirito").isAvailable()).isFalse();
         }
     }
 
@@ -163,8 +166,9 @@ class UserServiceTest {
             when(u.getNickname()).thenReturn(Nickname.of("NewNick"));
             when(u.getUpdatedAt()).thenReturn(Instant.now());
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
+            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
 
-            UserResult.NicknameChanged result = userService.changeNickname(1L, "NewNick");
+            UserResult.NicknameChanged result = userService.changeNickname("NewNick");
 
             verify(u).changeNickname(any(Nickname.class));
             assertThat(result.userId()).isEqualTo(1L);
@@ -182,6 +186,28 @@ class UserServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("delete()")
+    class Delete {
+
+        @Test
+        @DisplayName("현재 사용자 identity로 삭제한다")
+        void currentUser() {
+            User user = mock(User.class);
+            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+            when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+            when(passwordHasher.hash(any(RawPassword.class))).thenReturn(TEST_HASH);
+            when(user.getId()).thenReturn(1L);
+            when(user.getStatus()).thenReturn(UserStatus.DELETED);
+
+            UserResult.Deleted result = userService.delete("password1");
+
+            verify(user).delete(TEST_HASH);
+            assertThat(result.userId()).isEqualTo(1L);
+            assertThat(result.status()).isEqualTo("DELETED");
+        }
+    }
+
     // ── changePassword() ──────────────────────────────────────────────────────
 
     @Nested
@@ -195,8 +221,9 @@ class UserServiceTest {
             when(u.getId()).thenReturn(1L);
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
             when(passwordHasher.hash(any(RawPassword.class))).thenReturn(TEST_HASH);
+            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
 
-            UserResult.PasswordChanged result = userService.changePassword(1L,
+            UserResult.PasswordChanged result = userService.changePassword(
                     new UserCommand.ChangePassword("currentPw1", "newPassword1"));
 
             verify(u).changePassword(any(HashedPassword.class), any(HashedPassword.class));
@@ -217,8 +244,9 @@ class UserServiceTest {
             when(u.getEmail()).thenReturn(Email.of("e@e.com"));
             when(u.getNickname()).thenReturn(Nickname.of("Nick"));
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
+            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
 
-            UserResult.UserInfo info = userService.getUserInfo(1L);
+            UserResult.UserInfo info = userQueryService.getUserInfo();
 
             assertThat(info.email()).isEqualTo("e@e.com");
             assertThat(info.nickname()).isEqualTo("Nick");
@@ -230,7 +258,7 @@ class UserServiceTest {
             when(userReader.findByIdOrElseThrow(999L))
                     .thenThrow(new DomainException(UserError.USER_NOT_FOUND));
 
-            assertThatThrownBy(() -> userService.getUserInfo(999L))
+            assertThatThrownBy(() -> userQueryService.getUserInfo(999L))
                     .isInstanceOf(DomainException.class);
         }
     }

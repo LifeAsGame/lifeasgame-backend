@@ -8,7 +8,7 @@ import online.lifeasgame.user.api.user.mapper.UserWebMapper;
 import online.lifeasgame.user.api.user.request.UserRequest;
 import online.lifeasgame.user.api.user.response.UserResponse;
 import online.lifeasgame.user.api.user.spec.UserApiSpecV1;
-import online.lifeasgame.user.application.UserFacade;
+import online.lifeasgame.user.application.UserQueryService;
 import online.lifeasgame.user.application.UserService;
 import online.lifeasgame.user.application.result.UserResult;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements UserApiSpecV1 {
 
     private final UserService userService;
-    private final UserFacade userFacade;
+    private final UserQueryService userQueryService;
 
     @Override
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse.UserInfo>> me() {
-        UserResult.UserInfo userInfo = userFacade.getUserInfo();
+        UserResult.UserInfo userInfo = userQueryService.getUserInfo();
         return ApiResponses.ok(UserWebMapper.toUserInfo(userInfo));
     }
 
@@ -34,7 +34,7 @@ public class UserController implements UserApiSpecV1 {
     public ResponseEntity<ApiResponse<UserResponse.Availability>> checkEmailAvailability(
             @RequestParam String email
     ) {
-        UserResult.Availability availability = userService.checkEmailAvailability(email);
+        UserResult.Availability availability = userQueryService.checkEmailAvailability(email);
         return ApiResponses.ok(UserWebMapper.toAvailability(availability));
     }
 
@@ -43,7 +43,7 @@ public class UserController implements UserApiSpecV1 {
     public ResponseEntity<ApiResponse<UserResponse.Availability>> checkNicknameAvailability(
             @RequestParam String nickname
     ) {
-        UserResult.Availability availability = userService.checkNicknameAvailability(nickname);
+        UserResult.Availability availability = userQueryService.checkNicknameAvailability(nickname);
         return ApiResponses.ok(UserWebMapper.toAvailability(availability));
     }
 
@@ -52,7 +52,7 @@ public class UserController implements UserApiSpecV1 {
     public ResponseEntity<ApiResponse<UserResponse.NicknameChanged>> changeNickname(
             @Valid @RequestBody UserRequest.ChangeNickname request
     ) {
-        UserResult.NicknameChanged nicknameChanged = userFacade.changeNickname(request.nickname());
+        UserResult.NicknameChanged nicknameChanged = userService.changeNickname(request.nickname());
         return ApiResponses.ok(UserWebMapper.toNicknameChanged(nicknameChanged));
     }
 
@@ -61,7 +61,7 @@ public class UserController implements UserApiSpecV1 {
     public ResponseEntity<ApiResponse<UserResponse.PasswordChanged>> changePassword(
             @Valid @RequestBody UserRequest.ChangePassword request
     ) {
-        UserResult.PasswordChanged passwordChanged = userFacade.changePassword(UserWebMapper.toChangePasswordCommand(request));
+        UserResult.PasswordChanged passwordChanged = userService.changePassword(UserWebMapper.toChangePasswordCommand(request));
         return ApiResponses.ok(UserWebMapper.toPasswordChanged(passwordChanged));
     }
 
@@ -70,7 +70,7 @@ public class UserController implements UserApiSpecV1 {
     public ResponseEntity<ApiResponse<UserResponse.Deleted>> deleteMe(
             @Valid @RequestBody UserRequest.Delete request
     ) {
-        UserResult.Deleted deleted = userFacade.delete(request.password());
+        UserResult.Deleted deleted = userService.delete(request.password());
         return ApiResponses.deleted(UserWebMapper.toDeleted(deleted));
     }
 }
