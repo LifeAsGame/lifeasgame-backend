@@ -1,6 +1,6 @@
 # LifeAsGame Backend
 
-> 현실의 행동을 기록하고, 퀘스트와 보상으로 연결해 일상의 성장을 게임처럼 체감하게 만드는 백엔드입니다.
+> 보이지 않던 삶의 성장과 관계의 흔적을 기록하고, 목표와 성취를 게임처럼 체감할 수 있게 만드는 Life RPG 플랫폼의 백엔드입니다.
 
 [한국어](#korean) · [English](#english)
 
@@ -10,9 +10,124 @@
 
 ### 제품 소개
 
-LifeAsGame은 운동, 미디어 감상, 수집과 같은 현실의 경험을 기록하고 그 기록을 퀘스트 진행, 보상, 캐릭터 성장으로 연결하는 서비스입니다. 이 저장소는 해당 제품의 Spring Boot 기반 모듈러 모놀리스 백엔드입니다.
+LifeAsGame은 **내가 무엇을 해왔는지, 지금 어디까지 왔는지, 앞으로 무엇을 해야 하는지를 눈에 보이게 만드는 Life RPG 플랫폼**입니다.
 
-현재 저장소는 **중간 개발 시점의 스냅샷**입니다. 핵심 성장 루프는 실제 코드와 데이터베이스 계약으로 연결되어 있지만, 모든 bounded context가 최종 제품 구조에 도달한 것은 아닙니다. 아래에서는 구현된 기능과 발전 중인 영역을 구분합니다.
+취준생, 수험생, 직장인처럼 오랜 시간 노력하고 있어도 결과가 바로 보이지 않는 사람은 쉽게 이런 감각을 잃습니다.
+
+- 나는 요즘 제대로 살고 있는가
+- 지금까지 무엇을 해왔는가
+- 실제로 성장하고 있는가
+- 내 목표는 무엇인가
+- 지금 무엇을 해야 하는가
+- 예전에 중요하게 생각했던 것은 무엇이었는가
+
+공부, 운동, 프로젝트, 취업 준비, 독서, 취미, 인간관계처럼 현실의 중요한 활동은 대부분 하나의 숫자로 즉시 보상되지 않습니다.  
+시간이 지나면 자신이 쌓아온 과정조차 잊기 쉽고, 눈앞의 결과만으로 자신을 평가하면서 불안, 무기력, 방향 상실을 느끼기도 합니다.
+
+LifeAsGame은 이러한 **보이지 않는 성장과 경험의 흔적을 기록 가능한 상태로 만들고**, 그것을 Quest, EXP, Reward, Character Progression과 연결해 사용자가 자신의 삶을 하나의 긴 성장 과정으로 바라볼 수 있게 하는 것을 목표로 합니다.
+
+```text
+내가 해온 것
+    ↓
+LifeLog / Quest / Achievement
+    ↓
+눈에 보이는 성장과 누적
+    ↓
+현재 위치 이해
+    ↓
+다음 목표와 행동 선택
+```
+
+단순히 해야 할 일을 체크하는 서비스가 아니라,
+
+- 내가 어떤 노력을 해왔는지
+- 어떤 경험을 쌓았는지
+- 어떤 목표를 향하고 있는지
+- 무엇을 좋아하고 중요하게 생각하는지
+- 어느 영역에서 성장하고 있는지
+
+를 한곳에서 계속 축적하고 되돌아볼 수 있게 하는 것이 핵심입니다.
+
+이를 통해 사용자가 자신의 삶을 결과 한 번으로 평가하기보다 **과정과 누적된 성장을 확인하고, 다음 행동의 방향을 찾을 수 있는 경험**을 만드는 것을 지향합니다.
+
+### 관계와 기억도 삶의 일부로 기록
+
+LifeAsGame에서 성장은 개인의 능력치만을 의미하지 않습니다.
+
+사람과의 관계, 함께 보낸 시간, 기억하고 싶은 대화와 약속 역시 삶을 구성하는 중요한 자산으로 봅니다.
+
+장기적으로는 다음과 같은 관계의 맥락도 기록하고 이어갈 수 있도록 설계합니다.
+
+- 이 사람은 나와 어떤 관계인가
+- 어떤 Role에서 만난 사람인가
+- 예전에 어떤 중요한 이야기를 나눴는가
+- 무엇을 좋아하고 싫어하는가
+- 함께 무엇을 했는가
+- 어떤 추억이 있었는가
+- 다음에 무엇을 하기로 했는가
+- 어떤 약속이나 계획이 남아 있는가
+
+이 기능의 목적은 사람을 CRM처럼 관리하는 것이 아닙니다.
+
+시간이 지나며 사라지기 쉬운 **관계의 맥락과 기억을 보존하고**, 내가 중요하게 생각하는 사람들과의 연결을 더 오래 이어갈 수 있도록 돕는 개인적인 Life Memory System을 지향합니다.
+
+이를 위해 LifeAsGame은 다음 개념을 구분합니다.
+
+- **Role** — 내가 살아가며 가지는 역할과 정체성의 맥락
+- **Person** — 실제 한 사람에 대한 개인적인 Master Record
+- **RoleRelation** — 특정 Role 안에서 그 Person과 맺고 있는 관계의 맥락
+
+같은 Person이라도 친구, 동아리 선배, 직장 동료처럼 서로 다른 Role 안에서 다른 관계의 의미를 가질 수 있습니다.
+
+향후 `RoleEvent`, LifeLog, Person/RoleRelation이 연결되면 **누구와 어떤 일을 했고, 어떤 경험을 남겼는지**를 삶의 흐름 안에서 기록하는 방향으로 확장합니다.
+
+### LifeAsGame이 만들고 싶은 경험
+
+LifeAsGame은 특정 생산성 앱 하나를 대체하는 서비스가 아닙니다.
+
+단순 Todo, Diary, Workout Tracker, Finance Tracker, SNS 각각을 별도로 만드는 것이 아니라, 현실의 여러 영역을 하나의 성장 경험으로 연결하려고 합니다.
+
+```text
+Goal / Direction
+        ↓
+Quest
+        ↓
+Action / Experience
+        ↓
+LifeLog
+        ↓
+Reward / EXP / Item
+        ↓
+Character Growth
+        ↓
+Reflection / Next Goal
+```
+
+그리고 삶의 다른 축도 함께 연결합니다.
+
+```text
+Role
+ ├── Quest
+ ├── LifeLog
+ ├── Person / RoleRelation
+ ├── RoleEvent
+ └── Growth / Memory
+```
+
+최종적으로는 사용자가 앱을 열었을 때 다음 질문에 답할 수 있는 경험을 목표로 합니다.
+
+```text
+나는 어떤 사람으로 살아가고 있는가?
+나는 지금 무엇을 하고 있는가?
+나는 지금까지 무엇을 해왔는가?
+나는 어디에서 성장하고 있는가?
+내가 중요하게 생각하는 사람들은 누구인가?
+그들과 어떤 시간을 보냈는가?
+다음에는 무엇을 해야 하는가?
+```
+
+현재 저장소는 이 장기 제품 비전을 구현하는 **중간 개발 시점의 백엔드 스냅샷**입니다.  
+핵심 성장 루프는 실제 코드와 데이터베이스 계약으로 연결되어 있지만, 모든 bounded context가 최종 제품 구조에 도달한 것은 아닙니다.
 
 ### 핵심 제품 루프
 
@@ -204,9 +319,131 @@ Local profile은 기본값이며 Flyway migration을 실행합니다.
 
 ### Product
 
-LifeAsGame turns real-life experiences—such as exercise, media consumption, and collecting—into quest progress, rewards, and visible character growth. This repository contains the Spring Boot modular-monolith backend for that product.
+LifeAsGame is a **Life RPG platform designed to make invisible personal growth visible**.
 
-The repository is a **midpoint development snapshot**. The core growth loop is connected through application code and database contracts, while several bounded contexts are still evolving. The sections below distinguish implemented capabilities from planned or non-final areas.
+Students preparing for exams, job seekers, and working professionals often spend months or years putting effort into things whose results are not immediately visible.
+
+Over time, it becomes easy to lose track of questions such as:
+
+- What have I actually done?
+- Am I making progress?
+- What was I trying to achieve?
+- What should I do next?
+- What used to matter to me?
+- How much have I already built up?
+
+Studying, exercise, projects, job preparation, reading, hobbies, and relationships rarely provide immediate feedback in a form that feels measurable. When the accumulated process becomes invisible, people can start evaluating themselves only by the latest result and lose their sense of progress or direction.
+
+LifeAsGame aims to turn those **invisible traces of effort, experience, and growth into something that can be recorded, accumulated, revisited, and visualized**.
+
+Real-life actions and experiences are connected to Quest, EXP, Reward, and Character progression so that a player can view life as one continuous progression rather than a sequence of disconnected outcomes.
+
+```text
+What I have done
+        ↓
+LifeLog / Quest / Achievement
+        ↓
+Visible accumulated progress
+        ↓
+Understand where I am
+        ↓
+Choose the next goal and action
+```
+
+The goal is not simply to check off tasks.
+
+LifeAsGame is intended to help the player understand:
+
+- what effort they have accumulated
+- what experiences they have had
+- what goals they are moving toward
+- what they value and enjoy
+- where they are growing
+- what they should focus on next
+
+The product is designed around making accumulated effort visible so that a person can evaluate their life through a longer timeline of progress rather than a single outcome.
+
+### Relationships and memories are part of progression
+
+Growth is not limited to personal stats.
+
+People, relationships, shared memories, meaningful conversations, and promises are also part of a person's life.
+
+LifeAsGame is designed to eventually preserve relationship context such as:
+
+- who this person is to me
+- which Role connects us
+- what important conversations we have had
+- what they like or dislike
+- what we have done together
+- what memories we share
+- what we said we would do next
+- which promises or plans are still open
+
+This is not intended to turn people into CRM entries.
+
+The goal is to preserve the **context and memories that naturally disappear over time**, helping the player keep meaningful relationships connected to the rest of their life history.
+
+The model separates:
+
+- **Role** — a real-life identity or context the player lives through
+- **Person** — the player's private master record for a real person
+- **RoleRelation** — the relationship context between a Role and that Person
+
+The same Person may have different meanings in different Roles—for example, a friend, a club senior, and a coworker.
+
+As `RoleEvent`, LifeLog, Person, and RoleRelation evolve, the platform is intended to preserve not only **what happened**, but also **who was there, what it meant, and what should be remembered next**.
+
+### The experience LifeAsGame is trying to create
+
+LifeAsGame is not intended to be a replacement for one productivity category.
+
+It is not simply a Todo app, Diary, Workout Tracker, Finance Tracker, or Social Network.
+
+The product aims to connect different parts of life into one progression system.
+
+```text
+Goal / Direction
+        ↓
+Quest
+        ↓
+Action / Experience
+        ↓
+LifeLog
+        ↓
+Reward / EXP / Item
+        ↓
+Character Growth
+        ↓
+Reflection / Next Goal
+```
+
+Other parts of life are connected through the same model.
+
+```text
+Role
+ ├── Quest
+ ├── LifeLog
+ ├── Person / RoleRelation
+ ├── RoleEvent
+ └── Growth / Memory
+```
+
+The long-term experience is meant to help a player answer:
+
+```text
+Who am I becoming?
+What am I doing now?
+What have I done so far?
+Where am I growing?
+Who are the people that matter to me?
+What have we experienced together?
+What should I do next?
+```
+
+This repository is a **midpoint development snapshot** of the backend for that long-term product vision.
+
+The core growth loop is already connected through application code and database contracts, while several bounded contexts are still evolving. The sections below distinguish implemented capabilities from planned or non-final areas.
 
 ### Core product loop
 
