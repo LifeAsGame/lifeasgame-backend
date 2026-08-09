@@ -3,6 +3,7 @@ package online.lifeasgame.inventory.application;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.api.player.request.MailboxRequest;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
 import online.lifeasgame.inventory.domain.*;
@@ -41,7 +42,7 @@ class MailboxClaimBoundaryTest {
     private ItemReader itemReader;
 
     @Mock
-    private MailBoxQueryReader mailBoxQueryReader;
+    private CurrentPlayerAccessor currentPlayerAccessor;
 
     private MailboxService service;
 
@@ -51,7 +52,7 @@ class MailboxClaimBoundaryTest {
                 mailboxReader,
                 inventoryReader,
                 itemReader,
-                mailBoxQueryReader
+                currentPlayerAccessor
         );
     }
 

@@ -2,7 +2,7 @@ package online.lifeasgame.inventory.api.player;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.inventory.application.ItemService;
+import online.lifeasgame.inventory.application.ItemQueryService;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.application.result.ItemResult.Summary;
 import online.lifeasgame.inventory.api.player.mapper.ItemWebMapper;
@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/items")
 public class ItemController implements ItemApiSpecV1 {
 
-    private final ItemService itemService;
+    private final ItemQueryService itemQueryService;
 
     @Override
     @GetMapping("/{itemId}")
     public ResponseEntity<ApiResponse<ItemResponse.Detail>> getItem(@PathVariable Long itemId) {
-        ItemResult.Detail result = itemService.getItem(itemId);
+        ItemResult.Detail result = itemQueryService.getItem(itemId);
         return ApiResponses.ok(ItemWebMapper.toDetail(result));
     }
 
@@ -43,7 +43,13 @@ public class ItemController implements ItemApiSpecV1 {
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
-        ItemResult.Page<Summary> result = itemService.search(name, category, type, rarity, pageable);
+        ItemResult.Page<Summary> result = itemQueryService.search(
+                name,
+                category,
+                type,
+                rarity,
+                pageable
+        );
         return ApiResponses.ok(ItemWebMapper.toSummaryPage(result));
     }
 }

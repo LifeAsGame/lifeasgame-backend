@@ -2,8 +2,8 @@ package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.application.command.InventoryCommand;
-import online.lifeasgame.inventory.application.query.InventoryEntryView;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.domain.*;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class InventoryService {
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
     private final DomainEventPublisher domainEventPublisher;
-    private final InventoryQueryReader inventoryQueryReader;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
@@ -38,14 +38,9 @@ public class InventoryService {
         return InventoryResult.Slots.fromList(slotIndexes);
     }
 
-    public InventoryResult.Entries list(Long playerId) {
-        List<InventoryEntryView> entryViews = inventoryQueryReader.list(playerId);
-        return InventoryResult.Entries.fromViews(entryViews);
-    }
-
-    public InventoryResult.Entry getEntry(Long playerId, Long itemInstanceId) {
-        InventoryEntryView entryView = inventoryQueryReader.getEntry(playerId, itemInstanceId);
-        return InventoryResult.Entry.fromView(entryView);
+    @Transactional
+    public void remove(InventoryCommand.Remove command) {
+        remove(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -67,6 +62,11 @@ public class InventoryService {
     }
 
     @Transactional
+    public void move(InventoryCommand.Move command) {
+        move(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
+
+    @Transactional
     public void merge(Long playerId, InventoryCommand.Merge command) {
         SlotIndex from = SlotIndex.of(command.from());
         SlotIndex to = SlotIndex.of(command.to());
@@ -78,6 +78,11 @@ public class InventoryService {
         ItemCarryPolicy fromItemCarryPolicy = ItemCarryPolicy.from(item);
 
         playerInventory.merge(from, to, fromItemCarryPolicy);
+    }
+
+    @Transactional
+    public void merge(InventoryCommand.Merge command) {
+        merge(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -96,5 +101,13 @@ public class InventoryService {
         );
 
         return new InventoryResult.Slot(slotIndex.value());
+    }
+
+    @Transactional
+    public InventoryResult.Slot split(InventoryCommand.Split command) {
+        return split(
+                currentPlayerAccessor.currentPlayerIdOrThrow(),
+                command
+        );
     }
 }
