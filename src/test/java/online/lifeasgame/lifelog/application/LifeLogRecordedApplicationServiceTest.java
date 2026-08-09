@@ -2,11 +2,12 @@ package online.lifeasgame.lifelog.application;
 
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
-import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordRegistrar;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
@@ -52,8 +53,8 @@ class LifeLogRecordedApplicationServiceTest {
     void recordsLegacyCollectionCreate() {
         CollectionLogReader reader = mock(CollectionLogReader.class);
         CollectionLogWriter writer = mock(CollectionLogWriter.class);
-        LifeLogRecordService recordService =
-                mock(LifeLogRecordService.class);
+        LifeLogRecordRegistrar recordRegistrar =
+                mock(LifeLogRecordRegistrar.class);
         RecordingPublisher publisher = new RecordingPublisher();
         CollectionLog saved = mock(CollectionLog.class);
         when(saved.getId()).thenReturn(101L);
@@ -65,7 +66,7 @@ class LifeLogRecordedApplicationServiceTest {
                 LifeLogEntryMode.FULL,
                 null
         );
-        when(recordService.create(
+        when(recordRegistrar.register(
                 eq(PLAYER_ID),
                 eq(LifeLogSourceType.COLLECTION),
                 eq(101L),
@@ -75,8 +76,9 @@ class LifeLogRecordedApplicationServiceTest {
         CollectionLogService service = new CollectionLogService(
                 reader,
                 writer,
-                recordService,
-                publisher
+                recordRegistrar,
+                publisher,
+                mock(CurrentPlayerAccessor.class)
         );
 
         CollectionResult.Created result = service.create(
@@ -112,8 +114,8 @@ class LifeLogRecordedApplicationServiceTest {
     void recordsContentReadyExerciseCreate() {
         ExerciseLogReader reader = mock(ExerciseLogReader.class);
         ExerciseLogWriter writer = mock(ExerciseLogWriter.class);
-        LifeLogRecordService recordService =
-                mock(LifeLogRecordService.class);
+        LifeLogRecordRegistrar recordRegistrar =
+                mock(LifeLogRecordRegistrar.class);
         RecordingPublisher publisher = new RecordingPublisher();
         ExerciseLog saved = mock(ExerciseLog.class);
         when(saved.getId()).thenReturn(102L);
@@ -127,7 +129,7 @@ class LifeLogRecordedApplicationServiceTest {
                 LifeLogEntryMode.FULL,
                 LifeLogSubtype.ACTIVITY
         );
-        when(recordService.create(
+        when(recordRegistrar.register(
                 eq(PLAYER_ID),
                 eq(LifeLogSourceType.EXERCISE),
                 eq(102L),
@@ -137,8 +139,9 @@ class LifeLogRecordedApplicationServiceTest {
         ExerciseLogService service = new ExerciseLogService(
                 reader,
                 writer,
-                recordService,
-                publisher
+                recordRegistrar,
+                publisher,
+                mock(CurrentPlayerAccessor.class)
         );
 
         ExerciseResult.Created result = service.create(
@@ -176,8 +179,8 @@ class LifeLogRecordedApplicationServiceTest {
     void recordsMediaCreateOnce() {
         MediaLogReader reader = mock(MediaLogReader.class);
         MediaLogWriter writer = mock(MediaLogWriter.class);
-        LifeLogRecordService recordService =
-                mock(LifeLogRecordService.class);
+        LifeLogRecordRegistrar recordRegistrar =
+                mock(LifeLogRecordRegistrar.class);
         RecordingPublisher publisher = new RecordingPublisher();
         MediaLog saved = mock(MediaLog.class);
         when(saved.getId()).thenReturn(103L);
@@ -187,7 +190,7 @@ class LifeLogRecordedApplicationServiceTest {
                 LifeLogEntryMode.FULL,
                 LifeLogSubtype.STUDY
         );
-        when(recordService.create(
+        when(recordRegistrar.register(
                 eq(PLAYER_ID),
                 eq(LifeLogSourceType.MEDIA),
                 eq(103L),
@@ -197,8 +200,9 @@ class LifeLogRecordedApplicationServiceTest {
         MediaLogService service = new MediaLogService(
                 reader,
                 writer,
-                recordService,
-                publisher
+                recordRegistrar,
+                publisher,
+                mock(CurrentPlayerAccessor.class)
         );
 
         MediaLogResult.Created result = service.create(

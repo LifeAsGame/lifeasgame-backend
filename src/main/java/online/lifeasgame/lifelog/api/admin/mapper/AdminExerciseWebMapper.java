@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.admin.mapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
+import online.lifeasgame.lifelog.application.query.ExerciseQuery;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 
 import java.time.LocalDate;
@@ -13,14 +14,14 @@ public final class AdminExerciseWebMapper {
     private AdminExerciseWebMapper() {
     }
 
-    public static ExerciseCommand.Search toSearchCommand(
+    public static ExerciseQuery.Search toSearchQuery(
             String category,
             LocalDate from,
             LocalDate to,
             int page,
             int size
     ) {
-        return new ExerciseCommand.Search(category, from, to, page, size);
+        return new ExerciseQuery.Search(category, from, to, page, size);
     }
 
     public static List<AdminExerciseResponse.Info> toInfos(List<ExerciseResult.Info> results) {

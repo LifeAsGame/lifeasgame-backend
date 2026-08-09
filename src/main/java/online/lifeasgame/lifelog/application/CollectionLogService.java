@@ -2,10 +2,11 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
-import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordRegistrar;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
@@ -25,8 +26,14 @@ public class CollectionLogService {
 
     private final CollectionLogReader collectionLogReader;
     private final CollectionLogWriter collectionLogWriter;
-    private final LifeLogRecordService lifeLogRecordService;
+    private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Transactional
+    public CollectionResult.Created create(CollectionCommand.Create command) {
+        return create(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
 
     @Transactional
     public CollectionResult.Created create(Long playerId, CollectionCommand.Create command) {
@@ -67,7 +74,7 @@ public class CollectionLogService {
                 )
         );
 
-        LifeLogRecord record = lifeLogRecordService.create(
+        LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.COLLECTION,
                 saved.getId(),
@@ -97,6 +104,11 @@ public class CollectionLogService {
     }
 
     @Transactional
+    public CollectionResult.Info update(Long collectionId, CollectionCommand.Update command) {
+        return update(currentPlayerAccessor.currentPlayerIdOrThrow(), collectionId, command);
+    }
+
+    @Transactional
     public CollectionResult.Info update(Long playerId, Long collectionId, CollectionCommand.Update command) {
         CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
 
@@ -113,29 +125,12 @@ public class CollectionLogService {
         return CollectionResult.Info.from(collectionLog);
     }
 
-    public List<CollectionResult.Info> recent(Long playerId, int limit) {
-        return collectionLogReader.recent(playerId, limit).stream()
-                .map(CollectionResult.Info::from)
-                .toList();
+    @Transactional
+    public CollectionResult.Deleted delete(Long collectionId) {
+        return delete(currentPlayerAccessor.currentPlayerIdOrThrow(), collectionId);
     }
 
-    public List<CollectionResult.Info> search(Long playerId, CollectionCommand.Search command) {
-        return collectionLogReader.search(
-                        playerId,
-                        command.category(),
-                        command.titleLike(),
-                        command.page(),
-                        command.size()
-                ).stream()
-                .map(CollectionResult.Info::from)
-                .toList();
-    }
-
-    public CollectionResult.Info getCollection(Long playerId, Long collectionId) {
-        CollectionLog collectionLog = collectionLogReader.getByIdAndPlayerIdOrThrow(collectionId, playerId);
-        return CollectionResult.Info.from(collectionLog);
-    }
-
+    @Transactional
     public CollectionResult.Deleted delete(Long playerId, Long collectionId) {
         collectionLogWriter.delete(playerId, collectionId);
         return new CollectionResult.Deleted(playerId, collectionId);

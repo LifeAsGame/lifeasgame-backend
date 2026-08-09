@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.admin.mapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminCollectionRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminCollectionResponse;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
+import online.lifeasgame.lifelog.application.query.CollectionQuery;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 
 import java.util.List;
@@ -12,8 +13,8 @@ public final class AdminCollectionWebMapper {
     private AdminCollectionWebMapper() {
     }
 
-    public static CollectionCommand.Search toSearchCommand(String category, String titleLike, int page, int size) {
-        return new CollectionCommand.Search(category, titleLike, page, size);
+    public static CollectionQuery.Search toSearchQuery(String category, String titleLike, int page, int size) {
+        return new CollectionQuery.Search(category, titleLike, page, size);
     }
 
     public static List<AdminCollectionResponse.Info> toInfos(List<CollectionResult.Info> results) {

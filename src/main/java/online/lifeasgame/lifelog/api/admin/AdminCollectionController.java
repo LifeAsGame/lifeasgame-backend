@@ -10,6 +10,7 @@ import online.lifeasgame.lifelog.api.admin.request.AdminCollectionRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminCollectionResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminCollectionSpecV1;
 import online.lifeasgame.lifelog.application.CollectionLogService;
+import online.lifeasgame.lifelog.application.CollectionLogQueryService;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.List;
 public class AdminCollectionController implements AdminCollectionSpecV1 {
 
     private final CollectionLogService collectionLogService;
+    private final CollectionLogQueryService collectionLogQueryService;
 
     @Override
     @GetMapping("/{playerId}/collections/recent")
@@ -30,7 +32,7 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<CollectionResult.Info> results = collectionLogService.recent(playerId, limit);
+        List<CollectionResult.Info> results = collectionLogQueryService.recent(playerId, limit);
         return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
     }
 
@@ -43,9 +45,9 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        List<CollectionResult.Info> results = collectionLogService.search(
+        List<CollectionResult.Info> results = collectionLogQueryService.search(
                 playerId,
-                AdminCollectionWebMapper.toSearchCommand(category, titleLike, page, size)
+                AdminCollectionWebMapper.toSearchQuery(category, titleLike, page, size)
         );
 
         return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
@@ -87,7 +89,7 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long collectionId
     ) {
-        CollectionResult.Info result = collectionLogService.getCollection(playerId, collectionId);
+        CollectionResult.Info result = collectionLogQueryService.getCollection(playerId, collectionId);
         return ApiResponses.ok(AdminCollectionWebMapper.toInfo(result));
     }
 

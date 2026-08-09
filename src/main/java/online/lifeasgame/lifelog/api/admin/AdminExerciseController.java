@@ -10,6 +10,7 @@ import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminExerciseSpecV1;
 import online.lifeasgame.lifelog.application.ExerciseLogService;
+import online.lifeasgame.lifelog.application.ExerciseLogQueryService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,6 +26,7 @@ import java.util.List;
 public class AdminExerciseController implements AdminExerciseSpecV1 {
 
     private final ExerciseLogService exerciseLogService;
+    private final ExerciseLogQueryService exerciseLogQueryService;
 
     @Override
     @GetMapping("/{playerId}/exercises/recent")
@@ -32,7 +34,7 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<ExerciseResult.Info> results = exerciseLogService.recent(playerId, limit);
+        List<ExerciseResult.Info> results = exerciseLogQueryService.recent(playerId, limit);
         return ApiResponses.ok(AdminExerciseWebMapper.toInfos(results));
     }
 
@@ -46,9 +48,9 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<ExerciseResult.Info> results = exerciseLogService.search(
+        List<ExerciseResult.Info> results = exerciseLogQueryService.search(
                 playerId,
-                AdminExerciseWebMapper.toSearchCommand(category, from, to, page, size)
+                AdminExerciseWebMapper.toSearchQuery(category, from, to, page, size)
         );
 
         return ApiResponses.ok(AdminExerciseWebMapper.toInfos(results));
@@ -90,7 +92,7 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long exerciseId
     ) {
-        ExerciseResult.Info result = exerciseLogService.getExercise(playerId, exerciseId);
+        ExerciseResult.Info result = exerciseLogQueryService.getExercise(playerId, exerciseId);
         return ApiResponses.ok(AdminExerciseWebMapper.toInfo(result));
     }
 

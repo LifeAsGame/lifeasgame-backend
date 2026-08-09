@@ -7,7 +7,8 @@ import online.lifeasgame.lifelog.api.player.mapper.PlayerMediaLogWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerMediaLogRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerMediaLogResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerMediaLogSpecV1;
-import online.lifeasgame.lifelog.application.MediaLogFacade;
+import online.lifeasgame.lifelog.application.MediaLogQueryService;
+import online.lifeasgame.lifelog.application.MediaLogService;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +21,15 @@ import java.util.List;
 @RequestMapping("/api/v1/players/media")
 public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
 
-    private final MediaLogFacade mediaLogFacade;
+    private final MediaLogService mediaLogService;
+    private final MediaLogQueryService mediaLogQueryService;
 
     @Override
     @GetMapping("/recent")
     public ResponseEntity<List<PlayerMediaLogResponse.Info>> recent(
             @RequestParam(defaultValue = "20") Integer limit
     ) {
-        List<MediaLogResult.Info> infos = mediaLogFacade.recent(limit);
+        List<MediaLogResult.Info> infos = mediaLogQueryService.recent(limit);
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfos(infos));
     }
 
@@ -40,8 +42,8 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<MediaLogResult.Info> infos = mediaLogFacade.search(
-                PlayerMediaLogWebMapper.toSearchCommand(category, status, titleLike, page, size)
+        List<MediaLogResult.Info> infos = mediaLogQueryService.search(
+                PlayerMediaLogWebMapper.toSearchQuery(category, status, titleLike, page, size)
         );
 
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfos(infos));
@@ -52,7 +54,7 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
     public ResponseEntity<PlayerMediaLogResponse.Created> create(
             @Valid @RequestBody PlayerMediaLogRequest.Create request
     ) {
-        MediaLogResult.Created result = mediaLogFacade.create(PlayerMediaLogWebMapper.toCreateCommand(request));
+        MediaLogResult.Created result = mediaLogService.create(PlayerMediaLogWebMapper.toCreateCommand(request));
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toCreated(result));
     }
 
@@ -62,7 +64,7 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody PlayerMediaLogRequest.Rate request
     ) {
-        MediaLogResult.Info result = mediaLogFacade.rate(mediaId, PlayerMediaLogWebMapper.toRateCommand(request));
+        MediaLogResult.Info result = mediaLogService.rate(mediaId, PlayerMediaLogWebMapper.toRateCommand(request));
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 
@@ -72,7 +74,7 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody PlayerMediaLogRequest.Advance request
     ) {
-        MediaLogResult.Info result = mediaLogFacade.advance(mediaId, PlayerMediaLogWebMapper.toAdvanceCommand(request));
+        MediaLogResult.Info result = mediaLogService.advance(mediaId, PlayerMediaLogWebMapper.toAdvanceCommand(request));
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 
@@ -82,14 +84,14 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody PlayerMediaLogRequest.MarkStatus request
     ) {
-        MediaLogResult.Info result = mediaLogFacade.markStatus(mediaId, PlayerMediaLogWebMapper.toMarkStatusCommand(request));
+        MediaLogResult.Info result = mediaLogService.markStatus(mediaId, PlayerMediaLogWebMapper.toMarkStatusCommand(request));
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 
     @Override
     @PostMapping("/{mediaId}/rewatch")
     public ResponseEntity<PlayerMediaLogResponse.Info> rewatch(@PathVariable Long mediaId) {
-        MediaLogResult.Info result = mediaLogFacade.rewatch(mediaId);
+        MediaLogResult.Info result = mediaLogService.rewatch(mediaId);
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 
@@ -99,7 +101,7 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @PathVariable Long mediaId,
             @Valid @RequestBody PlayerMediaLogRequest.Update request
     ) {
-        MediaLogResult.Info result= mediaLogFacade.update(mediaId, PlayerMediaLogWebMapper.toUpdateCommand(request));
+        MediaLogResult.Info result= mediaLogService.update(mediaId, PlayerMediaLogWebMapper.toUpdateCommand(request));
         return ApiResponses.ok(PlayerMediaLogWebMapper.toInfo(result));
     }
 
@@ -108,7 +110,7 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
     public ResponseEntity<ApiResponse<PlayerMediaLogResponse.Deleted>> delete(
             @PathVariable Long mediaId
     ) {
-        MediaLogResult.Deleted result = mediaLogFacade.delete(mediaId);
+        MediaLogResult.Deleted result = mediaLogService.delete(mediaId);
         return ApiResponses.deleted(PlayerMediaLogWebMapper.toDeleted(result));
     }
 }

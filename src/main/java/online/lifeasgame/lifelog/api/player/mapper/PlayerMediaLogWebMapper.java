@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.mapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerMediaLogRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerMediaLogResponse;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.query.MediaLogQuery;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 
@@ -13,14 +14,14 @@ public final class PlayerMediaLogWebMapper {
     private PlayerMediaLogWebMapper() {
     }
 
-    public static MediaLogCommand.Search toSearchCommand(
+    public static MediaLogQuery.Search toSearchQuery(
             String category,
             String status,
             String titleLike,
             int page,
             int size
     ) {
-        return new MediaLogCommand.Search(category, status, titleLike, page, size);
+        return new MediaLogQuery.Search(category, status, titleLike, page, size);
     }
 
     public static List<PlayerMediaLogResponse.Info> toInfos(List<MediaLogResult.Info> results) {

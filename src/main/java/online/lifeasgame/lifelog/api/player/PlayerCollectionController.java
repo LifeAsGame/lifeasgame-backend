@@ -9,7 +9,8 @@ import online.lifeasgame.lifelog.api.player.mapper.PlayerCollectionWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerCollectionResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerCollectionSpecV1;
-import online.lifeasgame.lifelog.application.CollectionLogFacade;
+import online.lifeasgame.lifelog.application.CollectionLogQueryService;
+import online.lifeasgame.lifelog.application.CollectionLogService;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +23,15 @@ import java.util.List;
 @RequestMapping("/api/v1/players/collections")
 public class PlayerCollectionController implements PlayerCollectionSpecV1 {
 
-    private final CollectionLogFacade collectionLogFacade;
+    private final CollectionLogService collectionLogService;
+    private final CollectionLogQueryService collectionLogQueryService;
 
     @Override
     @GetMapping("/recent")
     public ResponseEntity<List<PlayerCollectionResponse.Info>> recent(
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
     ) {
-        List<CollectionResult.Info> results = collectionLogFacade.recent(limit);
+        List<CollectionResult.Info> results = collectionLogQueryService.recent(limit);
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
     }
 
@@ -41,8 +43,8 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        List<CollectionResult.Info> results = collectionLogFacade.search(
-                PlayerCollectionWebMapper.toSearchCommand(category, titleLike, page, size)
+        List<CollectionResult.Info> results = collectionLogQueryService.search(
+                PlayerCollectionWebMapper.toSearchQuery(category, titleLike, page, size)
         );
 
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
@@ -53,7 +55,7 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     public ResponseEntity<PlayerCollectionResponse.Created> create(
             @Valid @RequestBody PlayerCollectionRequest.Create request
     ) {
-        CollectionResult.Created result = collectionLogFacade.create(PlayerCollectionWebMapper.toCreateCommand(request));
+        CollectionResult.Created result = collectionLogService.create(PlayerCollectionWebMapper.toCreateCommand(request));
         return ResponseEntity.ok(PlayerCollectionWebMapper.toCreated(result));
     }
 
@@ -63,7 +65,7 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
             @PathVariable Long collectionId,
             @Valid @RequestBody PlayerCollectionRequest.Update request
     ) {
-        CollectionResult.Info result = collectionLogFacade.update(collectionId, PlayerCollectionWebMapper.toUpdateCommand(request));
+        CollectionResult.Info result = collectionLogService.update(collectionId, PlayerCollectionWebMapper.toUpdateCommand(request));
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfo(result));
     }
 
@@ -72,7 +74,7 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     public ResponseEntity<ApiResponse<PlayerCollectionResponse.Info>> get(
             @PathVariable Long collectionId
     ) {
-        CollectionResult.Info result = collectionLogFacade.getCollection(collectionId);
+        CollectionResult.Info result = collectionLogQueryService.getCollection(collectionId);
         return ApiResponses.ok(PlayerCollectionWebMapper.toInfo(result));
     }
 
@@ -81,7 +83,7 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     public ResponseEntity<ApiResponse<PlayerCollectionResponse.Deleted>> delete(
             @PathVariable Long collectionId
     ) {
-        CollectionResult.Deleted result = collectionLogFacade.delete(collectionId);
+        CollectionResult.Deleted result = collectionLogService.delete(collectionId);
         return ApiResponses.deleted(PlayerCollectionWebMapper.toDeleted(result));
     }
 }

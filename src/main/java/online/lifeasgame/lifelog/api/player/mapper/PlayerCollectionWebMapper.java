@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.mapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerCollectionResponse;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
+import online.lifeasgame.lifelog.application.query.CollectionQuery;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 
@@ -13,13 +14,13 @@ public final class PlayerCollectionWebMapper {
     private PlayerCollectionWebMapper() {
     }
 
-    public static CollectionCommand.Search toSearchCommand(
+    public static CollectionQuery.Search toSearchQuery(
             String category,
             String titleLike,
             int page,
             int size
     ) {
-        return new CollectionCommand.Search(category, titleLike, page, size);
+        return new CollectionQuery.Search(category, titleLike, page, size);
     }
 
     public static List<PlayerCollectionResponse.Info> toInfos(List<CollectionResult.Info> results) {

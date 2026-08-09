@@ -2,6 +2,7 @@ package online.lifeasgame.lifelog.quick.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.CollectionLogService;
 import online.lifeasgame.lifelog.application.ExerciseLogService;
 import online.lifeasgame.lifelog.application.MediaLogService;
@@ -28,6 +29,19 @@ public class QuickRecordService {
     private final QuickRecordRequestReceiptRepository receiptRepository;
     private final QuickRecordRequestHasher requestHasher;
     private final Clock clock;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Transactional
+    public QuickRecordResult.Recorded record(
+            String idempotencyKey,
+            QuickRecordCommand.Create command
+    ) {
+        return record(
+                currentPlayerAccessor.currentPlayerIdOrThrow(),
+                idempotencyKey,
+                command
+        );
+    }
 
     @Transactional
     public QuickRecordResult.Recorded record(

@@ -48,11 +48,4 @@ public final class CollectionCommand {
     ) {
     }
 
-    public record Search(
-            String category,
-            String titleLike,
-            int page,
-            int size
-    ) {
-    }
 }
