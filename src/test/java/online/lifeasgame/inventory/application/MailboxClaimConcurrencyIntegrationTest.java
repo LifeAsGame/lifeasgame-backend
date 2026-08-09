@@ -6,6 +6,7 @@ import online.lifeasgame.inventory.application.internal.InventoryRewardDeliveryA
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,138 +46,153 @@ class MailboxClaimConcurrencyIntegrationTest
         resetState();
     }
 
-    @Test
-    @DisplayName("same slot quantity 1은 정확히 하나만 claim하고 timeout 없이 보존한다")
-    void serializesSameSlotClaim() throws Exception {
-        deliver(ITEM_A, 1, Map.of(), true);
+    @Nested
+    @DisplayName("같은 Mailbox slot을 동시에 claim하면")
+    class ClaimSameSlot {
 
-        List<Throwable> outcomes = race(
-                () -> claim(0, 1),
-                () -> claim(0, 1)
-        );
+        @Test
+        @DisplayName("quantity 1은 정확히 하나만 claim하고 timeout 없이 보존한다")
+        void serializesSameSlotClaim() throws Exception {
+            deliver(ITEM_A, 1, Map.of(), true);
 
-        assertOneFailure(outcomes, InventoryError.SLOT_EMPTY);
-        assertThat(mailboxTotal()).isZero();
-        assertThat(inventoryTotal()).isEqualTo(1);
-        assertConserved(1, 0);
-    }
+            List<Throwable> outcomes = race(
+                    () -> claim(0, 1),
+                    () -> claim(0, 1)
+            );
 
-    @Test
-    @DisplayName("same slot quantity 10의 두 claim 7은 하나만 성공한다")
-    void serializesInsufficientSameSlotClaim() throws Exception {
-        deliver(ITEM_A, 10, Map.of(), true);
-
-        List<Throwable> outcomes = race(
-                () -> claim(0, 7),
-                () -> claim(0, 7)
-        );
-
-        assertOneFailure(outcomes, InventoryError.NOT_ENOUGH_QUANTITY);
-        assertThat(mailboxTotal()).isEqualTo(3);
-        assertThat(inventoryTotal()).isEqualTo(7);
-        assertConserved(10, 0);
-    }
-
-    @Test
-    @DisplayName("overlapping claimAll은 후행 batch 전체를 latest state에서 거부한다")
-    void serializesOverlappingBatches() throws Exception {
-        deliver(ITEM_A, 5, Map.of("grade", "A"), true);
-        deliver(ITEM_A, 5, Map.of("grade", "B"), true);
-        deliver(ITEM_B, 1, Map.of(), true);
-
-        List<Throwable> outcomes = race(
-                () -> claimAll(
-                        new MailboxCommand.Claim(0, 3),
-                        new MailboxCommand.Claim(1, 3)
-                ),
-                () -> claimAll(
-                        new MailboxCommand.Claim(1, 4),
-                        new MailboxCommand.Claim(2, 1)
-                )
-        );
-
-        assertOneFailure(outcomes, InventoryError.NOT_ENOUGH_QUANTITY);
-        assertThat(mailboxTotal() + inventoryTotal()).isEqualTo(11);
-        if (inventoryTotal() == 6) {
-            assertThat(mailboxSlotQuantity(0)).isEqualTo(2);
-            assertThat(mailboxSlotQuantity(2)).isEqualTo(1);
-        } else {
-            assertThat(inventoryTotal()).isEqualTo(5);
-            assertThat(mailboxSlotQuantity(0)).isEqualTo(5);
-            assertThat(mailboxSlotQuantity(2)).isZero();
-        }
-    }
-
-    @Test
-    @DisplayName("claim과 overlapping claimAll도 partial batch 없이 직렬화한다")
-    void serializesClaimAgainstBatch() throws Exception {
-        deliver(ITEM_A, 2, Map.of("grade", "A"), true);
-        deliver(ITEM_A, 1, Map.of("grade", "B"), true);
-
-        List<Throwable> outcomes = race(
-                () -> claim(0, 1),
-                () -> claimAll(
-                        new MailboxCommand.Claim(0, 2),
-                        new MailboxCommand.Claim(1, 1)
-                )
-        );
-
-        assertThat(successCount(outcomes)).isEqualTo(1);
-        assertThat(failure(outcomes)).isInstanceOfSatisfying(
-                DomainException.class,
-                exception -> assertThat(exception.getErrorCode()).isIn(
-                        InventoryError.SLOT_EMPTY,
-                        InventoryError.NOT_ENOUGH_QUANTITY
-                )
-        );
-        assertThat(mailboxTotal() + inventoryTotal()).isEqualTo(3);
-        if (inventoryTotal() == 1) {
-            assertThat(mailboxSlotQuantity(1)).isEqualTo(1);
-        } else {
-            assertThat(inventoryTotal()).isEqualTo(3);
+            assertOneFailure(outcomes, InventoryError.SLOT_EMPTY);
             assertThat(mailboxTotal()).isZero();
+            assertThat(inventoryTotal()).isEqualTo(1);
+            assertConserved(1, 0);
+        }
+
+        @Test
+        @DisplayName("quantity 10의 두 claim 7은 하나만 성공한다")
+        void serializesInsufficientSameSlotClaim() throws Exception {
+            deliver(ITEM_A, 10, Map.of(), true);
+
+            List<Throwable> outcomes = race(
+                    () -> claim(0, 7),
+                    () -> claim(0, 7)
+            );
+
+            assertOneFailure(outcomes, InventoryError.NOT_ENOUGH_QUANTITY);
+            assertThat(mailboxTotal()).isEqualTo(3);
+            assertThat(inventoryTotal()).isEqualTo(7);
+            assertConserved(10, 0);
         }
     }
 
-    @RepeatedTest(10)
-    @DisplayName("claim과 Reward delivery는 lost update 없이 receipt와 총량을 보존한다")
-    void serializesClaimAgainstRewardDelivery() throws Exception {
-        deliver(ITEM_A, 1, Map.of(), true);
+    @Nested
+    @DisplayName("겹치는 claim과 claimAll을 동시에 실행하면")
+    class ClaimOverlappingBatch {
 
-        List<Throwable> outcomes = race(
-                () -> claim(0, 1),
-                () -> rewardDeliveryApi.deliverReward(
-                        2282001L,
-                        PLAYER_ID,
-                        ITEM_A,
-                        2L
-                )
-        );
+        @Test
+        @DisplayName("overlapping claimAll은 후행 batch 전체를 latest state에서 거부한다")
+        void serializesOverlappingBatches() throws Exception {
+            deliver(ITEM_A, 5, Map.of("grade", "A"), true);
+            deliver(ITEM_A, 5, Map.of("grade", "B"), true);
+            deliver(ITEM_B, 1, Map.of(), true);
 
-        assertThat(outcomes).containsOnlyNulls();
-        assertThat(receiptCount(2282001L)).isEqualTo(1);
-        assertThat(mailboxTotal()).isEqualTo(2);
-        assertThat(inventoryTotal()).isEqualTo(1);
-        assertConserved(3, 0);
+            List<Throwable> outcomes = race(
+                    () -> claimAll(
+                            new MailboxCommand.Claim(0, 3),
+                            new MailboxCommand.Claim(1, 3)
+                    ),
+                    () -> claimAll(
+                            new MailboxCommand.Claim(1, 4),
+                            new MailboxCommand.Claim(2, 1)
+                    )
+            );
+
+            assertOneFailure(outcomes, InventoryError.NOT_ENOUGH_QUANTITY);
+            assertThat(mailboxTotal() + inventoryTotal()).isEqualTo(11);
+            if (inventoryTotal() == 6) {
+                assertThat(mailboxSlotQuantity(0)).isEqualTo(2);
+                assertThat(mailboxSlotQuantity(2)).isEqualTo(1);
+            } else {
+                assertThat(inventoryTotal()).isEqualTo(5);
+                assertThat(mailboxSlotQuantity(0)).isEqualTo(5);
+                assertThat(mailboxSlotQuantity(2)).isZero();
+            }
+        }
+
+        @Test
+        @DisplayName("claim과 claimAll도 partial batch 없이 직렬화한다")
+        void serializesClaimAgainstBatch() throws Exception {
+            deliver(ITEM_A, 2, Map.of("grade", "A"), true);
+            deliver(ITEM_A, 1, Map.of("grade", "B"), true);
+
+            List<Throwable> outcomes = race(
+                    () -> claim(0, 1),
+                    () -> claimAll(
+                            new MailboxCommand.Claim(0, 2),
+                            new MailboxCommand.Claim(1, 1)
+                    )
+            );
+
+            assertThat(successCount(outcomes)).isEqualTo(1);
+            assertThat(failure(outcomes)).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode()).isIn(
+                            InventoryError.SLOT_EMPTY,
+                            InventoryError.NOT_ENOUGH_QUANTITY
+                    )
+            );
+            assertThat(mailboxTotal() + inventoryTotal()).isEqualTo(3);
+            if (inventoryTotal() == 1) {
+                assertThat(mailboxSlotQuantity(1)).isEqualTo(1);
+            } else {
+                assertThat(inventoryTotal()).isEqualTo(3);
+                assertThat(mailboxTotal()).isZero();
+            }
+        }
     }
 
-    @Test
-    @DisplayName("claim과 delete는 정확히 하나만 적용하고 총량을 보존한다")
-    void serializesClaimAgainstDelete() throws Exception {
-        deliver(ITEM_A, 1, Map.of(), true);
+    @Nested
+    @DisplayName("claim과 다른 Mailbox mutation이 경쟁하면")
+    class ClaimAgainstOtherMutation {
 
-        List<Throwable> outcomes = race(
-                () -> claim(0, 1),
-                () -> mailboxService.delete(
-                        PLAYER_ID,
-                        new MailboxCommand.Delete(0)
-                )
-        );
+        @RepeatedTest(10)
+        @DisplayName("Reward delivery와 lost update 없이 receipt와 총량을 보존한다")
+        void serializesClaimAgainstRewardDelivery() throws Exception {
+            deliver(ITEM_A, 1, Map.of(), true);
 
-        assertOneFailure(outcomes, InventoryError.SLOT_EMPTY);
-        long deleted = inventoryTotal() == 0 ? 1 : 0;
-        assertThat(mailboxTotal()).isZero();
-        assertConserved(1, deleted);
+            List<Throwable> outcomes = race(
+                    () -> claim(0, 1),
+                    () -> rewardDeliveryApi.deliverReward(
+                            2282001L,
+                            PLAYER_ID,
+                            ITEM_A,
+                            2L
+                    )
+            );
+
+            assertThat(outcomes).containsOnlyNulls();
+            assertThat(receiptCount(2282001L)).isEqualTo(1);
+            assertThat(mailboxTotal()).isEqualTo(2);
+            assertThat(inventoryTotal()).isEqualTo(1);
+            assertConserved(3, 0);
+        }
+
+        @Test
+        @DisplayName("delete와 정확히 하나만 적용하고 총량을 보존한다")
+        void serializesClaimAgainstDelete() throws Exception {
+            deliver(ITEM_A, 1, Map.of(), true);
+
+            List<Throwable> outcomes = race(
+                    () -> claim(0, 1),
+                    () -> mailboxService.delete(
+                            PLAYER_ID,
+                            new MailboxCommand.Delete(0)
+                    )
+            );
+
+            assertOneFailure(outcomes, InventoryError.SLOT_EMPTY);
+            long deleted = inventoryTotal() == 0 ? 1 : 0;
+            assertThat(mailboxTotal()).isZero();
+            assertConserved(1, deleted);
+        }
     }
 
     private void claim(int slot, int quantity) {

@@ -13,6 +13,7 @@ import online.lifeasgame.reward.domain.RewardType;
 import online.lifeasgame.reward.domain.error.RewardError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,81 +55,91 @@ class RewardSettlementItemProcessAttemptTest {
         );
     }
 
-    @Test
-    @DisplayName("PENDING ITEM을 신규 지급하고 Line과 Settlement를 성공시킨다")
-    void deliversPendingItem() {
-        RewardSettlement settlement = itemSettlement();
-        given(settlementReader.getByIdForUpdateOrThrow(100L))
-                .willReturn(settlement);
-        given(inventoryDeliveryApi.deliverReward(
-                1000L, 1L, "IT_ITEM", 2L
-        )).willReturn(delivery(false));
+    @Nested
+    @DisplayName("PENDING ITEM Line을 처리할 때")
+    class ProcessPendingLine {
 
-        var result = attempt.process(100L, 1000L);
+        @Test
+        @DisplayName("신규 지급하고 Line과 Settlement를 성공시킨다")
+        void deliversPendingItem() {
+            RewardSettlement settlement = itemSettlement();
+            given(settlementReader.getByIdForUpdateOrThrow(100L))
+                    .willReturn(settlement);
+            given(inventoryDeliveryApi.deliverReward(
+                    1000L, 1L, "IT_ITEM", 2L
+            )).willReturn(delivery(false));
 
-        assertThat(result.lineStatus())
-                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
-        assertThat(result.settlementStatus())
-                .isEqualTo(RewardSettlementStatus.COMPLETED);
-        assertThat(result.replayed()).isFalse();
-        assertThat(result.deliveryId()).isEqualTo(500L);
-        verify(settlementWriter).saveAndFlush(settlement);
+            var result = attempt.process(100L, 1000L);
+
+            assertThat(result.lineStatus())
+                    .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+            assertThat(result.settlementStatus())
+                    .isEqualTo(RewardSettlementStatus.COMPLETED);
+            assertThat(result.replayed()).isFalse();
+            assertThat(result.deliveryId()).isEqualTo(500L);
+            verify(settlementWriter).saveAndFlush(settlement);
+        }
+
+        @Test
+        @DisplayName("matching receipt replay로 Line 성공을 복구한다")
+        void recoversPendingLineFromDeliveryReplay() {
+            RewardSettlement settlement = itemSettlement();
+            given(settlementReader.getByIdForUpdateOrThrow(100L))
+                    .willReturn(settlement);
+            given(inventoryDeliveryApi.deliverReward(
+                    1000L, 1L, "IT_ITEM", 2L
+            )).willReturn(delivery(true));
+
+            var result = attempt.process(100L, 1000L);
+
+            assertThat(result.replayed()).isTrue();
+            assertThat(result.lineStatus())
+                    .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+            verify(settlementWriter).saveAndFlush(settlement);
+        }
     }
 
-    @Test
-    @DisplayName("PENDING ITEM의 matching receipt replay로 Line 성공을 복구한다")
-    void recoversPendingLineFromDeliveryReplay() {
-        RewardSettlement settlement = itemSettlement();
-        given(settlementReader.getByIdForUpdateOrThrow(100L))
-                .willReturn(settlement);
-        given(inventoryDeliveryApi.deliverReward(
-                1000L, 1L, "IT_ITEM", 2L
-        )).willReturn(delivery(true));
+    @Nested
+    @DisplayName("이미 SUCCEEDED인 ITEM Line을 다시 처리할 때")
+    class ProcessSucceededLine {
 
-        var result = attempt.process(100L, 1000L);
+        @Test
+        @DisplayName("receipt만 검증하고 신규 지급과 저장을 하지 않는다")
+        void verifiesSucceededLineReceiptOnly() {
+            RewardSettlement settlement = itemSettlement();
+            settlement.markItemLineSucceeded(1000L);
+            given(settlementReader.getByIdForUpdateOrThrow(100L))
+                    .willReturn(settlement);
+            given(inventoryDeliveryApi.findRewardDelivery(1000L))
+                    .willReturn(Optional.of(receipt()));
 
-        assertThat(result.replayed()).isTrue();
-        assertThat(result.lineStatus())
-                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
-        verify(settlementWriter).saveAndFlush(settlement);
-    }
+            var result = attempt.process(100L, 1000L);
 
-    @Test
-    @DisplayName("SUCCEEDED ITEM은 receipt만 검증하고 신규 지급과 저장을 하지 않는다")
-    void verifiesSucceededLineReceiptOnly() {
-        RewardSettlement settlement = itemSettlement();
-        settlement.markItemLineSucceeded(1000L);
-        given(settlementReader.getByIdForUpdateOrThrow(100L))
-                .willReturn(settlement);
-        given(inventoryDeliveryApi.findRewardDelivery(1000L))
-                .willReturn(Optional.of(receipt()));
+            assertThat(result.replayed()).isTrue();
+            verify(inventoryDeliveryApi, never()).deliverReward(
+                    1000L, 1L, "IT_ITEM", 2L
+            );
+            verify(settlementWriter, never()).saveAndFlush(settlement);
+        }
 
-        var result = attempt.process(100L, 1000L);
+        @Test
+        @DisplayName("receipt가 없으면 신규 지급 없이 invariant error다")
+        void rejectsSucceededLineWithoutReceipt() {
+            RewardSettlement settlement = itemSettlement();
+            settlement.markItemLineSucceeded(1000L);
+            given(settlementReader.getByIdForUpdateOrThrow(100L))
+                    .willReturn(settlement);
+            given(inventoryDeliveryApi.findRewardDelivery(1000L))
+                    .willReturn(Optional.empty());
 
-        assertThat(result.replayed()).isTrue();
-        verify(inventoryDeliveryApi, never()).deliverReward(
-                1000L, 1L, "IT_ITEM", 2L
-        );
-        verify(settlementWriter, never()).saveAndFlush(settlement);
-    }
+            assertInconsistent(() -> attempt.process(100L, 1000L));
 
-    @Test
-    @DisplayName("SUCCEEDED ITEM receipt가 없으면 신규 지급 없이 invariant error다")
-    void rejectsSucceededLineWithoutReceipt() {
-        RewardSettlement settlement = itemSettlement();
-        settlement.markItemLineSucceeded(1000L);
-        given(settlementReader.getByIdForUpdateOrThrow(100L))
-                .willReturn(settlement);
-        given(inventoryDeliveryApi.findRewardDelivery(1000L))
-                .willReturn(Optional.empty());
-
-        assertInconsistent(() -> attempt.process(100L, 1000L));
-
-        verify(inventoryDeliveryApi, never()).deliverReward(
-                1000L, 1L, "IT_ITEM", 2L
-        );
-        assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
-                .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+            verify(inventoryDeliveryApi, never()).deliverReward(
+                    1000L, 1L, "IT_ITEM", 2L
+            );
+            assertThat(settlement.getLineByIdOrThrow(1000L).getStatus())
+                    .isEqualTo(RewardSettlementLineStatus.SUCCEEDED);
+        }
     }
 
     @ParameterizedTest

@@ -4,6 +4,8 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.application.*;
 import online.lifeasgame.reward.application.event.QuestRewardReadyBridge;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +18,11 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisplayName("Inventory/Reward residual architecture alignment")
 class InventoryRewardResidualArchitectureTest {
 
     @Test
+    @DisplayName("단순 Facade와 query forwarding wrapper는 존재하지 않는다")
     void simpleFacadesAndQueryForwardersAreRemoved() {
         for (String className : Set.of(
                 "online.lifeasgame.inventory.application.InventoryFacade",
@@ -33,6 +37,7 @@ class InventoryRewardResidualArchitectureTest {
     }
 
     @Test
+    @DisplayName("self identity는 실제 Inventory와 Mailbox use case가 resolve한다")
     void selfIdentityLivesInInventoryAndMailboxUseCases() {
         for (Class<?> type : List.of(
                 InventoryService.class,
@@ -45,6 +50,7 @@ class InventoryRewardResidualArchitectureTest {
     }
 
     @Test
+    @DisplayName("query는 read-only이며 Item command service에는 read가 없다")
     void queryServicesAreReadOnlyAndItemCommandsContainNoReads() {
         for (Class<?> type : List.of(
                 InventoryQueryService.class,
@@ -64,6 +70,7 @@ class InventoryRewardResidualArchitectureTest {
     }
 
     @Test
+    @DisplayName("Reward attempt와 failure transaction 격리를 유지한다")
     void rewardAttemptAndFailureTransactionsRemainIsolated()
             throws Exception {
         assertRequiresNew(RewardSettlementCreateAttempt.class, "create");
@@ -86,10 +93,11 @@ class InventoryRewardResidualArchitectureTest {
     }
 
     @Test
+    @DisplayName("Reward bridge는 Quest 소유 typed fact를 소비한다")
     void rewardBridgeConsumesTheQuestOwnedTypedFact() {
         assertThat(Arrays.stream(
-                        QuestRewardReadyBridge.class.getDeclaredMethods()
-                ).flatMap(method -> Arrays.stream(method.getParameterTypes())))
+                QuestRewardReadyBridge.class.getDeclaredMethods()
+        ).flatMap(method -> Arrays.stream(method.getParameterTypes())))
                 .contains(QuestRewardReadyFact.class);
     }
 
