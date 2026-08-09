@@ -1,6 +1,7 @@
 package online.lifeasgame.user.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.security.CurrentUserAccessor;
 import online.lifeasgame.user.application.command.UserSettingCommand;
 import online.lifeasgame.user.application.result.UserSettingResult;
 import online.lifeasgame.user.domain.UserSetting;
@@ -13,15 +14,27 @@ public class UserSettingService {
 
     private final UserSettingWriter userSettingWriter;
     private final UserSettingReader userSettingReader;
+    private final CurrentUserAccessor currentUserAccessor;
 
     @Transactional
     public Long ensureDefaultIfMissing(Long userId) {
         return userSettingWriter.ensureDefaultIfMissing(userId);
     }
 
+    @Transactional(readOnly = true)
+    public UserSettingResult.Settings getSettings() {
+        return getSettings(currentUserAccessor.currentUserIdOrThrow());
+    }
+
+    @Transactional(readOnly = true)
     public UserSettingResult.Settings getSettings(Long userId) {
         UserSetting userSetting = userSettingReader.findByIdOrElseThrow(userId);
         return UserSettingResult.Settings.from(userSetting);
+    }
+
+    @Transactional
+    public UserSettingResult.Settings updateSettings(UserSettingCommand.UpdateSettings command) {
+        return updateSettings(currentUserAccessor.currentUserIdOrThrow(), command);
     }
 
     @Transactional

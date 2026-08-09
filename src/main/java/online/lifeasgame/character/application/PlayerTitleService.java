@@ -6,6 +6,7 @@ import online.lifeasgame.character.application.result.PlayerTitleResult;
 import online.lifeasgame.character.application.view.PlayerTitleView;
 import online.lifeasgame.character.domain.PlayerTitle;
 import online.lifeasgame.character.domain.Title;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +21,11 @@ public class PlayerTitleService {
     private final PlayerTitleWriter playerTitleWriter;
     private final TitleReader titleReader;
     private final PlayerReader playerReader;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
-    public List<PlayerTitleResult.Info> getPlayerTitleInfos(Long playerId) {
+    @Transactional(readOnly = true)
+    public List<PlayerTitleResult.Info> getPlayerTitleInfos() {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         List<PlayerTitleView> playerTitleViews = playerTitleReader.getViewsByPlayerId(playerId);
         return playerTitleViews.stream()
                 .map(PlayerTitleResult.Info::from)

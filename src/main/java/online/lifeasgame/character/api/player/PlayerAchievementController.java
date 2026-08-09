@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.api.player.mapper.PlayerAchievementWebMapper;
 import online.lifeasgame.character.api.player.response.PlayerAchievementResponse;
 import online.lifeasgame.character.api.player.spec.PlayerAchievementApiSpecV1;
-import online.lifeasgame.character.application.PlayerAchievementFacade;
+import online.lifeasgame.character.application.PlayerAchievementService;
 import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -20,12 +20,12 @@ import java.util.List;
 @RequestMapping("/api/v1/players")
 public class PlayerAchievementController implements PlayerAchievementApiSpecV1 {
 
-    private final PlayerAchievementFacade playerAchievementFacade;
+    private final PlayerAchievementService playerAchievementService;
 
     @Override
     @GetMapping("/achievements")
     public ResponseEntity<ApiResponse<PlayerAchievementResponse.Infos>> playerAchievementInfos() {
-        List<PlayerAchievementResult.Info> results = playerAchievementFacade.getPlayerAchievementInfos();
+        List<PlayerAchievementResult.Info> results = playerAchievementService.getPlayerAchievementInfos();
         return ApiResponses.ok(PlayerAchievementWebMapper.toInfos(results));
     }
 }

@@ -5,7 +5,7 @@ import online.lifeasgame.character.api.player.mapper.PlayerEquipmentWebMapper;
 import online.lifeasgame.character.api.player.request.PlayerEquipmentRequest;
 import online.lifeasgame.character.api.player.response.PlayerEquipmentResponse;
 import online.lifeasgame.character.api.player.spec.PlayerEquipmentApiSpecV1;
-import online.lifeasgame.character.application.PlayerEquipmentFacade;
+import online.lifeasgame.character.application.PlayerEquipmentService;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -19,12 +19,12 @@ import java.util.List;
 @RequestMapping("/api/v1/players")
 public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
 
-    private final PlayerEquipmentFacade playerEquipmentFacade;
+    private final PlayerEquipmentService playerEquipmentService;
 
     @Override
     @GetMapping("/equipment")
     public ResponseEntity<ApiResponse<PlayerEquipmentResponse.Infos>> playerEquipmentInfos() {
-        List<PlayerEquipmentResult.Info> results = playerEquipmentFacade.getPlayerEquipmentInfos();
+        List<PlayerEquipmentResult.Info> results = playerEquipmentService.getPlayerEquipmentInfos();
         return ApiResponses.ok(PlayerEquipmentWebMapper.toInfos(results));
     }
 
@@ -34,7 +34,7 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
             @PathVariable Long slotId,
             @RequestBody PlayerEquipmentRequest.Equip request
     ) {
-        PlayerEquipmentResult.Equipped result = playerEquipmentFacade.equip(
+        PlayerEquipmentResult.Equipped result = playerEquipmentService.equip(
                 PlayerEquipmentWebMapper.toEquipCommand(slotId, request)
         );
 
@@ -44,7 +44,7 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
     @Override
     @DeleteMapping("/equipment/{slotId}")
     public ResponseEntity<ApiResponse<PlayerEquipmentResponse.UnEquipped>> unEquip(@PathVariable Long slotId) {
-        playerEquipmentFacade.unEquip(slotId);
+        playerEquipmentService.unEquip(slotId);
         return ApiResponses.deleted(PlayerEquipmentWebMapper.toUnEquipped(slotId));
     }
 }

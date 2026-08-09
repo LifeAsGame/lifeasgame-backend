@@ -6,7 +6,7 @@ import online.lifeasgame.character.api.player.mapper.PlayerHobbyWebMapper;
 import online.lifeasgame.character.api.player.request.PlayerHobbyRequest;
 import online.lifeasgame.character.api.player.response.PlayerHobbyResponse;
 import online.lifeasgame.character.api.player.spec.PlayerHobbyApiSpecV1;
-import online.lifeasgame.character.application.PlayerHobbyFacade;
+import online.lifeasgame.character.application.PlayerHobbyService;
 import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -21,12 +21,12 @@ import java.util.List;
 @RequestMapping("/api/v1/players")
 public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
 
-    private final PlayerHobbyFacade playerHobbyFacade;
+    private final PlayerHobbyService playerHobbyService;
 
     @Override
     @GetMapping("/hobbies")
     public ResponseEntity<ApiResponse<PlayerHobbyResponse.Infos>> playerHobbyInfos() {
-        List<PlayerHobbyResult.Info> results = playerHobbyFacade.getPlayerHobbyInfos();
+        List<PlayerHobbyResult.Info> results = playerHobbyService.getPlayerHobbyInfos();
         return ApiResponses.ok(PlayerHobbyWebMapper.toInfos(results));
     }
 
@@ -36,7 +36,7 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody PlayerHobbyRequest.Create request
     ) {
-        PlayerHobbyResult.Created result = playerHobbyFacade.createPlayerHobby(
+        PlayerHobbyResult.Created result = playerHobbyService.createPlayerHobby(
                 PlayerHobbyWebMapper.toCreateCommand(hobbyId, request)
         );
 
@@ -52,7 +52,7 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
             @PathVariable Long hobbyId,
             @Valid @RequestBody PlayerHobbyRequest.Update request
     ) {
-        PlayerHobbyResult.Changed result = playerHobbyFacade.changePlayerHobby(
+        PlayerHobbyResult.Changed result = playerHobbyService.changePlayerHobby(
                 PlayerHobbyWebMapper.toChangeCommand(hobbyId, request)
         );
 
@@ -62,7 +62,7 @@ public class PlayerHobbyController implements PlayerHobbyApiSpecV1 {
     @Override
     @DeleteMapping("/hobbies/{hobbyId}")
     public ResponseEntity<ApiResponse<Long>> delete(@PathVariable Long hobbyId) {
-        playerHobbyFacade.deletePlayerHobby(hobbyId);
+        playerHobbyService.deletePlayerHobby(hobbyId);
         return ApiResponses.deleted(hobbyId);
     }
 }

@@ -6,6 +6,7 @@ import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.character.application.view.PlayerAchievementView;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.PlayerAchievement;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +21,11 @@ public class PlayerAchievementService {
     private final PlayerAchievementWriter playerAchievementWriter;
     private final AchievementReader achievementReader;
     private final PlayerReader playerReader;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
-    public List<PlayerAchievementResult.Info> getPlayerAchievementInfos(Long playerId) {
+    @Transactional(readOnly = true)
+    public List<PlayerAchievementResult.Info> getPlayerAchievementInfos() {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         List<PlayerAchievementView> playerAchievementViews = playerAchievementReader.getViewsByPlayerId(playerId);
         return playerAchievementViews.stream()
                 .map(PlayerAchievementResult.Info::from)

@@ -8,6 +8,7 @@ import online.lifeasgame.user.api.admin.request.AdminUserRequest;
 import online.lifeasgame.user.api.admin.response.AdminUserResponse;
 import online.lifeasgame.user.api.admin.spec.AdminUserApiSpecV1;
 import online.lifeasgame.user.application.UserService;
+import online.lifeasgame.user.application.UserQueryService;
 import online.lifeasgame.user.application.result.UserResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminUserController implements AdminUserApiSpecV1 {
 
     private final UserService userService;
+    private final UserQueryService userQueryService;
 
     @Override
     @GetMapping
@@ -31,8 +33,8 @@ public class AdminUserController implements AdminUserApiSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        UserResult.UserList userList = userService.search(
-                AdminUserWebMapper.toSearchCommand(email, nickname, status, page, size)
+        UserResult.UserList userList = userQueryService.search(
+                AdminUserWebMapper.toSearchQuery(email, nickname, status, page, size)
         );
 
         return ApiResponses.ok(AdminUserWebMapper.toUserList(userList));
@@ -40,7 +42,7 @@ public class AdminUserController implements AdminUserApiSpecV1 {
 
     @Override
     public ResponseEntity<ApiResponse<AdminUserResponse.UserInfo>> get(Long userId) {
-        UserResult.UserInfo userInfo = userService.getUserInfo(userId);
+        UserResult.UserInfo userInfo = userQueryService.getUserInfo(userId);
         return ApiResponses.ok(AdminUserWebMapper.toUserInfo(userInfo));
     }
 
