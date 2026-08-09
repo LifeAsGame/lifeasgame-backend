@@ -2,10 +2,11 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
-import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordRegistrar;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
@@ -27,8 +28,14 @@ public class ExerciseLogService {
 
     private final ExerciseLogReader exerciseLogReader;
     private final ExerciseLogWriter exerciseLogWriter;
-    private final LifeLogRecordService lifeLogRecordService;
+    private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Transactional
+    public ExerciseResult.Created create(ExerciseCommand.Create command) {
+        return create(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
 
     @Transactional
     public ExerciseResult.Created create(Long playerId, ExerciseCommand.Create command) {
@@ -65,7 +72,7 @@ public class ExerciseLogService {
                 )
         );
 
-        LifeLogRecord record = lifeLogRecordService.create(
+        LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.EXERCISE,
                 saved.getId(),
@@ -97,6 +104,11 @@ public class ExerciseLogService {
     }
 
     @Transactional
+    public ExerciseResult.Info update(Long exerciseId, ExerciseCommand.Update command) {
+        return update(currentPlayerAccessor.currentPlayerIdOrThrow(), exerciseId, command);
+    }
+
+    @Transactional
     public ExerciseResult.Info update(Long playerId, Long exerciseId, ExerciseCommand.Update command) {
         ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
 
@@ -113,28 +125,9 @@ public class ExerciseLogService {
         return ExerciseResult.Info.from(exerciseLog);
     }
 
-    public List<ExerciseResult.Info> recent(Long playerId, int limit) {
-        return exerciseLogReader.recent(playerId, limit).stream()
-                .map(ExerciseResult.Info::from)
-                .toList();
-    }
-
-    public List<ExerciseResult.Info> search(Long playerId, ExerciseCommand.Search command) {
-        return exerciseLogReader.search(
-                playerId,
-                command.category(),
-                command.from(),
-                command.to(),
-                command.page(),
-                command.size()
-        ).stream()
-                .map(ExerciseResult.Info::from)
-                .toList();
-    }
-
-    public ExerciseResult.Info getExercise(Long playerId, Long exerciseId) {
-        ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
-        return ExerciseResult.Info.from(exerciseLog);
+    @Transactional
+    public ExerciseResult.Deleted delete(Long exerciseId) {
+        return delete(currentPlayerAccessor.currentPlayerIdOrThrow(), exerciseId);
     }
 
     @Transactional

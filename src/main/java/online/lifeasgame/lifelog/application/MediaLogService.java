@@ -2,10 +2,11 @@ package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.core.support.IdGenerator;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
-import online.lifeasgame.lifelog.application.record.LifeLogRecordService;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordRegistrar;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.*;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +25,14 @@ public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
     private final MediaLogWriter mediaLogWriter;
-    private final LifeLogRecordService lifeLogRecordService;
+    private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Transactional
+    public MediaLogResult.Created create(MediaLogCommand.Create command) {
+        return create(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
 
     @Transactional
     public MediaLogResult.Created create(Long playerId, MediaLogCommand.Create command) {
@@ -64,7 +70,7 @@ public class MediaLogService {
                 )
         );
 
-        LifeLogRecord record = lifeLogRecordService.create(
+        LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.MEDIA,
                 saved.getId(),
@@ -87,10 +93,20 @@ public class MediaLogService {
     }
 
     @Transactional
+    public MediaLogResult.Info rate(Long mediaId, MediaLogCommand.Rate command) {
+        return rate(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId, command);
+    }
+
+    @Transactional
     public MediaLogResult.Info rate(Long playerId, Long mediaId, MediaLogCommand.Rate command) {
         MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
         mediaLog.rate(command.score());
         return MediaLogResult.Info.from(mediaLog);
+    }
+
+    @Transactional
+    public MediaLogResult.Info advance(Long mediaId, MediaLogCommand.Advance command) {
+        return advance(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId, command);
     }
 
     @Transactional
@@ -114,10 +130,20 @@ public class MediaLogService {
     }
 
     @Transactional
+    public MediaLogResult.Info markStatus(Long mediaId, MediaLogCommand.MarkStatus command) {
+        return markStatus(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId, command);
+    }
+
+    @Transactional
     public MediaLogResult.Info markStatus(Long playerId, Long mediaId, MediaLogCommand.MarkStatus command) {
         MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
         mediaLog.markStatus(WatchStatus.parse(command.status()));
         return MediaLogResult.Info.from(mediaLog);
+    }
+
+    @Transactional
+    public MediaLogResult.Info rewatch(Long mediaId) {
+        return rewatch(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId);
     }
 
     @Transactional
@@ -127,23 +153,9 @@ public class MediaLogService {
         return MediaLogResult.Info.from(mediaLog);
     }
 
-    public List<MediaLogResult.Info> recent(Long playerId, int limit) {
-        return mediaLogReader.recent(playerId, limit).stream()
-                .map(MediaLogResult.Info::from)
-                .toList();
-    }
-
-    public List<MediaLogResult.Info> search(Long playerId, MediaLogCommand.Search command) {
-        return mediaLogReader.search(
-                        playerId,
-                        command.category(),
-                        command.status(),
-                        command.titleLike(),
-                        command.page(),
-                        command.size()
-                ).stream()
-                .map(MediaLogResult.Info::from)
-                .toList();
+    @Transactional
+    public MediaLogResult.Info update(Long mediaId, MediaLogCommand.Update command) {
+        return update(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId, command);
     }
 
     @Transactional
@@ -168,13 +180,13 @@ public class MediaLogService {
     }
 
     @Transactional
+    public MediaLogResult.Deleted delete(Long mediaId) {
+        return delete(currentPlayerAccessor.currentPlayerIdOrThrow(), mediaId);
+    }
+
+    @Transactional
     public MediaLogResult.Deleted delete(Long playerId, Long mediaId) {
         mediaLogWriter.delete(playerId, mediaId);
         return new MediaLogResult.Deleted(mediaId);
-    }
-
-    public MediaLogResult.Info getMedia(Long playerId, Long mediaId) {
-        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
-        return MediaLogResult.Info.from(mediaLog);
     }
 }

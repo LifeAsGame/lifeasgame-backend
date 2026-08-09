@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.lifelog.quick.application.QuickRecordFacade;
+import online.lifeasgame.lifelog.quick.application.QuickRecordService;
 import online.lifeasgame.lifelog.quick.application.QuickRecordResult;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/lifelogs")
 public class QuickRecordController implements QuickRecordSpecV1 {
 
-    private final QuickRecordFacade quickRecordFacade;
+    private final QuickRecordService quickRecordService;
 
     @Override
     @PostMapping("/quick-record")
@@ -38,7 +38,7 @@ public class QuickRecordController implements QuickRecordSpecV1 {
                     QuickRecordError.IDEMPOTENCY_KEY_REQUIRED
             );
         }
-        QuickRecordResult.Recorded result = quickRecordFacade.record(
+        QuickRecordResult.Recorded result = quickRecordService.record(
                 idempotencyKey,
                 QuickRecordWebMapper.toCommand(request)
         );

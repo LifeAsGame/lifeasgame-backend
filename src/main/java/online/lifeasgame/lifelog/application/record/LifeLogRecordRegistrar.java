@@ -17,13 +17,13 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class LifeLogRecordService {
+public class LifeLogRecordRegistrar {
 
     private final LifeLogRecordRepository repository;
     private final PlayerTimezoneResolver timezoneResolver;
     private final Clock clock;
 
-    public LifeLogRecord create(
+    public LifeLogRecord register(
             Long playerId,
             LifeLogSourceType sourceType,
             Long sourceId,
@@ -34,8 +34,7 @@ public class LifeLogRecordService {
                 metadata == null
                         ? LifeLogRecordMetadataCommand.none()
                         : metadata;
-        LifeLogRecordMetadataCommand.Resolved resolved =
-                command.resolve();
+        LifeLogRecordMetadataCommand.Resolved resolved = command.resolve();
         Instant occurredAt = clock.instant();
 
         if (resolved.subtype() == null) {

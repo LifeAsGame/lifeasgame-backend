@@ -8,6 +8,7 @@ import online.lifeasgame.lifelog.api.admin.request.AdminMediaRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminMediaResponse;
 import online.lifeasgame.lifelog.api.admin.spec.AdminMediaSpecV1;
 import online.lifeasgame.lifelog.application.MediaLogService;
+import online.lifeasgame.lifelog.application.MediaLogQueryService;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.List;
 public class AdminMediaController implements AdminMediaSpecV1 {
 
     private final MediaLogService mediaLogService;
+    private final MediaLogQueryService mediaLogQueryService;
 
     @Override
     @GetMapping("/{playerId}/media/recent")
@@ -28,7 +30,7 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long playerId,
             @RequestParam(defaultValue = "20") Integer limit
     ) {
-        List<MediaLogResult.Info> results = mediaLogService.recent(playerId, limit);
+        List<MediaLogResult.Info> results = mediaLogQueryService.recent(playerId, limit);
         return ApiResponses.ok(AdminMediaWebMapper.toInfos(results));
     }
 
@@ -42,9 +44,9 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<MediaLogResult.Info> results = mediaLogService.search(
+        List<MediaLogResult.Info> results = mediaLogQueryService.search(
                 playerId,
-                AdminMediaWebMapper.toSearchCommand(category, status, titleLike, page, size)
+                AdminMediaWebMapper.toSearchQuery(category, status, titleLike, page, size)
         );
 
         return ApiResponses.ok(AdminMediaWebMapper.toInfos(results));
@@ -114,7 +116,7 @@ public class AdminMediaController implements AdminMediaSpecV1 {
             @PathVariable Long playerId,
             @PathVariable Long mediaId
     ) {
-        MediaLogResult.Info result = mediaLogService.getMedia(playerId, mediaId);
+        MediaLogResult.Info result = mediaLogQueryService.getMedia(playerId, mediaId);
         return ApiResponses.ok(AdminMediaWebMapper.toInfo(result));
     }
 

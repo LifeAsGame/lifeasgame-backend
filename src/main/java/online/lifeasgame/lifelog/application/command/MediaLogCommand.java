@@ -51,15 +51,6 @@ public final class MediaLogCommand {
     public record MarkStatus(String status) {
     }
 
-    public record Search(
-            String category,
-            String status,
-            String titleLike,
-            int page,
-            int size
-    ) {
-    }
-
     public record Update(
             String category,
             String title,

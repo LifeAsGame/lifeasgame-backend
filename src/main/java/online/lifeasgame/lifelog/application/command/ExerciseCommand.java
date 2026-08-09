@@ -48,12 +48,4 @@ public final class ExerciseCommand {
     ) {
     }
 
-    public record Search(
-            String category,
-            LocalDate from,
-            LocalDate to,
-            int page,
-            int size
-    ) {
-    }
 }

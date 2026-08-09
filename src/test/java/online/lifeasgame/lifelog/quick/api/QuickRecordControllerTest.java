@@ -5,8 +5,8 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.lifelog.api.player.request.PlayerCollectionRequest;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
-import online.lifeasgame.lifelog.quick.application.QuickRecordFacade;
 import online.lifeasgame.lifelog.quick.application.QuickRecordResult;
+import online.lifeasgame.lifelog.quick.application.QuickRecordService;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
@@ -58,7 +58,7 @@ class QuickRecordControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private QuickRecordFacade quickRecordFacade;
+    private QuickRecordService quickRecordService;
 
     @MockitoBean
     private JwtProvider jwtProvider;
@@ -170,7 +170,7 @@ class QuickRecordControllerTest {
     @Test
     @DisplayName("최초 생성은 실제 Source snapshot과 201을 반환한다")
     void returnsCreatedSource() throws Exception {
-        when(quickRecordFacade.record(
+        when(quickRecordService.record(
                 eq("created-key"),
                 argThat(command -> command.collection() != null)
         )).thenReturn(result(false));
@@ -197,7 +197,7 @@ class QuickRecordControllerTest {
     @Test
     @DisplayName("동일 요청 replay는 저장된 Source snapshot과 200을 반환한다")
     void returnsReplay() throws Exception {
-        when(quickRecordFacade.record(
+        when(quickRecordService.record(
                 eq("replay-key"),
                 argThat(command -> command.collection() != null)
         )).thenReturn(result(true));
@@ -220,7 +220,7 @@ class QuickRecordControllerTest {
     @Test
     @DisplayName("다른 payload conflict는 기존 Source나 private 값을 노출하지 않는다")
     void returnsConflictWithoutSensitiveResult() throws Exception {
-        when(quickRecordFacade.record(
+        when(quickRecordService.record(
                 eq("conflict-key"),
                 argThat(command -> true)
         )).thenThrow(new DomainException(
@@ -252,7 +252,7 @@ class QuickRecordControllerTest {
     }
 
     private void mockInvalid(String key) {
-        when(quickRecordFacade.record(
+        when(quickRecordService.record(
                 eq(key),
                 argThat(command -> true)
         )).thenThrow(new DomainException(

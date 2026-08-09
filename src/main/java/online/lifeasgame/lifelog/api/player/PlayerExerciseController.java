@@ -7,7 +7,8 @@ import online.lifeasgame.lifelog.api.player.mapper.PlayerExerciseWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerExerciseResponse;
 import online.lifeasgame.lifelog.api.player.spec.PlayerExerciseSpecV1;
-import online.lifeasgame.lifelog.application.ExerciseLogFacade;
+import online.lifeasgame.lifelog.application.ExerciseLogQueryService;
+import online.lifeasgame.lifelog.application.ExerciseLogService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,12 +23,13 @@ import java.util.List;
 @RequestMapping("/api/v1/players/exercises")
 public class PlayerExerciseController implements PlayerExerciseSpecV1 {
 
-    private final ExerciseLogFacade exerciseLogFacade;
+    private final ExerciseLogService exerciseLogService;
+    private final ExerciseLogQueryService exerciseLogQueryService;
 
     @GetMapping("/recent")
     @Override
     public ResponseEntity<List<PlayerExerciseResponse.Info>> recent(@RequestParam(defaultValue = "20") Integer limit) {
-        List<ExerciseResult.Info> results = exerciseLogFacade.recent(limit);
+        List<ExerciseResult.Info> results = exerciseLogQueryService.recent(limit);
         return ResponseEntity.ok(PlayerExerciseWebMapper.toInfos(results));
     }
 
@@ -39,8 +41,8 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<ExerciseResult.Info> results = exerciseLogFacade.search(
-                PlayerExerciseWebMapper.toSearchCommand(category, from, to, page, size)
+        List<ExerciseResult.Info> results = exerciseLogQueryService.search(
+                PlayerExerciseWebMapper.toSearchQuery(category, from, to, page, size)
         );
         return ResponseEntity.ok(PlayerExerciseWebMapper.toInfos(results));
     }
@@ -50,7 +52,7 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
     public ResponseEntity<PlayerExerciseResponse.Created> create(
             @Valid @RequestBody PlayerExerciseRequest.Create request
     ) {
-        ExerciseResult.Created result = exerciseLogFacade.create(PlayerExerciseWebMapper.toCreateCommand(request));
+        ExerciseResult.Created result = exerciseLogService.create(PlayerExerciseWebMapper.toCreateCommand(request));
         return ResponseEntity.ok(PlayerExerciseWebMapper.toCreated(result));
     }
 
@@ -60,7 +62,7 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
             @PathVariable Long exerciseId,
             @Valid @RequestBody PlayerExerciseRequest.Update request
     ) {
-        ExerciseResult.Info result = exerciseLogFacade.update(exerciseId, PlayerExerciseWebMapper.toUpdateCommand(request));
+        ExerciseResult.Info result = exerciseLogService.update(exerciseId, PlayerExerciseWebMapper.toUpdateCommand(request));
         return ResponseEntity.ok(PlayerExerciseWebMapper.toInfo(result));
     }
 
@@ -69,7 +71,7 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
     public ResponseEntity<ApiResponse<PlayerExerciseResponse.Info>> get(
             @PathVariable Long exerciseId
     ) {
-        ExerciseResult.Info result = exerciseLogFacade.getExercise(exerciseId);
+        ExerciseResult.Info result = exerciseLogQueryService.getExercise(exerciseId);
         return ApiResponses.ok(PlayerExerciseWebMapper.toInfo(result));
     }
 
@@ -78,7 +80,7 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
     public ResponseEntity<ApiResponse<PlayerExerciseResponse.Deleted>> delete(
             @PathVariable Long exerciseId
     ) {
-        ExerciseResult.Deleted result = exerciseLogFacade.delete(exerciseId);
+        ExerciseResult.Deleted result = exerciseLogService.delete(exerciseId);
         return ApiResponses.deleted(PlayerExerciseWebMapper.toDeleted(result));
     }
 }
