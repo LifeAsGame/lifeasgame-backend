@@ -3,9 +3,13 @@ package online.lifeasgame.quest.application;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
+import online.lifeasgame.quest.application.event.QuestDefinitionEventFactory;
+import online.lifeasgame.quest.application.event.QuestTransitionEventFactory;
+import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -33,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -65,18 +69,27 @@ class QuestServiceStateContractTest {
     private DomainEventPublisher domainEventPublisher;
 
     private QuestService service;
+    private QuestQueryService queryService;
 
     @BeforeEach
     void setUp() {
         service = new QuestService(
-                questBlueprintCatalog,
+                mock(QuestDefinitionProvisioner.class),
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
                 new QuestCompletionEventFactory(),
+                new QuestDefinitionEventFactory(),
+                new QuestTransitionEventFactory(),
                 ignored -> PLAYER_ZONE,
-                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC)
+                Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
+                mock(CurrentPlayerAccessor.class)
+        );
+        queryService = new QuestQueryService(
+                questBlueprintCatalog,
+                questReader,
+                mock(CurrentPlayerAccessor.class)
         );
     }
 
@@ -217,8 +230,8 @@ class QuestServiceStateContractTest {
             given(questReader.findQuestAcceptances(QUEST_ID, QuestStatus.COMPLETED))
                     .willReturn(List.of());
 
-            service.questAcceptances(
-                    new QuestCommand.Acceptances(QuestCode.PLAYER_WELCOME.name(), "DONE")
+            queryService.questAcceptances(
+                    new QuestQuery.Acceptances(QuestCode.PLAYER_WELCOME.name(), "DONE")
             );
 
             verify(questReader).findQuestAcceptances(QUEST_ID, QuestStatus.COMPLETED);
@@ -230,7 +243,10 @@ class QuestServiceStateContractTest {
             given(questReader.findPlayerAcceptances(PLAYER_ID, QuestStatus.COMPLETED))
                     .willReturn(List.of());
 
-            service.playerQuests(PLAYER_ID, new QuestCommand.PlayerQuests("DONE"));
+            queryService.playerQuests(
+                    PLAYER_ID,
+                    new QuestQuery.PlayerQuests("DONE")
+            );
 
             verify(questReader).findPlayerAcceptances(PLAYER_ID, QuestStatus.COMPLETED);
         }
@@ -248,7 +264,7 @@ class QuestServiceStateContractTest {
                     .willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(null);
-            given(questWriter.accept(any())).willAnswer(
+            given(questWriter.saveAcceptance(any())).willAnswer(
                     invocation -> invocation.getArgument(0)
             );
 
@@ -286,7 +302,7 @@ class QuestServiceStateContractTest {
                     .willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(previous);
-            given(questWriter.accept(any())).willAnswer(
+            given(questWriter.saveAcceptance(any())).willAnswer(
                     invocation -> invocation.getArgument(0)
             );
 
@@ -395,7 +411,6 @@ class QuestServiceStateContractTest {
             assertThat(previous.getGuildId()).isEqualTo(4L);
             assertThat(previous.getIdempotencyKey()).isNull();
             verify(questWriter).saveAcceptance(previous);
-            verify(questWriter, never()).accept(any());
         }
 
         @Test
@@ -466,7 +481,7 @@ class QuestServiceStateContractTest {
             )).willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(null);
-            given(questWriter.accept(any())).willAnswer(
+            given(questWriter.saveAcceptance(any())).willAnswer(
                     invocation -> invocation.getArgument(0)
             );
 
@@ -504,7 +519,7 @@ class QuestServiceStateContractTest {
             )).willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(null);
-            given(questWriter.accept(any())).willAnswer(
+            given(questWriter.saveAcceptance(any())).willAnswer(
                     invocation -> invocation.getArgument(0)
             );
 

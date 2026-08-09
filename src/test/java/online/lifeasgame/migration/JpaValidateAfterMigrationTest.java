@@ -1,9 +1,9 @@
 package online.lifeasgame.migration;
 
 import online.lifeasgame.inventory.application.internal.ItemLookupApi;
-import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.QuestQueryService;
 import online.lifeasgame.quest.application.bootstrap.QuestDefinitionBootstrapper;
-import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import online.lifeasgame.reward.application.result.RewardProfileResult;
@@ -73,7 +73,7 @@ class JpaValidateAfterMigrationTest {
     private RewardSettlementReader rewardSettlementReader;
 
     @Autowired
-    private QuestService questService;
+    private QuestQueryService questQueryService;
 
     @Autowired
     private QuestDefinitionBootstrapper questDefinitionBootstrapper;
@@ -105,8 +105,8 @@ class JpaValidateAfterMigrationTest {
                     QuestCode.Q_RECOVERY_REST_TEN
             );
             var before = codes.stream()
-                    .map(code -> questService.getDefinition(
-                            new QuestCommand.Definition(code.value())
+                    .map(code -> questQueryService.getDefinition(
+                            new QuestQuery.Definition(code.value())
                     ))
                     .toList();
 
@@ -120,8 +120,8 @@ class JpaValidateAfterMigrationTest {
             questDefinitionBootstrapper.run(null);
 
             var after = codes.stream()
-                    .map(code -> questService.getDefinition(
-                            new QuestCommand.Definition(code.value())
+                    .map(code -> questQueryService.getDefinition(
+                            new QuestQuery.Definition(code.value())
                     ))
                     .toList();
             assertThat(after)

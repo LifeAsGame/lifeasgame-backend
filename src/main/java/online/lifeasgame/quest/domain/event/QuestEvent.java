@@ -46,7 +46,12 @@ public record QuestEvent(
         return type.name();
     }
 
-    public static QuestEvent snapshot(QuestEventType type, Quest quest, String correlationId) {
+    public static QuestEvent snapshot(
+            QuestEventType type,
+            Quest quest,
+            Instant occurredAt,
+            String correlationId
+    ) {
         Builder builder = QuestEvent.builder(type)
                 .questId(quest.getId())
                 .questCode(quest.getCode())
@@ -63,7 +68,7 @@ public record QuestEvent(
                 .attribute("completionPolicy", quest.getCompletionPolicy().name())
                 .definitionSnapshot(quest)
                 .attribute("dueAt", quest.getDueAt())
-                .occurredAt(Instant.now())
+                .occurredAt(occurredAt)
                 .correlationId(correlationId);
         return builder.build();
     }
@@ -74,7 +79,7 @@ public record QuestEvent(
         private Long questId;
         private String questCode;
         private final Map<String, Object> attributes = new LinkedHashMap<>();
-        private Instant occurredAt = Instant.now();
+        private Instant occurredAt;
         private String correlationId;
 
         private Builder(QuestEventType type) {

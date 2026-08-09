@@ -3,7 +3,7 @@ package online.lifeasgame.reward.application;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.error.DomainException;
-import online.lifeasgame.reward.application.event.QuestRewardReadyFact;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementLine;
 import online.lifeasgame.reward.domain.RewardSettlementLineStatus;

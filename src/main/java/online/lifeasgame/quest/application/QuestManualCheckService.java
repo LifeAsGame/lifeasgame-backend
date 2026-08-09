@@ -2,6 +2,7 @@ package online.lifeasgame.quest.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.automation.QuestSignal;
 import online.lifeasgame.quest.application.automation.QuestSignalAcceptancePolicy;
 import online.lifeasgame.quest.application.automation.QuestSignalProcessingService;
@@ -32,6 +33,11 @@ public class QuestManualCheckService {
     private final QuestAcceptanceCompletionService completionService;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
+
+    public QuestResult.Acceptance check(QuestCommand.ManualCheck command) {
+        return check(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
 
     public QuestResult.Acceptance check(
             Long playerId,

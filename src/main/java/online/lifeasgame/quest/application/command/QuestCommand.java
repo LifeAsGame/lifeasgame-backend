@@ -11,9 +11,6 @@ public final class QuestCommand {
     public record EnsureDefinition(String code) {
     }
 
-    public record Definition(String questCode) {
-    }
-
     public record UpdateDefinition(
             String questCode,
             Integer definitionVersion,
@@ -56,18 +53,6 @@ public final class QuestCommand {
                     null
             );
         }
-    }
-
-    public record Acceptances(String questCode, String status) {
-    }
-
-    public record Acceptance(Long acceptanceId) {
-    }
-
-    public record PlayerQuests(String status) {
-    }
-
-    public record PlayerQuest(String questCode) {
     }
 
     public record Accept(

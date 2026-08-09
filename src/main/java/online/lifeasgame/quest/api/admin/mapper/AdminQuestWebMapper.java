@@ -3,6 +3,7 @@ package online.lifeasgame.quest.api.admin.mapper;
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.application.result.QuestResult;
 
 import java.util.List;
@@ -52,8 +53,8 @@ public final class AdminQuestWebMapper {
         return new QuestCommand.EnsureDefinition(questCode);
     }
 
-    public static QuestCommand.Definition toDefinitionCommand(String questCode) {
-        return new QuestCommand.Definition(questCode);
+    public static QuestQuery.Definition toDefinitionQuery(String questCode) {
+        return new QuestQuery.Definition(questCode);
     }
 
     public static QuestCommand.UpdateDefinition toUpdateCommand(String questCode, AdminQuestRequest.Update request) {
@@ -97,8 +98,8 @@ public final class AdminQuestWebMapper {
         );
     }
 
-    public static QuestCommand.Acceptances toAcceptancesCommand(String questCode, String status) {
-        return new QuestCommand.Acceptances(questCode, status);
+    public static QuestQuery.Acceptances toAcceptancesQuery(String questCode, String status) {
+        return new QuestQuery.Acceptances(questCode, status);
     }
 
     public static AdminQuestResponse.Acceptances toAcceptances(List<QuestResult.Acceptance> results) {
@@ -108,8 +109,8 @@ public final class AdminQuestWebMapper {
                 .toList());
     }
 
-    public static QuestCommand.Acceptance toAcceptanceCommand(Long acceptanceId) {
-        return new QuestCommand.Acceptance(acceptanceId);
+    public static QuestQuery.Acceptance toAcceptanceQuery(Long acceptanceId) {
+        return new QuestQuery.Acceptance(acceptanceId);
     }
 
     public static AdminQuestResponse.Acceptance toAcceptance(QuestResult.Acceptance result) {

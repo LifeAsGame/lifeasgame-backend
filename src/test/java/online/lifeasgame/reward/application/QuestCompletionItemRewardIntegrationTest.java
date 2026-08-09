@@ -1,8 +1,7 @@
 package online.lifeasgame.reward.application;
 
 import online.lifeasgame.inventory.application.internal.InventoryRewardDeliveryApi;
-import online.lifeasgame.quest.domain.event.QuestEvent;
-import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.application.event.QuestRewardReadyBridge;
 import online.lifeasgame.reward.domain.RewardSettlementLineStatus;
 import online.lifeasgame.reward.domain.RewardSettlementStatus;
@@ -24,7 +23,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -96,7 +94,7 @@ class QuestCompletionItemRewardIntegrationTest {
     @Test
     @DisplayName("동시·순차·restart redelivery에도 EXP/ITEM/receipt를 각각 한 번만 반영한다")
     void completesMixedProfileExactlyOnceAcrossReplays() throws Exception {
-        QuestEvent event = rewardReady();
+        QuestRewardReadyFact event = rewardReady();
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         List<Future<?>> futures = List.of(
@@ -113,7 +111,7 @@ class QuestCompletionItemRewardIntegrationTest {
         }
 
         clearInvocations(inventoryDeliveryApi);
-        bridge.onQuestEvent(event);
+        bridge.onQuestRewardReady(event);
 
         assertThat(settlementCount()).isEqualTo(1);
         assertThat(lineCount()).isEqualTo(2);
@@ -136,33 +134,27 @@ class QuestCompletionItemRewardIntegrationTest {
     }
 
     private Future<?> submit(
-            QuestEvent event,
+            QuestRewardReadyFact event,
             CountDownLatch ready,
             CountDownLatch start
     ) {
         return executor.submit(() -> {
             ready.countDown();
             start.await();
-            bridge.onQuestEvent(event);
+            bridge.onQuestRewardReady(event);
             return null;
         });
     }
 
-    private QuestEvent rewardReady() {
-        return new QuestEvent(
-                QuestEventType.QUEST_REWARD_READY,
+    private QuestRewardReadyFact rewardReady() {
+        return new QuestRewardReadyFact(
+                QuestRewardReadyFact.EVENT_VERSION,
                 PLAYER_ID,
+                226301L,
+                "RP_EXP_AND_ITEM_FIRST_STEP_20",
                 2262L,
                 "Q_RECORD_THREE_TRACES",
-                Map.of(
-                        "acceptanceId", 226301L,
-                        "rewardProfileCode",
-                        "RP_EXP_AND_ITEM_FIRST_STEP_20",
-                        "questDefinitionVersion", 1,
-                        "questSemanticCategory", "GROWTH",
-                        "progressSource", "COUNT",
-                        "repeatPolicy", "ONCE"
-                ),
+                1,
                 Instant.parse("2026-08-03T12:00:00Z"),
                 "quest:2262:acceptance:226301:completed:reward"
         );

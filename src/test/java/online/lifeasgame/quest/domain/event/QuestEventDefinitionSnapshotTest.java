@@ -4,10 +4,15 @@ import online.lifeasgame.quest.domain.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("QuestEvent Definition Snapshot")
 class QuestEventDefinitionSnapshotTest {
+
+    private static final Instant OCCURRED_AT =
+            Instant.parse("2026-08-10T00:00:00Z");
 
     @Test
     @DisplayName("RewardProfile QuestCompleted는 version과 code만 보상 계약으로 기록한다")
@@ -15,6 +20,7 @@ class QuestEventDefinitionSnapshotTest {
         QuestEvent event = QuestEvent.snapshot(
                 QuestEventType.QUEST_COMPLETED,
                 profileQuest(),
+                OCCURRED_AT,
                 "quest:test:profile:completed"
         );
 
@@ -40,6 +46,7 @@ class QuestEventDefinitionSnapshotTest {
         QuestEvent event = QuestEvent.snapshot(
                 QuestEventType.QUEST_UPDATED,
                 profileQuest(null),
+                OCCURRED_AT,
                 "quest:test:profile:updated"
         );
 
@@ -79,6 +86,7 @@ class QuestEventDefinitionSnapshotTest {
         QuestEvent event = QuestEvent.snapshot(
                 QuestEventType.QUEST_COMPLETED,
                 quest,
+                OCCURRED_AT,
                 "quest:test:final-event:completed"
         );
 
@@ -96,6 +104,7 @@ class QuestEventDefinitionSnapshotTest {
         QuestEvent event = QuestEvent.snapshot(
                 QuestEventType.QUEST_COMPLETED,
                 legacyQuest(),
+                OCCURRED_AT,
                 "quest:test:legacy:completed"
         );
 

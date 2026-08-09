@@ -3,13 +3,14 @@ package online.lifeasgame.quest.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
+import online.lifeasgame.quest.application.event.QuestDefinitionEventFactory;
+import online.lifeasgame.quest.application.event.QuestTransitionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
-import online.lifeasgame.quest.domain.event.QuestEvent;
-import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,60 +21,43 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.WeekFields;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class QuestService {
 
-    private final QuestBlueprintCatalog questBlueprintCatalog;
+    private final QuestDefinitionProvisioner definitionProvisioner;
     private final QuestReader questReader;
     private final QuestWriter questWriter;
     private final RewardProfileLookupApi rewardProfileLookupApi;
     private final DomainEventPublisher domainEventPublisher;
     private final QuestCompletionEventFactory completionEventFactory;
+    private final QuestDefinitionEventFactory definitionEventFactory;
+    private final QuestTransitionEventFactory transitionEventFactory;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public QuestResult.Definition ensureDefinition(QuestCommand.EnsureDefinition command) {
-        Quest quest = ensureQuest(QuestCode.parse(command.code()));
-        return QuestResult.Definition.from(quest);
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestResult.Definition> getDefinitions() {
-        return questReader.findAll().stream()
-                .map(QuestResult.Definition::from)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestResult.Blueprint> getCatalog() {
-        return questBlueprintCatalog.all().stream()
-                .map(QuestResult.Blueprint::from)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public QuestResult.Definition getDefinition(QuestCommand.Definition command) {
-        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
+        Quest quest = definitionProvisioner.ensure(
+                QuestCode.parse(command.code())
+        );
         return QuestResult.Definition.from(quest);
     }
 
     @Transactional
     public QuestResult.Definition updateDefinition(QuestCommand.UpdateDefinition command) {
-        Quest quest = ensureQuest(QuestCode.parse(command.questCode()));
+        Quest quest = definitionProvisioner.ensure(
+                QuestCode.parse(command.questCode())
+        );
         assertRewardContract(command, quest);
         RewardProfileRef rewardProfileRef =
                 rewardProfileRefOrNull(command.rewardProfileCode(), quest);
 
-        quest.updateDefinition(
+        boolean changed = quest.updateDefinition(
                 targetOrNull(command),
                 rewardOrNull(command, quest),
                 QuestRepeatRule.parseNullable(command.repeatRule()),
@@ -88,9 +72,11 @@ public class QuestService {
                 roleTemplateRefOrNull(command.roleTemplateCode())
         );
 
-        var events = quest.pullEvents();
-        if (!events.isEmpty()) {
-            domainEventPublisher.publishAll(events);
+        if (changed) {
+            domainEventPublisher.publish(definitionEventFactory.updated(
+                    quest,
+                    clock.instant()
+            ));
         }
 
         return QuestResult.Definition.from(quest);
@@ -145,69 +131,9 @@ public class QuestService {
         return code == null ? null : QuestRoleTemplateRef.of(code);
     }
 
-    @Transactional(readOnly = true)
-    public List<QuestResult.Acceptance> questAcceptances(QuestCommand.Acceptances command) {
-        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
-        return questReader.findQuestAcceptances(
-                        quest.getId(),
-                        QuestStatus.parseNullable(command.status())
-                ).stream()
-                .map(acceptance -> QuestResult.Acceptance.from(acceptance, quest))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public QuestResult.Acceptance acceptance(QuestCommand.Acceptance command) {
-        QuestAcceptance acceptance = questReader.getAcceptance(command.acceptanceId());
-        Quest quest = questReader.getById(acceptance.getQuestId());
-        return QuestResult.Acceptance.from(acceptance, quest);
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestResult.Acceptance> playerQuests(Long playerId, QuestCommand.PlayerQuests command) {
-        List<QuestAcceptance> acceptances =
-                questReader.findPlayerAcceptances(
-                        playerId,
-                        QuestStatus.parseNullable(command.status())
-                );
-
-        if (acceptances.isEmpty()) {
-            return List.of();
-        }
-
-        Set<Long> questIds = acceptances.stream()
-                .map(QuestAcceptance::getQuestId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        Map<Long, Quest> questMap = questReader.getByIds(questIds).stream()
-                .collect(Collectors.toMap(Quest::getId, Function.identity()));
-
-        return acceptances.stream()
-                .map(acc -> QuestResult.Acceptance.from(acc, questMap.get(acc.getQuestId())))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public QuestResult.PlayerQuest playerQuest(Long playerId, QuestCommand.PlayerQuest command) {
-        Quest quest = questReader.getByCode(QuestCode.parse(command.questCode()));
-        QuestAcceptance latest = questReader.findLatest(quest.getId(), playerId);
-        return QuestResult.PlayerQuest.from(quest, latest);
-    }
-
     @Transactional
-    public Quest ensureQuest(QuestCode code) {
-        return questReader.findByCode(code)
-                .orElseGet(() -> materialize(questBlueprintCatalog.require(code)));
-    }
-
-    private Quest materialize(QuestBlueprint blueprint) {
-        if (blueprint.usesRewardProfile()) {
-            rewardProfileLookupApi.getActiveByCode(
-                    blueprint.rewardProfileCodeOrNull()
-            );
-        }
-        return questWriter.create(blueprint.instantiate());
+    public QuestResult.Acceptance accept(QuestCommand.Accept command) {
+        return accept(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -245,7 +171,7 @@ public class QuestService {
             );
         }
 
-        QuestAcceptance questAcceptance = questWriter.accept(
+        QuestAcceptance questAcceptance = questWriter.saveAcceptance(
                 QuestAcceptance.start(
                         quest.getId(),
                         playerId,
@@ -267,6 +193,11 @@ public class QuestService {
                 local.get(iso.weekBasedYear()),
                 local.get(iso.weekOfWeekBasedYear())
         );
+    }
+
+    @Transactional
+    public QuestResult.Canceled cancel(QuestCommand.Cancel command) {
+        return cancel(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -322,20 +253,14 @@ public class QuestService {
             Instant occurredAt,
             String suffix
     ) {
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_PROGRESS)
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(acceptance.getPlayerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", acceptance.getProgressValue())
-                        .attribute("target", quest.target().value())
-                        .attribute("status", acceptance.getStatus().name())
-                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                        .occurredAt(occurredAt)
-                        .correlationId(correlation(acceptance, suffix))
-                        .build()
-        );
+        domainEventPublisher.publish(transitionEventFactory.progress(
+                acceptance,
+                quest,
+                Map.of(),
+                null,
+                occurredAt,
+                correlation(acceptance, suffix)
+        ));
     }
 
     private void publishGoalReached(
@@ -344,20 +269,13 @@ public class QuestService {
             Instant occurredAt,
             String suffix
     ) {
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_GOAL_REACHED)
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(acceptance.getPlayerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", acceptance.getProgressValue())
-                        .attribute("target", quest.target().value())
-                        .attribute("reachedAt", acceptance.getGoalReachedAt())
-                        .attribute("completionPolicy", quest.getCompletionPolicy().name())
-                        .occurredAt(occurredAt)
-                        .correlationId(correlation(acceptance, suffix))
-                        .build()
-        );
+        domainEventPublisher.publish(transitionEventFactory.goalReached(
+                acceptance,
+                quest,
+                Map.of(),
+                occurredAt,
+                correlation(acceptance, suffix)
+        ));
     }
 
     private void publishCompleted(

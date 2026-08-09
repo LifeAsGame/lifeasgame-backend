@@ -17,6 +17,7 @@ import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
 import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.social.domain.ChatChannelType;
@@ -125,6 +126,7 @@ class OutboxEventCodecRegistryTest {
                             "inactive"
                     ),
                     questEvent(),
+                    rewardReadyFact(),
                     economyEvent()
             );
 
@@ -154,6 +156,8 @@ class OutboxEventCodecRegistryTest {
                     .isEqualTo("lifelog.recorded.v1");
             assertThat(registry.aliasFor(QuestEvent.class))
                     .isEqualTo("quest.event.v1");
+            assertThat(registry.aliasFor(QuestRewardReadyFact.class))
+                    .isEqualTo("quest.reward-ready.v1");
             assertThat(registry.aliasFor(EconomyEvent.class))
                     .isEqualTo("economy.event.v1");
         }
@@ -353,6 +357,20 @@ class OutboxEventCodecRegistryTest {
                 attributes,
                 OCCURRED_AT,
                 "quest:91:acceptance:197:completed"
+        );
+    }
+
+    private QuestRewardReadyFact rewardReadyFact() {
+        return new QuestRewardReadyFact(
+                QuestRewardReadyFact.EVENT_VERSION,
+                197L,
+                19701L,
+                "RP_EXP_30",
+                91L,
+                "Q_OUTBOX",
+                4,
+                OCCURRED_AT,
+                "quest:91:acceptance:19701:completed:reward"
         );
     }
 

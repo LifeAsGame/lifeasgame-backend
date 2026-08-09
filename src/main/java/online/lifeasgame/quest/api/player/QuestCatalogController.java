@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.quest.api.player.mapper.QuestWebMapper;
 import online.lifeasgame.quest.api.player.response.QuestResponse;
 import online.lifeasgame.quest.api.player.spec.QuestCatalogSpecV1;
-import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.QuestQueryService;
 import online.lifeasgame.quest.application.result.QuestResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +18,12 @@ import java.util.List;
 @RequestMapping("/api/v1/quests")
 public class QuestCatalogController implements QuestCatalogSpecV1 {
 
-    private final QuestService questService;
+    private final QuestQueryService questQueryService;
 
     @GetMapping("/catalog")
     @Override
     public ResponseEntity<QuestResponse.Blueprints> catalog() {
-        List<QuestResult.Blueprint> results = questService.getCatalog();
+        List<QuestResult.Blueprint> results = questQueryService.getCatalog();
         return ResponseEntity.ok(QuestWebMapper.toBlueprints(results));
     }
 }

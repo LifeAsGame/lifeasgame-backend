@@ -11,6 +11,7 @@ import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.social.domain.event.ChatChannelDeactivated;
 import online.lifeasgame.user.domain.event.UserRegistered;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,11 @@ public class OutboxEventCodecRegistry {
                         objectMapper
                 ),
                 new QuestEventOutboxCodec(objectMapper),
+                codec(
+                        "quest.reward-ready.v1",
+                        QuestRewardReadyFact.class,
+                        objectMapper
+                ),
                 new EconomyEventOutboxCodec(objectMapper)
         );
     }

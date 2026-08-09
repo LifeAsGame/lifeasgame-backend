@@ -6,16 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.error.DomainException;
-import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import online.lifeasgame.quest.domain.error.QuestError;
-import online.lifeasgame.quest.domain.event.QuestEvent;
-import online.lifeasgame.quest.domain.event.QuestEventType;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -76,9 +71,6 @@ public class Quest extends AbstractTime {
 
     @Column(name = "due_at")
     private Instant dueAt;
-
-    @Transient
-    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     private Quest(
             String code,
@@ -282,7 +274,7 @@ public class Quest extends AbstractTime {
         );
     }
 
-    public void updateDefinition(
+    public boolean updateDefinition(
             QuestTarget questTarget,
             QuestReward questReward,
             QuestRepeatRule questRepeatRule,
@@ -290,7 +282,7 @@ public class Quest extends AbstractTime {
             Integer nextDefinitionVersion,
             RewardProfileRef nextRewardProfileRef
     ) {
-        updateDefinition(
+        return updateDefinition(
                 questTarget,
                 questReward,
                 questRepeatRule,
@@ -304,7 +296,7 @@ public class Quest extends AbstractTime {
         );
     }
 
-    public void updateDefinition(
+    public boolean updateDefinition(
             QuestTarget questTarget,
             QuestReward questReward,
             QuestRepeatRule questRepeatRule,
@@ -376,16 +368,16 @@ public class Quest extends AbstractTime {
             changed = true;
         }
 
-        if (changed) recordUpdatedEvent();
+        return changed;
     }
 
-    public void updateDefinition(
+    public boolean updateDefinition(
             QuestTarget questTarget,
             QuestReward questReward,
             QuestRepeatRule questRepeatRule,
             Instant dueAt
     ) {
-        updateDefinition(
+        return updateDefinition(
                 questTarget,
                 questReward,
                 questRepeatRule,
@@ -523,20 +515,6 @@ public class Quest extends AbstractTime {
         if (definitionVersion < 1) {
             throw new DomainException(QuestError.QUEST_DEFINITION_VERSION_INVALID);
         }
-    }
-
-    private void recordUpdatedEvent() {
-        recordEvent(QuestEvent.snapshot(QuestEventType.QUEST_UPDATED, this, "quest:" + code + ":updated"));
-    }
-
-    public List<DomainEvent> pullEvents() {
-        var copy = List.copyOf(domainEvents);
-        domainEvents.clear();
-        return copy;
-    }
-
-    private void recordEvent(DomainEvent event) {
-        if (event != null) domainEvents.add(event);
     }
 
     public void changeTarget(QuestTarget target) {

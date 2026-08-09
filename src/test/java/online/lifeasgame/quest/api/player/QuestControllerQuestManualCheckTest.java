@@ -4,7 +4,9 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
-import online.lifeasgame.quest.application.QuestFacade;
+import online.lifeasgame.quest.application.QuestManualCheckService;
+import online.lifeasgame.quest.application.QuestQueryService;
+import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.QuestTargetType;
@@ -47,7 +49,13 @@ class QuestControllerQuestManualCheckTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private QuestFacade questFacade;
+    private QuestManualCheckService questManualCheckService;
+
+    @MockitoBean
+    private QuestService questService;
+
+    @MockitoBean
+    private QuestQueryService questQueryService;
 
     @MockitoBean
     private JwtProvider jwtProvider;
@@ -61,7 +69,7 @@ class QuestControllerQuestManualCheckTest {
     @Test
     @DisplayName("Request body 없이 기존 Acceptance DTO를 200으로 반환한다")
     void returnsAcceptanceWithoutBody() throws Exception {
-        when(questFacade.manualCheck(
+        when(questManualCheckService.check(
                 new QuestCommand.ManualCheck("Q_GROWTH_ONE_FOCUS")
         )).thenReturn(acceptance());
 
@@ -78,7 +86,7 @@ class QuestControllerQuestManualCheckTest {
                 .andExpect(jsonPath("$.result.completedAt")
                         .value("2026-07-31T03:00:00Z"));
 
-        verify(questFacade).manualCheck(
+        verify(questManualCheckService).check(
                 new QuestCommand.ManualCheck("Q_GROWTH_ONE_FOCUS")
         );
     }
@@ -86,7 +94,7 @@ class QuestControllerQuestManualCheckTest {
     @Test
     @DisplayName("허용하지 않은 Quest는 안정된 409를 반환한다")
     void rejectsWrongQuest() throws Exception {
-        when(questFacade.manualCheck(argThat(command ->
+        when(questManualCheckService.check(argThat(command ->
                 command.questCode().equals("Q_RECORD_FIRST_TRACE")
         ))).thenThrow(new DomainException(
                 QuestError.QUEST_MANUAL_CHECK_NOT_ALLOWED

@@ -169,7 +169,7 @@ class QuestSemanticDefinitionContractTest {
         void keepsSameValueNoOp() {
             Quest quest = finalQuest(QuestRoleTemplateRef.of("ROLE_WARRIOR"));
 
-            quest.updateDefinition(
+            boolean changed = quest.updateDefinition(
                     quest.target(),
                     null,
                     QuestRepeatRule.ONCE,
@@ -182,7 +182,7 @@ class QuestSemanticDefinitionContractTest {
                     QuestRoleTemplateRef.of(" ROLE_WARRIOR ")
             );
 
-            assertThat(quest.pullEvents()).isEmpty();
+            assertThat(changed).isFalse();
         }
 
         @Test
@@ -213,7 +213,6 @@ class QuestSemanticDefinitionContractTest {
                     .isEqualTo(QuestProgressSource.COUNT);
             assertThat(quest.getRepeatRule()).isEqualTo(QuestRepeatRule.ONCE);
             assertThat(quest.roleTemplateCodeOrNull()).isNull();
-            assertThat(quest.pullEvents()).isEmpty();
         }
     }
 
