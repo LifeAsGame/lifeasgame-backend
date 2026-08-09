@@ -1,6 +1,7 @@
 package online.lifeasgame.quest.application;
 
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.automation.QuestSignal;
 import online.lifeasgame.quest.application.automation.QuestSignalAcceptancePolicy;
 import online.lifeasgame.quest.application.automation.QuestSignalProcessingService;
@@ -63,7 +64,8 @@ class QuestManualCheckServiceTest {
                 signalProcessingService,
                 completionService,
                 playerTimezoneResolver,
-                Clock.fixed(CHECKED_AT, ZoneId.of("UTC"))
+                Clock.fixed(CHECKED_AT, ZoneId.of("UTC")),
+                mock(CurrentPlayerAccessor.class)
         );
         lenient().when(playerTimezoneResolver.resolve(PLAYER_ID))
                 .thenReturn(PLAYER_ZONE);

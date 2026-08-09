@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.quest.application.PlayerTimezoneResolver;
-import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.QuestDefinitionProvisioner;
 import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
+import online.lifeasgame.quest.application.event.QuestTransitionEventFactory;
 import online.lifeasgame.quest.domain.*;
-import online.lifeasgame.quest.domain.event.QuestEvent;
-import online.lifeasgame.quest.domain.event.QuestEventType;
 import online.lifeasgame.quest.domain.repository.QuestAcceptanceRepository;
 import online.lifeasgame.quest.domain.repository.QuestSignalReceiptRepository;
 import org.springframework.stereotype.Component;
@@ -27,11 +26,12 @@ import java.util.Optional;
 public class QuestSignalProcessingAttempt {
 
     private final QuestSignalReceiptRepository receiptRepository;
-    private final QuestService questService;
+    private final QuestDefinitionProvisioner definitionProvisioner;
     private final QuestAcceptanceRepository questAcceptanceRepository;
     private final QuestProgressStore questProgressStore;
     private final DomainEventPublisher domainEventPublisher;
     private final QuestCompletionEventFactory completionEventFactory;
+    private final QuestTransitionEventFactory transitionEventFactory;
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
 
@@ -51,7 +51,7 @@ public class QuestSignalProcessingAttempt {
                 )
         );
 
-        Quest quest = questService.ensureQuest(signal.questCode());
+        Quest quest = definitionProvisioner.ensure(signal.questCode());
         ZoneId playerZone = Objects.requireNonNull(
                 playerTimezoneResolver.resolve(signal.playerId()),
                 "playerTimezone"
@@ -85,9 +85,9 @@ public class QuestSignalProcessingAttempt {
         boolean goalReached = acceptance.isGoalReached();
         acceptance = questAcceptanceRepository.save(acceptance);
 
-        publishProgress(signal, quest, acceptance, progressValue);
+        publishProgress(signal, quest, acceptance);
         if (goalReached) {
-            publishGoalReached(signal, quest, acceptance, progressValue);
+            publishGoalReached(signal, quest, acceptance);
             if (quest.isAutoCompletion()
                     && acceptance.complete(signal.occurredAt())) {
                 acceptance = questAcceptanceRepository.save(acceptance);
@@ -268,83 +268,44 @@ public class QuestSignalProcessingAttempt {
             Quest quest,
             QuestAcceptance acceptance
     ) {
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_ACCEPTED)
-                        .attributes(signal.attributes())
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(signal.playerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", acceptance.getProgressValue())
-                        .attribute("target", quest.target().value())
-                        .attribute("repeatRule", quest.getRepeatRule().name())
-                        .attribute(
-                                "completionPolicy",
-                                quest.getCompletionPolicy().name()
-                        )
-                        .occurredAt(signal.occurredAt())
-                        .correlationId(correlation(signal, "accepted"))
-                        .build()
-        );
+        domainEventPublisher.publish(transitionEventFactory.accepted(
+                acceptance,
+                quest,
+                signal.attributes(),
+                signal.occurredAt(),
+                correlation(signal, "accepted")
+        ));
     }
 
     private void publishProgress(
             QuestSignal signal,
             Quest quest,
-            QuestAcceptance acceptance,
-            int progressValue
+            QuestAcceptance acceptance
     ) {
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_PROGRESS)
-                        .attributes(signal.attributes())
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(signal.playerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", progressValue)
-                        .attribute("target", quest.target().value())
-                        .attribute("repeatRule", quest.getRepeatRule().name())
-                        .attribute(
-                                "completionPolicy",
-                                quest.getCompletionPolicy().name()
-                        )
-                        .attribute("status", acceptance.getStatus().name())
-                        .attribute(
-                                "delta",
-                                signal.type() == QuestSignalType.ADD_PROGRESS
-                                        ? signal.progressDelta()
-                                        : null
-                        )
-                        .occurredAt(signal.occurredAt())
-                        .correlationId(correlation(signal, "progress"))
-                        .build()
-        );
+        domainEventPublisher.publish(transitionEventFactory.progress(
+                acceptance,
+                quest,
+                signal.attributes(),
+                signal.type() == QuestSignalType.ADD_PROGRESS
+                        ? signal.progressDelta()
+                        : null,
+                signal.occurredAt(),
+                correlation(signal, "progress")
+        ));
     }
 
     private void publishGoalReached(
             QuestSignal signal,
             Quest quest,
-            QuestAcceptance acceptance,
-            int progressValue
+            QuestAcceptance acceptance
     ) {
-        domainEventPublisher.publish(
-                QuestEvent.builder(QuestEventType.QUEST_GOAL_REACHED)
-                        .attributes(signal.attributes())
-                        .questId(quest.getId())
-                        .questCode(quest.getCode())
-                        .playerId(signal.playerId())
-                        .attribute("acceptanceId", acceptance.getId())
-                        .attribute("progress", progressValue)
-                        .attribute("target", quest.target().value())
-                        .attribute("reachedAt", acceptance.getGoalReachedAt())
-                        .attribute(
-                                "completionPolicy",
-                                quest.getCompletionPolicy().name()
-                        )
-                        .occurredAt(signal.occurredAt())
-                        .correlationId(correlation(signal, "goal-reached"))
-                        .build()
-        );
+        domainEventPublisher.publish(transitionEventFactory.goalReached(
+                acceptance,
+                quest,
+                signal.attributes(),
+                signal.occurredAt(),
+                correlation(signal, "goal-reached")
+        ));
     }
 
     private void publishCompleted(

@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.core.event.DomainEvent;
-import online.lifeasgame.quest.application.automation.QuestAutomationService;
+import online.lifeasgame.quest.application.automation.QuestSignalBatchProcessor;
 import online.lifeasgame.quest.application.automation.QuestSignal;
 import online.lifeasgame.quest.application.trigger.QuestTriggerRegistry;
 import online.lifeasgame.quest.domain.event.QuestEvent;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class QuestEventBridge {
 
     private final QuestTriggerRegistry triggerRegistry;
-    private final QuestAutomationService questAutomationService;
+    private final QuestSignalBatchProcessor signalBatchProcessor;
 
     @EventListener
     public void onDomainEvent(DomainEvent event) {
@@ -32,6 +32,6 @@ public class QuestEventBridge {
         }
 
         log.debug("Translating {} into {} quest signals", event.getClass().getSimpleName(), signals.size());
-        questAutomationService.processSignals(signals);
+        signalBatchProcessor.process(signals);
     }
 }

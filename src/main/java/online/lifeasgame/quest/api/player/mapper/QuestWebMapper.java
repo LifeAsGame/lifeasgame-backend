@@ -3,6 +3,7 @@ package online.lifeasgame.quest.api.player.mapper;
 import online.lifeasgame.quest.api.player.request.QuestRequest;
 import online.lifeasgame.quest.api.player.response.QuestResponse;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.application.result.QuestResult;
 
 import java.util.List;
@@ -11,8 +12,8 @@ public final class QuestWebMapper {
 
     private QuestWebMapper() {}
 
-    public static QuestCommand.PlayerQuests toListCommand(String status) {
-        return new QuestCommand.PlayerQuests(status);
+    public static QuestQuery.PlayerQuests toListQuery(String status) {
+        return new QuestQuery.PlayerQuests(status);
     }
 
     public static QuestResponse.Acceptances toAcceptances(List<QuestResult.Acceptance> results) {
@@ -23,8 +24,8 @@ public final class QuestWebMapper {
         );
     }
 
-    public static QuestCommand.PlayerQuest toPlayerQuestCommand(String questCode) {
-        return new QuestCommand.PlayerQuest(questCode);
+    public static QuestQuery.PlayerQuest toPlayerQuestQuery(String questCode) {
+        return new QuestQuery.PlayerQuest(questCode);
     }
 
     public static QuestResponse.PlayerQuest toPlayerQuest(QuestResult.PlayerQuest result) {

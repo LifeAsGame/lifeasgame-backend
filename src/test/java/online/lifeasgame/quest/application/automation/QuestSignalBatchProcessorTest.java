@@ -18,17 +18,17 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("QuestAutomationService")
-class QuestAutomationServiceTest {
+@DisplayName("QuestSignalBatchProcessor")
+class QuestSignalBatchProcessorTest {
 
     @Mock
     private QuestSignalProcessingService processingService;
 
-    private QuestAutomationService service;
+    private QuestSignalBatchProcessor processor;
 
     @BeforeEach
     void setUp() {
-        service = new QuestAutomationService(processingService);
+        processor = new QuestSignalBatchProcessor(processingService);
     }
 
     @Nested
@@ -48,7 +48,7 @@ class QuestAutomationServiceTest {
             given(processingService.process(second)).willReturn(secondResult);
 
             List<QuestSignalProcessingResult> results =
-                    service.processSignals(List.of(first, second));
+                    processor.process(List.of(first, second));
 
             assertThat(results).containsExactly(firstResult, secondResult);
             InOrder inOrder = inOrder(processingService);
@@ -59,8 +59,8 @@ class QuestAutomationServiceTest {
         @Test
         @DisplayName("null 또는 빈 Collection은 처리하지 않는다")
         void ignoresEmptySignals() {
-            assertThat(service.processSignals(null)).isEmpty();
-            assertThat(service.processSignals(List.of())).isEmpty();
+            assertThat(processor.process(null)).isEmpty();
+            assertThat(processor.process(List.of())).isEmpty();
 
             verifyNoInteractions(processingService);
         }

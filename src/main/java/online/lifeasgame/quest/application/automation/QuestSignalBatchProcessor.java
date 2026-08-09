@@ -8,11 +8,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class QuestAutomationService {
+public class QuestSignalBatchProcessor {
 
     private final QuestSignalProcessingService processingService;
 
-    public List<QuestSignalProcessingResult> processSignals(
+    public List<QuestSignalProcessingResult> process(
             Collection<QuestSignal> signals
     ) {
         if (signals == null || signals.isEmpty()) {

@@ -8,7 +8,9 @@ import online.lifeasgame.quest.api.player.mapper.QuestWebMapper;
 import online.lifeasgame.quest.api.player.request.QuestRequest;
 import online.lifeasgame.quest.api.player.response.QuestResponse;
 import online.lifeasgame.quest.api.player.spec.QuestSpecV1;
-import online.lifeasgame.quest.application.QuestFacade;
+import online.lifeasgame.quest.application.QuestManualCheckService;
+import online.lifeasgame.quest.application.QuestQueryService;
+import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.result.QuestResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +23,18 @@ import java.util.List;
 @RequestMapping("/api/v1/players/quests")
 public class QuestController implements QuestSpecV1 {
 
-    private final QuestFacade questFacade;
+    private final QuestService questService;
+    private final QuestQueryService questQueryService;
+    private final QuestManualCheckService questManualCheckService;
 
     @Override
     @GetMapping
     public ResponseEntity<QuestResponse.Acceptances> list(
             @RequestParam(required = false) String status
     ) {
-        List<QuestResult.Acceptance> results = questFacade.list(QuestWebMapper.toListCommand(status));
+        List<QuestResult.Acceptance> results = questQueryService.playerQuests(
+                QuestWebMapper.toListQuery(status)
+        );
         return ResponseEntity.ok(QuestWebMapper.toAcceptances(results));
     }
 
@@ -37,7 +43,9 @@ public class QuestController implements QuestSpecV1 {
     public ResponseEntity<QuestResponse.PlayerQuest> detail(
             @PathVariable String questCode
     ) {
-        QuestResult.PlayerQuest result = questFacade.detail(QuestWebMapper.toPlayerQuestCommand(questCode));
+        QuestResult.PlayerQuest result = questQueryService.playerQuest(
+                QuestWebMapper.toPlayerQuestQuery(questCode)
+        );
         return ResponseEntity.ok(QuestWebMapper.toPlayerQuest(result));
     }
 
@@ -47,7 +55,9 @@ public class QuestController implements QuestSpecV1 {
             @PathVariable String questCode,
             @Valid @RequestBody QuestRequest.Accept request
     ) {
-        QuestResult.Acceptance result = questFacade.accept(QuestWebMapper.toAcceptCommand(questCode, request));
+        QuestResult.Acceptance result = questService.accept(
+                QuestWebMapper.toAcceptCommand(questCode, request)
+        );
         return ApiResponses.created(
                 URI.create("/api/v1/players/quests"),
                 QuestWebMapper.toAcceptance(result)
@@ -59,7 +69,7 @@ public class QuestController implements QuestSpecV1 {
     public ResponseEntity<ApiResponse<QuestResponse.Acceptance>> manualCheck(
             @PathVariable String questCode
     ) {
-        QuestResult.Acceptance result = questFacade.manualCheck(
+        QuestResult.Acceptance result = questManualCheckService.check(
                 QuestWebMapper.toManualCheckCommand(questCode)
         );
         return ApiResponses.ok(QuestWebMapper.toAcceptance(result));
@@ -71,7 +81,9 @@ public class QuestController implements QuestSpecV1 {
             @PathVariable String questCode,
             @Valid @RequestBody QuestRequest.Cancel request
     ) {
-        QuestResult.Canceled result = questFacade.cancel(QuestWebMapper.toCancelCommand(questCode, request));
+        QuestResult.Canceled result = questService.cancel(
+                QuestWebMapper.toCancelCommand(questCode, request)
+        );
         return ApiResponses.deleted(QuestWebMapper.toCanceled(result));
     }
 }

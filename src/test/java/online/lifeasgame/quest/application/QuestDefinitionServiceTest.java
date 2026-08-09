@@ -2,9 +2,12 @@ package online.lifeasgame.quest.application;
 
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.blueprint.StaticQuestBlueprintCatalog;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.event.QuestCompletionEventFactory;
+import online.lifeasgame.quest.application.event.QuestDefinitionEventFactory;
+import online.lifeasgame.quest.application.event.QuestTransitionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
 import online.lifeasgame.quest.domain.error.QuestError;
@@ -49,19 +52,25 @@ class QuestDefinitionServiceTest {
     @Mock
     private DomainEventPublisher domainEventPublisher;
 
+    @Mock
+    private QuestDefinitionProvisioner definitionProvisioner;
+
     private QuestService service;
 
     @BeforeEach
     void setUp() {
         service = new QuestService(
-                blueprintCatalog,
+                definitionProvisioner,
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
                 domainEventPublisher,
                 new QuestCompletionEventFactory(),
+                new QuestDefinitionEventFactory(),
+                new QuestTransitionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
-                Clock.systemUTC()
+                Clock.systemUTC(),
+                mock(CurrentPlayerAccessor.class)
         );
     }
 
@@ -86,7 +95,7 @@ class QuestDefinitionServiceTest {
             assertThat(result.rewardExp()).isNull();
             assertThat(result.rewardStats()).isNull();
             verify(rewardProfileLookupApi).getActiveByCode("RP_EXP_30");
-            verify(domainEventPublisher).publishAll(any());
+            verify(domainEventPublisher).publish(any());
         }
 
         @Test
@@ -175,7 +184,7 @@ class QuestDefinitionServiceTest {
         assertThat(result.rewardExp()).isEqualTo(50);
         assertThat(result.rewardStats()).containsEntry("strength", 1);
         verifyNoInteractions(rewardProfileLookupApi);
-        verify(domainEventPublisher).publishAll(any());
+        verify(domainEventPublisher).publish(any());
     }
 
     @Nested
@@ -204,7 +213,7 @@ class QuestDefinitionServiceTest {
             assertThat(result.repeatPolicy()).isEqualTo("ONCE");
             assertThat(result.repeatRule()).isEqualTo("ONCE");
             assertThat(result.roleTemplateCode()).isEqualTo("ROLE_READER");
-            verify(domainEventPublisher).publishAll(any());
+            verify(domainEventPublisher).publish(any());
         }
 
         @Test
@@ -282,7 +291,8 @@ class QuestDefinitionServiceTest {
                 invocation -> invocation.getArgument(0)
         );
 
-        Quest result = service.ensureQuest(QuestCode.PLAYER_WELCOME);
+        Quest result = provisioner(blueprintCatalog)
+                .ensure(QuestCode.PLAYER_WELCOME);
 
         assertThat(result.getDefinitionVersion()).isEqualTo(4);
         assertThat(result.rewardProfileCodeOrNull()).isEqualTo("RP_EXP_30");
@@ -302,16 +312,8 @@ class QuestDefinitionServiceTest {
     void materializesSeedLevel1BlueprintsWithActiveProfiles() {
         StaticQuestBlueprintCatalog staticCatalog =
                 new StaticQuestBlueprintCatalog();
-        QuestService seedService = new QuestService(
-                staticCatalog,
-                questReader,
-                questWriter,
-                rewardProfileLookupApi,
-                domainEventPublisher,
-                new QuestCompletionEventFactory(),
-                ignored -> ZoneId.of("Asia/Seoul"),
-                Clock.systemUTC()
-        );
+        QuestDefinitionProvisioner seedProvisioner =
+                provisioner(staticCatalog);
         given(questReader.findByCode(any(QuestCode.class)))
                 .willReturn(Optional.empty());
         given(rewardProfileLookupApi.getActiveByCode(anyString()))
@@ -324,7 +326,7 @@ class QuestDefinitionServiceTest {
 
         var quests = SeedLevel1Quest.definitions().stream()
                 .map(definition ->
-                        seedService.ensureQuest(definition.questCode()))
+                        seedProvisioner.ensure(definition.questCode()))
                 .toList();
 
         assertThat(quests).hasSize(5)
@@ -347,16 +349,8 @@ class QuestDefinitionServiceTest {
     void doesNotMaterializeSeedWithUnavailableProfile() {
         StaticQuestBlueprintCatalog staticCatalog =
                 new StaticQuestBlueprintCatalog();
-        QuestService seedService = new QuestService(
-                staticCatalog,
-                questReader,
-                questWriter,
-                rewardProfileLookupApi,
-                domainEventPublisher,
-                new QuestCompletionEventFactory(),
-                ignored -> ZoneId.of("Asia/Seoul"),
-                Clock.systemUTC()
-        );
+        QuestDefinitionProvisioner seedProvisioner =
+                provisioner(staticCatalog);
         given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                 .willReturn(Optional.empty());
         given(rewardProfileLookupApi.getActiveByCode("RP_EXP_TINY_10"))
@@ -365,7 +359,7 @@ class QuestDefinitionServiceTest {
                 ));
 
         assertRewardError(
-                () -> seedService.ensureQuest(
+                () -> seedProvisioner.ensure(
                         QuestCode.Q_RECORD_FIRST_TRACE
                 ),
                 RewardError.REWARD_PROFILE_INACTIVE
@@ -382,20 +376,12 @@ class QuestDefinitionServiceTest {
         Quest existing = staticCatalog
                 .require(QuestCode.Q_RECORD_FIRST_TRACE)
                 .instantiate();
-        QuestService seedService = new QuestService(
-                staticCatalog,
-                questReader,
-                questWriter,
-                rewardProfileLookupApi,
-                domainEventPublisher,
-                new QuestCompletionEventFactory(),
-                ignored -> ZoneId.of("Asia/Seoul"),
-                Clock.systemUTC()
-        );
+        QuestDefinitionProvisioner seedProvisioner =
+                provisioner(staticCatalog);
         given(questReader.findByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                 .willReturn(Optional.of(existing));
 
-        Quest replay = seedService.ensureQuest(
+        Quest replay = seedProvisioner.ensure(
                 QuestCode.Q_RECORD_FIRST_TRACE
         );
 
@@ -408,8 +394,22 @@ class QuestDefinitionServiceTest {
     }
 
     private void stubExisting(Quest quest) {
-        given(questReader.findByCode(QuestCode.PLAYER_WELCOME))
-                .willReturn(Optional.of(quest));
+        given(definitionProvisioner.ensure(QuestCode.PLAYER_WELCOME))
+                .willReturn(quest);
+    }
+
+    private QuestDefinitionProvisioner provisioner(
+            QuestBlueprintCatalog catalog
+    ) {
+        return new QuestDefinitionProvisioner(
+                catalog,
+                questReader,
+                questWriter,
+                rewardProfileLookupApi,
+                domainEventPublisher,
+                new QuestDefinitionEventFactory(),
+                Clock.systemUTC()
+        );
     }
 
     private QuestCommand.UpdateDefinition update(
@@ -510,7 +510,6 @@ class QuestDefinitionServiceTest {
         assertThat(quest.getDefinitionVersion()).isEqualTo(1);
         assertThat(quest.rewardProfileCodeOrNull()).isNull();
         assertThat(quest.getReward().exp()).isZero();
-        assertThat(quest.pullEvents()).isEmpty();
     }
 
     private void assertQuestError(Runnable action, QuestError error) {

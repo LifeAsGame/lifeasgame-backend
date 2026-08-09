@@ -3,7 +3,7 @@ package online.lifeasgame.reward.application;
 import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.domain.error.InventoryError;
-import online.lifeasgame.reward.application.event.QuestRewardReadyFact;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.reward.domain.*;
 import online.lifeasgame.reward.domain.error.RewardError;
 import org.junit.jupiter.api.BeforeEach;
@@ -374,6 +374,7 @@ class QuestCompletionRewardServiceTest {
 
     private QuestRewardReadyFact fact(String profileCode) {
         return new QuestRewardReadyFact(
+                QuestRewardReadyFact.EVENT_VERSION,
                 2190L,
                 21900L,
                 profileCode,

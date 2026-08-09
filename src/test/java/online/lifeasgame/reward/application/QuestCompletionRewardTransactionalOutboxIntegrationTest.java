@@ -11,6 +11,7 @@ import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegis
 import online.lifeasgame.quest.application.QuestManualCheckService;
 import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.QuestStatus;
@@ -190,7 +191,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @Test
     @DisplayName("RP_NONE은 Line 없이 COMPLETED이고 EXP를 지급하지 않는다")
     void completesNoRewardProfile() {
-        bridge.onQuestEvent(rewardReady(219101L, "RP_NONE"));
+        bridge.onQuestRewardReady(rewardReady(219101L, "RP_NONE"));
 
         assertThat(settlementCount()).isEqualTo(1);
         assertThat(lineCount()).isZero();
@@ -204,7 +205,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @DisplayName("RP_EXP_TINY_10은 EXP 10을 exact-once 지급하고 Settlement를 완료한다")
     void processesExpTenExactlyOnceUnderConcurrentRedelivery()
             throws Exception {
-        QuestEvent event = rewardReady(
+        QuestRewardReadyFact event = rewardReady(
                 219102L,
                 "RP_EXP_TINY_10"
         );
@@ -234,7 +235,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @Test
     @DisplayName("RP_EXP_AND_ITEM_FIRST_STEP_20은 EXP와 ITEM을 exact-once 지급하고 완료한다")
     void processesExpAndItemToCompletion() {
-        bridge.onQuestEvent(rewardReady(
+        bridge.onQuestRewardReady(rewardReady(
                 219103L,
                 "RP_EXP_AND_ITEM_FIRST_STEP_20"
         ));
@@ -256,11 +257,11 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @Test
     @DisplayName("새 acceptance attempt는 별도 Settlement identity로 한 번 더 지급한다")
     void treatsRestartedAcceptanceAsNewSettlementIdentity() {
-        bridge.onQuestEvent(rewardReady(
+        bridge.onQuestRewardReady(rewardReady(
                 219104L,
                 "RP_EXP_TINY_10"
         ));
-        bridge.onQuestEvent(rewardReady(
+        bridge.onQuestRewardReady(rewardReady(
                 219105L,
                 "RP_EXP_TINY_10"
         ));
@@ -274,7 +275,10 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @DisplayName("Player가 없으면 FAILED/failureCode를 durable 저장하고 중복 Event에서 Processor를 재호출하지 않는다")
     void consumesOnlyDurableFailureAndSkipsFailedReplay() {
         jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
-        QuestEvent event = rewardReady(219106L, "RP_EXP_TINY_10");
+        QuestRewardReadyFact event = rewardReady(
+                219106L,
+                "RP_EXP_TINY_10"
+        );
 
         append(event);
         OutboxRelayResult first = relayService.relayBatch();
@@ -297,12 +301,12 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     @Test
     @DisplayName("동일 Settlement identity의 다른 profile은 Snapshot을 바꾸거나 추가 지급하지 않고 stable 409다")
     void rejectsProfileSnapshotConflict() {
-        bridge.onQuestEvent(rewardReady(
+        bridge.onQuestRewardReady(rewardReady(
                 219107L,
                 "RP_EXP_TINY_10"
         ));
 
-        assertThatThrownBy(() -> bridge.onQuestEvent(
+        assertThatThrownBy(() -> bridge.onQuestRewardReady(
                 rewardReady(219107L, "RP_NONE")
         )).isInstanceOfSatisfying(
                 DomainException.class,
@@ -507,8 +511,10 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         List<OutboxClaim> rewardClaims = claimService.claimBatch();
         assertThat(rewardClaims).hasSize(2);
         rewardClaims.forEach(claim -> {
-            assertThat(decodeQuestEvent(claim).type())
-                    .isEqualTo(QuestEventType.QUEST_REWARD_READY);
+            assertThat(claim.eventType())
+                    .isEqualTo("quest.reward-ready.v1");
+            assertThat(decodeRewardFact(claim).acceptanceId())
+                    .isEqualTo(accepted.id());
             dispatchAttempt.dispatch(claim);
             dispatchAttempt.dispatch(claim);
             completionService.complete(claim);
@@ -525,14 +531,14 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
     }
 
     private Future<?> submit(
-            QuestEvent event,
+            QuestRewardReadyFact event,
             CountDownLatch ready,
             CountDownLatch start
     ) {
         return executor.submit(() -> {
             ready.countDown();
             start.await();
-            bridge.onQuestEvent(event);
+            bridge.onQuestRewardReady(event);
             return null;
         });
     }
@@ -591,20 +597,25 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         );
     }
 
-    private QuestEvent rewardReady(long acceptanceId, String profileCode) {
-        return new QuestEvent(
-                QuestEventType.QUEST_REWARD_READY,
+    private QuestRewardReadyFact decodeRewardFact(OutboxClaim claim) {
+        return (QuestRewardReadyFact) codecRegistry.decode(
+                claim.eventType(),
+                claim.payload()
+        );
+    }
+
+    private QuestRewardReadyFact rewardReady(
+            long acceptanceId,
+            String profileCode
+    ) {
+        return new QuestRewardReadyFact(
+                QuestRewardReadyFact.EVENT_VERSION,
                 PLAYER_ID,
+                acceptanceId,
+                profileCode,
                 219L,
                 "Q_FIRST_STEP",
-                Map.of(
-                        "acceptanceId", acceptanceId,
-                        "rewardProfileCode", profileCode,
-                        "questDefinitionVersion", 1,
-                        "questSemanticCategory", "GROWTH",
-                        "progressSource", "COUNT",
-                        "repeatPolicy", "ONCE"
-                ),
+                1,
                 COMPLETED_AT.plusSeconds(1),
                 "quest:219:acceptance:%d:completed:reward".formatted(
                         acceptanceId

@@ -2,8 +2,6 @@ package online.lifeasgame.quest.domain;
 
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.quest.domain.error.QuestError;
-import online.lifeasgame.quest.domain.event.QuestEvent;
-import online.lifeasgame.quest.domain.event.QuestEventType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -75,7 +73,6 @@ class QuestDefinitionContractTest {
 
             assertThat(quest.getDefinitionVersion()).isEqualTo(3);
             assertThat(quest.target().value()).isEqualTo(1);
-            assertThat(quest.pullEvents()).isEmpty();
         }
 
         @Test
@@ -100,7 +97,6 @@ class QuestDefinitionContractTest {
             assertThat(quest.getReward().exp()).isEqualTo(70);
             assertThat(quest.getReward().stats().stats())
                     .containsEntry("strength", 2);
-            assertThat(quest.pullEvents()).isEmpty();
         }
 
         @Test
@@ -108,7 +104,7 @@ class QuestDefinitionContractTest {
         void clearsLegacyRewardWhenApplyingProfileReference() {
             Quest quest = nonZeroLegacyQuest();
 
-            quest.updateDefinition(
+            boolean changed = quest.updateDefinition(
                     null,
                     null,
                     null,
@@ -121,16 +117,7 @@ class QuestDefinitionContractTest {
             assertThat(quest.rewardProfileCodeOrNull()).isEqualTo("RP_EXP_30");
             assertThat(quest.getReward().exp()).isZero();
             assertThat(quest.getReward().stats().stats()).isEmpty();
-            QuestEvent event = (QuestEvent) quest.pullEvents().getFirst();
-            assertThat(event.attributes())
-                    .containsEntry("questDefinitionVersion", 2)
-                    .containsEntry("rewardProfileCode", "RP_EXP_30")
-                    .doesNotContainKeys(
-                            "rewardExp",
-                            "rewardStats",
-                            "rewardLines",
-                            "rewardProfileId"
-                    );
+            assertThat(changed).isTrue();
         }
 
         @Test
@@ -155,7 +142,6 @@ class QuestDefinitionContractTest {
             assertThat(quest.getReward().exp()).isEqualTo(70);
             assertThat(quest.getReward().stats().stats())
                     .containsEntry("strength", 2);
-            assertThat(quest.pullEvents()).isEmpty();
         }
 
         @Test
@@ -163,7 +149,7 @@ class QuestDefinitionContractTest {
         void doesNotRecordNoOpEvent() {
             Quest quest = profileQuest(2, "RP_EXP_10");
 
-            quest.updateDefinition(
+            boolean changed = quest.updateDefinition(
                     quest.target(),
                     null,
                     quest.getRepeatRule(),
@@ -172,15 +158,15 @@ class QuestDefinitionContractTest {
                     RewardProfileRef.of("RP_EXP_10")
             );
 
-            assertThat(quest.pullEvents()).isEmpty();
+            assertThat(changed).isFalse();
         }
 
         @Test
-        @DisplayName("변경 Event에는 version과 profile code만 보상 Snapshot으로 담는다")
-        void snapshotsDefinitionReference() {
+        @DisplayName("변경 여부를 반환하고 새 Definition 값을 보존한다")
+        void reportsDefinitionChange() {
             Quest quest = profileQuest(1, "RP_EXP_10");
 
-            quest.updateDefinition(
+            boolean changed = quest.updateDefinition(
                     null,
                     null,
                     null,
@@ -189,12 +175,10 @@ class QuestDefinitionContractTest {
                     RewardProfileRef.of("RP_EXP_30")
             );
 
-            QuestEvent event = (QuestEvent) quest.pullEvents().getFirst();
-            assertThat(event.type()).isEqualTo(QuestEventType.QUEST_UPDATED);
-            assertThat(event.attributes())
-                    .containsEntry("questDefinitionVersion", 2)
-                    .containsEntry("rewardProfileCode", "RP_EXP_30")
-                    .doesNotContainKeys("rewardExp", "rewardStats", "rewardLines");
+            assertThat(changed).isTrue();
+            assertThat(quest.getDefinitionVersion()).isEqualTo(2);
+            assertThat(quest.rewardProfileCodeOrNull())
+                    .isEqualTo("RP_EXP_30");
         }
     }
 

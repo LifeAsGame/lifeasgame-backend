@@ -2,7 +2,7 @@ package online.lifeasgame.quest.application.bootstrap;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import online.lifeasgame.quest.application.QuestService;
+import online.lifeasgame.quest.application.QuestDefinitionProvisioner;
 import online.lifeasgame.quest.domain.QuestBlueprint;
 import online.lifeasgame.quest.domain.QuestBlueprintCatalog;
 import org.springframework.boot.ApplicationArguments;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class QuestDefinitionBootstrapper implements ApplicationRunner {
 
-    private final QuestService questService;
+    private final QuestDefinitionProvisioner definitionProvisioner;
     private final QuestBlueprintCatalog questBlueprintCatalog;
 
     @Override
@@ -32,7 +32,7 @@ public class QuestDefinitionBootstrapper implements ApplicationRunner {
     }
 
     private void ensureQuest(QuestBlueprint blueprint) {
-        questService.ensureQuest(blueprint.code());
+        definitionProvisioner.ensure(blueprint.code());
         log.debug("Quest definition ensured for {}", blueprint.code().name());
     }
 }
