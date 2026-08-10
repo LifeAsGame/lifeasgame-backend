@@ -4,6 +4,8 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.automation.QuestSignalProcessingAttempt;
 import online.lifeasgame.quest.application.command.QuestCommand;
+import online.lifeasgame.quest.api.player.QuestRouteController;
+import online.lifeasgame.quest.api.player.request.QuestRouteRequest;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.domain.event.QuestEvent;
@@ -11,6 +13,7 @@ import online.lifeasgame.reward.application.event.QuestRewardReadyBridge;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -26,6 +29,7 @@ class QuestArchitectureAlignmentTest {
     void simpleFacadeAndMisleadingOrchestrationNamesAreRemoved() {
         for (String className : Set.of(
                 "online.lifeasgame.quest.application.QuestFacade",
+                "online.lifeasgame.quest.application.QuestRouteFacade",
                 "online.lifeasgame.quest.application.automation.QuestAutomationService",
                 "online.lifeasgame.quest.application.saga.QuestRewardSaga"
         )) {
@@ -39,10 +43,22 @@ class QuestArchitectureAlignmentTest {
         for (Class<?> type : List.of(
                 QuestService.class,
                 QuestQueryService.class,
-                QuestManualCheckService.class
+                QuestManualCheckService.class,
+                QuestRouteSelectService.class,
+                QuestRouteAdvanceService.class,
+                QuestRouteQueryService.class
         )) {
             assertThat(fieldTypes(type)).contains(CurrentPlayerAccessor.class);
         }
+        assertThat(fieldTypes(QuestRouteController.class))
+                .doesNotContain(CurrentPlayerAccessor.class);
+        assertThat(Arrays.stream(
+                        QuestRouteRequest.Advance.class.getRecordComponents()
+                ).map(component -> component.getName()))
+                .containsExactly("expectedStepId");
+        assertThat(QuestRouteController.class
+                .getAnnotation(RequestMapping.class).value())
+                .containsExactly("/api/v1/quest-routes");
     }
 
     @Test

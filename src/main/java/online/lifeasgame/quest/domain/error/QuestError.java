@@ -136,6 +136,41 @@ public enum QuestError implements ErrorCode {
             "QUE-400-REWARD-CONTRACT-CONFLICT",
             "Reward profile and legacy inline reward cannot be changed together",
             400
+    ),
+    ROUTE_NOT_FOUND(
+            "QUE-404-ROUTE-NOT-FOUND",
+            "Quest route not found",
+            404
+    ),
+    PLAYER_ROUTE_NOT_FOUND(
+            "QUE-404-PLAYER-ROUTE-NOT-FOUND",
+            "Player quest route not found",
+            404
+    ),
+    ROUTE_STEP_NOT_FOUND(
+            "QUE-404-ROUTE-STEP-NOT-FOUND",
+            "Quest route step not found",
+            404
+    ),
+    ROUTE_ALREADY_COMPLETED(
+            "QUE-409-ROUTE-ALREADY-COMPLETED",
+            "Quest route is already completed",
+            409
+    ),
+    ROUTE_STEP_NOT_CURRENT(
+            "QUE-409-ROUTE-STEP-NOT-CURRENT",
+            "Expected step is not the current quest route step",
+            409
+    ),
+    ROUTE_STEP_CRITERIA_NOT_SATISFIED(
+            "QUE-409-ROUTE-STEP-CRITERIA-NOT-SATISFIED",
+            "Quest route step criteria are not satisfied",
+            409
+    ),
+    ROUTE_DEFINITION_INVALID(
+            "QUE-400-ROUTE-DEFINITION-INVALID",
+            "Quest route definition is invalid",
+            400
     )
     ;
 
