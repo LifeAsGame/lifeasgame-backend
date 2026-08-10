@@ -37,15 +37,6 @@ class QuestRouteReader {
         return route;
     }
 
-    QuestRoute getRouteForUpdate(Long routeId) {
-        QuestRoute route = questRouteRepository.findByIdForUpdate(routeId)
-                .orElseThrow(() -> new DomainException(
-                        QuestError.ROUTE_NOT_FOUND
-                ));
-        route.validateDefinition();
-        return route;
-    }
-
     Optional<PlayerQuestRoute> findPlayerRoute(Long playerId, Long routeId) {
         return playerQuestRouteRepository.findByPlayerIdAndRouteId(
                 playerId,
@@ -60,6 +51,7 @@ class QuestRouteReader {
                 ));
     }
 
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = false)
     PlayerQuestRoute getPlayerRouteForUpdate(Long playerId, Long routeId) {
         return playerQuestRouteRepository
                 .findByPlayerIdAndRouteIdForUpdate(playerId, routeId)

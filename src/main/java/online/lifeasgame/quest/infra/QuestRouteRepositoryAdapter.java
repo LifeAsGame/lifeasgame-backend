@@ -25,11 +25,6 @@ public class QuestRouteRepositoryAdapter implements QuestRouteRepository {
     }
 
     @Override
-    public Optional<QuestRoute> findByIdForUpdate(Long routeId) {
-        return jpaRepository.findByIdForUpdate(routeId);
-    }
-
-    @Override
     public Optional<QuestRoute> findByCode(String code) {
         return jpaRepository.findByCode(code);
     }

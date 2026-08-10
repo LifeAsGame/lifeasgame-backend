@@ -34,7 +34,7 @@ public interface JpaPlayerQuestRouteRepository
 
     @Modifying(flushAutomatically = true)
     @Query(value = """
-            INSERT IGNORE INTO player_quest_routes (
+            INSERT INTO player_quest_routes (
                 player_id,
                 route_id,
                 current_step_id,
@@ -55,6 +55,7 @@ public interface JpaPlayerQuestRouteRepository
                 :selectedAt,
                 :selectedAt
             )
+            ON DUPLICATE KEY UPDATE id = id
             """, nativeQuery = true)
     int insertIfAbsent(
             @Param("playerId") Long playerId,

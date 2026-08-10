@@ -1,6 +1,7 @@
 package online.lifeasgame.migration;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -166,6 +167,63 @@ class QuestRouteFlywayMigrationTest {
                             "REQUIRED"
                     )
             );
+        }
+
+        @Test
+        @DisplayName("동일한 stable Quest code가 있으면 기존 정의를 덮어쓰지 않는다")
+        void preservesExistingQuestDefinitionOnStableCodeConflict() {
+            flyway.clean();
+            Flyway.configure()
+                    .dataSource(
+                            MYSQL.getJdbcUrl(),
+                            MYSQL.getUsername(),
+                            MYSQL.getPassword()
+                    )
+                    .locations("classpath:db/migration")
+                    .target(MigrationVersion.fromVersion("19"))
+                    .baselineOnMigrate(false)
+                    .cleanDisabled(false)
+                    .load()
+                    .migrate();
+            jdbc.update("""
+                    INSERT INTO quests (
+                        reward_exp,
+                        definition_version,
+                        target_value,
+                        created_at,
+                        due_at,
+                        updated_at,
+                        code,
+                        title_id,
+                        reward_stats,
+                        reward_profile_code,
+                        category,
+                        semantic_category,
+                        description_md,
+                        repeat_rule,
+                        completion_policy,
+                        role_template_code,
+                        target_type,
+                        progress_source
+                    ) VALUES (
+                        0, 7, 1, CURRENT_TIMESTAMP(6), NULL,
+                        CURRENT_TIMESTAMP(6), 'Q_RECORD_FIRST_TRACE',
+                        '기존 정의', JSON_OBJECT(), 'RP_NONE', NULL,
+                        'RECORD', '기존 설명', 'ONCE', 'AUTO', NULL,
+                        'COUNT', 'RECORD_CREATED'
+                    )
+                    """);
+
+            flyway.migrate();
+
+            assertThat(jdbc.queryForMap("""
+                    SELECT definition_version, title_id
+                    FROM quests
+                    WHERE code = 'Q_RECORD_FIRST_TRACE'
+                    """))
+                    .containsEntry("definition_version", 7)
+                    .containsEntry("title_id", "기존 정의");
+            assertThat(routeId("ROUTE_RECORD_START")).isPositive();
         }
     }
 

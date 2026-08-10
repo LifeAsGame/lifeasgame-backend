@@ -6,17 +6,21 @@ import online.lifeasgame.quest.application.result.QuestRouteResult;
 import online.lifeasgame.quest.domain.PlayerQuestRouteStatus;
 import online.lifeasgame.quest.domain.QuestRouteStepState;
 import online.lifeasgame.quest.domain.error.QuestError;
+import online.lifeasgame.quest.domain.repository.PlayerQuestRouteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -75,6 +79,12 @@ class QuestRouteApplicationIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PlayerQuestRouteRepository playerQuestRouteRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @MockitoBean
     private CurrentPlayerAccessor currentPlayerAccessor;
@@ -152,6 +162,22 @@ class QuestRouteApplicationIntegrationTest {
         }
 
         @Test
+        @DisplayName("서로 다른 Player가 같은 Route를 동시에 선택하면 각각 runtime을 생성한다")
+        void createsIndependentRuntimesAcrossPlayers() throws Exception {
+            Long routeId = routeId();
+            when(currentPlayerAccessor.currentPlayerIdOrThrow())
+                    .thenReturn(PLAYER_ID, OTHER_PLAYER_ID);
+
+            List<String> outcomes = runConcurrently(
+                    () -> selectService.select(routeId).code()
+            );
+
+            assertThat(outcomes).containsOnly("ROUTE_RECORD_START");
+            assertThat(playerRouteCount(PLAYER_ID)).isEqualTo(1);
+            assertThat(playerRouteCount(OTHER_PLAYER_ID)).isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("다른 Route를 선택해도 기존 Route를 취소하지 않는다")
         void keepsMultipleSelectedRoutes() {
             Long anotherRouteId = insertAnotherRoute();
@@ -162,6 +188,37 @@ class QuestRouteApplicationIntegrationTest {
             assertThat(playerRouteCount(PLAYER_ID)).isEqualTo(2);
             assertThat(playerRouteStatuses(PLAYER_ID))
                     .containsOnly(PlayerQuestRouteStatus.IN_PROGRESS.name());
+        }
+    }
+
+    @Nested
+    @DisplayName("선택 runtime을 DB에 생성할 때")
+    class PersistSelectedRoute {
+
+        @Test
+        @DisplayName("존재하지 않는 Route 또는 Step 참조의 무결성 실패를 전파한다")
+        void propagatesForeignKeyViolation() {
+            TransactionTemplate transaction =
+                    new TransactionTemplate(transactionManager);
+            Long routeId = routeId();
+            Long firstStepId = stepId("RS_RECORD_01_LEAVE_TRACE");
+
+            assertThatThrownBy(() -> transaction.executeWithoutResult(
+                    status -> playerQuestRouteRepository.insertIfAbsent(
+                            PLAYER_ID,
+                            Long.MAX_VALUE,
+                            firstStepId,
+                            COMPLETED_AT
+                    )
+            )).isInstanceOf(DataIntegrityViolationException.class);
+            assertThatThrownBy(() -> transaction.executeWithoutResult(
+                    status -> playerQuestRouteRepository.insertIfAbsent(
+                            PLAYER_ID,
+                            routeId,
+                            Long.MAX_VALUE,
+                            COMPLETED_AT
+                    )
+            )).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
 
@@ -638,17 +695,24 @@ class QuestRouteApplicationIntegrationTest {
 
     private List<String> runConcurrently(ConcurrentAction action)
             throws Exception {
+        return runConcurrently(action, action);
+    }
+
+    private List<String> runConcurrently(
+            ConcurrentAction firstAction,
+            ConcurrentAction secondAction
+    ) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try {
             Future<String> first = executor.submit(() -> run(
-                    action,
+                    firstAction,
                     ready,
                     start
             ));
             Future<String> second = executor.submit(() -> run(
-                    action,
+                    secondAction,
                     ready,
                     start
             ));

@@ -132,8 +132,8 @@ CREATE TABLE player_quest_routes (
   COLLATE=utf8mb4_0900_ai_ci;
 
 -- The three required Quest definitions are the existing Level 1 content contract.
--- INSERT IGNORE only fills a clean database; existing definitions remain authoritative.
-INSERT IGNORE INTO quests (
+-- A stable code conflict preserves its existing authoritative definition.
+INSERT INTO quests (
     reward_exp,
     definition_version,
     target_value,
@@ -173,7 +173,8 @@ INSERT IGNORE INTO quests (
         'RP_NONE', NULL, 'RECORD',
         '이번 주 기록 중 하나를 골라 지금의 나에게 남길 한 줄을 적어보세요.',
         'WEEKLY', 'AUTO', NULL, 'COUNT', 'RECORD_CREATED'
-    );
+    )
+ON DUPLICATE KEY UPDATE code = VALUES(code);
 
 INSERT INTO quest_routes (
     code,

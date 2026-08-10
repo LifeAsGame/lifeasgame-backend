@@ -124,7 +124,7 @@ public class QuestRouteStep {
         if (stepOrder < 1
                 || criterionType != QuestRouteCriterionType.QUEST_COMPLETION_SET
                 || requiredEvidenceCount < 1
-                || requiredEvidenceCount > requiredQuestCount
+                || requiredEvidenceCount != requiredQuestCount
                 || !userAdvanceRequired
                 || !retroactiveEvidenceAllowed
                 || skipAllowed) {

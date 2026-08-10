@@ -89,8 +89,61 @@ class QuestRouteTest {
     }
 
     @Nested
-    @DisplayName("Step의 Quest evidence 계약을 정의할 때")
+    @DisplayName("Route Step 정의를 검증할 때")
     class DefineStepCriteria {
+
+        @Test
+        @DisplayName("required Quest 하나에는 evidence 하나를 요구할 수 있다")
+        void acceptsOneRequiredQuestAndOneEvidence() {
+            QuestRouteStep step = QuestRouteStep.define(
+                    "STEP_ONE",
+                    1,
+                    "첫 단계",
+                    null,
+                    1,
+                    Set.of(QuestRouteStepQuest.required(101L))
+            );
+
+            assertThat(step.getRequiredEvidenceCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("required Quest 둘에는 evidence 둘을 요구할 수 있다")
+        void acceptsTwoRequiredQuestsAndTwoEvidence() {
+            QuestRouteStep step = QuestRouteStep.define(
+                    "STEP_ONE",
+                    1,
+                    "첫 단계",
+                    null,
+                    2,
+                    Set.of(
+                            QuestRouteStepQuest.required(101L),
+                            QuestRouteStepQuest.required(102L)
+                    )
+            );
+
+            assertThat(step.requiredQuestIds()).containsExactlyInAnyOrder(
+                    101L,
+                    102L
+            );
+            assertThat(step.getRequiredEvidenceCount()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("required Quest 둘에 evidence 하나만 요구하면 정의를 거부한다")
+        void rejectsEvidenceCountBelowRequiredQuestCount() {
+            assertInvalidDefinition(() -> QuestRouteStep.define(
+                    "STEP_ONE",
+                    1,
+                    "첫 단계",
+                    null,
+                    1,
+                    Set.of(
+                            QuestRouteStepQuest.required(101L),
+                            QuestRouteStepQuest.required(102L)
+                    )
+            ));
+        }
 
         @Test
         @DisplayName("Optional Quest는 required evidence 수에 포함하지 않는다")

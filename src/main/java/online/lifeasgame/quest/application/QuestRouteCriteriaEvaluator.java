@@ -25,7 +25,6 @@ public class QuestRouteCriteriaEvaluator {
                         playerId,
                         requiredQuestIds
                 );
-        return completedQuestIds.containsAll(requiredQuestIds)
-                && completedQuestIds.size() >= step.getRequiredEvidenceCount();
+        return completedQuestIds.containsAll(requiredQuestIds);
     }
 }

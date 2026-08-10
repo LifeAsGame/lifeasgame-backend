@@ -24,7 +24,7 @@ public class QuestRouteSelectService {
     @Transactional
     public QuestRouteResult.Route select(Long routeId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        QuestRoute route = routeReader.getRouteForUpdate(routeId);
+        QuestRoute route = routeReader.getRoute(routeId);
         Long firstStepId = route.firstStep().getId();
         playerQuestRouteRepository.insertIfAbsent(
                 playerId,

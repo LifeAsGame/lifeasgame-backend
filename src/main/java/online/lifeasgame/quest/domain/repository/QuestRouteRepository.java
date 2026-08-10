@@ -10,7 +10,5 @@ public interface QuestRouteRepository {
 
     Optional<QuestRoute> findById(Long routeId);
 
-    Optional<QuestRoute> findByIdForUpdate(Long routeId);
-
     Optional<QuestRoute> findByCode(String code);
 }
