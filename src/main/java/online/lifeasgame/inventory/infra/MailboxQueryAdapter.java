@@ -3,19 +3,19 @@ package online.lifeasgame.inventory.infra;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.application.query.MailboxEntryView;
-import online.lifeasgame.inventory.application.query.MailBoxQuery;
+import online.lifeasgame.inventory.application.query.MailboxQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class MailboxQueryAdapter implements MailBoxQuery {
+public class MailboxQueryAdapter implements MailboxQuery {
 
     private final EntityManager em;
 
     @Override
-    public List<MailboxEntryView> findMailBoxEntries(Long playerId) {
+    public List<MailboxEntryView> findMailboxEntries(Long playerId) {
         return em.createQuery("""
             SELECT new online.lifeasgame.inventory.application.query.MailboxEntryView(
                 m.id,

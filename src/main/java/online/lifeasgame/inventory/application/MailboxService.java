@@ -2,8 +2,8 @@ package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
-import online.lifeasgame.inventory.application.query.MailboxEntryView;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.domain.*;
 import online.lifeasgame.inventory.domain.error.InventoryError;
@@ -21,7 +21,7 @@ public class MailboxService {
     private final MailboxReader mailboxReader;
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
-    private final MailBoxQueryReader mailBoxQueryReader;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public MailboxResult.Slot deliver(Long playerId, MailboxCommand.Deliver command) {
@@ -41,6 +41,11 @@ public class MailboxService {
     }
 
     @Transactional
+    public void claim(MailboxCommand.Claim command) {
+        claim(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
+    }
+
+    @Transactional
     public void claim(Long playerId, MailboxCommand.Claim command) {
         validateClaim(command);
         PlayerMailbox mailbox = mailboxReader
@@ -49,6 +54,11 @@ public class MailboxService {
                 .getByPlayerIdForUpdateOrThrow(playerId);
 
         claim(mailbox, inventory, List.of(command));
+    }
+
+    @Transactional
+    public void claimAll(MailboxCommand.ClaimAll command) {
+        claimAll(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional
@@ -140,10 +150,9 @@ public class MailboxService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public MailboxResult.Entries list(Long playerId) {
-        List<MailboxEntryView> entryViews = mailBoxQueryReader.list(playerId);
-        return MailboxResult.Entries.fromViews(entryViews);
+    @Transactional
+    public void delete(MailboxCommand.Delete command) {
+        delete(currentPlayerAccessor.currentPlayerIdOrThrow(), command);
     }
 
     @Transactional

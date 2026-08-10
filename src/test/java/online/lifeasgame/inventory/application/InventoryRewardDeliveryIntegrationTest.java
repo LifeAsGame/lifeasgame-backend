@@ -8,6 +8,7 @@ import online.lifeasgame.inventory.domain.error.ItemError;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -129,255 +130,270 @@ class InventoryRewardDeliveryIntegrationTest {
         );
     }
 
-    @Test
-    @DisplayName("stable ItemCode로 bound=true, empty attrs 지급과 receipt를 원자 저장한다")
-    void deliversNewReward() {
-        InventoryRewardDeliveryApi.RewardDeliveryResult result =
-                deliveryApi.deliverReward(
-                        2241001L,
-                        PLAYER_ID,
-                        "  " + ITEM_CODE + "  ",
-                        2L
-                );
+    @Nested
+    @DisplayName("Reward를 지급하거나 receipt를 조회할 때")
+    class DeliverAndReadReceipt {
 
-        assertThat(result.deliveryId()).isPositive();
-        assertThat(result.rewardLineId()).isEqualTo(2241001L);
-        assertThat(result.playerId()).isEqualTo(PLAYER_ID);
-        assertThat(result.itemId()).isEqualTo(itemId(ITEM_CODE));
-        assertThat(result.itemCode()).isEqualTo(ITEM_CODE);
-        assertThat(result.quantity()).isEqualTo(2L);
-        assertThat(result.replayed()).isFalse();
-        assertThat(receiptCount(2241001L)).isEqualTo(1);
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(2L);
-        assertThat(mailboxEntryBound(PLAYER_ID)).isTrue();
-        assertThat(mailboxEntryAttrs(PLAYER_ID)).isEqualTo("{}");
-
-        InventoryRewardDeliveryApi.RewardDeliveryReceipt receipt =
-                deliveryApi.findRewardDelivery(2241001L).orElseThrow();
-        assertThat(receipt.deliveryId()).isEqualTo(result.deliveryId());
-        assertThat(receipt.rewardLineId()).isEqualTo(2241001L);
-        assertThat(receipt.playerId()).isEqualTo(PLAYER_ID);
-        assertThat(receipt.itemId()).isEqualTo(result.itemId());
-        assertThat(receipt.itemCode()).isEqualTo(ITEM_CODE);
-        assertThat(receipt.quantity()).isEqualTo(2L);
-    }
-
-    @Test
-    @DisplayName("receipt 조회 miss는 container, Mailbox, Catalog를 변경하지 않는다")
-    void findsMissingReceiptWithoutMutation() {
-        assertThat(deliveryApi.findRewardDelivery(2241099L)).isEmpty();
-
-        assertThat(receiptCountAll()).isZero();
-        assertThat(containerCount("player_inventory", PLAYER_ID)).isZero();
-        assertThat(containerCount("player_mailbox", PLAYER_ID)).isZero();
-        assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
-    }
-
-    @Test
-    @DisplayName("receipt 조회도 rewardLineId 양수 경계를 검증한다")
-    void validatesReceiptLookupRewardLineId() {
-        assertError(
-                () -> deliveryApi.findRewardDelivery(0L),
-                InventoryError.REWARD_LINE_ID_INVALID
-        );
-    }
-
-    @Test
-    @DisplayName("기존 stack, 신규 stack, 다중 stack에 지급하고 receipt는 전체 수량을 저장한다")
-    void stacksAcrossMailboxEntries() {
-        deliveryApi.deliverReward(2241101L, PLAYER_ID, ITEM_CODE, 90L);
-        deliveryApi.deliverReward(2241102L, PLAYER_ID, ITEM_CODE, 30L);
-
-        assertThat(mailboxQuantities(PLAYER_ID)).containsExactly(21, 99);
-        assertThat(receiptQuantity(2241102L)).isEqualTo(30L);
-
-        deliveryApi.deliverReward(2241103L, PLAYER_ID, ITEM_CODE, 150L);
-
-        assertThat(mailboxQuantities(PLAYER_ID)).containsExactly(72, 99, 99);
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(270L);
-        assertThat(receiptQuantity(2241103L)).isEqualTo(150L);
-    }
-
-    @Test
-    @DisplayName("순차 동일 payload replay는 Mailbox를 다시 변경하지 않는다")
-    void replaysSequentially() {
-        InventoryRewardDeliveryApi.RewardDeliveryResult first =
-                deliveryApi.deliverReward(2241201L, PLAYER_ID, ITEM_CODE, 5L);
-        InventoryRewardDeliveryApi.RewardDeliveryResult replay =
-                deliveryApi.deliverReward(
-                        2241201L,
-                        PLAYER_ID,
-                        "  " + ITEM_CODE + " ",
-                        5L
-                );
-
-        assertThat(first.replayed()).isFalse();
-        assertThat(replay.replayed()).isTrue();
-        assertThat(replay.deliveryId()).isEqualTo(first.deliveryId());
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(5L);
-        assertThat(receiptCount(2241201L)).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("동시 동일 payload는 Mailbox lock으로 한 번만 지급한다")
-    void replaysConcurrently() throws Exception {
-        int workers = 2;
-        ExecutorService executor = Executors.newFixedThreadPool(workers);
-        CountDownLatch ready = new CountDownLatch(workers);
-        CountDownLatch start = new CountDownLatch(1);
-        List<Future<InventoryRewardDeliveryApi.RewardDeliveryResult>> futures =
-                new ArrayList<>();
-
-        try {
-            for (int i = 0; i < workers; i++) {
-                futures.add(executor.submit(() -> {
-                    ready.countDown();
-                    start.await();
-                    return deliveryApi.deliverReward(
-                            2241301L,
+        @Test
+        @DisplayName("stable ItemCode로 bound=true, empty attrs 지급과 receipt를 원자 저장한다")
+        void deliversNewReward() {
+            InventoryRewardDeliveryApi.RewardDeliveryResult result =
+                    deliveryApi.deliverReward(
+                            2241001L,
                             PLAYER_ID,
-                            ITEM_CODE,
-                            7L
+                            "  " + ITEM_CODE + "  ",
+                            2L
                     );
-                }));
-            }
 
-            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
-            start.countDown();
-            List<InventoryRewardDeliveryApi.RewardDeliveryResult> results =
-                    new ArrayList<>();
-            for (Future<InventoryRewardDeliveryApi.RewardDeliveryResult> future : futures) {
-                results.add(future.get(30, TimeUnit.SECONDS));
-            }
+            assertThat(result.deliveryId()).isPositive();
+            assertThat(result.rewardLineId()).isEqualTo(2241001L);
+            assertThat(result.playerId()).isEqualTo(PLAYER_ID);
+            assertThat(result.itemId()).isEqualTo(itemId(ITEM_CODE));
+            assertThat(result.itemCode()).isEqualTo(ITEM_CODE);
+            assertThat(result.quantity()).isEqualTo(2L);
+            assertThat(result.replayed()).isFalse();
+            assertThat(receiptCount(2241001L)).isEqualTo(1);
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(2L);
+            assertThat(mailboxEntryBound(PLAYER_ID)).isTrue();
+            assertThat(mailboxEntryAttrs(PLAYER_ID)).isEqualTo("{}");
 
-            assertThat(results)
-                    .extracting(InventoryRewardDeliveryApi.RewardDeliveryResult::replayed)
-                    .containsExactlyInAnyOrder(false, true);
-            assertThat(results)
-                    .extracting(InventoryRewardDeliveryApi.RewardDeliveryResult::deliveryId)
-                    .containsOnly(results.getFirst().deliveryId());
-        } finally {
-            executor.shutdownNow();
+            InventoryRewardDeliveryApi.RewardDeliveryReceipt receipt =
+                    deliveryApi.findRewardDelivery(2241001L).orElseThrow();
+            assertThat(receipt.deliveryId()).isEqualTo(result.deliveryId());
+            assertThat(receipt.rewardLineId()).isEqualTo(2241001L);
+            assertThat(receipt.playerId()).isEqualTo(PLAYER_ID);
+            assertThat(receipt.itemId()).isEqualTo(result.itemId());
+            assertThat(receipt.itemCode()).isEqualTo(ITEM_CODE);
+            assertThat(receipt.quantity()).isEqualTo(2L);
         }
 
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(7L);
-        assertThat(receiptCount(2241301L)).isEqualTo(1);
+        @Test
+        @DisplayName("receipt 조회 miss는 container, Mailbox, Catalog를 변경하지 않는다")
+        void findsMissingReceiptWithoutMutation() {
+            assertThat(deliveryApi.findRewardDelivery(2241099L)).isEmpty();
+
+            assertThat(receiptCountAll()).isZero();
+            assertThat(containerCount("player_inventory", PLAYER_ID)).isZero();
+            assertThat(containerCount("player_mailbox", PLAYER_ID)).isZero();
+            assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
+        }
+
+        @Test
+        @DisplayName("receipt 조회도 rewardLineId 양수 경계를 검증한다")
+        void validatesReceiptLookupRewardLineId() {
+            assertError(
+                    () -> deliveryApi.findRewardDelivery(0L),
+                    InventoryError.REWARD_LINE_ID_INVALID
+            );
+        }
+
+        @Test
+        @DisplayName("기존 stack, 신규 stack, 다중 stack에 지급하고 receipt는 전체 수량을 저장한다")
+        void stacksAcrossMailboxEntries() {
+            deliveryApi.deliverReward(2241101L, PLAYER_ID, ITEM_CODE, 90L);
+            deliveryApi.deliverReward(2241102L, PLAYER_ID, ITEM_CODE, 30L);
+
+            assertThat(mailboxQuantities(PLAYER_ID)).containsExactly(21, 99);
+            assertThat(receiptQuantity(2241102L)).isEqualTo(30L);
+
+            deliveryApi.deliverReward(2241103L, PLAYER_ID, ITEM_CODE, 150L);
+
+            assertThat(mailboxQuantities(PLAYER_ID)).containsExactly(72, 99, 99);
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(270L);
+            assertThat(receiptQuantity(2241103L)).isEqualTo(150L);
+        }
     }
 
-    @Test
-    @DisplayName("같은 rewardLineId의 다른 player, itemCode, quantity는 stable conflict다")
-    void rejectsReplayPayloadMismatch() {
-        deliveryApi.deliverReward(2241401L, PLAYER_ID, ITEM_CODE, 3L);
+    @Nested
+    @DisplayName("동일 rewardLineId가 재전달되면")
+    class ReplayDelivery {
 
-        assertConflict(() -> deliveryApi.deliverReward(
-                2241401L,
-                OTHER_PLAYER_ID,
-                ITEM_CODE,
-                3L
-        ));
-        assertConflict(() -> deliveryApi.deliverReward(
-                2241401L,
-                PLAYER_ID,
-                OTHER_ITEM_CODE,
-                3L
-        ));
-        assertConflict(() -> deliveryApi.deliverReward(
-                2241401L,
-                PLAYER_ID,
-                ITEM_CODE,
-                4L
-        ));
+        @Test
+        @DisplayName("순차 동일 payload replay는 Mailbox를 다시 변경하지 않는다")
+        void replaysSequentially() {
+            InventoryRewardDeliveryApi.RewardDeliveryResult first =
+                    deliveryApi.deliverReward(2241201L, PLAYER_ID, ITEM_CODE, 5L);
+            InventoryRewardDeliveryApi.RewardDeliveryResult replay =
+                    deliveryApi.deliverReward(
+                            2241201L,
+                            PLAYER_ID,
+                            "  " + ITEM_CODE + " ",
+                            5L
+                    );
 
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(3L);
-        assertThat(mailboxTotalQuantity(OTHER_PLAYER_ID)).isZero();
-        assertThat(receiptCount(2241401L)).isEqualTo(1);
-        assertThat(receiptQuantity(2241401L)).isEqualTo(3L);
+            assertThat(first.replayed()).isFalse();
+            assertThat(replay.replayed()).isTrue();
+            assertThat(replay.deliveryId()).isEqualTo(first.deliveryId());
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(5L);
+            assertThat(receiptCount(2241201L)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("동시 동일 payload는 Mailbox lock으로 한 번만 지급한다")
+        void replaysConcurrently() throws Exception {
+            int workers = 2;
+            ExecutorService executor = Executors.newFixedThreadPool(workers);
+            CountDownLatch ready = new CountDownLatch(workers);
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<InventoryRewardDeliveryApi.RewardDeliveryResult>> futures =
+                    new ArrayList<>();
+
+            try {
+                for (int i = 0; i < workers; i++) {
+                    futures.add(executor.submit(() -> {
+                        ready.countDown();
+                        start.await();
+                        return deliveryApi.deliverReward(
+                                2241301L,
+                                PLAYER_ID,
+                                ITEM_CODE,
+                                7L
+                        );
+                    }));
+                }
+
+                assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+                start.countDown();
+                List<InventoryRewardDeliveryApi.RewardDeliveryResult> results =
+                        new ArrayList<>();
+                for (Future<InventoryRewardDeliveryApi.RewardDeliveryResult> future : futures) {
+                    results.add(future.get(30, TimeUnit.SECONDS));
+                }
+
+                assertThat(results)
+                        .extracting(InventoryRewardDeliveryApi.RewardDeliveryResult::replayed)
+                        .containsExactlyInAnyOrder(false, true);
+                assertThat(results)
+                        .extracting(InventoryRewardDeliveryApi.RewardDeliveryResult::deliveryId)
+                        .containsOnly(results.getFirst().deliveryId());
+            } finally {
+                executor.shutdownNow();
+            }
+
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(7L);
+            assertThat(receiptCount(2241301L)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("다른 player, itemCode, quantity는 stable conflict다")
+        void rejectsReplayPayloadMismatch() {
+            deliveryApi.deliverReward(2241401L, PLAYER_ID, ITEM_CODE, 3L);
+
+            assertConflict(() -> deliveryApi.deliverReward(
+                    2241401L,
+                    OTHER_PLAYER_ID,
+                    ITEM_CODE,
+                    3L
+            ));
+            assertConflict(() -> deliveryApi.deliverReward(
+                    2241401L,
+                    PLAYER_ID,
+                    OTHER_ITEM_CODE,
+                    3L
+            ));
+            assertConflict(() -> deliveryApi.deliverReward(
+                    2241401L,
+                    PLAYER_ID,
+                    ITEM_CODE,
+                    4L
+            ));
+
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isEqualTo(3L);
+            assertThat(mailboxTotalQuantity(OTHER_PLAYER_ID)).isZero();
+            assertThat(receiptCount(2241401L)).isEqualTo(1);
+            assertThat(receiptQuantity(2241401L)).isEqualTo(3L);
+        }
     }
 
-    @Test
-    @DisplayName("invalid input과 missing Item은 receipt와 Mailbox를 변경하지 않는다")
-    void rejectsInvalidOrMissingPayload() {
-        assertError(
-                () -> deliveryApi.deliverReward(0L, PLAYER_ID, ITEM_CODE, 1L),
-                InventoryError.REWARD_LINE_ID_INVALID
-        );
-        assertError(
-                () -> deliveryApi.deliverReward(2241501L, 0L, ITEM_CODE, 1L),
-                InventoryError.PLAYER_ID_INVALID
-        );
-        assertError(
-                () -> deliveryApi.deliverReward(2241502L, PLAYER_ID, " ", 1L),
-                InventoryError.REWARD_ITEM_CODE_INVALID
-        );
-        assertError(
-                () -> deliveryApi.deliverReward(
-                        2241503L,
-                        PLAYER_ID,
-                        "I".repeat(81),
-                        1L
-                ),
-                InventoryError.REWARD_ITEM_CODE_INVALID
-        );
-        assertError(
-                () -> deliveryApi.deliverReward(2241504L, PLAYER_ID, ITEM_CODE, 0L),
-                InventoryError.REWARD_QUANTITY_INVALID
-        );
-        assertError(
-                () -> deliveryApi.deliverReward(
-                        2241505L,
-                        PLAYER_ID,
-                        ITEM_CODE,
-                        (long) Integer.MAX_VALUE + 1
-                ),
-                InventoryError.REWARD_QUANTITY_INVALID
-        );
-        assertItemError(() -> deliveryApi.deliverReward(
-                2241506L,
-                PLAYER_ID,
-                "IT_MISSING",
-                1L
-        ));
+    @Nested
+    @DisplayName("Reward를 지급할 수 없으면")
+    class RejectOrRollbackDelivery {
 
-        assertThat(receiptCountAll()).isZero();
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isZero();
-    }
+        @Test
+        @DisplayName("invalid input과 missing Item은 receipt와 Mailbox를 변경하지 않는다")
+        void rejectsInvalidOrMissingPayload() {
+            assertError(
+                    () -> deliveryApi.deliverReward(0L, PLAYER_ID, ITEM_CODE, 1L),
+                    InventoryError.REWARD_LINE_ID_INVALID
+            );
+            assertError(
+                    () -> deliveryApi.deliverReward(2241501L, 0L, ITEM_CODE, 1L),
+                    InventoryError.PLAYER_ID_INVALID
+            );
+            assertError(
+                    () -> deliveryApi.deliverReward(2241502L, PLAYER_ID, " ", 1L),
+                    InventoryError.REWARD_ITEM_CODE_INVALID
+            );
+            assertError(
+                    () -> deliveryApi.deliverReward(
+                            2241503L,
+                            PLAYER_ID,
+                            "I".repeat(81),
+                            1L
+                    ),
+                    InventoryError.REWARD_ITEM_CODE_INVALID
+            );
+            assertError(
+                    () -> deliveryApi.deliverReward(2241504L, PLAYER_ID, ITEM_CODE, 0L),
+                    InventoryError.REWARD_QUANTITY_INVALID
+            );
+            assertError(
+                    () -> deliveryApi.deliverReward(
+                            2241505L,
+                            PLAYER_ID,
+                            ITEM_CODE,
+                            (long) Integer.MAX_VALUE + 1
+                    ),
+                    InventoryError.REWARD_QUANTITY_INVALID
+            );
+            assertItemError(() -> deliveryApi.deliverReward(
+                    2241506L,
+                    PLAYER_ID,
+                    "IT_MISSING",
+                    1L
+            ));
 
-    @Test
-    @DisplayName("Mailbox full은 entry mutation과 receipt를 모두 rollback한다")
-    void rollsBackWhenMailboxIsFull() {
-        insertInventory(PLAYER_ID, PlayerInventory.DEFAULT_CAPACITY);
-        insertMailbox(PLAYER_ID, 1);
+            assertThat(receiptCountAll()).isZero();
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isZero();
+        }
 
-        assertError(
-                () -> deliveryApi.deliverReward(
-                        2241601L,
-                        PLAYER_ID,
-                        ITEM_CODE,
-                        100L
-                ),
-                InventoryError.MAILBOX_FULL
-        );
+        @Test
+        @DisplayName("Mailbox full은 entry mutation과 receipt를 모두 rollback한다")
+        void rollsBackWhenMailboxIsFull() {
+            insertInventory(PLAYER_ID, PlayerInventory.DEFAULT_CAPACITY);
+            insertMailbox(PLAYER_ID, 1);
 
-        assertThat(mailboxTotalQuantity(PLAYER_ID)).isZero();
-        assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
-        assertThat(receiptCount(2241601L)).isZero();
-        assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(1);
-    }
+            assertError(
+                    () -> deliveryApi.deliverReward(
+                            2241601L,
+                            PLAYER_ID,
+                            ITEM_CODE,
+                            100L
+                    ),
+                    InventoryError.MAILBOX_FULL
+            );
 
-    @Test
-    @DisplayName("provider는 caller REQUIRED transaction rollback에 참여한다")
-    void joinsCallerTransaction() {
-        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+            assertThat(mailboxTotalQuantity(PLAYER_ID)).isZero();
+            assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
+            assertThat(receiptCount(2241601L)).isZero();
+            assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(1);
+        }
 
-        transaction.executeWithoutResult(status -> {
-            deliveryApi.deliverReward(2241701L, PLAYER_ID, ITEM_CODE, 1L);
-            status.setRollbackOnly();
-        });
+        @Test
+        @DisplayName("provider는 caller REQUIRED transaction rollback에 참여한다")
+        void joinsCallerTransaction() {
+            TransactionTemplate transaction = new TransactionTemplate(transactionManager);
 
-        assertThat(receiptCount(2241701L)).isZero();
-        assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
-        assertThat(containerCount("player_inventory", PLAYER_ID)).isZero();
-        assertThat(containerCount("player_mailbox", PLAYER_ID)).isZero();
+            transaction.executeWithoutResult(status -> {
+                deliveryApi.deliverReward(2241701L, PLAYER_ID, ITEM_CODE, 1L);
+                status.setRollbackOnly();
+            });
+
+            assertThat(receiptCount(2241701L)).isZero();
+            assertThat(mailboxEntryCount(PLAYER_ID)).isZero();
+            assertThat(containerCount("player_inventory", PLAYER_ID)).isZero();
+            assertThat(containerCount("player_mailbox", PLAYER_ID)).isZero();
+        }
     }
 
     private void assertConflict(Runnable call) {

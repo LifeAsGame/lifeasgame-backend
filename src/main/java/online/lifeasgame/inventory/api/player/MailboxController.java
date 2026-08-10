@@ -3,7 +3,8 @@ package online.lifeasgame.inventory.api.player;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.inventory.application.MailboxFacade;
+import online.lifeasgame.inventory.application.MailboxQueryService;
+import online.lifeasgame.inventory.application.MailboxService;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.api.player.mapper.MailboxWebMapper;
 import online.lifeasgame.inventory.api.player.request.MailboxRequest;
@@ -18,19 +19,20 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/mailbox")
 public class MailboxController implements MailboxApiSpecV1 {
 
-    private final MailboxFacade mailboxFacade;
+    private final MailboxService mailboxService;
+    private final MailboxQueryService mailboxQueryService;
 
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<MailboxResponse.Entries>> list() {
-        MailboxResult.Entries result = mailboxFacade.list();
+        MailboxResult.Entries result = mailboxQueryService.list();
         return ApiResponses.ok(MailboxWebMapper.toMails(result));
     }
 
     @Override
     @PostMapping("/claim")
     public ResponseEntity<ApiResponse<Void>> claim(@Valid @RequestBody MailboxRequest.Claim request) {
-        mailboxFacade.claim(MailboxWebMapper.toClaimCommand(request));
+        mailboxService.claim(MailboxWebMapper.toClaimCommand(request));
         return ApiResponses.noContent();
     }
 
@@ -39,14 +41,14 @@ public class MailboxController implements MailboxApiSpecV1 {
     public ResponseEntity<ApiResponse<Void>> claimAll(
             @Valid @RequestBody MailboxRequest.ClaimAll request
     ) {
-        mailboxFacade.claimAll(MailboxWebMapper.toClaimAllCommand(request));
+        mailboxService.claimAll(MailboxWebMapper.toClaimAllCommand(request));
         return ApiResponses.noContent();
     }
 
     @Override
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> delete(MailboxRequest.Delete request) {
-        mailboxFacade.delete(MailboxWebMapper.toDeleteCommand(request));
+        mailboxService.delete(MailboxWebMapper.toDeleteCommand(request));
         return ApiResponses.noContent();
     }
 }

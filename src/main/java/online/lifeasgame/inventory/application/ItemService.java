@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.application.command.ItemCommand;
 import online.lifeasgame.inventory.application.result.ItemResult;
 import online.lifeasgame.inventory.domain.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,28 +65,4 @@ public class ItemService {
         return new ItemResult.Deleted(item.getId());
     }
 
-    @Transactional(readOnly = true)
-    public ItemResult.Detail getItem(Long id) {
-        Item item = itemReader.getByIdOrThrow(id);
-        return ItemResult.Detail.from(item);
-    }
-
-    @Transactional(readOnly = true)
-    public ItemResult.Page<ItemResult.Summary> search(
-            String name,
-            String category,
-            String type,
-            String rarity,
-            Pageable pageable
-    ) {
-        Page<ItemResult.Summary> result = itemReader.search(
-                name,
-                ItemCategory.parseNullable(category),
-                ItemType.parseNullable(type),
-                Rarity.parseNullable(rarity),
-                pageable
-        ).map(ItemResult.Summary::from);
-
-        return ItemResult.Page.from(result);
-    }
 }

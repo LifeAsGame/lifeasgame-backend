@@ -1,7 +1,9 @@
 package online.lifeasgame.inventory.api.player;
 
-import online.lifeasgame.inventory.application.InventoryFacade;
-import online.lifeasgame.inventory.application.MailboxFacade;
+import online.lifeasgame.inventory.application.InventoryQueryService;
+import online.lifeasgame.inventory.application.InventoryService;
+import online.lifeasgame.inventory.application.MailboxQueryService;
+import online.lifeasgame.inventory.application.MailboxService;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.support.ControllerSliceTest;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
@@ -25,10 +27,16 @@ class InventoryMutationAuthorizationTest {
     private RequestMappingHandlerMapping handlerMapping;
 
     @MockitoBean
-    private InventoryFacade inventoryFacade;
+    private InventoryService inventoryService;
 
     @MockitoBean
-    private MailboxFacade mailboxFacade;
+    private InventoryQueryService inventoryQueryService;
+
+    @MockitoBean
+    private MailboxService mailboxService;
+
+    @MockitoBean
+    private MailboxQueryService mailboxQueryService;
 
     @MockitoBean
     private AppErrorProperties appErrorProperties;

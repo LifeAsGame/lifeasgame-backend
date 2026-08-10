@@ -6,6 +6,7 @@ import online.lifeasgame.inventory.domain.PlayerMailbox;
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -64,95 +65,105 @@ class InventoryContainerProvisioningIntegrationTest {
         jdbcTemplate.update("DELETE FROM player_mailbox");
     }
 
-    @Test
-    @DisplayName("둘 다 없으면 기본 capacity로 만들고 순차 replay는 no-op이다")
-    void ensuresMissingContainersIdempotently() {
-        provisioningService.ensureContainers(PLAYER_ID);
-        provisioningService.ensureContainers(PLAYER_ID);
+    @Nested
+    @DisplayName("Inventory와 Mailbox가 모두 없을 때")
+    class ProvisionMissingContainers {
 
-        assertContainerCounts(PLAYER_ID, 1, 1);
-        assertThat(inventoryCapacity(PLAYER_ID))
-                .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
-        assertThat(mailboxCapacity(PLAYER_ID))
-                .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
-    }
+        @Test
+        @DisplayName("기본 capacity로 만들고 순차 replay는 no-op이다")
+        void ensuresMissingContainersIdempotently() {
+            provisioningService.ensureContainers(PLAYER_ID);
+            provisioningService.ensureContainers(PLAYER_ID);
 
-    @Test
-    @DisplayName("Inventory만 있으면 기존 capacity와 version을 보존한다")
-    void preservesExistingInventory() {
-        insertInventory(PLAYER_ID, 77, 8L);
-
-        provisioningService.ensureContainers(PLAYER_ID);
-
-        assertContainerCounts(PLAYER_ID, 1, 1);
-        assertThat(inventoryCapacity(PLAYER_ID)).isEqualTo(77);
-        assertThat(inventoryVersion(PLAYER_ID)).isEqualTo(8L);
-        assertThat(mailboxCapacity(PLAYER_ID))
-                .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
-    }
-
-    @Test
-    @DisplayName("Mailbox만 있으면 기존 capacity와 version을 보존한다")
-    void preservesExistingMailbox() {
-        insertMailbox(PLAYER_ID, 133, 9L);
-
-        provisioningService.ensureContainers(PLAYER_ID);
-
-        assertContainerCounts(PLAYER_ID, 1, 1);
-        assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(133);
-        assertThat(mailboxVersion(PLAYER_ID)).isEqualTo(9L);
-        assertThat(inventoryCapacity(PLAYER_ID))
-                .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
-    }
-
-    @Test
-    @DisplayName("둘 다 있으면 custom capacity와 version을 모두 보존한다")
-    void preservesBothExistingContainers() {
-        insertInventory(PLAYER_ID, 71, 4L);
-        insertMailbox(PLAYER_ID, 121, 5L);
-
-        provisioningService.ensureContainers(PLAYER_ID);
-
-        assertContainerCounts(PLAYER_ID, 1, 1);
-        assertThat(inventoryCapacity(PLAYER_ID)).isEqualTo(71);
-        assertThat(inventoryVersion(PLAYER_ID)).isEqualTo(4L);
-        assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(121);
-        assertThat(mailboxVersion(PLAYER_ID)).isEqualTo(5L);
-    }
-
-    @Test
-    @DisplayName("동시 ensure에도 각 container는 한 건이다")
-    void ensuresConcurrently() throws Exception {
-        int workers = 8;
-        ExecutorService executor = Executors.newFixedThreadPool(workers);
-        CountDownLatch ready = new CountDownLatch(workers);
-        CountDownLatch start = new CountDownLatch(1);
-        List<Future<Void>> futures = new ArrayList<>();
-
-        try {
-            for (int i = 0; i < workers; i++) {
-                futures.add(executor.submit(() -> {
-                    ready.countDown();
-                    start.await();
-                    provisioningService.ensureContainers(PLAYER_ID);
-                    return null;
-                }));
-            }
-
-            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
-            start.countDown();
-            for (Future<Void> future : futures) {
-                future.get(30, TimeUnit.SECONDS);
-            }
-        } finally {
-            executor.shutdownNow();
+            assertContainerCounts(PLAYER_ID, 1, 1);
+            assertThat(inventoryCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
+            assertThat(mailboxCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
         }
 
-        assertContainerCounts(PLAYER_ID, 1, 1);
-        assertThat(inventoryCapacity(PLAYER_ID))
-                .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
-        assertThat(mailboxCapacity(PLAYER_ID))
-                .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
+        @Test
+        @DisplayName("동시 ensure에도 각 container는 한 건이다")
+        void ensuresConcurrently() throws Exception {
+            int workers = 8;
+            ExecutorService executor = Executors.newFixedThreadPool(workers);
+            CountDownLatch ready = new CountDownLatch(workers);
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<Void>> futures = new ArrayList<>();
+
+            try {
+                for (int i = 0; i < workers; i++) {
+                    futures.add(executor.submit(() -> {
+                        ready.countDown();
+                        start.await();
+                        provisioningService.ensureContainers(PLAYER_ID);
+                        return null;
+                    }));
+                }
+
+                assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+                start.countDown();
+                for (Future<Void> future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            } finally {
+                executor.shutdownNow();
+            }
+
+            assertContainerCounts(PLAYER_ID, 1, 1);
+            assertThat(inventoryCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
+            assertThat(mailboxCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
+        }
+    }
+
+    @Nested
+    @DisplayName("기존 Container가 있으면")
+    class PreserveExistingContainers {
+
+        @Test
+        @DisplayName("Inventory만 있으면 기존 capacity와 version을 보존한다")
+        void preservesExistingInventory() {
+            insertInventory(PLAYER_ID, 77, 8L);
+
+            provisioningService.ensureContainers(PLAYER_ID);
+
+            assertContainerCounts(PLAYER_ID, 1, 1);
+            assertThat(inventoryCapacity(PLAYER_ID)).isEqualTo(77);
+            assertThat(inventoryVersion(PLAYER_ID)).isEqualTo(8L);
+            assertThat(mailboxCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerMailbox.DEFAULT_CAPACITY);
+        }
+
+        @Test
+        @DisplayName("Mailbox만 있으면 기존 capacity와 version을 보존한다")
+        void preservesExistingMailbox() {
+            insertMailbox(PLAYER_ID, 133, 9L);
+
+            provisioningService.ensureContainers(PLAYER_ID);
+
+            assertContainerCounts(PLAYER_ID, 1, 1);
+            assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(133);
+            assertThat(mailboxVersion(PLAYER_ID)).isEqualTo(9L);
+            assertThat(inventoryCapacity(PLAYER_ID))
+                    .isEqualTo(PlayerInventory.DEFAULT_CAPACITY);
+        }
+
+        @Test
+        @DisplayName("둘 다 있으면 custom capacity와 version을 모두 보존한다")
+        void preservesBothExistingContainers() {
+            insertInventory(PLAYER_ID, 71, 4L);
+            insertMailbox(PLAYER_ID, 121, 5L);
+
+            provisioningService.ensureContainers(PLAYER_ID);
+
+            assertContainerCounts(PLAYER_ID, 1, 1);
+            assertThat(inventoryCapacity(PLAYER_ID)).isEqualTo(71);
+            assertThat(inventoryVersion(PLAYER_ID)).isEqualTo(4L);
+            assertThat(mailboxCapacity(PLAYER_ID)).isEqualTo(121);
+            assertThat(mailboxVersion(PLAYER_ID)).isEqualTo(5L);
+        }
     }
 
     @Test

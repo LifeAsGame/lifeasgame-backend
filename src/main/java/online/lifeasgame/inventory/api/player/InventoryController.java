@@ -3,7 +3,8 @@ package online.lifeasgame.inventory.api.player;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
-import online.lifeasgame.inventory.application.InventoryFacade;
+import online.lifeasgame.inventory.application.InventoryQueryService;
+import online.lifeasgame.inventory.application.InventoryService;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.api.player.mapper.InventoryWebMapper;
 import online.lifeasgame.inventory.api.player.request.InventoryRequest;
@@ -18,12 +19,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/inventory")
 public class InventoryController implements InventoryApiSpecV1 {
 
-    private final InventoryFacade inventoryFacade;
+    private final InventoryService inventoryService;
+    private final InventoryQueryService inventoryQueryService;
 
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<InventoryResponse.Entries>> list() {
-        InventoryResult.Entries result = inventoryFacade.list();
+        InventoryResult.Entries result = inventoryQueryService.list();
         return ApiResponses.ok(InventoryWebMapper.toEntries(result));
     }
 
@@ -34,20 +36,21 @@ public class InventoryController implements InventoryApiSpecV1 {
             @RequestParam(defaultValue = "true") boolean includeItem,
             @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
     ) {
-        InventoryResult.Entry result = inventoryFacade.getEntry(itemInstanceId);
+        InventoryResult.Entry result =
+                inventoryQueryService.getEntry(itemInstanceId);
         return ApiResponses.ok(InventoryWebMapper.toEntryDetail(result));
     }
     @Override
     @PatchMapping("/move")
     public ResponseEntity<ApiResponse<Void>> move(@Valid @RequestBody InventoryRequest.Move request) {
-        inventoryFacade.move(InventoryWebMapper.toMoveCommand(request));
+        inventoryService.move(InventoryWebMapper.toMoveCommand(request));
         return ApiResponses.noContent();
     }
 
     @Override
     @PatchMapping("/merge")
     public ResponseEntity<ApiResponse<Void>> merge(@Valid @RequestBody InventoryRequest.Merge request) {
-        inventoryFacade.merge(InventoryWebMapper.toMergeCommand(request));
+        inventoryService.merge(InventoryWebMapper.toMergeCommand(request));
         return ApiResponses.noContent();
     }
 
@@ -56,14 +59,16 @@ public class InventoryController implements InventoryApiSpecV1 {
     public ResponseEntity<ApiResponse<InventoryResponse.Slot>> split(
             @Valid @RequestBody InventoryRequest.Split request
     ) {
-        InventoryResult.Slot result = inventoryFacade.split(InventoryWebMapper.toSplitCommand(request));
+        InventoryResult.Slot result = inventoryService.split(
+                InventoryWebMapper.toSplitCommand(request)
+        );
         return ApiResponses.ok(InventoryWebMapper.toSlot(result));
     }
 
     @Override
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse<Void>> remove(@Valid @RequestBody InventoryRequest.Remove request) {
-        inventoryFacade.remove(InventoryWebMapper.toRemoveCommand(request));
+        inventoryService.remove(InventoryWebMapper.toRemoveCommand(request));
         return ApiResponses.noContent();
     }
 }
