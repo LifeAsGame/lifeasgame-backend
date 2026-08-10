@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V19까지 적용되고 persistence foundation을 추가한다")
+        @DisplayName("V1부터 V20까지 적용되고 QuestRoute foundation을 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -58,12 +58,12 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(7);
+            assertThat(result.migrationsExecuted).isEqualTo(8);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16", "17", "18", "19"
+                            "14", "15", "16", "17", "18", "19", "20"
                     );
             assertThat(existingTables(
                     "users",
@@ -84,7 +84,11 @@ class FlywayMigrationTest {
                     "inventory_reward_deliveries",
                     "roles",
                     "persons",
-                    "role_relations"
+                    "role_relations",
+                    "quest_routes",
+                    "quest_route_steps",
+                    "quest_route_step_quests",
+                    "player_quest_routes"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -104,7 +108,11 @@ class FlywayMigrationTest {
                     "inventory_reward_deliveries",
                     "roles",
                     "persons",
-                    "role_relations"
+                    "role_relations",
+                    "quest_routes",
+                    "quest_route_steps",
+                    "quest_route_step_quests",
+                    "player_quest_routes"
             );
             assertThat(existingTables(
                     "quick_lifelog_entries",

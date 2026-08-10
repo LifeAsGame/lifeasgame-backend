@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface JpaQuestAcceptanceRepository extends JpaRepository<QuestAcceptance, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -29,4 +30,17 @@ public interface JpaQuestAcceptanceRepository extends JpaRepository<QuestAccepta
     Optional<QuestAcceptance> findTopByQuestIdAndPlayerIdOrderByIdDesc(Long questId, Long playerId);
 
     boolean existsByPlayerIdAndId(Long playerId, Long id);
+
+    @Query("""
+            SELECT DISTINCT acceptance.questId
+            FROM QuestAcceptance acceptance
+            WHERE acceptance.playerId = :playerId
+              AND acceptance.status = :status
+              AND acceptance.questId IN :questIds
+            """)
+    Set<Long> findQuestIdsByPlayerIdAndStatus(
+            @Param("playerId") Long playerId,
+            @Param("status") QuestStatus status,
+            @Param("questIds") Set<Long> questIds
+    );
 }

@@ -5,6 +5,7 @@ import online.lifeasgame.quest.domain.QuestStatus;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface QuestAcceptanceRepository {
     QuestAcceptance save(QuestAcceptance acceptance);
@@ -24,4 +25,6 @@ public interface QuestAcceptanceRepository {
     Optional<QuestAcceptance> findLatestByQuestAndPlayer(Long questId, Long playerId);
 
     boolean existsByPlayerIdAndId(Long playerId, Long questId);
+
+    Set<Long> findCompletedQuestIds(Long playerId, Set<Long> questIds);
 }

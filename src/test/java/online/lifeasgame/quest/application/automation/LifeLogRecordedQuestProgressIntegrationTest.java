@@ -14,6 +14,7 @@ import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.QuestStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -129,200 +130,216 @@ class LifeLogRecordedQuestProgressIntegrationTest {
         transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
-    @Test
-    @DisplayName("Acceptance가 없던 Fact는 나중에 수락해도 replay로 진행하지 않는다")
-    void neverReplaysFactSeenWithoutAcceptance() {
-        LifeLogRecorded firstDelivery = regular(
-                "215-no-acceptance-a",
-                215100L,
-                ACCEPTED_AT.plusSeconds(1)
-        );
+    @Nested
+    @DisplayName("LifeLog Fact와 Quest Acceptance 시간 경계를 평가할 때")
+    class AcceptanceBoundary {
 
-        appendAndRelay(firstDelivery);
+        @Test
+        @DisplayName("Acceptance가 없던 Fact는 나중에 수락해도 replay로 진행하지 않는다")
+        void neverReplaysFactSeenWithoutAcceptance() {
+            LifeLogRecorded firstDelivery = regular(
+                    "215-no-acceptance-a",
+                    215100L,
+                    ACCEPTED_AT.plusSeconds(1)
+            );
 
-        assertThat(acceptanceCount()).isZero();
-        assertThat(receiptCount()).isEqualTo(2);
+            appendAndRelay(firstDelivery);
 
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-        appendAndRelay(regular(
-                "215-no-acceptance-b",
-                firstDelivery.lifeLogId(),
-                firstDelivery.occurredAt()
-        ));
+            assertThat(acceptanceCount()).isZero();
+            assertThat(receiptCount()).isEqualTo(2);
 
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(1);
-    }
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+            appendAndRelay(regular(
+                    "215-no-acceptance-b",
+                    firstDelivery.lifeLogId(),
+                    firstDelivery.occurredAt()
+            ));
 
-    @Test
-    @DisplayName("acceptedAt 이전 Fact는 다른 eventId 재전달까지 영구 무시한다")
-    void permanentlyIgnoresPreAcceptanceFact() {
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-        LifeLogRecorded beforeAcceptance = regular(
-                "215-pre-accept-a",
-                215101L,
-                ACCEPTED_AT.minusSeconds(1)
-        );
-
-        appendAndRelay(beforeAcceptance);
-        appendAndRelay(regular(
-                "215-pre-accept-b",
-                beforeAcceptance.lifeLogId(),
-                beforeAcceptance.occurredAt()
-        ));
-
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("취소 후 같은 period 재수락은 기존 row를 초기화하고 old Fact를 이월하지 않는다")
-    void restartsCanceledAcceptanceWithoutCarryingOldFacts() {
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-        appendAndRelay(regular(
-                "215-reaccept-before-cancel",
-                215108L,
-                ACCEPTED_AT.plusSeconds(1)
-        ));
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        LifeLogRecorded oldFact = regular(
-                "215-reaccept-old-a",
-                215109L,
-                ACCEPTED_AT.plusSeconds(2)
-        );
-
-        questService.cancel(
-                PLAYER_ID,
-                new QuestCommand.Cancel(
-                        QuestCode.Q_RECORD_THREE_TRACES.value(),
-                        "restart integration test"
-                )
-        );
-        Instant restartedAt = ACCEPTED_AT.plusSeconds(10);
-        clock.set(restartedAt);
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-
-        assertThat(acceptanceCount()).isEqualTo(1);
-        assertThat(acceptedAt(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(restartedAt);
-        assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(QuestStatus.IN_PROGRESS.name());
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
-
-        appendAndRelay(oldFact);
-
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(2);
-
-        appendAndRelay(regular(
-                "215-reaccept-new",
-                215110L,
-                restartedAt.plusSeconds(1)
-        ));
-
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(QuestStatus.IN_PROGRESS.name());
-
-        appendAndRelay(regular(
-                "215-reaccept-old-b",
-                oldFact.lifeLogId(),
-                oldFact.occurredAt()
-        ));
-
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("한 LifeLog가 첫 기록과 세 기록 Quest를 동시에 진행한다")
-    void progressesFirstAndThreeTracesTogether() {
-        accept(QuestCode.Q_RECORD_FIRST_TRACE);
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-
-        appendAndRelay(regular(
-                "215-simultaneous",
-                215102L,
-                ACCEPTED_AT.plusSeconds(1)
-        ));
-
-        assertThat(progress(QuestCode.Q_RECORD_FIRST_TRACE)).isEqualTo(1);
-        assertThat(status(QuestCode.Q_RECORD_FIRST_TRACE))
-                .isEqualTo(QuestStatus.COMPLETED.name());
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(QuestStatus.IN_PROGRESS.name());
-    }
-
-    @Test
-    @DisplayName("같은 global lifeLogId의 다른 eventId는 durable Receipt replay다")
-    void replaysSameLifeLogWithDifferentEventId() {
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-        LifeLogRecorded first = regular(
-                "215-replay-a",
-                215103L,
-                ACCEPTED_AT.plusSeconds(1)
-        );
-
-        appendAndRelay(first);
-        appendAndRelay(regular(
-                "215-replay-b",
-                first.lifeLogId(),
-                first.occurredAt()
-        ));
-
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(1);
-        assertThat(correlations(QuestCode.Q_RECORD_THREE_TRACES))
-                .containsExactly("lifelog:" + first.lifeLogId());
-    }
-
-    @Test
-    @DisplayName("동일 LifeLog Signal 동시 중복은 한 번만 적용한다")
-    void appliesConcurrentDuplicateOnce() throws Exception {
-        accept(QuestCode.Q_RECORD_THREE_TRACES);
-        QuestSignal signal = trigger.translate(regular(
-                        "215-concurrent",
-                        215104L,
-                        ACCEPTED_AT.plusSeconds(1)
-                )).stream()
-                .filter(candidate -> candidate.questCode()
-                        == QuestCode.Q_RECORD_THREE_TRACES)
-                .findFirst()
-                .orElseThrow();
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch ready = new CountDownLatch(2);
-        CountDownLatch start = new CountDownLatch(1);
-        try {
-            Future<QuestSignalProcessingResult> first =
-                    submit(executor, ready, start, signal);
-            Future<QuestSignalProcessingResult> second =
-                    submit(executor, ready, start, signal);
-            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
-            start.countDown();
-
-            assertThat(List.of(
-                    first.get(20, TimeUnit.SECONDS),
-                    second.get(20, TimeUnit.SECONDS)
-            )).extracting(QuestSignalProcessingResult::outcome)
-                    .containsExactlyInAnyOrder(
-                            QuestSignalProcessingResult.Outcome.APPLIED,
-                            QuestSignalProcessingResult.Outcome.REPLAYED
-                    );
-        } finally {
-            executor.shutdownNow();
-            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS))
-                    .isTrue();
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
         }
 
-        assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isEqualTo(1);
-        assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
-                .isEqualTo(1);
+        @Test
+        @DisplayName("acceptedAt 이전 Fact는 다른 eventId 재전달까지 영구 무시한다")
+        void permanentlyIgnoresPreAcceptanceFact() {
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+            LifeLogRecorded beforeAcceptance = regular(
+                    "215-pre-accept-a",
+                    215101L,
+                    ACCEPTED_AT.minusSeconds(1)
+            );
+
+            appendAndRelay(beforeAcceptance);
+            appendAndRelay(regular(
+                    "215-pre-accept-b",
+                    beforeAcceptance.lifeLogId(),
+                    beforeAcceptance.occurredAt()
+            ));
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("취소 후 같은 period 재수락은 기존 row를 초기화하고 old Fact를 이월하지 않는다")
+        void restartsCanceledAcceptanceWithoutCarryingOldFacts() {
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+            appendAndRelay(regular(
+                    "215-reaccept-before-cancel",
+                    215108L,
+                    ACCEPTED_AT.plusSeconds(1)
+            ));
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            LifeLogRecorded oldFact = regular(
+                    "215-reaccept-old-a",
+                    215109L,
+                    ACCEPTED_AT.plusSeconds(2)
+            );
+
+            questService.cancel(
+                    PLAYER_ID,
+                    new QuestCommand.Cancel(
+                            QuestCode.Q_RECORD_THREE_TRACES.value(),
+                            "restart integration test"
+                    )
+            );
+            Instant restartedAt = ACCEPTED_AT.plusSeconds(10);
+            clock.set(restartedAt);
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+
+            assertThat(acceptanceCount()).isEqualTo(1);
+            assertThat(acceptedAt(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(restartedAt);
+            assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(QuestStatus.IN_PROGRESS.name());
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+
+            appendAndRelay(oldFact);
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES)).isZero();
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(2);
+
+            appendAndRelay(regular(
+                    "215-reaccept-new",
+                    215110L,
+                    restartedAt.plusSeconds(1)
+            ));
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(QuestStatus.IN_PROGRESS.name());
+
+            appendAndRelay(regular(
+                    "215-reaccept-old-b",
+                    oldFact.lifeLogId(),
+                    oldFact.occurredAt()
+            ));
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("LifeLog Fact로 여러 Quest 진행을 반영할 때")
+    class ProgressAndReplay {
+
+        @Test
+        @DisplayName("한 LifeLog가 첫 기록과 세 기록 Quest를 동시에 진행한다")
+        void progressesFirstAndThreeTracesTogether() {
+            accept(QuestCode.Q_RECORD_FIRST_TRACE);
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+
+            appendAndRelay(regular(
+                    "215-simultaneous",
+                    215102L,
+                    ACCEPTED_AT.plusSeconds(1)
+            ));
+
+            assertThat(progress(QuestCode.Q_RECORD_FIRST_TRACE)).isEqualTo(1);
+            assertThat(status(QuestCode.Q_RECORD_FIRST_TRACE))
+                    .isEqualTo(QuestStatus.COMPLETED.name());
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(status(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(QuestStatus.IN_PROGRESS.name());
+        }
+
+        @Test
+        @DisplayName("같은 global lifeLogId의 다른 eventId는 durable Receipt replay다")
+        void replaysSameLifeLogWithDifferentEventId() {
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+            LifeLogRecorded first = regular(
+                    "215-replay-a",
+                    215103L,
+                    ACCEPTED_AT.plusSeconds(1)
+            );
+
+            appendAndRelay(first);
+            appendAndRelay(regular(
+                    "215-replay-b",
+                    first.lifeLogId(),
+                    first.occurredAt()
+            ));
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(correlations(QuestCode.Q_RECORD_THREE_TRACES))
+                    .containsExactly("lifelog:" + first.lifeLogId());
+        }
+
+        @Test
+        @DisplayName("동일 LifeLog Signal 동시 중복은 한 번만 적용한다")
+        void appliesConcurrentDuplicateOnce() throws Exception {
+            accept(QuestCode.Q_RECORD_THREE_TRACES);
+            QuestSignal signal = trigger.translate(regular(
+                            "215-concurrent",
+                            215104L,
+                            ACCEPTED_AT.plusSeconds(1)
+                    )).stream()
+                    .filter(candidate -> candidate.questCode()
+                            == QuestCode.Q_RECORD_THREE_TRACES)
+                    .findFirst()
+                    .orElseThrow();
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            CountDownLatch ready = new CountDownLatch(2);
+            CountDownLatch start = new CountDownLatch(1);
+            try {
+                Future<QuestSignalProcessingResult> first =
+                        submit(executor, ready, start, signal);
+                Future<QuestSignalProcessingResult> second =
+                        submit(executor, ready, start, signal);
+                assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+                start.countDown();
+
+                assertThat(List.of(
+                        first.get(20, TimeUnit.SECONDS),
+                        second.get(20, TimeUnit.SECONDS)
+                )).extracting(QuestSignalProcessingResult::outcome)
+                        .containsExactlyInAnyOrder(
+                                QuestSignalProcessingResult.Outcome.APPLIED,
+                                QuestSignalProcessingResult.Outcome.REPLAYED
+                        );
+            } finally {
+                executor.shutdownNow();
+                assertThat(executor.awaitTermination(5, TimeUnit.SECONDS))
+                        .isTrue();
+            }
+
+            assertThat(progress(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+            assertThat(receiptCount(QuestCode.Q_RECORD_THREE_TRACES))
+                    .isEqualTo(1);
+        }
     }
 
     @Test
