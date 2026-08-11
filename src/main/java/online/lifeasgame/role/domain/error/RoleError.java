@@ -11,7 +11,15 @@ public enum RoleError implements ErrorCode {
     ROLE_RELATION_NOT_FOUND("ROL-404-RELATION-NOT-FOUND", "Role relation not found", 404),
     ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409),
     ROLE_RELATION_ALREADY_EXISTS("ROL-409-RELATION-ALREADY-EXISTS", "Role relation already exists", 409),
-    ROLE_RELATION_ARCHIVED("ROL-409-RELATION-ARCHIVED", "Archived Role relation cannot be updated", 409);
+    ROLE_RELATION_ARCHIVED("ROL-409-RELATION-ARCHIVED", "Archived Role relation cannot be updated", 409),
+    ROLE_EVENT_NOT_FOUND("ROL-404-EVENT-NOT-FOUND", "Role event not found", 404),
+    ROLE_EVENT_PARTICIPANT_NOT_FOUND("ROL-404-EVENT-PARTICIPANT-NOT-FOUND", "Role event participant not found", 404),
+    INVALID_ROLE_EVENT_TITLE("ROL-400-INVALID-EVENT-TITLE", "Invalid Role event title", 400),
+    INVALID_ROLE_EVENT_DESCRIPTION("ROL-400-INVALID-EVENT-DESCRIPTION", "Invalid Role event description", 400),
+    INVALID_ROLE_EVENT_TIME_RANGE("ROL-400-INVALID-EVENT-TIME-RANGE", "Invalid Role event time range", 400),
+    INVALID_ROLE_EVENT_PARTICIPANT_TYPE("ROL-400-INVALID-EVENT-PARTICIPANT-TYPE", "Invalid Role event participant type", 400),
+    ROLE_EVENT_NOT_PLANNED("ROL-409-EVENT-NOT-PLANNED", "Only planned Role events can be changed", 409),
+    ROLE_EVENT_PARTICIPANT_ALREADY_EXISTS("ROL-409-EVENT-PARTICIPANT-ALREADY-EXISTS", "Role event participant already exists", 409);
 
     private final String code;
     private final String message;

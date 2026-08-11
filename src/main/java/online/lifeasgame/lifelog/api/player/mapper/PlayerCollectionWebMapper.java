@@ -38,7 +38,9 @@ public final class PlayerCollectionWebMapper {
                 request.tags(),
                 new LifeLogRecordMetadataCommand(
                         request.lifeLogSubtype(),
-                        request.reflectionScope()
+                        request.reflectionScope(),
+                        request.primaryRoleId(),
+                        request.roleEventId()
                 )
         );
     }

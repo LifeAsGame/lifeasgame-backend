@@ -100,7 +100,7 @@ class RolePersonPersistenceIntegrationTest {
 
     @Test
     void persistsOwnerScopedCrudAndKeepsArchivedRows() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("20");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
 
         var role = roleService.create(
                 new RoleCommand.Create("work", "Developer", "Builds")

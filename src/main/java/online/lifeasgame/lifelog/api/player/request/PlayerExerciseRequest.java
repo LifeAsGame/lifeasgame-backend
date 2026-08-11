@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDate;
 
@@ -19,8 +20,34 @@ public final class PlayerExerciseRequest {
             @NotNull LocalDate exercisedOn,
             String memo,
             String lifeLogSubtype,
-            String reflectionScope
+            String reflectionScope,
+            @Positive Long primaryRoleId,
+            @Positive Long roleEventId
     ) {
+        public Create(
+                String category,
+                Integer durationMinutes,
+                Double distanceKm,
+                Integer calories,
+                LocalDate exercisedOn,
+                String memo,
+                String lifeLogSubtype,
+                String reflectionScope
+        ) {
+            this(
+                    category,
+                    durationMinutes,
+                    distanceKm,
+                    calories,
+                    exercisedOn,
+                    memo,
+                    lifeLogSubtype,
+                    reflectionScope,
+                    null,
+                    null
+            );
+        }
+
         public Create(
                 String category,
                 Integer durationMinutes,
@@ -36,6 +63,8 @@ public final class PlayerExerciseRequest {
                     calories,
                     exercisedOn,
                     memo,
+                    null,
+                    null,
                     null,
                     null
             );

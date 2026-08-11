@@ -8,6 +8,7 @@ import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.quick.domain.error.QuickRecordError;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -203,6 +204,48 @@ class QuickRecordRequestHasherTest {
         ));
 
         assertThat(first).isNotEqualTo(second);
+    }
+
+    @Nested
+    @DisplayName("Quick Record idempotency에 Role context를 포함할 때")
+    class RoleContextHash {
+
+        @Test
+        @DisplayName("Role/Event가 다르면 서로 다른 request hash를 만든다")
+        void distinguishesRoleContext() {
+            var payload = collection("title", Set.of("tag"));
+
+            String roleOnly = hash(new QuickRecordCommand.Create(
+                    "COLLECTION", null, null, 10L, null,
+                    payload, null, null
+            ));
+            String firstEvent = hash(new QuickRecordCommand.Create(
+                    "COLLECTION", null, null, 10L, 20L,
+                    payload, null, null
+            ));
+            String secondEvent = hash(new QuickRecordCommand.Create(
+                    "COLLECTION", null, null, 10L, 21L,
+                    payload, null, null
+            ));
+
+            assertThat(Set.of(roleOnly, firstEvent, secondEvent)).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("Role context가 없으면 기존 constructor와 동일한 hash를 유지한다")
+        void preservesExistingHashWithoutRoleContext() {
+            var payload = collection("title", Set.of("tag"));
+            var existing = new QuickRecordCommand.Create(
+                    "COLLECTION", "MEMORY", null,
+                    payload, null, null
+            );
+            var expanded = new QuickRecordCommand.Create(
+                    "COLLECTION", "MEMORY", null, null, null,
+                    payload, null, null
+            );
+
+            assertThat(hash(expanded)).isEqualTo(hash(existing));
+        }
     }
 
     private String hash(QuickRecordCommand.Create command) {

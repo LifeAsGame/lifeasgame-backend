@@ -39,7 +39,9 @@ public final class PlayerExerciseWebMapper {
                 request.memo(),
                 new LifeLogRecordMetadataCommand(
                         request.lifeLogSubtype(),
-                        request.reflectionScope()
+                        request.reflectionScope(),
+                        request.primaryRoleId(),
+                        request.roleEventId()
                 )
         );
     }

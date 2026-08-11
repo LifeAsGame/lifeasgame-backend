@@ -13,6 +13,7 @@ import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -174,6 +175,43 @@ class LifeLogRecordedCodecTest {
                 );
 
         assertCodecFailure(payload);
+    }
+
+    @Nested
+    @DisplayName("v1 payload에 Role snapshot을 encode할 때")
+    class EncodeRoleSnapshot {
+
+        @Test
+        @DisplayName("primaryRoleId만 활성화하고 roleEventId field는 추가하지 않는다")
+        void keepsVersionOneShape() throws Exception {
+            LifeLogRecorded source = new LifeLogRecorded(
+                    "role-event",
+                    LifeLogRecorded.EVENT_TYPE,
+                    LifeLogRecorded.EVENT_VERSION,
+                    OCCURRED_AT,
+                    197L,
+                    213L,
+                    1,
+                    LifeLogSubtype.MEMORY,
+                    LifeLogEntryMode.FULL,
+                    null,
+                    null,
+                    31L,
+                    null
+            );
+
+            OutboxEventEnvelope envelope = registry.encode(source);
+            JsonNode json = objectMapper.readTree(envelope.payload());
+            LifeLogRecorded decoded = (LifeLogRecorded) registry.decode(
+                    envelope.eventType(),
+                    envelope.payload()
+            );
+
+            assertThat(json.get("eventVersion").asInt()).isEqualTo(1);
+            assertThat(json.get("primaryRoleId").asLong()).isEqualTo(31L);
+            assertThat(json.has("roleEventId")).isFalse();
+            assertThat(decoded.primaryRoleId()).isEqualTo(31L);
+        }
     }
 
     private void assertCodecFailure(String payload) {

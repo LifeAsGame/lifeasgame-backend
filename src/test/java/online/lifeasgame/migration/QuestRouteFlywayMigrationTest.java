@@ -42,6 +42,7 @@ class QuestRouteFlywayMigrationTest {
                         MYSQL.getPassword()
                 )
                 .locations("classpath:db/migration")
+                .target(MigrationVersion.fromVersion("20"))
                 .baselineOnMigrate(false)
                 .cleanDisabled(false)
                 .load();

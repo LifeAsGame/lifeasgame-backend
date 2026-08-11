@@ -59,6 +59,20 @@ public class QuickRecordRequestHasher {
                         ? null
                         : resolved.reflectionScope().name()
         );
+        if (resolved.primaryRoleId() != null) {
+            appendNumber(
+                    target,
+                    "primaryRoleId",
+                    resolved.primaryRoleId()
+            );
+        }
+        if (resolved.roleEventId() != null) {
+            appendNumber(
+                    target,
+                    "roleEventId",
+                    resolved.roleEventId()
+            );
+        }
     }
 
     private void appendCollection(

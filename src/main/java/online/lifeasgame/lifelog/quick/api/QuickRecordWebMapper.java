@@ -18,6 +18,8 @@ public final class QuickRecordWebMapper {
                 request.type(),
                 request.lifeLogSubtype(),
                 request.reflectionScope(),
+                request.primaryRoleId(),
+                request.roleEventId(),
                 request.collection() == null
                         ? null
                         : PlayerCollectionWebMapper.toCreateCommand(

@@ -10,6 +10,7 @@ import online.lifeasgame.quest.application.automation.QuestSignalAcceptancePolic
 import online.lifeasgame.quest.application.automation.QuestSignalFingerprint;
 import online.lifeasgame.quest.domain.QuestCode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -181,12 +182,59 @@ class LifeLogRecordedQuestTriggerTest {
                 .isEqualTo(fingerprint.fingerprint(first));
     }
 
+    @Nested
+    @DisplayName("Role-linked LifeLogRecorded를 번역할 때")
+    class TranslateRoleLinkedFact {
+
+        @Test
+        @DisplayName("primaryRoleId를 attribute로 보존하고 기존 Quest Signal만 만든다")
+        void preservesExistingQuestMeaning() {
+            List<QuestSignal> signals = trigger.translate(event(
+                    "role-linked",
+                    LifeLogSubtype.MEMORY,
+                    LifeLogEntryMode.FULL,
+                    null,
+                    null,
+                    31L
+            ));
+
+            assertThat(signals)
+                    .extracting(QuestSignal::questCode)
+                    .containsExactly(
+                            QuestCode.Q_RECORD_FIRST_TRACE,
+                            QuestCode.Q_RECORD_THREE_TRACES
+                    );
+            assertThat(signals).allSatisfy(signal ->
+                    assertThat(signal.attributes())
+                            .containsEntry("primaryRoleId", 31L)
+            );
+        }
+    }
+
     private LifeLogRecorded event(
             String eventId,
             LifeLogSubtype subtype,
             LifeLogEntryMode entryMode,
             LifeLogReflectionScope reflectionScope,
             String periodKey
+    ) {
+        return event(
+                eventId,
+                subtype,
+                entryMode,
+                reflectionScope,
+                periodKey,
+                null
+        );
+    }
+
+    private LifeLogRecorded event(
+            String eventId,
+            LifeLogSubtype subtype,
+            LifeLogEntryMode entryMode,
+            LifeLogReflectionScope reflectionScope,
+            String periodKey,
+            Long primaryRoleId
     ) {
         return new LifeLogRecorded(
                 eventId,
@@ -200,7 +248,7 @@ class LifeLogRecordedQuestTriggerTest {
                 entryMode,
                 reflectionScope,
                 periodKey,
-                null,
+                primaryRoleId,
                 null
         );
     }

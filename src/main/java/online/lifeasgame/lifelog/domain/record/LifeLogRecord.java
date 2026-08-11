@@ -82,6 +82,9 @@ public class LifeLogRecord extends AbstractTime {
     @Column(name = "primary_role_id", updatable = false)
     private Long primaryRoleId;
 
+    @Column(name = "role_event_id", updatable = false)
+    private Long roleEventId;
+
     @Column(name = "occurred_at", nullable = false, updatable = false)
     private Instant occurredAt;
 
@@ -95,6 +98,7 @@ public class LifeLogRecord extends AbstractTime {
             LifeLogReflectionScope reflectionScope,
             String periodKey,
             Long primaryRoleId,
+            Long roleEventId,
             Instant occurredAt
     ) {
         this.playerId = positive(playerId, "playerId");
@@ -111,12 +115,13 @@ public class LifeLogRecord extends AbstractTime {
         validateReflection(subtype, reflectionScope, periodKey);
         this.reflectionScope = reflectionScope;
         this.periodKey = periodKey;
-        if (primaryRoleId != null) {
+        this.primaryRoleId = nullablePositive(primaryRoleId, "primaryRoleId");
+        this.roleEventId = nullablePositive(roleEventId, "roleEventId");
+        if (this.roleEventId != null && this.primaryRoleId == null) {
             throw new IllegalArgumentException(
-                    "primaryRoleId must be null until Role Domain is available"
+                    "roleEventId requires primaryRoleId"
             );
         }
-        this.primaryRoleId = null;
         this.occurredAt = Guard.notNull(occurredAt, "occurredAt");
     }
 
@@ -137,6 +142,31 @@ public class LifeLogRecord extends AbstractTime {
                 null,
                 null,
                 null,
+                null,
+                occurredAt
+        );
+    }
+
+    public static LifeLogRecord legacy(
+            Long playerId,
+            LifeLogSourceType sourceType,
+            Long sourceId,
+            LifeLogEntryMode entryMode,
+            Long primaryRoleId,
+            Long roleEventId,
+            Instant occurredAt
+    ) {
+        return new LifeLogRecord(
+                playerId,
+                sourceType,
+                sourceId,
+                SOURCE_DEFINITION_VERSION,
+                null,
+                entryMode,
+                null,
+                null,
+                primaryRoleId,
+                roleEventId,
                 occurredAt
         );
     }
@@ -161,6 +191,34 @@ public class LifeLogRecord extends AbstractTime {
                 reflectionScope,
                 periodKey == null ? null : periodKey.value(),
                 null,
+                null,
+                occurredAt
+        );
+    }
+
+    public static LifeLogRecord contentReady(
+            Long playerId,
+            LifeLogSourceType sourceType,
+            Long sourceId,
+            LifeLogSubtype subtype,
+            LifeLogEntryMode entryMode,
+            LifeLogReflectionScope reflectionScope,
+            LifeLogPeriodKey periodKey,
+            Long primaryRoleId,
+            Long roleEventId,
+            Instant occurredAt
+    ) {
+        return new LifeLogRecord(
+                playerId,
+                sourceType,
+                sourceId,
+                SOURCE_DEFINITION_VERSION,
+                Guard.notNull(subtype, "subtype"),
+                entryMode,
+                reflectionScope,
+                periodKey == null ? null : periodKey.value(),
+                primaryRoleId,
+                roleEventId,
                 occurredAt
         );
     }
@@ -173,6 +231,10 @@ public class LifeLogRecord extends AbstractTime {
         Guard.notNull(value, name);
         Guard.minValue(value, 1L, name);
         return value;
+    }
+
+    private static Long nullablePositive(Long value, String name) {
+        return value == null ? null : positive(value, name);
     }
 
     public static void validateReflection(

@@ -39,7 +39,9 @@ public final class PlayerMediaLogWebMapper {
                 request.tags(),
                 new LifeLogRecordMetadataCommand(
                         request.lifeLogSubtype(),
-                        request.reflectionScope()
+                        request.reflectionScope(),
+                        request.primaryRoleId(),
+                        request.roleEventId()
                 )
         );
     }
