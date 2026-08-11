@@ -22,6 +22,9 @@ logging:
     org.hibernate.SQL: INFO
 
 lifeasgame:
+  web:
+    cors:
+      allowed-origins: ${LIFEASGAME_WEB_ALLOWED_ORIGINS}
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiry-ms: 3600000

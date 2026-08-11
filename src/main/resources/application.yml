@@ -71,6 +71,11 @@ logging:
     org.hibernate.orm.jdbc.extract: OFF
     org.hibernate.type.descriptor.sql: WARN
 
+lifeasgame:
+  web:
+    cors:
+      allowed-origins: ${LIFEASGAME_WEB_ALLOWED_ORIGINS:http://localhost:3000}
+
 app:
   error:
     docs:
