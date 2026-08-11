@@ -173,6 +173,27 @@ class CorsSecurityContractTest {
     }
 
     @Nested
+    @DisplayName("허용되지 않은 method/header이면")
+    class UnapprovedRequestContract {
+
+        @Test
+        @DisplayName("TRACE preflight를 403으로 거부한다")
+        void rejectsTraceMethod() throws Exception {
+            preflight(PRODUCTION_ORIGIN, HttpMethod.TRACE, "Authorization")
+                    .andExpect(status().isForbidden())
+                    .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS));
+        }
+
+        @Test
+        @DisplayName("X-Unapproved-Header preflight를 403으로 거부한다")
+        void rejectsUnapprovedHeader() throws Exception {
+            preflight(PRODUCTION_ORIGIN, HttpMethod.GET, "X-Unapproved-Header")
+                    .andExpect(status().isForbidden())
+                    .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS));
+        }
+    }
+
+    @Nested
     @DisplayName("Origin 설정 계약을 검증할 때")
     class OriginConfiguration {
 
