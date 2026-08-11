@@ -4,10 +4,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.security.jwt.JwtAuthenticationFilter;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,7 +20,6 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(WebCorsProperties.class)
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
@@ -71,7 +68,6 @@ public class SecurityConfig {
         cfg.setAllowedOrigins(webCorsProperties.allowedOrigins());
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        cfg.setExposedHeaders(List.of(HttpHeaders.LOCATION));
         cfg.setAllowCredentials(true);
         cfg.validateAllowCredentials();
         cfg.setMaxAge(3600L);

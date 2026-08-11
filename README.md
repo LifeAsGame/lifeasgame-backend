@@ -294,9 +294,9 @@ LIFEASGAME_WEB_ALLOWED_ORIGINS=<frontend production origin>
 ```
 
 여러 origin은 공백 없는 쉼표 구분 형식으로 설정합니다.
-예: `https://frontend.example,https://admin.example`. 각 값은 scheme과 host를 포함한 정확한
-origin이어야 하며 wildcard는 허용하지 않습니다. 로컬 기본 origin은
-`http://localhost:3000`입니다.
+예: `https://frontend.example,https://admin.example`. 각 값은 path, trailing slash, query,
+fragment가 없는 정확한 `http(s)://host[:port]` origin이어야 합니다. 빈 값, malformed URI,
+wildcard는 application startup에서 거부합니다. 로컬 기본 origin은 `http://localhost:3000`입니다.
 
 ### API 문서와 테스트
 
@@ -630,8 +630,9 @@ LIFEASGAME_WEB_ALLOWED_ORIGINS=<frontend production origin>
 ```
 
 For multiple origins, use a comma-separated list without spaces, for example
-`https://frontend.example,https://admin.example`. Each value must be an exact origin including
-scheme and host; wildcards are rejected. The local default origin is
+`https://frontend.example,https://admin.example`. Each value must be an exact
+`http(s)://host[:port]` origin without a path, trailing slash, query, or fragment. Empty values,
+malformed URIs, and wildcards are rejected at application startup. The local default origin is
 `http://localhost:3000`.
 
 ### API documentation and tests
