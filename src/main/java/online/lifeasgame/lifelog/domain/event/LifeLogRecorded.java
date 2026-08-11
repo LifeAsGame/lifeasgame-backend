@@ -43,11 +43,7 @@ public record LifeLogRecorded(
         Guard.notNull(occurredAt, "occurredAt");
         positive(playerId, "playerId");
         positive(lifeLogId, "lifeLogId");
-        if (primaryRoleId != null) {
-            throw new IllegalArgumentException(
-                    "primaryRoleId must be null until Role Domain is available"
-            );
-        }
+        if (primaryRoleId != null) positive(primaryRoleId, "primaryRoleId");
 
         if (sourceDefinitionVersion == null) {
             if (subtype != null

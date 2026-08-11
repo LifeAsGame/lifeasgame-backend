@@ -4,6 +4,7 @@ import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
 import online.lifeasgame.lifelog.domain.record.LifeLogReflectionScope;
 import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -108,7 +109,7 @@ class LifeLogRecordedTest {
                 LifeLogRecorded.EVENT_TYPE,
                 1,
                 1,
-                31L
+                0L
         )).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -130,6 +131,31 @@ class LifeLogRecordedTest {
                 null,
                 null
         )).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Nested
+    @DisplayName("v1 Fact에 primary Role snapshot을 기록할 때")
+    class PrimaryRoleSnapshot {
+
+        @Test
+        @DisplayName("기존 null primaryRoleId를 계속 허용한다")
+        void acceptsNullPrimaryRole() {
+            assertThat(contentReady().primaryRoleId()).isNull();
+        }
+
+        @Test
+        @DisplayName("positive primaryRoleId를 additive field로 허용한다")
+        void acceptsPositivePrimaryRole() {
+            LifeLogRecorded event = withContract(
+                    LifeLogRecorded.EVENT_TYPE,
+                    LifeLogRecorded.EVENT_VERSION,
+                    1,
+                    31L
+            );
+
+            assertThat(event.eventVersion()).isEqualTo(1);
+            assertThat(event.primaryRoleId()).isEqualTo(31L);
+        }
     }
 
     private LifeLogRecorded contentReady() {

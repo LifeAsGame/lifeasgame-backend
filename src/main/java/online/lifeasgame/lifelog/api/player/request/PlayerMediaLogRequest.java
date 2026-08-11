@@ -18,8 +18,36 @@ public final class PlayerMediaLogRequest {
             @NotBlank String status,
             Set<String> tags,
             String lifeLogSubtype,
-            String reflectionScope
+            String reflectionScope,
+            @Positive Long primaryRoleId,
+            @Positive Long roleEventId
     ) {
+        public Create(
+                String category,
+                String title,
+                String originalTitle,
+                Integer currentEpisode,
+                Integer totalEpisode,
+                String status,
+                Set<String> tags,
+                String lifeLogSubtype,
+                String reflectionScope
+        ) {
+            this(
+                    category,
+                    title,
+                    originalTitle,
+                    currentEpisode,
+                    totalEpisode,
+                    status,
+                    tags,
+                    lifeLogSubtype,
+                    reflectionScope,
+                    null,
+                    null
+            );
+        }
+
         public Create(
                 String category,
                 String title,
@@ -37,6 +65,8 @@ public final class PlayerMediaLogRequest {
                     totalEpisode,
                     status,
                     tags,
+                    null,
+                    null,
                     null,
                     null
             );

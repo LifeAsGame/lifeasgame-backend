@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.Set;
 
@@ -20,8 +21,36 @@ public final class PlayerCollectionRequest {
             String acquiredFrom,
             Set<String> tags,
             String lifeLogSubtype,
-            String reflectionScope
+            String reflectionScope,
+            @Positive Long primaryRoleId,
+            @Positive Long roleEventId
     ) {
+        public Create(
+                String category,
+                String title,
+                String originalTitle,
+                Integer quantity,
+                String conditionNote,
+                String acquiredFrom,
+                Set<String> tags,
+                String lifeLogSubtype,
+                String reflectionScope
+        ) {
+            this(
+                    category,
+                    title,
+                    originalTitle,
+                    quantity,
+                    conditionNote,
+                    acquiredFrom,
+                    tags,
+                    lifeLogSubtype,
+                    reflectionScope,
+                    null,
+                    null
+            );
+        }
+
         public Create(
                 String category,
                 String title,
@@ -39,6 +68,8 @@ public final class PlayerCollectionRequest {
                     conditionNote,
                     acquiredFrom,
                     tags,
+                    null,
+                    null,
                     null,
                     null
             );

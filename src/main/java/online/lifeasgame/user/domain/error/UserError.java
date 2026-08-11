@@ -22,6 +22,12 @@ public enum UserError implements ErrorCode {
             404
     ),
 
+    USER_NOT_ACTIVE(
+            "USR-409-NOT-ACTIVE",
+            "User is not active",
+            409
+    ),
+
     NICKNAME_DUPLICATE(
             "USR-409-NICKNAME-DUP",
             "Nickname already in use",

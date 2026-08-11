@@ -1,6 +1,7 @@
 package online.lifeasgame.lifelog.domain.record;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -131,5 +132,58 @@ class LifeLogRecordTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new LifeLogPeriodKey("2025-W53"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Nested
+    @DisplayName("canonical header에 Role context를 기록할 때")
+    class RoleContext {
+
+        @Test
+        @DisplayName("Role만 지정한 legacy header를 허용한다")
+        void acceptsRoleOnly() {
+            LifeLogRecord record = LifeLogRecord.legacy(
+                    1L,
+                    LifeLogSourceType.COLLECTION,
+                    1L,
+                    LifeLogEntryMode.FULL,
+                    10L,
+                    null,
+                    OCCURRED_AT
+            );
+
+            assertThat(record.getPrimaryRoleId()).isEqualTo(10L);
+            assertThat(record.getRoleEventId()).isNull();
+        }
+
+        @Test
+        @DisplayName("RoleEvent를 지정하면 primary Role도 함께 보존한다")
+        void acceptsRoleAndEvent() {
+            LifeLogRecord record = LifeLogRecord.legacy(
+                    1L,
+                    LifeLogSourceType.COLLECTION,
+                    1L,
+                    LifeLogEntryMode.FULL,
+                    10L,
+                    20L,
+                    OCCURRED_AT
+            );
+
+            assertThat(record.getPrimaryRoleId()).isEqualTo(10L);
+            assertThat(record.getRoleEventId()).isEqualTo(20L);
+        }
+
+        @Test
+        @DisplayName("Role 없이 RoleEvent만 가진 비정규 header는 거부한다")
+        void rejectsEventWithoutRole() {
+            assertThatThrownBy(() -> LifeLogRecord.legacy(
+                    1L,
+                    LifeLogSourceType.COLLECTION,
+                    1L,
+                    LifeLogEntryMode.FULL,
+                    null,
+                    20L,
+                    OCCURRED_AT
+            )).isInstanceOf(IllegalArgumentException.class);
+        }
     }
 }

@@ -22,17 +22,48 @@ public final class QuickRecordCommand {
             String type,
             String lifeLogSubtype,
             String reflectionScope,
+            Long primaryRoleId,
+            Long roleEventId,
             CollectionCommand.Create collection,
             ExerciseCommand.Create exercise,
             MediaLogCommand.Create media
     ) {
         public Create(
                 String type,
+                String lifeLogSubtype,
+                String reflectionScope,
                 CollectionCommand.Create collection,
                 ExerciseCommand.Create exercise,
                 MediaLogCommand.Create media
         ) {
-            this(type, null, null, collection, exercise, media);
+            this(
+                    type,
+                    lifeLogSubtype,
+                    reflectionScope,
+                    null,
+                    null,
+                    collection,
+                    exercise,
+                    media
+            );
+        }
+
+        public Create(
+                String type,
+                CollectionCommand.Create collection,
+                ExerciseCommand.Create exercise,
+                MediaLogCommand.Create media
+        ) {
+            this(
+                    type,
+                    null,
+                    null,
+                    null,
+                    null,
+                    collection,
+                    exercise,
+                    media
+            );
         }
 
         public Create {
@@ -68,7 +99,9 @@ public final class QuickRecordCommand {
                     selectedType,
                     new LifeLogRecordMetadataCommand(
                             lifeLogSubtype,
-                            reflectionScope
+                            reflectionScope,
+                            primaryRoleId,
+                            roleEventId
                     ),
                     collection,
                     exercise,

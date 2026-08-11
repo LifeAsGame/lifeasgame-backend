@@ -12,7 +12,8 @@ public enum LifeLogError implements ErrorCode {
     INVALID_MEDIA_CATEGORY("LIF-400-INVALID-MEDIA-CATEGORY", "Invalid Media Category", 400),
     INVALID_COLLECTION_CATEGORY("LIF-400-INVALID-COLLECTION-CATEGORY", "Invalid Collection Category", 400),
     INVALID_WATCH_STATUS("LIF-400-INVALID-WATCH-STATUS", "Invalid Watch Status", 400),
-    INVALID_EXERCISE_CATEGORY("LIF-400-INVALID-EXERCISE-CATEGORY", "Invalid Exercise Category", 400);
+    INVALID_EXERCISE_CATEGORY("LIF-400-INVALID-EXERCISE-CATEGORY", "Invalid Exercise Category", 400),
+    ROLE_EVENT_CONTEXT_MISMATCH("LIF-400-ROLE-EVENT-CONTEXT-MISMATCH", "Role event does not belong to the requested Role", 400);
 
     private final String code;
     private final String message;

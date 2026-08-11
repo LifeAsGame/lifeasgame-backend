@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V20까지 적용되고 QuestRoute foundation을 추가한다")
+        @DisplayName("V1부터 V21까지 적용되고 RoleEvent linkage를 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -58,12 +58,13 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(8);
+            assertThat(result.migrationsExecuted).isEqualTo(9);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16", "17", "18", "19", "20"
+                            "14", "15", "16", "17", "18", "19", "20",
+                            "21"
                     );
             assertThat(existingTables(
                     "users",
@@ -88,7 +89,9 @@ class FlywayMigrationTest {
                     "quest_routes",
                     "quest_route_steps",
                     "quest_route_step_quests",
-                    "player_quest_routes"
+                    "player_quest_routes",
+                    "role_events",
+                    "role_event_participants"
             )).containsExactlyInAnyOrder(
                     "users",
                     "player",
@@ -112,7 +115,9 @@ class FlywayMigrationTest {
                     "quest_routes",
                     "quest_route_steps",
                     "quest_route_step_quests",
-                    "player_quest_routes"
+                    "player_quest_routes",
+                    "role_events",
+                    "role_event_participants"
             );
             assertThat(existingTables(
                     "quick_lifelog_entries",
@@ -291,6 +296,7 @@ class FlywayMigrationTest {
                     "reflection_scope",
                     "period_key",
                     "primary_role_id",
+                    "role_event_id",
                     "occurred_at",
                     "created_at",
                     "updated_at"
@@ -312,7 +318,8 @@ class FlywayMigrationTest {
                     "ck_life_log_record_reflection_scope",
                     "ck_life_log_record_reflection_pairing",
                     "ck_life_log_record_non_reflection_metadata",
-                    "ck_life_log_record_primary_role"
+                    "ck_life_log_record_primary_role",
+                    "ck_life_log_record_role_event"
             );
             assertThat(lifeLogRecordCount()).isZero();
             assertLifeLogRecordReflectionCheckContract();

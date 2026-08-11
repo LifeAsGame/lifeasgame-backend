@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V20까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V21까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,12 +72,13 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(19);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(20);
             assertThat(history).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
-                            "14", "15", "16", "17", "18", "19", "20"
+                            "14", "15", "16", "17", "18", "19", "20",
+                            "21"
                     );
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
@@ -107,7 +108,8 @@ class FlywayExplicitBaselineTest {
                             "V17__inventory_reward_delivery_foundation.sql",
                             "V18__reward_item_code_snapshot.sql",
                             "V19__role_person_persistence_foundation.sql",
-                            "V20__quest_route_mvp.sql"
+                            "V20__quest_route_mvp.sql",
+                            "V21__role_event_lifelog_linkage.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -127,7 +129,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("20");
+                        .isEqualTo("21");
             }
         }
     }
