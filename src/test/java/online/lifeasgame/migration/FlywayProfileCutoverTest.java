@@ -183,6 +183,7 @@ class FlywayProfileCutoverTest {
                     .run(
                             "--spring.profiles.active=prod",
                             "--FLYWAY_ENABLED=false",
+                            "--LIFEASGAME_WEB_ALLOWED_ORIGINS=https://app.example.com",
                             "--spring.datasource.url=" + jdbcUrl,
                             "--spring.datasource.username=" + FLYWAY_DISABLED_MYSQL.getUsername(),
                             "--spring.datasource.password=" + FLYWAY_DISABLED_MYSQL.getPassword(),

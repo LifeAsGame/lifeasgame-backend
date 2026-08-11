@@ -278,6 +278,26 @@ export DB_PASSWORD=root
 
 Local profile은 기본값이며 Flyway migration을 실행합니다.
 
+### 프로덕션 웹 연동
+
+프론트엔드 배포 환경:
+
+```bash
+NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_API_URL=<backend URL>
+```
+
+백엔드 `prod` profile은 허용할 프론트엔드 origin을 필수 환경변수로 받습니다.
+
+```bash
+LIFEASGAME_WEB_ALLOWED_ORIGINS=<frontend production origin>
+```
+
+여러 origin은 공백 없는 쉼표 구분 형식으로 설정합니다.
+예: `https://frontend.example,https://admin.example`. 각 값은 path, trailing slash, query,
+fragment가 없는 정확한 `http(s)://host[:port]` origin이어야 합니다. 빈 값, malformed URI,
+wildcard는 application startup에서 거부합니다. 로컬 기본 origin은 `http://localhost:3000`입니다.
+
 ### API 문서와 테스트
 
 애플리케이션 실행 후:
@@ -593,6 +613,27 @@ export DB_PASSWORD=root
 ```
 
 The local profile is the default and runs Flyway migrations.
+
+### Production web integration
+
+Frontend deployment environment:
+
+```bash
+NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_API_URL=<backend URL>
+```
+
+The backend `prod` profile requires the frontend origin through an environment variable.
+
+```bash
+LIFEASGAME_WEB_ALLOWED_ORIGINS=<frontend production origin>
+```
+
+For multiple origins, use a comma-separated list without spaces, for example
+`https://frontend.example,https://admin.example`. Each value must be an exact
+`http(s)://host[:port]` origin without a path, trailing slash, query, or fragment. Empty values,
+malformed URIs, and wildcards are rejected at application startup. The local default origin is
+`http://localhost:3000`.
 
 ### API documentation and tests
 
