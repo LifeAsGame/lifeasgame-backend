@@ -15,6 +15,16 @@ public final class HomeWebMapper {
                 result.recentJournal().stream()
                         .map(HomeWebMapper::toJournalEntry)
                         .toList(),
+                result.recentAchievements().stream()
+                        .map(achievement -> new HomeResponse.RecentAchievement(
+                                achievement.achievementId(),
+                                achievement.code(),
+                                achievement.name(),
+                                achievement.category(),
+                                achievement.descMd(),
+                                achievement.acquiredAt()
+                        ))
+                        .toList(),
                 new HomeResponse.Journey(
                         result.journey().currentQuests().stream()
                                 .map(quest -> new HomeResponse.CurrentQuest(
