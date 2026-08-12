@@ -21,6 +21,14 @@ public interface LifeLogJournalQuery {
             int size
     );
 
+    List<CanonicalRecord> findRecent(Long playerId, int limit);
+
+    List<RoleCount> countByPrimaryRole(
+            Long playerId,
+            Instant windowStart,
+            Instant windowEnd
+    );
+
     Optional<CanonicalRecord> findOwned(Long playerId, Long lifeLogId);
 
     Map<SourceKey, LifeLogJournalResult.Preview> loadPreviews(
@@ -60,5 +68,8 @@ public interface LifeLogJournalQuery {
     }
 
     record SourceKey(LifeLogSourceType sourceType, Long sourceId) {
+    }
+
+    record RoleCount(Long roleId, long recordCount) {
     }
 }
