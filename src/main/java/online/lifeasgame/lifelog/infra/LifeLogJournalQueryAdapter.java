@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.infra;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.lifelog.application.query.LifeLogJournalQuery;
@@ -14,6 +15,7 @@ import online.lifeasgame.lifelog.domain.record.LifeLogSourceType;
 import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -79,6 +81,61 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
         long total = count == null ? 0L : count;
         int totalPages = (int) Math.ceil(total / (double) size);
         return new CanonicalPage(content, page, size, total, totalPages);
+    }
+
+    @Override
+    public List<CanonicalRecord> findRecent(Long playerId, int limit) {
+        return queryFactory
+                .select(Projections.constructor(
+                        CanonicalRecord.class,
+                        lifeLogRecord.id,
+                        lifeLogRecord.sourceType,
+                        lifeLogRecord.sourceId,
+                        lifeLogRecord.subtype,
+                        lifeLogRecord.entryMode,
+                        lifeLogRecord.reflectionScope,
+                        lifeLogRecord.periodKey,
+                        lifeLogRecord.primaryRoleId,
+                        lifeLogRecord.roleEventId,
+                        lifeLogRecord.occurredAt
+                ))
+                .from(lifeLogRecord)
+                .where(lifeLogRecord.playerId.eq(playerId))
+                .orderBy(
+                        lifeLogRecord.occurredAt.desc(),
+                        lifeLogRecord.id.desc()
+                )
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public List<RoleCount> countByPrimaryRole(
+            Long playerId,
+            Instant windowStart,
+            Instant windowEnd
+    ) {
+        NumberExpression<Long> recordCount = lifeLogRecord.id.count();
+        return queryFactory
+                .select(lifeLogRecord.primaryRoleId, recordCount)
+                .from(lifeLogRecord)
+                .where(
+                        lifeLogRecord.playerId.eq(playerId),
+                        lifeLogRecord.occurredAt.goe(windowStart),
+                        lifeLogRecord.occurredAt.loe(windowEnd)
+                )
+                .groupBy(lifeLogRecord.primaryRoleId)
+                .orderBy(
+                        recordCount.desc(),
+                        lifeLogRecord.primaryRoleId.asc()
+                )
+                .fetch()
+                .stream()
+                .map(row -> new RoleCount(
+                        row.get(lifeLogRecord.primaryRoleId),
+                        row.get(recordCount)
+                ))
+                .toList();
     }
 
     @Override

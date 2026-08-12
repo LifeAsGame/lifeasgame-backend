@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.lifelog.application.internal.LifeLogActivityReadApi;
 import online.lifeasgame.lifelog.application.query.LifeLogJournalQuery;
 import online.lifeasgame.lifelog.application.result.LifeLogJournalResult;
 import online.lifeasgame.lifelog.domain.error.LifeLogError;
@@ -10,12 +11,14 @@ import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class LifeLogJournalQueryService {
+public class LifeLogJournalQueryService implements LifeLogActivityReadApi {
 
     private final LifeLogJournalQuery journalQuery;
     private final CurrentPlayerAccessor currentPlayerAccessor;
@@ -35,18 +38,8 @@ public class LifeLogJournalQueryService {
                         page,
                         size
                 );
-        Map<LifeLogJournalQuery.SourceKey, LifeLogJournalResult.Preview>
-                previews = journalQuery.loadPreviews(
-                        playerId,
-                        canonicalPage.content()
-                );
         return new LifeLogJournalResult.Page(
-                canonicalPage.content().stream()
-                        .map(record -> LifeLogJournalResult.Entry.from(
-                                record,
-                                requirePreview(previews, record)
-                        ))
-                        .toList(),
+                enrich(playerId, canonicalPage.content()),
                 canonicalPage.page(),
                 canonicalPage.size(),
                 canonicalPage.totalElements(),
@@ -65,6 +58,62 @@ public class LifeLogJournalQueryService {
                 .loadSource(playerId, record)
                 .orElseThrow(LifeLogJournalQueryService::sourceMissing);
         return LifeLogJournalResult.Detail.from(record, source);
+    }
+
+    @Override
+    public List<LifeLogJournalResult.Entry> recentJournal(
+            Long playerId,
+            int limit
+    ) {
+        return enrich(playerId, journalQuery.findRecent(playerId, limit));
+    }
+
+    @Override
+    public RoleActivity roleActivity(
+            Long playerId,
+            Instant windowStart,
+            Instant windowEnd
+    ) {
+        List<LifeLogJournalQuery.RoleCount> counts =
+                journalQuery.countByPrimaryRole(
+                        playerId,
+                        windowStart,
+                        windowEnd
+                );
+        long assigned = counts.stream()
+                .filter(count -> count.roleId() != null)
+                .mapToLong(LifeLogJournalQuery.RoleCount::recordCount)
+                .sum();
+        long unassigned = counts.stream()
+                .filter(count -> count.roleId() == null)
+                .mapToLong(LifeLogJournalQuery.RoleCount::recordCount)
+                .sum();
+        return new RoleActivity(
+                assigned + unassigned,
+                assigned,
+                unassigned,
+                counts.stream()
+                        .filter(count -> count.roleId() != null)
+                        .map(count -> new LifeLogActivityReadApi.RoleCount(
+                                count.roleId(),
+                                count.recordCount()
+                        ))
+                        .toList()
+        );
+    }
+
+    private List<LifeLogJournalResult.Entry> enrich(
+            Long playerId,
+            List<LifeLogJournalQuery.CanonicalRecord> records
+    ) {
+        Map<LifeLogJournalQuery.SourceKey, LifeLogJournalResult.Preview>
+                previews = journalQuery.loadPreviews(playerId, records);
+        return records.stream()
+                .map(record -> LifeLogJournalResult.Entry.from(
+                        record,
+                        requirePreview(previews, record)
+                ))
+                .toList();
     }
 
     private LifeLogJournalResult.Preview requirePreview(
