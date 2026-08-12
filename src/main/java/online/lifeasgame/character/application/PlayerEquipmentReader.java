@@ -24,8 +24,11 @@ class PlayerEquipmentReader {
         return repository.findByPlayerId(playerId);
     }
 
-    public void assertNotEquipped(Long playerId, Long slotId, Long instanceId) {
-        if (repository.existsByPlayerIdAndSlotIdAndItemInstanceId(playerId, slotId, instanceId)) {
+    public void assertNotEquipped(Long playerId, Long instanceId) {
+        if (repository.existsByPlayerIdAndItemInstanceId(
+                playerId,
+                instanceId
+        )) {
             throw new DomainException(PlayerEquipmentError.ALREADY_EQUIPPED_ITEM);
         }
     }

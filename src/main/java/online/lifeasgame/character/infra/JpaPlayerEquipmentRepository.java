@@ -19,7 +19,10 @@ public interface JpaPlayerEquipmentRepository extends JpaRepository<PlayerEquipm
     @Query("SELECT pe FROM PlayerEquipment pe WHERE pe.playerId = :playerId AND pe.slotId = :slotId")
     Optional<PlayerEquipment> findByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId);
 
-    boolean existsByPlayerIdAndSlotIdAndItemInstanceId(Long playerId, Long slotId, Long instanceId);
+    boolean existsByPlayerIdAndItemInstanceId(
+            Long playerId,
+            Long instanceId
+    );
 
     List<PlayerEquipment> findByPlayerId(Long playerId);
 }

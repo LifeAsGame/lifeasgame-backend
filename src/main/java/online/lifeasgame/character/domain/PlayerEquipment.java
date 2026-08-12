@@ -15,7 +15,16 @@ import java.time.Instant;
 @AggregateRoot
 @Table(
         name = "player_equipment",
-        uniqueConstraints = @UniqueConstraint(name = "uq_player_slot", columnNames = {"player_id", "slot_id"})
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_player_slot",
+                        columnNames = {"player_id", "slot_id"}
+                ),
+                @UniqueConstraint(
+                        name = "uq_player_equipment_item",
+                        columnNames = {"player_id", "item_inst_id"}
+                )
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerEquipment extends AbstractTime {

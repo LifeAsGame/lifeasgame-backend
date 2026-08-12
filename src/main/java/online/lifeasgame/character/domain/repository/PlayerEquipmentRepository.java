@@ -10,7 +10,12 @@ public interface PlayerEquipmentRepository {
 
     List<PlayerEquipment> findByPlayerId(Long playerId);
 
-    boolean existsByPlayerIdAndSlotIdAndItemInstanceId(Long playerId, Long slotId, Long instanceId);
+    boolean existsByPlayerIdAndItemInstanceId(
+            Long playerId,
+            Long instanceId
+    );
 
     PlayerEquipment save(PlayerEquipment playerEquipment);
+
+    PlayerEquipment saveAndFlush(PlayerEquipment playerEquipment);
 }

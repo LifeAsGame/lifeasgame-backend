@@ -8,4 +8,6 @@ public interface InventoryQuery {
     List<InventoryEntryView> findInventoryEntries(Long playerId);
 
     Optional<InventoryEntryView> findInventoryEntryByInstanceId(Long playerId, Long itemInstanceId);
+
+    Optional<OwnedEquipmentItemView> findOwnedEquipmentItem(Long playerId, Long itemInstanceId);
 }
