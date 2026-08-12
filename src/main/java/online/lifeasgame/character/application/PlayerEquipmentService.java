@@ -3,8 +3,10 @@ package online.lifeasgame.character.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand.Equip;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
+import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +18,30 @@ public class PlayerEquipmentService {
 
     private final PlayerEquipmentWriter playerEquipmentWriter;
     private final PlayerEquipmentReader playerEquipmentReader;
+    private final EquipmentSlotReader equipmentSlotReader;
+    private final InventoryEquipmentReadApi inventoryEquipmentReadApi;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public PlayerEquipmentResult.Equipped equip(Equip command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        playerEquipmentReader.assertNotEquipped(playerId, command.slotId(), command.itemInstanceId());
+        EquipmentSlot slot = equipmentSlotReader.getByIdOrThrow(
+                command.slotId()
+        );
+        InventoryEquipmentReadApi.OwnedEquipmentItem item =
+                inventoryEquipmentReadApi.getOwnedItem(
+                        playerId,
+                        command.itemInstanceId()
+                );
+        EquipmentCompatibilityPolicy.validate(
+                slot.getCategory(),
+                item.category(),
+                item.type()
+        );
+        playerEquipmentReader.assertNotEquipped(
+                playerId,
+                command.itemInstanceId()
+        );
 
         PlayerEquipment playerEquipment = playerEquipmentWriter.equip(
                 playerId,

@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.inventory.application.query.InventoryEntryView;
 import online.lifeasgame.inventory.application.query.InventoryQuery;
+import online.lifeasgame.inventory.application.query.OwnedEquipmentItemView;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -66,6 +67,26 @@ public class PlayerInventoryQueryAdapter implements InventoryQuery {
             JOIN Item i ON i.id = e.itemId
             WHERE inv.playerId = :playerId AND e.id = :itemInstanceId
         """, InventoryEntryView.class)
+                .setParameter("playerId", playerId)
+                .setParameter("itemInstanceId", itemInstanceId)
+                .getResultStream()
+                .findFirst();
+    }
+
+    @Override
+    public Optional<OwnedEquipmentItemView> findOwnedEquipmentItem(Long playerId, Long itemInstanceId) {
+        return em.createQuery("""
+            SELECT new online.lifeasgame.inventory.application.query.OwnedEquipmentItemView(
+                e.id,
+                i.id,
+                i.category,
+                i.type
+            )
+            FROM InventoryEntry e
+            JOIN e.inventory inv
+            JOIN Item i ON i.id = e.itemId
+            WHERE inv.playerId = :playerId AND e.id = :itemInstanceId
+        """, OwnedEquipmentItemView.class)
                 .setParameter("playerId", playerId)
                 .setParameter("itemInstanceId", itemInstanceId)
                 .getResultStream()

@@ -3,8 +3,10 @@ package online.lifeasgame.inventory.application;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import online.lifeasgame.inventory.application.query.InventoryEntryView;
 import online.lifeasgame.inventory.application.query.InventoryQuery;
+import online.lifeasgame.inventory.application.query.OwnedEquipmentItemView;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class InventoryQueryService {
+public class InventoryQueryService implements InventoryEquipmentReadApi {
 
     private final InventoryQuery inventoryQuery;
     private final CurrentPlayerAccessor currentPlayerAccessor;
@@ -47,5 +49,23 @@ public class InventoryQueryService {
                         InventoryError.INVENTORY_ENTRY_NOT_FOUND
                 ));
         return InventoryResult.Entry.fromView(entryView);
+    }
+
+    @Override
+    public OwnedEquipmentItem getOwnedItem(
+            Long playerId,
+            Long itemInstanceId
+    ) {
+        OwnedEquipmentItemView item = inventoryQuery
+                .findOwnedEquipmentItem(playerId, itemInstanceId)
+                .orElseThrow(() -> new DomainException(
+                        InventoryError.INVENTORY_ENTRY_NOT_FOUND
+                ));
+        return new OwnedEquipmentItem(
+                item.itemInstanceId(),
+                item.itemId(),
+                item.category().name(),
+                item.type().name()
+        );
     }
 }
