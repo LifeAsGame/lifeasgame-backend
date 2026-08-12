@@ -3,6 +3,8 @@ package online.lifeasgame.lifelog.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum LifeLogError implements ErrorCode {
+    LIFE_LOG_NOT_FOUND("LIF-404-LIFE-LOG-NOT-FOUND", "LifeLog Not Found", 404),
+    LIFE_LOG_SOURCE_UNAVAILABLE("LIF-500-SOURCE-UNAVAILABLE", "LifeLog Source Unavailable", 500),
     MEDIA_NOT_FOUND("LIF-404-MEDIA-NOT-FOUND", "Media Not Found", 404),
     EXERCISE_NOT_FOUND("LIF-404-EXERCISE-NOT-FOUND", "Exercise Not Found", 404),
     COLLECTION_NOT_FOUND("LIF-404-COLLECTION-NOT-FOUND", "Collection Not Found", 404),

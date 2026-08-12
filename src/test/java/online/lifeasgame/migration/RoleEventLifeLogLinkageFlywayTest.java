@@ -34,7 +34,7 @@ class RoleEventLifeLogLinkageFlywayTest {
 
     @BeforeEach
     void migrateCleanDatabase() {
-        flyway = flyway(null);
+        flyway = flyway(MigrationVersion.fromVersion("21"));
         flyway.clean();
         flyway.migrate();
         jdbc = new JdbcTemplate(new DriverManagerDataSource(
