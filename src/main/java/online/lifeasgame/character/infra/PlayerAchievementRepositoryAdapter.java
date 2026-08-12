@@ -1,17 +1,22 @@
 package online.lifeasgame.character.infra;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.character.application.query.PlayerAchievementQuery;
 import online.lifeasgame.character.application.view.PlayerAchievementView;
 import online.lifeasgame.character.domain.PlayerAchievement;
 import online.lifeasgame.character.domain.repository.PlayerAchievementRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class PlayerAchievementRepositoryAdapter implements PlayerAchievementRepository, PlayerAchievementQuery {
+public class PlayerAchievementRepositoryAdapter implements
+        PlayerAchievementRepository,
+        PlayerAchievementQuery,
+        AchievementProgressReadApi {
 
     private final JpaPlayerAchievementRepository jpaRepository;
 
@@ -28,5 +33,25 @@ public class PlayerAchievementRepositoryAdapter implements PlayerAchievementRepo
     @Override
     public List<PlayerAchievementView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerAchievementViews(playerId);
+    }
+
+    @Override
+    public List<RecentAchievement> recentAchievements(
+            Long playerId,
+            int limit
+    ) {
+        return jpaRepository.findRecentPlayerAchievementViews(
+                        playerId,
+                        PageRequest.of(0, limit)
+                ).stream()
+                .map(view -> new RecentAchievement(
+                        view.getAchievementId(),
+                        view.getCode(),
+                        view.getName(),
+                        view.getCategory().name(),
+                        view.getDescMd(),
+                        view.getAcquiredAt()
+                ))
+                .toList();
     }
 }

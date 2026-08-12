@@ -1,5 +1,6 @@
 package online.lifeasgame.home.application.result;
 
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.lifelog.application.result.LifeLogJournalResult;
 import online.lifeasgame.quest.application.internal.QuestProgressReadApi;
 
@@ -14,11 +15,13 @@ public final class HomeResult {
     public record Summary(
             Instant generatedAt,
             List<LifeLogJournalResult.Entry> recentJournal,
+            List<AchievementProgressReadApi.RecentAchievement> recentAchievements,
             Journey journey,
             RoleActivity roleActivity30d
     ) {
         public Summary {
             recentJournal = List.copyOf(recentJournal);
+            recentAchievements = List.copyOf(recentAchievements);
         }
     }
 

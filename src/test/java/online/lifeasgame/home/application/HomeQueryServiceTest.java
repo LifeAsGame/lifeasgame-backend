@@ -1,5 +1,6 @@
 package online.lifeasgame.home.application;
 
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.home.application.result.HomeResult;
@@ -40,6 +41,9 @@ class HomeQueryServiceTest {
     private CurrentPlayerAccessor currentPlayerAccessor;
 
     @Mock
+    private AchievementProgressReadApi achievementProgressReadApi;
+
+    @Mock
     private LifeLogActivityReadApi lifeLogActivityReadApi;
 
     @Mock
@@ -55,6 +59,7 @@ class HomeQueryServiceTest {
         service = new HomeQueryService(
                 currentPlayerAccessor,
                 Clock.fixed(NOW, ZoneOffset.UTC),
+                achievementProgressReadApi,
                 lifeLogActivityReadApi,
                 questProgressReadApi,
                 roleDisplayReadApi
@@ -76,6 +81,7 @@ class HomeQueryServiceTest {
 
             assertThat(result.generatedAt()).isEqualTo(NOW);
             assertThat(result.recentJournal()).isEmpty();
+            assertThat(result.recentAchievements()).isEmpty();
             assertThat(result.journey().currentQuests()).isEmpty();
             assertThat(result.journey().selectedRoutes()).isEmpty();
             assertThat(result.roleActivity30d()).isEqualTo(
@@ -88,9 +94,14 @@ class HomeQueryServiceTest {
                             List.of()
                     )
             );
+            verify(currentPlayerAccessor).currentPlayerIdOrThrow();
             verify(lifeLogActivityReadApi).recentJournal(
                     PLAYER_ID,
                     HomeQueryService.RECENT_JOURNAL_LIMIT
+            );
+            verify(achievementProgressReadApi).recentAchievements(
+                    PLAYER_ID,
+                    HomeQueryService.RECENT_ACHIEVEMENT_LIMIT
             );
             verify(questProgressReadApi).currentQuests(
                     PLAYER_ID,
@@ -100,6 +111,34 @@ class HomeQueryServiceTest {
                     PLAYER_ID,
                     HomeQueryService.SELECTED_ROUTE_LIMIT
             );
+        }
+
+        @Test
+        @DisplayName("현재 Player와 limit 5로 최근 획득 업적을 합성한다")
+        void composesRecentAchievements() {
+            givenEmptyProviders();
+            AchievementProgressReadApi.RecentAchievement achievement =
+                    new AchievementProgressReadApi.RecentAchievement(
+                            260L,
+                            "FIRST_HOME",
+                            "첫 Home",
+                            "STORY",
+                            "Home feed 업적",
+                            NOW.minusSeconds(60)
+                    );
+            given(achievementProgressReadApi.recentAchievements(
+                    PLAYER_ID,
+                    HomeQueryService.RECENT_ACHIEVEMENT_LIMIT
+            )).willReturn(List.of(achievement));
+
+            HomeResult.Summary result = service.home();
+
+            assertThat(result.recentAchievements())
+                    .containsExactly(achievement);
+            assertThat(result.recentJournal()).isEmpty();
+            assertThat(result.journey().currentQuests()).isEmpty();
+            assertThat(result.journey().selectedRoutes()).isEmpty();
+            assertThat(result.roleActivity30d().totalRecords()).isZero();
         }
 
         @Test
@@ -168,6 +207,33 @@ class HomeQueryServiceTest {
 
             assertThatThrownBy(service::home).isSameAs(failure);
         }
+
+        @Test
+        @DisplayName("Achievement provider 실패를 빈 목록으로 위조하지 않는다")
+        void propagatesAchievementProviderFailure() {
+            given(lifeLogActivityReadApi.roleActivity(
+                    PLAYER_ID,
+                    WINDOW_START,
+                    NOW
+            )).willReturn(new LifeLogActivityReadApi.RoleActivity(
+                    0, 0, 0, List.of()
+            ));
+            given(roleDisplayReadApi.findNames(PLAYER_ID, List.of()))
+                    .willReturn(Map.of());
+            given(lifeLogActivityReadApi.recentJournal(
+                    PLAYER_ID,
+                    HomeQueryService.RECENT_JOURNAL_LIMIT
+            )).willReturn(List.of());
+            RuntimeException failure = new RuntimeException(
+                    "achievement provider unavailable"
+            );
+            given(achievementProgressReadApi.recentAchievements(
+                    PLAYER_ID,
+                    HomeQueryService.RECENT_ACHIEVEMENT_LIMIT
+            )).willThrow(failure);
+
+            assertThatThrownBy(service::home).isSameAs(failure);
+        }
     }
 
     private void givenEmptyProviders() {
@@ -183,6 +249,10 @@ class HomeQueryServiceTest {
         given(lifeLogActivityReadApi.recentJournal(
                 PLAYER_ID,
                 HomeQueryService.RECENT_JOURNAL_LIMIT
+        )).willReturn(List.of());
+        given(achievementProgressReadApi.recentAchievements(
+                PLAYER_ID,
+                HomeQueryService.RECENT_ACHIEVEMENT_LIMIT
         )).willReturn(List.of());
         given(questProgressReadApi.currentQuests(
                 PLAYER_ID,

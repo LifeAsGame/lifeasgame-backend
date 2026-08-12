@@ -12,6 +12,7 @@ public final class HomeResponse {
     public record Summary(
             Instant generatedAt,
             List<JournalEntry> recentJournal,
+            List<RecentAchievement> recentAchievements,
             Journey journey,
             RoleActivity roleActivity30d
     ) {
@@ -26,6 +27,16 @@ public final class HomeResponse {
             Long roleEventId,
             Instant recordedAt,
             Preview preview
+    ) {
+    }
+
+    public record RecentAchievement(
+            Long achievementId,
+            String code,
+            String name,
+            String category,
+            String descMd,
+            Instant acquiredAt
     ) {
     }
 

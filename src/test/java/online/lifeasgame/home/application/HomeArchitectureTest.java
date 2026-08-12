@@ -1,5 +1,6 @@
 package online.lifeasgame.home.application;
 
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.home.api.HomeController;
 import online.lifeasgame.lifelog.application.internal.LifeLogActivityReadApi;
@@ -33,6 +34,7 @@ class HomeArchitectureTest {
                     .containsExactlyInAnyOrder(
                             CurrentPlayerAccessor.class,
                             Clock.class,
+                            AchievementProgressReadApi.class,
                             LifeLogActivityReadApi.class,
                             QuestProgressReadApi.class,
                             RoleDisplayReadApi.class

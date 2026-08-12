@@ -1,6 +1,7 @@
 package online.lifeasgame.home.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.home.application.result.HomeResult;
 import online.lifeasgame.lifelog.application.internal.LifeLogActivityReadApi;
@@ -21,12 +22,14 @@ import java.util.Map;
 public class HomeQueryService {
 
     static final int RECENT_JOURNAL_LIMIT = 5;
+    static final int RECENT_ACHIEVEMENT_LIMIT = 5;
     static final int CURRENT_QUEST_LIMIT = 10;
     static final int SELECTED_ROUTE_LIMIT = 10;
     private static final Duration ROLE_ACTIVITY_WINDOW = Duration.ofDays(30);
 
     private final CurrentPlayerAccessor currentPlayerAccessor;
     private final Clock clock;
+    private final AchievementProgressReadApi achievementProgressReadApi;
     private final LifeLogActivityReadApi lifeLogActivityReadApi;
     private final QuestProgressReadApi questProgressReadApi;
     private final RoleDisplayReadApi roleDisplayReadApi;
@@ -53,6 +56,10 @@ public class HomeQueryService {
                 lifeLogActivityReadApi.recentJournal(
                         playerId,
                         RECENT_JOURNAL_LIMIT
+                ),
+                achievementProgressReadApi.recentAchievements(
+                        playerId,
+                        RECENT_ACHIEVEMENT_LIMIT
                 ),
                 new HomeResult.Journey(
                         questProgressReadApi.currentQuests(

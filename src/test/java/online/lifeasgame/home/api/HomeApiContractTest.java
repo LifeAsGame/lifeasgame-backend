@@ -1,5 +1,6 @@
 package online.lifeasgame.home.api;
 
+import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.home.application.HomeQueryService;
 import online.lifeasgame.home.application.result.HomeResult;
 import online.lifeasgame.lifelog.application.result.LifeLogJournalResult;
@@ -103,6 +104,10 @@ class HomeApiContractTest {
                             .value("2026-08-12T00:00:00Z"))
                     .andExpect(jsonPath("$.result.recentJournal").isArray())
                     .andExpect(jsonPath("$.result.recentJournal").isEmpty())
+                    .andExpect(jsonPath("$.result.recentAchievements")
+                            .isArray())
+                    .andExpect(jsonPath("$.result.recentAchievements")
+                            .isEmpty())
                     .andExpect(jsonPath("$.result.journey.currentQuests")
                             .isEmpty())
                     .andExpect(jsonPath("$.result.journey.selectedRoutes")
@@ -140,6 +145,24 @@ class HomeApiContractTest {
                             "$.result.recentJournal[0].sourceId"
                     ).doesNotExist())
                     .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].achievementId"
+                    ).value(601))
+                    .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].code"
+                    ).value("HOME_FIRST"))
+                    .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].name"
+                    ).value("첫 Home"))
+                    .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].category"
+                    ).value("STORY"))
+                    .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].descMd"
+                    ).value("Home feed 업적"))
+                    .andExpect(jsonPath(
+                            "$.result.recentAchievements[0].acquiredAt"
+                    ).value("2026-08-11T23:59:30Z"))
+                    .andExpect(jsonPath(
                             "$.result.journey.currentQuests[0].status"
                     ).value("GOAL_REACHED"))
                     .andExpect(jsonPath(
@@ -158,6 +181,7 @@ class HomeApiContractTest {
     private HomeResult.Summary emptySummary() {
         return new HomeResult.Summary(
                 GENERATED_AT,
+                List.of(),
                 List.of(),
                 new HomeResult.Journey(List.of(), List.of()),
                 new HomeResult.RoleActivity(
@@ -190,6 +214,14 @@ class HomeApiContractTest {
                                 "기록",
                                 1
                         )
+                )),
+                List.of(new AchievementProgressReadApi.RecentAchievement(
+                        601L,
+                        "HOME_FIRST",
+                        "첫 Home",
+                        "STORY",
+                        "Home feed 업적",
+                        GENERATED_AT.minusSeconds(30)
                 )),
                 new HomeResult.Journey(
                         List.of(new QuestProgressReadApi.CurrentQuest(

@@ -105,6 +105,7 @@ class HomeProviderIntegrationTest {
             HomeResult.Summary result = queryService.home();
 
             assertThat(result.recentJournal()).isEmpty();
+            assertThat(result.recentAchievements()).isEmpty();
             assertThat(result.journey().currentQuests()).isEmpty();
             assertThat(result.journey().selectedRoutes()).isEmpty();
             assertThat(result.roleActivity30d().totalRecords()).isZero();
@@ -320,7 +321,7 @@ class HomeProviderIntegrationTest {
         }
 
         @Test
-        @DisplayName("mixed world summary를 최대 여덟 query로 읽는다")
+        @DisplayName("Achievement를 포함한 mixed world summary를 최대 아홉 query로 읽는다")
         void boundsComposedQueryCount() {
             Role role = role("역할", false);
             CollectionLog collection = collection(PLAYER_ID, "컬렉션");
@@ -334,6 +335,7 @@ class HomeProviderIntegrationTest {
             acceptance(quest("Q_QUERY", "쿼리 퀘스트"), NOW.minusSeconds(4));
             playerRoute(route("ROUTE_QUERY", "쿼리 경로"),
                     NOW.minusSeconds(5));
+            acquire("HOME_QUERY", "Home 조회", PLAYER_ID);
             flushAndClear();
             Statistics statistics = entityManagerFactory
                     .unwrap(SessionFactory.class)
@@ -343,8 +345,9 @@ class HomeProviderIntegrationTest {
             HomeResult.Summary result = queryService.home();
 
             assertThat(result.recentJournal()).hasSize(3);
+            assertThat(result.recentAchievements()).hasSize(1);
             assertThat(statistics.getPrepareStatementCount())
-                    .isLessThanOrEqualTo(8);
+                    .isLessThanOrEqualTo(9);
         }
     }
 
@@ -445,6 +448,43 @@ class HomeProviderIntegrationTest {
         entityManager.persist(quest);
         entityManager.flush();
         return quest;
+    }
+
+    private void acquire(
+            String code,
+            String name,
+            Long playerId
+    ) {
+        jdbcTemplate.update("""
+                INSERT INTO achievements (
+                    created_at,
+                    updated_at,
+                    code,
+                    name,
+                    category,
+                    desc_md
+                ) VALUES (?, ?, ?, ?, 'STORY', ?)
+                """, NOW, NOW, code, name, "Home feed");
+        Long achievementId = jdbcTemplate.queryForObject(
+                "SELECT id FROM achievements WHERE code = ?",
+                Long.class,
+                code
+        );
+        jdbcTemplate.update("""
+                INSERT INTO player_achievements (
+                    achievement_id,
+                    acquired_at,
+                    created_at,
+                    player_id,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                achievementId,
+                NOW,
+                NOW,
+                playerId,
+                NOW
+        );
     }
 
     private QuestAcceptance acceptance(Quest quest, Instant acceptedAt) {
