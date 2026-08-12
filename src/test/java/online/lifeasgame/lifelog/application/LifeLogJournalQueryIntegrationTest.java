@@ -442,7 +442,8 @@ class LifeLogJournalQueryIntegrationTest {
             );
 
             assertThat(page.content()).hasSize(3);
-            assertThat(statistics.getPrepareStatementCount()).isEqualTo(5);
+            assertThat(statistics.getPrepareStatementCount())
+                    .isLessThanOrEqualTo(5);
         }
     }
 

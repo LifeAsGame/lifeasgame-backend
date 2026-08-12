@@ -26,6 +26,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -170,6 +171,20 @@ public class GlobalExceptionHandler {
         pd.setProperty(ErrorKeys.ERRORS, violations);
 
         log.warn("400 constraint size={} path={}", violations.size(), pd.getProperties().get(ErrorKeys.PATH));
+
+        return ResponseEntity.status(status).body(pd);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ProblemDetail> handleMethodValidation(
+            HandlerMethodValidationException ex,
+            WebRequest req
+    ) {
+        var err = CommonError.REQ_VALIDATION;
+        var status = HttpStatus.valueOf(err.status());
+        var pd = pdf.base(status, err.message(), "Constraint violation", err.code(), req);
+
+        log.warn("400 method-validation path={}", pd.getProperties().get(ErrorKeys.PATH));
 
         return ResponseEntity.status(status).body(pd);
     }

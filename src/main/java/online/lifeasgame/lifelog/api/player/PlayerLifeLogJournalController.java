@@ -1,8 +1,5 @@
 package online.lifeasgame.lifelog.api.player;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerLifeLogJournalWebMapper;
@@ -29,10 +26,10 @@ public class PlayerLifeLogJournalController
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<PlayerLifeLogJournalResponse.Page>> list(
-            @RequestParam(required = false) @Positive Long primaryRoleId,
+            @RequestParam(required = false) Long primaryRoleId,
             @RequestParam(required = false) String subtype,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         LifeLogJournalResult.Page result = journalQueryService.list(
                 primaryRoleId,
@@ -46,7 +43,7 @@ public class PlayerLifeLogJournalController
     @Override
     @GetMapping("/{lifeLogId}")
     public ResponseEntity<ApiResponse<PlayerLifeLogJournalResponse.Detail>>
-    detail(@PathVariable @Positive Long lifeLogId) {
+    detail(@PathVariable Long lifeLogId) {
         return ApiResponses.ok(PlayerLifeLogJournalWebMapper.toDetail(
                 journalQueryService.detail(lifeLogId)
         ));

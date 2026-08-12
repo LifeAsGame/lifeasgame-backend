@@ -89,6 +89,41 @@ class PlayerLifeLogJournalApiContractTest {
     }
 
     @Nested
+    @DisplayName("인증된 Journal parameter를 검증할 때")
+    class ValidateParameters {
+
+        @Test
+        @DisplayName("primaryRoleId가 0이면 400이다")
+        void rejectsNonPositivePrimaryRoleId() throws Exception {
+            assertBadRequest("/api/v1/lifelogs?primaryRoleId=0");
+        }
+
+        @Test
+        @DisplayName("page가 음수이면 400이다")
+        void rejectsNegativePage() throws Exception {
+            assertBadRequest("/api/v1/lifelogs?page=-1");
+        }
+
+        @Test
+        @DisplayName("size가 0이면 400이다")
+        void rejectsZeroSize() throws Exception {
+            assertBadRequest("/api/v1/lifelogs?size=0");
+        }
+
+        @Test
+        @DisplayName("size가 100보다 크면 400이다")
+        void rejectsOversizedPage() throws Exception {
+            assertBadRequest("/api/v1/lifelogs?size=101");
+        }
+
+        @Test
+        @DisplayName("lifeLogId가 0이면 400이다")
+        void rejectsNonPositiveLifeLogId() throws Exception {
+            assertBadRequest("/api/v1/lifelogs/0");
+        }
+    }
+
+    @Nested
     @DisplayName("Journal 목록을 호출할 때")
     class ListJournal {
 
@@ -211,6 +246,11 @@ class PlayerLifeLogJournalApiContractTest {
                         )
                 ))
                 .header("Authorization", "Bearer test-token");
+    }
+
+    private void assertBadRequest(String path) throws Exception {
+        mockMvc.perform(authenticatedGet(path))
+                .andExpect(status().isBadRequest());
     }
 
     private void assertMapping(RequestMethod method, String path) {
