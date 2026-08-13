@@ -72,15 +72,15 @@ public class ExerciseLog extends AbstractTime {
         return new ExerciseLog(playerId, category, metrics, exercisedOn, memo);
     }
 
-    public void changeMetrics(ExerciseMetrics metrics) {
+    public void update(
+            ExerciseCategory category,
+            ExerciseMetrics metrics,
+            LocalDate exercisedOn,
+            String memo
+    ) {
+        this.category = Guard.notNull(category, "category");
         this.metrics = Guard.notNull(metrics, "metrics");
-    }
-
-    public void changeMemo(String memo) {
+        this.exercisedOn = Guard.notNull(exercisedOn, "exercisedOn");
         this.memo = (memo == null || memo.isBlank()) ? null : memo.trim();
-    }
-
-    public void changeExercisedOn(LocalDate when) {
-        this.exercisedOn = Guard.notNull(when, "when");
     }
 }

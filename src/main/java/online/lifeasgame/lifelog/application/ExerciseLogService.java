@@ -111,16 +111,30 @@ public class ExerciseLogService {
     @Transactional
     public ExerciseResult.Info update(Long playerId, Long exerciseId, ExerciseCommand.Update command) {
         ExerciseLog exerciseLog = exerciseLogReader.getByIdAndPlayerIdOrThrow(exerciseId, playerId);
+        ExerciseMetrics metrics = exerciseLog.getMetrics();
 
-        exerciseLog.changeMetrics(
+        exerciseLog.update(
+                command.category() != null
+                        ? ExerciseCategory.parse(command.category())
+                        : exerciseLog.getCategory(),
                 ExerciseMetrics.of(
-                        command.durationMinutes(),
-                        command.distanceKm(),
-                        command.calories()
-                )
+                        command.durationMinutes() != null
+                                ? command.durationMinutes()
+                                : metrics.durationMinutes(),
+                        command.distanceKm() != null
+                                ? command.distanceKm()
+                                : metrics.distanceKm(),
+                        command.calories() != null
+                                ? command.calories()
+                                : metrics.calories()
+                ),
+                command.exercisedOn() != null
+                        ? command.exercisedOn()
+                        : exerciseLog.getExercisedOn(),
+                command.memo() != null
+                        ? command.memo()
+                        : exerciseLog.getMemo()
         );
-        exerciseLog.changeExercisedOn(command.exercisedOn());
-        exerciseLog.changeMemo(command.memo());
 
         return ExerciseResult.Info.from(exerciseLog);
     }
