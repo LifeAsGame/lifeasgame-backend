@@ -1,6 +1,7 @@
 package online.lifeasgame.character.api.player.mapper;
 
 import online.lifeasgame.character.application.command.PlayerCommand;
+import online.lifeasgame.character.application.result.GrowthResult;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.api.player.request.PlayerRequest;
 import online.lifeasgame.character.api.player.response.PlayerResponse;
@@ -52,5 +53,38 @@ public final class PlayerWebMapper {
 
     public static PlayerResponse.UpdatedTitle toUpdatedTitle(PlayerResult.UpdatedTitle result) {
         return new PlayerResponse.UpdatedTitle(result.titleId());
+    }
+
+    public static PlayerResponse.Growth toGrowth(GrowthResult.Overview result) {
+        GrowthResult.Current current = result.current();
+        return new PlayerResponse.Growth(
+                new PlayerResponse.Growth.Current(
+                        current.level(),
+                        current.exp(),
+                        current.str(),
+                        current.agi(),
+                        current.dex(),
+                        current.intel(),
+                        current.vit(),
+                        current.luc(),
+                        current.extraStats(),
+                        current.representativeTitleId()
+                ),
+                result.recentExpChanges().stream()
+                        .map(change -> new PlayerResponse.Growth.RecentExpChange(
+                                change.changeId(),
+                                change.requestedExp(),
+                                change.appliedExp(),
+                                change.leftoverExp(),
+                                change.beforeLevel(),
+                                change.afterLevel(),
+                                change.beforeTotalExp(),
+                                change.afterTotalExp(),
+                                change.occurredAt(),
+                                change.sourceType(),
+                                change.sourceId()
+                        ))
+                        .toList()
+        );
     }
 }

@@ -1,5 +1,6 @@
 package online.lifeasgame.character.api.player.response;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,37 @@ public final class PlayerResponse {
     }
 
     public record UpdatedTitle(Long titleId) {
+    }
+
+    public record Growth(Current current, List<RecentExpChange> recentExpChanges) {
+        public record Current(
+                int level,
+                long exp,
+                int str,
+                int agi,
+                int dex,
+                int intel,
+                int vit,
+                int luc,
+                Map<String, Integer> extraStats,
+                Long representativeTitleId
+        ) {
+        }
+
+        public record RecentExpChange(
+                Long changeId,
+                long requestedExp,
+                long appliedExp,
+                long leftoverExp,
+                int beforeLevel,
+                int afterLevel,
+                long beforeTotalExp,
+                long afterTotalExp,
+                Instant occurredAt,
+                String sourceType,
+                Long sourceId
+        ) {
+        }
     }
 
     public record CharacterSheet(
