@@ -7,9 +7,11 @@ import online.lifeasgame.character.api.player.request.PlayerRequest;
 import online.lifeasgame.character.api.player.response.PlayerResponse;
 import online.lifeasgame.character.api.player.spec.PlayerApiSpecV1;
 import online.lifeasgame.character.application.PlayerFacade;
+import online.lifeasgame.character.application.GrowthQueryService;
 import online.lifeasgame.character.application.PlayerQueryService;
 import online.lifeasgame.character.application.PlayerService;
 import online.lifeasgame.character.application.result.PlayerResult;
+import online.lifeasgame.character.application.result.GrowthResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +27,20 @@ public class PlayerController implements PlayerApiSpecV1 {
     private final PlayerFacade playerFacade;
     private final PlayerQueryService playerQueryService;
     private final PlayerService playerService;
+    private final GrowthQueryService growthQueryService;
 
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<PlayerResponse.Info>> me() {
         PlayerResult.PlayerInfo result = playerQueryService.getPlayerInfo();
         return ApiResponses.ok(PlayerWebMapper.toPlayerInfo(result));
+    }
+
+    @Override
+    @GetMapping("/growth")
+    public ResponseEntity<ApiResponse<PlayerResponse.Growth>> growth() {
+        GrowthResult.Overview result = growthQueryService.getCurrentGrowth();
+        return ApiResponses.ok(PlayerWebMapper.toGrowth(result));
     }
 
     @Override

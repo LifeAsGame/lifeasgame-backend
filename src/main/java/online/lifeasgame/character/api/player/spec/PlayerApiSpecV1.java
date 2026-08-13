@@ -16,6 +16,9 @@ public interface PlayerApiSpecV1 {
     @Operation(summary = "내 Player 조회", description = "상태창에 필요한 Player 기본 정보를 조회합니다.")
     ResponseEntity<ApiResponse<PlayerResponse.Info>> me();
 
+    @Operation(summary = "현재 Player 성장 조회", description = "현재 성장 상태와 최근 EXP 변경을 조회합니다.")
+    ResponseEntity<ApiResponse<PlayerResponse.Growth>> growth();
+
     @Operation(summary = "Player 생성(링크 시작)", description = "User 계정 기준으로 Player를 생성합니다.")
     ResponseEntity<ApiResponse<PlayerResponse.CreatedWithToken>> register(
             @Valid @RequestBody PlayerRequest.Register request

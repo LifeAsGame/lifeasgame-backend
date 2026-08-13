@@ -1,7 +1,7 @@
 ALTER TABLE quest_acceptances
     ADD COLUMN accepted_at DATETIME(6) NULL
         AFTER period_end,
-    ADD COLUMN period_key VARCHAR(16) NULL
+    ADD COLUMN period_key VARCHAR(20) NULL
         AFTER accepted_at;
 
 UPDATE quest_acceptances
