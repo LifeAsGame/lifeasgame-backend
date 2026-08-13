@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -99,6 +100,41 @@ class PlayerAchievementApiContractTest {
         void requiresAuthentication() throws Exception {
             mockMvc.perform(get("/api/v1/players/achievements"))
                     .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("현재 Player의 획득 업적 상세를 조회할 때")
+    class ReadAchievement {
+
+        @Test
+        @DisplayName("인증된 exact path에서 caller identity 없이 기존 여섯 필드만 반환한다")
+        void returnsExactOwnedDetailContract() throws Exception {
+            given(playerAchievementService.getPlayerAchievementInfo(260L))
+                    .willReturn(new PlayerAchievementResult.Info(
+                            260L,
+                            "HOME_FIRST",
+                            "첫 Home",
+                            "STORY",
+                            "Home feed 업적",
+                            ACQUIRED_AT
+                    ));
+
+            assertThat(PlayerAchievementController.class
+                    .getDeclaredMethod("playerAchievementInfo", Long.class)
+                    .getParameterCount()).isEqualTo(1);
+
+            mockMvc.perform(get("/api/v1/players/achievements/{achievementId}", 260L)
+                            .with(authentication(playerAuthentication())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.*", hasSize(6)))
+                    .andExpect(jsonPath("$.result.achievementId").value(260))
+                    .andExpect(jsonPath("$.result.code").value("HOME_FIRST"))
+                    .andExpect(jsonPath("$.result.name").value("첫 Home"))
+                    .andExpect(jsonPath("$.result.category").value("STORY"))
+                    .andExpect(jsonPath("$.result.descMd").value("Home feed 업적"))
+                    .andExpect(jsonPath("$.result.acquiredAt")
+                            .value("2026-08-12T00:00:00Z"));
         }
     }
 

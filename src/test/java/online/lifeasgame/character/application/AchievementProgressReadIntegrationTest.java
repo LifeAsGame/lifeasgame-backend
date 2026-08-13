@@ -4,10 +4,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import online.lifeasgame.character.application.internal.AchievementProgressReadApi;
 import online.lifeasgame.character.application.query.PlayerAchievementQuery;
+import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.character.application.view.PlayerAchievementView;
 import online.lifeasgame.character.domain.Achievement;
 import online.lifeasgame.character.domain.AchievementCategory;
 import online.lifeasgame.character.domain.PlayerAchievement;
+import online.lifeasgame.character.domain.error.AchievementError;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
@@ -24,6 +29,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(properties =
         "spring.jpa.properties.hibernate.generate_statistics=true")
@@ -44,6 +51,9 @@ class AchievementProgressReadIntegrationTest {
     private PlayerAchievementQuery playerAchievementQuery;
 
     @Autowired
+    private PlayerAchievementService playerAchievementService;
+
+    @Autowired
     private EntityManager entityManager;
 
     @Autowired
@@ -51,6 +61,54 @@ class AchievementProgressReadIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @MockitoBean
+    private CurrentPlayerAccessor currentPlayerAccessor;
+
+    @Nested
+    @DisplayName("현재 Player의 획득 업적 상세를 조회할 때")
+    class OwnedDetail {
+
+        @Test
+        @DisplayName("보유 상세만 한 query로 반환하고 다른 Player 및 미획득 catalog 업적은 숨긴다")
+        void returnsOnlyOwnedAchievementInOneQuery() {
+            Acquisition owned = acquire(
+                    PLAYER_ID, "OWNED", "보유", ACQUIRED_AT
+            );
+            Acquisition otherOwned = acquire(
+                    OTHER_PLAYER_ID, "OTHER_OWNED", "다른 Player 보유", ACQUIRED_AT
+            );
+            Achievement notAcquired = Achievement.create(
+                    "NOT_ACQUIRED",
+                    "미획득",
+                    AchievementCategory.STORY,
+                    "미획득 설명"
+            );
+            entityManager.persist(notAcquired);
+            flushAndClear();
+            given(currentPlayerAccessor.currentPlayerIdOrThrow())
+                    .willReturn(PLAYER_ID);
+            Statistics statistics = statistics();
+            statistics.clear();
+
+            PlayerAchievementResult.Info result =
+                    playerAchievementService.getPlayerAchievementInfo(
+                            owned.achievementId()
+                    );
+
+            assertThat(result).isEqualTo(new PlayerAchievementResult.Info(
+                    owned.achievementId(),
+                    "OWNED",
+                    "보유",
+                    "STORY",
+                    "OWNED 설명",
+                    ACQUIRED_AT
+            ));
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
+            assertOwnedDetailNotFound(otherOwned.achievementId());
+            assertOwnedDetailNotFound(notAcquired.getId());
+        }
+    }
 
     @Nested
     @DisplayName("획득 업적이 없을 때")
@@ -189,6 +247,20 @@ class AchievementProgressReadIntegrationTest {
         return entityManagerFactory
                 .unwrap(SessionFactory.class)
                 .getStatistics();
+    }
+
+    private void assertOwnedDetailNotFound(Long achievementId) {
+        Statistics statistics = statistics();
+        statistics.clear();
+
+        assertThatThrownBy(() -> playerAchievementService
+                .getPlayerAchievementInfo(achievementId))
+                .isInstanceOfSatisfying(
+                        DomainException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(AchievementError.ACHIEVEMENT_NOT_FOUND)
+                );
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
     }
 
     private void flushAndClear() {

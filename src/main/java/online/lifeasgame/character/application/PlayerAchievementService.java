@@ -32,6 +32,17 @@ public class PlayerAchievementService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public PlayerAchievementResult.Info getPlayerAchievementInfo(Long achievementId) {
+        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return PlayerAchievementResult.Info.from(
+                playerAchievementReader.getViewByPlayerIdAndAchievementIdOrThrow(
+                        playerId,
+                        achievementId
+                )
+        );
+    }
+
     @Transactional
     public PlayerAchievementResult.Granted grantAchievement(Long playerId, Long achievementId) {
         playerReader.assertExistsById(playerId);
