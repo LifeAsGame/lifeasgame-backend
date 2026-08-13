@@ -10,6 +10,7 @@ import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,7 +24,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Exercise partial update")
+@DisplayName("ExerciseLogService")
 class ExerciseLogServiceTest {
 
     private static final Long PLAYER_ID = 270L;
@@ -64,58 +65,63 @@ class ExerciseLogServiceTest {
         )).willReturn(exerciseLog);
     }
 
-    @Test
-    @DisplayName("category와 duration만 바꾸고 생략한 metrics/date/memo는 보존한다")
-    void appliesSuppliedFieldsAndPreservesOmittedFields() {
-        ExerciseResult.Info result = service.update(
-                EXERCISE_ID,
-                new ExerciseCommand.Update(
-                        "CYCLING",
-                        45,
-                        null,
-                        null,
-                        null,
-                        null
-                )
-        );
+    @Nested
+    @DisplayName("운동 기록을 부분 수정할 때")
+    class UpdateExercise {
 
-        assertThat(result.category()).isEqualTo("CYCLING");
-        assertThat(result.durationMinutes()).isEqualTo(45);
-        assertThat(result.distanceKm()).isEqualTo(5.0);
-        assertThat(result.calories()).isEqualTo(250);
-        assertThat(result.exercisedOn()).isEqualTo(EXERCISED_ON);
-        assertThat(result.memo()).isEqualTo("기존 메모");
-    }
+        @Test
+        @DisplayName("category와 duration만 바꾸고 생략한 metrics/date/memo는 보존한다")
+        void appliesSuppliedFieldsAndPreservesOmittedFields() {
+            ExerciseResult.Info result = service.update(
+                    EXERCISE_ID,
+                    new ExerciseCommand.Update(
+                            "CYCLING",
+                            45,
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
 
-    @Test
-    @DisplayName("null memo는 보존하고 blank memo는 기존 정규화로 지운다")
-    void preservesNullMemoAndClearsBlankMemo() {
-        ExerciseResult.Info preserved = service.update(
-                EXERCISE_ID,
-                new ExerciseCommand.Update(
-                        null, null, null, null, null, null
-                )
-        );
-        ExerciseResult.Info cleared = service.update(
-                EXERCISE_ID,
-                new ExerciseCommand.Update(
-                        null, null, null, null, null, "   "
-                )
-        );
+            assertThat(result.category()).isEqualTo("CYCLING");
+            assertThat(result.durationMinutes()).isEqualTo(45);
+            assertThat(result.distanceKm()).isEqualTo(5.0);
+            assertThat(result.calories()).isEqualTo(250);
+            assertThat(result.exercisedOn()).isEqualTo(EXERCISED_ON);
+            assertThat(result.memo()).isEqualTo("기존 메모");
+        }
 
-        assertThat(preserved.memo()).isEqualTo("기존 메모");
-        assertThat(cleared.memo()).isNull();
-    }
+        @Test
+        @DisplayName("null memo는 보존하고 blank memo는 기존 정규화로 지운다")
+        void preservesNullMemoAndClearsBlankMemo() {
+            ExerciseResult.Info preserved = service.update(
+                    EXERCISE_ID,
+                    new ExerciseCommand.Update(
+                            null, null, null, null, null, null
+                    )
+            );
+            ExerciseResult.Info cleared = service.update(
+                    EXERCISE_ID,
+                    new ExerciseCommand.Update(
+                            null, null, null, null, null, "   "
+                    )
+            );
 
-    @Test
-    @DisplayName("supplied invalid duration은 기존 domain invariant로 거부한다")
-    void rejectsInvalidSuppliedDuration() {
-        assertThatThrownBy(() -> service.update(
-                EXERCISE_ID,
-                new ExerciseCommand.Update(
-                        null, 0, null, null, null, null
-                )
-        )).isInstanceOf(IllegalStateException.class)
-                .hasMessage("durationMinutes >= 1");
+            assertThat(preserved.memo()).isEqualTo("기존 메모");
+            assertThat(cleared.memo()).isNull();
+        }
+
+        @Test
+        @DisplayName("supplied invalid duration은 기존 domain invariant로 거부한다")
+        void rejectsInvalidSuppliedDuration() {
+            assertThatThrownBy(() -> service.update(
+                    EXERCISE_ID,
+                    new ExerciseCommand.Update(
+                            null, 0, null, null, null, null
+                    )
+            )).isInstanceOf(IllegalStateException.class)
+                    .hasMessage("durationMinutes >= 1");
+        }
     }
 }
