@@ -28,8 +28,12 @@ public class EpisodeProgress {
         this.total = total;
     }
 
-    public static EpisodeProgress of(int current, int total) {
-        return new EpisodeProgress(current, total);
+    public static EpisodeProgress of(Integer current, Integer total) {
+        int normalizedCurrent = current == null ? 0 : current;
+        int normalizedTotal = total == null
+                ? Math.max(1, normalizedCurrent)
+                : total;
+        return new EpisodeProgress(normalizedCurrent, normalizedTotal);
     }
 
     public EpisodeProgress advance(int step) {

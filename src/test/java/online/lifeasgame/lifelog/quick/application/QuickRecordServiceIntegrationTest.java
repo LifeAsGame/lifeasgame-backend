@@ -214,6 +214,52 @@ class QuickRecordServiceIntegrationTest {
     }
 
     @Test
+    @DisplayName("Media progress 생략은 0/1로 저장하고 같은 요청을 replay한다")
+    void normalizesOmittedMediaProgressAndReplays() {
+        QuickRecordCommand.Create command = mediaCommand(
+                "Omitted progress",
+                null,
+                null
+        );
+
+        QuickRecordResult.Recorded first = quickRecordService.record(
+                PLAYER_ID,
+                "media-omitted-progress",
+                command
+        );
+        QuickRecordResult.Recorded replay = quickRecordService.record(
+                PLAYER_ID,
+                "media-omitted-progress",
+                command
+        );
+
+        assertFirstResult(first, LifeLogType.MEDIA);
+        assertThat(replay.replay()).isTrue();
+        assertSameSnapshot(first, replay);
+        assertThat(mediaProgress(first.sourceId()))
+                .isEqualTo(new StoredMediaProgress(0, 1));
+        assertThat(count("media_logs")).isEqualTo(1);
+        assertThat(count("life_log_records")).isEqualTo(1);
+        assertThat(receiptCount()).isEqualTo(1);
+        assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Media current만 있으면 C/C로 저장한다")
+    void normalizesCurrentOnlyMediaProgress() {
+        QuickRecordResult.Recorded result = quickRecordService.record(
+                PLAYER_ID,
+                "media-current-only",
+                mediaCommand("Current only", 4, null)
+        );
+
+        assertFirstResult(result, LifeLogType.MEDIA);
+        assertThat(mediaProgress(result.sourceId()))
+                .isEqualTo(new StoredMediaProgress(4, 4));
+        assertThat(count("life_log_records")).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("동일 key와 payload 순차 replay는 subtype create와 Event를 반복하지 않는다")
     void replaysSequentially() {
         QuickRecordCommand.Create command =
@@ -533,6 +579,14 @@ class QuickRecordServiceIntegrationTest {
     }
 
     private QuickRecordCommand.Create mediaCommand(String title) {
+        return mediaCommand(title, 0, 1);
+    }
+
+    private QuickRecordCommand.Create mediaCommand(
+            String title,
+            Integer currentEpisode,
+            Integer totalEpisode
+    ) {
         return new QuickRecordCommand.Create(
                 "MEDIA",
                 null,
@@ -541,11 +595,26 @@ class QuickRecordServiceIntegrationTest {
                         "MOVIE",
                         title,
                         "Private original",
-                        0,
-                        1,
+                        currentEpisode,
+                        totalEpisode,
                         "PLANNED",
                         Set.of("private-tag")
                 )
+        );
+    }
+
+    private StoredMediaProgress mediaProgress(Long mediaId) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT progress_current, progress_total
+                FROM media_logs
+                WHERE id = ?
+                """,
+                (resultSet, rowNumber) -> new StoredMediaProgress(
+                        resultSet.getInt("progress_current"),
+                        resultSet.getInt("progress_total")
+                ),
+                mediaId
         );
     }
 
@@ -557,6 +626,9 @@ class QuickRecordServiceIntegrationTest {
         assertThat(result.sourceId()).isPositive();
         assertThat(result.recordedAt()).isEqualTo(RECORDED_AT);
         assertThat(result.replay()).isFalse();
+    }
+
+    private record StoredMediaProgress(int current, int total) {
     }
 
     private void assertSameSnapshot(
