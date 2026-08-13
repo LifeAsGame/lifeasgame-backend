@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,6 +34,17 @@ public class PlayerAchievementRepositoryAdapter implements
     @Override
     public List<PlayerAchievementView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerAchievementViews(playerId);
+    }
+
+    @Override
+    public Optional<PlayerAchievementView> findViewByPlayerIdAndAchievementId(
+            Long playerId,
+            Long achievementId
+    ) {
+        return jpaRepository.findViewByPlayerIdAndAchievementId(
+                playerId,
+                achievementId
+        );
     }
 
     @Override
