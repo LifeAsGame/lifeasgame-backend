@@ -36,6 +36,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -175,7 +176,7 @@ class LifeLogRecordedApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Media content-ready direct create도 Fact를 정확히 한 번 발행한다")
+    @DisplayName("progress를 생략한 Media direct create도 0/1 Source와 Fact를 한 번 만든다")
     void recordsMediaCreateOnce() {
         MediaLogReader reader = mock(MediaLogReader.class);
         MediaLogWriter writer = mock(MediaLogWriter.class);
@@ -211,8 +212,8 @@ class LifeLogRecordedApplicationServiceTest {
                         "MOVIE",
                         "Private media title",
                         "Private original title",
-                        0,
-                        1,
+                        null,
+                        null,
                         "PLANNED",
                         Set.of("private-tag"),
                         new LifeLogRecordMetadataCommand("STUDY", null)
@@ -221,6 +222,10 @@ class LifeLogRecordedApplicationServiceTest {
 
         assertThat(result.id()).isEqualTo(103L);
         assertThat(result.lifeLogId()).isEqualTo(1003L);
+        verify(writer).create(argThat(media ->
+                media.getProgress().current() == 0
+                        && media.getProgress().total() == 1
+        ));
         assertRecorded(
                 publisher.events(),
                 1003L,
