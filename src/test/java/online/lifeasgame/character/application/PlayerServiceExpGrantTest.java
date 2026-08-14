@@ -26,7 +26,7 @@ class PlayerServiceExpGrantTest {
     private PlayerReader playerReader;
 
     @Mock
-    private PlayerTitleReader playerTitleReader;
+    private PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
 
     @Mock
     private PlayerExpGrantService playerExpGrantService;
@@ -44,7 +44,7 @@ class PlayerServiceExpGrantTest {
         service = new PlayerService(
                 playerWriter,
                 playerReader,
-                playerTitleReader,
+                playerTitleOwnershipVerifier,
                 playerExpGrantService,
                 domainEventPublisher,
                 currentPlayerAccessor

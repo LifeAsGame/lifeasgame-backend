@@ -26,5 +26,5 @@ public interface JpaPlayerTitleRepository extends JpaRepository<PlayerTitle, Lon
 
     boolean existsByPlayerIdAndTitleId(Long playerId, Long titleId);
 
-    void deleteByPlayerIdAndTitleId(Long playerId, Long titleId);
+    long deleteByPlayerIdAndTitleId(Long playerId, Long titleId);
 }

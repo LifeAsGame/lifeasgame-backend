@@ -18,7 +18,9 @@ import java.util.List;
 public class PlayerTitleService {
 
     private final PlayerTitleReader playerTitleReader;
-    private final PlayerTitleWriter playerTitleWriter;
+    private final PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
+    private final PlayerTitleRegistrar playerTitleRegistrar;
+    private final PlayerTitleRevoker playerTitleRevoker;
     private final TitleReader titleReader;
     private final PlayerReader playerReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
@@ -34,9 +36,11 @@ public class PlayerTitleService {
 
     @Transactional
     public PlayerTitleResult.Created createTitle(Long playerId, Long titleId) {
+        playerReader.assertExistsById(playerId);
+
         Title title = titleReader.getByIdOrThrow(titleId);
 
-        PlayerTitle playerTitle = playerTitleWriter.create(
+        PlayerTitle playerTitle = playerTitleRegistrar.register(
                 PlayerTitle.create(playerId, titleId)
         );
 
@@ -46,9 +50,9 @@ public class PlayerTitleService {
     @Transactional
     public PlayerTitleResult.Revoked revokeTitle(Long playerId, Long titleId) {
         var player = playerReader.getByIdForUpdateOrThrow(playerId);
-        playerTitleReader.assertHasTitle(playerId, titleId);
+        playerTitleOwnershipVerifier.verifyOwned(playerId, titleId);
         player.clearRepresentativeTitleIfMatches(titleId);
-        playerTitleWriter.revoke(playerId, titleId);
+        playerTitleRevoker.revoke(playerId, titleId);
         return new PlayerTitleResult.Revoked(playerId, titleId);
     }
 }

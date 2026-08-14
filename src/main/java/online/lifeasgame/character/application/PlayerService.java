@@ -15,7 +15,7 @@ public class PlayerService {
 
     private final PlayerWriter playerWriter;
     private final PlayerReader playerReader;
-    private final PlayerTitleReader playerTitleReader;
+    private final PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
     private final PlayerExpGrantService playerExpGrantService;
     private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
@@ -45,7 +45,7 @@ public class PlayerService {
     @Transactional
     public PlayerResult.UpdatedTitle changeRepresentativeTitle(Long playerId, Long titleId) {
         Player player = playerReader.getByIdForUpdateOrThrow(playerId);
-        playerTitleReader.assertHasTitle(playerId, titleId);
+        playerTitleOwnershipVerifier.verifyOwned(playerId, titleId);
         player.changeRepresentativeTitle(titleId);
 
         return new PlayerResult.UpdatedTitle(player.getTitleId());

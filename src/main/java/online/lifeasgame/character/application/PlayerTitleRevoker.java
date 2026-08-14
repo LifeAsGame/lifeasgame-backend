@@ -1,8 +1,9 @@
 package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
-import online.lifeasgame.character.domain.PlayerTitle;
+import online.lifeasgame.character.domain.error.PlayerTitleError;
 import online.lifeasgame.character.domain.repository.PlayerTitleRepository;
+import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,15 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-class PlayerTitleWriter {
+class PlayerTitleRevoker {
 
     private final PlayerTitleRepository repository;
 
-    public PlayerTitle create(PlayerTitle playerTitle) {
-        return repository.save(playerTitle);
-    }
-
     public void revoke(Long playerId, Long titleId) {
-        repository.deleteByPlayerIdAndTitleId(playerId, titleId);
+        if (repository.deleteByPlayerIdAndTitleId(playerId, titleId) == 0) {
+            throw new DomainException(PlayerTitleError.PLAYER_TITLE_NOT_FOUND);
+        }
     }
 }
