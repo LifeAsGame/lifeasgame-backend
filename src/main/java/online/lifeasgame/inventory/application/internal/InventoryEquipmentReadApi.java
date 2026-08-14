@@ -8,7 +8,8 @@ public interface InventoryEquipmentReadApi {
             Long itemInstanceId,
             Long itemId,
             String category,
-            String type
+            String type,
+            String equipmentCompatibilityKind
     ) {
     }
 }

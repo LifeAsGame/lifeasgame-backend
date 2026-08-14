@@ -259,7 +259,8 @@ class PlayerEquipmentServiceTest {
                 itemInstanceId,
                 itemInstanceId + 1_000,
                 category,
-                type
+                type,
+                null
         );
     }
 }

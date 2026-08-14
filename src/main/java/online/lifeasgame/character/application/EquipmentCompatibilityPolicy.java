@@ -12,8 +12,18 @@ final class EquipmentCompatibilityPolicy {
     static void validate(
             EquipmentSlotCategory slot,
             String itemCategory,
-            String itemType
+            String itemType,
+            String equipmentCompatibilityKind
     ) {
+        if (equipmentCompatibilityKind != null) {
+            if (!slot.name().equals(equipmentCompatibilityKind)) {
+                throw new DomainException(
+                        PlayerEquipmentError.ITEM_NOT_COMPATIBLE_WITH_SLOT
+                );
+            }
+            return;
+        }
+
         boolean compatible = switch (slot) {
             case WEAPON -> itemCategory.equals("WEAPON");
             case HEAD -> itemCategory.equals("ARMOR")

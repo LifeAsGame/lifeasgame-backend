@@ -39,6 +39,10 @@ public class Item extends AbstractTime {
     private ItemType type;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "equipment_compatibility_kind", length = 20)
+    private EquipmentCompatibilityKind equipmentCompatibilityKind;
+
+    @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private Rarity rarity = Rarity.COMMON;
 
@@ -60,16 +64,19 @@ public class Item extends AbstractTime {
             ItemName name,
             ItemCategory category,
             ItemType type,
+            EquipmentCompatibilityKind equipmentCompatibilityKind,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
             int maxStack,
             DurabilityPolicy durabilityPolicy
     ) {
+        validateEquipmentCompatibility(category, equipmentCompatibilityKind);
         this.code = code;
         this.name = Guard.notNull(name, "name");
         this.category = Guard.notNull(category, "category");
         this.type = Guard.notNull(type, "type");
+        this.equipmentCompatibilityKind = equipmentCompatibilityKind;
         this.rarity = (rarity == null) ? Rarity.COMMON : rarity;
         this.baseAttrs = (baseAttrs == null) ? BaseAttrs.empty() : baseAttrs;
         this.stackable = stackable;
@@ -81,6 +88,7 @@ public class Item extends AbstractTime {
             ItemName name,
             ItemCategory category,
             ItemType type,
+            EquipmentCompatibilityKind equipmentCompatibilityKind,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
@@ -89,7 +97,18 @@ public class Item extends AbstractTime {
     ) {
         int ms = (stackable) ? Guard.minValue(Optional.ofNullable(maxStack).orElse(0), 2, "maxStack") : 1;
         DurabilityPolicy durabilityPolicy = (maxDurabilityOrNull == null) ? null : DurabilityPolicy.of(maxDurabilityOrNull);
-        return new Item(null, name, category, type, rarity, baseAttrs, stackable, ms, durabilityPolicy);
+        return new Item(
+                null,
+                name,
+                category,
+                type,
+                equipmentCompatibilityKind,
+                rarity,
+                baseAttrs,
+                stackable,
+                ms,
+                durabilityPolicy
+        );
     }
 
     public static Item createContentItem(
@@ -97,6 +116,7 @@ public class Item extends AbstractTime {
             ItemName name,
             ItemCategory category,
             ItemType type,
+            EquipmentCompatibilityKind equipmentCompatibilityKind,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
@@ -113,6 +133,7 @@ public class Item extends AbstractTime {
                 name,
                 category,
                 type,
+                equipmentCompatibilityKind,
                 rarity,
                 baseAttrs,
                 stackable,
@@ -125,15 +146,18 @@ public class Item extends AbstractTime {
             ItemName itemName,
             ItemCategory itemCategory,
             ItemType itemType,
+            EquipmentCompatibilityKind equipmentCompatibilityKind,
             Rarity rarity,
             BaseAttrs baseAttrs,
             boolean stackable,
             Integer maxStack,
             Integer maxDurabilityOrNull
     ) {
+        validateEquipmentCompatibility(itemCategory, equipmentCompatibilityKind);
         this.name = Guard.notNull(itemName, "name");
         this.category = Guard.notNull(itemCategory, "category");
         this.type = Guard.notNull(itemType, "type");
+        this.equipmentCompatibilityKind = equipmentCompatibilityKind;
         this.rarity = (rarity == null) ? Rarity.COMMON : rarity;
         this.baseAttrs = (baseAttrs == null) ? BaseAttrs.empty() : baseAttrs;
         this.stackable = stackable;
@@ -151,5 +175,15 @@ public class Item extends AbstractTime {
 
     public Integer maxDurability() {
         return (this.durabilityPolicy == null) ? null : this.durabilityPolicy.max();
+    }
+
+    private static void validateEquipmentCompatibility(
+            ItemCategory category,
+            EquipmentCompatibilityKind equipmentCompatibilityKind
+    ) {
+        Guard.notNull(category, "category");
+        if (equipmentCompatibilityKind != null) {
+            equipmentCompatibilityKind.validateCategory(category);
+        }
     }
 }

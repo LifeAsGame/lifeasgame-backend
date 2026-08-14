@@ -11,6 +11,16 @@ public enum ItemError implements ErrorCode {
     INVALID_ITEM_CATEGORY("ITM-400-INVALID-ITEM-CATEGORY", "Invalid item category", 400),
     INVALID_ITEM_TYPE("ITM-400-INVALID-ITEM-TYPE", "Invalid item type", 400),
     INVALID_ITEM_RARITY("ITM-400-INVALID-ITEM-RARITY", "Invalid item rarity", 400),
+    INVALID_EQUIPMENT_COMPATIBILITY_KIND(
+            "ITM-400-INVALID-EQUIPMENT-COMPATIBILITY-KIND",
+            "Invalid equipment compatibility kind",
+            400
+    ),
+    INVALID_EQUIPMENT_COMPATIBILITY(
+            "ITM-400-INVALID-EQUIPMENT-COMPATIBILITY",
+            "Equipment compatibility kind does not match item category",
+            400
+    ),
     POLICY_CONFLICT("ITM-409-POLICY-CONFLICT",
             "Item policy change conflicts with existing stacks (reconciliation required).", 409)
     ;

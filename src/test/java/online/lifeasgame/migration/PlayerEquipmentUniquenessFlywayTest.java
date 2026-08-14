@@ -52,7 +52,7 @@ class PlayerEquipmentUniquenessFlywayTest {
         @Test
         @DisplayName("player/item unique를 추가하고 nullable empty slot은 유지한다")
         void addsPlayerItemUniquenessWithNullableSlots() {
-            var result = flyway(null).migrate();
+            var result = flyway(MigrationVersion.fromVersion("23")).migrate();
 
             assertThat(result.migrationsExecuted).isEqualTo(1);
             assertThat(indexColumns()).containsExactly(
@@ -83,7 +83,7 @@ class PlayerEquipmentUniquenessFlywayTest {
             insertEquipment(262L, 1L, 26201L);
             insertEquipment(262L, 2L, 26201L);
 
-            assertThatThrownBy(() -> flyway(null).migrate())
+            assertThatThrownBy(() -> flyway(MigrationVersion.fromVersion("23")).migrate())
                     .isInstanceOf(FlywayException.class);
 
             assertThat(jdbc.queryForObject("""

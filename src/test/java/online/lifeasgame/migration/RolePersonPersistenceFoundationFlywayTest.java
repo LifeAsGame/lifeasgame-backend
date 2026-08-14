@@ -46,9 +46,9 @@ class RolePersonPersistenceFoundationFlywayTest {
     }
 
     @Test
-    @DisplayName("V23까지 적용된 schema에서 V19 Role/Person 계약을 고정한다")
+    @DisplayName("V24까지 적용된 schema에서 V19 Role/Person 계약을 고정한다")
     void createsSchemaContract() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
         assertThat(tableContracts()).containsExactly(
                 new TableContract("roles", "InnoDB", "utf8mb4_0900_ai_ci"),
                 new TableContract("persons", "InnoDB", "utf8mb4_0900_ai_ci"),

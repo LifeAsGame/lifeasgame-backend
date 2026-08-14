@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManagerFactory;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import online.lifeasgame.inventory.domain.BaseAttrs;
+import online.lifeasgame.inventory.domain.EquipmentCompatibilityKind;
 import online.lifeasgame.inventory.domain.InstanceAttrs;
 import online.lifeasgame.inventory.domain.Item;
 import online.lifeasgame.inventory.domain.ItemCarryPolicy;
@@ -57,7 +58,8 @@ class InventoryEquipmentReadIntegrationTest {
                     PLAYER_ID,
                     "소유한 투구",
                     ItemCategory.ARMOR,
-                    ItemType.HELMET
+                    ItemType.HELMET,
+                    EquipmentCompatibilityKind.HEAD
             );
             flushAndClear();
             Statistics statistics = statistics();
@@ -73,6 +75,7 @@ class InventoryEquipmentReadIntegrationTest {
             assertThat(result.itemId()).isPositive();
             assertThat(result.category()).isEqualTo("ARMOR");
             assertThat(result.type()).isEqualTo("HELMET");
+            assertThat(result.equipmentCompatibilityKind()).isEqualTo("HEAD");
             assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
         }
     }
@@ -88,7 +91,8 @@ class InventoryEquipmentReadIntegrationTest {
                     OTHER_PLAYER_ID,
                     "다른 Player 검",
                     ItemCategory.WEAPON,
-                    ItemType.SWORD
+                    ItemType.SWORD,
+                    EquipmentCompatibilityKind.WEAPON
             );
             flushAndClear();
 
@@ -101,12 +105,14 @@ class InventoryEquipmentReadIntegrationTest {
             Long playerId,
             String name,
             ItemCategory category,
-            ItemType type
+            ItemType type,
+            EquipmentCompatibilityKind equipmentCompatibilityKind
     ) {
         Item item = Item.create(
                 ItemName.of(name),
                 category,
                 type,
+                equipmentCompatibilityKind,
                 Rarity.COMMON,
                 BaseAttrs.empty(),
                 false,
