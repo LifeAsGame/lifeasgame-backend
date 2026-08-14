@@ -12,7 +12,9 @@ public interface FollowRepository {
 
     Optional<Follow> findByIdAndPlayerId(Long id, Long playerId);
 
-    boolean existsByPlayerIdAndTargetId(Long playerId, Long friendId);
+    Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId);
+
+    boolean existsActiveFollow(Long playerId, Long targetPlayerId);
 
     List<Follow> findFollowings(Long playerId, int page, int size);
 

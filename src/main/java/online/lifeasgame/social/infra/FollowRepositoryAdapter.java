@@ -2,6 +2,7 @@ package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.domain.Follow;
+import online.lifeasgame.social.domain.FollowState;
 import online.lifeasgame.social.domain.repository.FollowRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,19 +32,29 @@ public class FollowRepositoryAdapter implements FollowRepository {
     }
 
     @Override
-    public boolean existsByPlayerIdAndTargetId(Long playerId, Long friendId) {
-        return followJpaRepository.existsByPlayerIdAndTargetPlayerId(playerId, friendId);
+    public Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId) {
+        return followJpaRepository.findByPlayerIdAndTargetPlayerId(playerId, targetPlayerId);
+    }
+
+    @Override
+    public boolean existsActiveFollow(Long playerId, Long targetPlayerId) {
+        return followJpaRepository.existsByPlayerIdAndTargetPlayerIdAndState(
+                playerId,
+                targetPlayerId,
+                FollowState.FOLLOWING
+        );
     }
 
     @Override
     public List<Follow> findFollowings(Long playerId, int page, int size) {
         Page<Long> idPage = followJpaRepository.findFollowingIds(
                 playerId,
+                FollowState.FOLLOWING,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
         );
         if (idPage.isEmpty()) return List.of();
         List<Long> ids = idPage.getContent();
-        List<Follow> list = followJpaRepository.findAllByIdIn(ids);
+        List<Follow> list = followJpaRepository.findAllByIdInAndState(ids, FollowState.FOLLOWING);
         Map<Long, Integer> order = new HashMap<>();
         for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
         list.sort(Comparator.comparingInt(f -> order.getOrDefault(f.getId(), Integer.MAX_VALUE)));
@@ -52,18 +63,19 @@ public class FollowRepositoryAdapter implements FollowRepository {
 
     @Override
     public long countFollowings(Long playerId) {
-        return followJpaRepository.findFollowingIds(playerId, PageRequest.of(0, 1)).getTotalElements();
+        return followJpaRepository.countByPlayerIdAndState(playerId, FollowState.FOLLOWING);
     }
 
     @Override
     public List<Follow> findFollowers(Long playerId, int page, int size) {
         Page<Long> idPage = followJpaRepository.findFollowerIds(
                 playerId,
+                FollowState.FOLLOWING,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
         );
         if (idPage.isEmpty()) return List.of();
         List<Long> ids = idPage.getContent();
-        List<Follow> list = followJpaRepository.findAllByIdIn(ids);
+        List<Follow> list = followJpaRepository.findAllByIdInAndState(ids, FollowState.FOLLOWING);
         Map<Long, Integer> order = new HashMap<>();
         for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
         list.sort(Comparator.comparingInt(f -> order.getOrDefault(f.getId(), Integer.MAX_VALUE)));
@@ -72,16 +84,24 @@ public class FollowRepositoryAdapter implements FollowRepository {
 
     @Override
     public long countFollowers(Long playerId) {
-        return followJpaRepository.countByPlayerId(playerId);
+        return followJpaRepository.countByTargetPlayerIdAndState(playerId, FollowState.FOLLOWING);
     }
 
     @Override
     public List<Follow> recentFollowings(Long playerId, int limit) {
-        return followJpaRepository.findRecentFollowings(playerId, PageRequest.of(0, Math.min(Math.max(limit, 1), 100)));
+        return followJpaRepository.findRecentFollowings(
+                playerId,
+                FollowState.FOLLOWING,
+                PageRequest.of(0, Math.min(Math.max(limit, 1), 100))
+        );
     }
 
     @Override
     public List<Follow> recentFollowers(Long playerId, int limit) {
-        return followJpaRepository.findRecentFollowers(playerId, PageRequest.of(0, Math.min(Math.max(limit, 1), 100)));
+        return followJpaRepository.findRecentFollowers(
+                playerId,
+                FollowState.FOLLOWING,
+                PageRequest.of(0, Math.min(Math.max(limit, 1), 100))
+        );
     }
 }

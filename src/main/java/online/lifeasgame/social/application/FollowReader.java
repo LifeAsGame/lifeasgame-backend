@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +22,10 @@ public class FollowReader {
     public Follow getByFollowIdAndPlayerId(Long followId, Long playerId) {
         return repository.findByIdAndPlayerId(followId, playerId).orElseThrow(() -> new DomainException(
                 SocialError.FOLLOW_NOT_FOUND));
+    }
+
+    public Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId) {
+        return repository.findByPlayerIdAndTargetPlayerId(playerId, targetPlayerId);
     }
 
     public List<Follow> getFollowingsByPlayerId(Long playerId, int page, int size) {
@@ -47,10 +52,4 @@ public class FollowReader {
         return repository.recentFollowers(playerId, limit);
     }
 
-    public void assertExistsFriend(Long friendId, Long playerId) {
-        if (repository.existsByPlayerIdAndTargetId(playerId, friendId)
-                && repository.existsByPlayerIdAndTargetId(friendId, playerId)) {
-            throw new DomainException(SocialError.NOT_FRIEND);
-        }
-    }
 }

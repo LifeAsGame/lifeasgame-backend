@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.application.command.FollowCommand;
 import online.lifeasgame.social.application.result.FollowResult;
 import online.lifeasgame.social.domain.Follow;
+import online.lifeasgame.social.domain.FollowState;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +17,22 @@ import java.util.List;
 public class FollowService {
 
     private final FollowReader followReader;
-    private final FollowWriter followWriter;
+    private final FollowRegistrar followRegistrar;
 
     @Transactional
     public FollowResult.Info follow(Long playerId, FollowCommand.Create command) {
-        Follow follow = followWriter.create(
+        Follow follow = followReader.findByPlayerIdAndTargetPlayerId(
+                playerId,
+                command.targetPlayerId()
+        ).orElseGet(() -> followRegistrar.register(
                 Follow.create(
                         playerId,
                         command.targetPlayerId()
                 )
-        );
+        ));
+        if (follow.getState() == FollowState.STOPPED) {
+            follow.followAgain();
+        }
         
         return FollowResult.Info.from(follow);
     }

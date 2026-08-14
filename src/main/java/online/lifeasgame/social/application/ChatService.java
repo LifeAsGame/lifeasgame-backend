@@ -20,7 +20,7 @@ public class ChatService {
     private final ChatWriter chatWriter;
     private final GuildReader guildReader;
     private final PartyReader partyReader;
-    private final FollowReader followReader;
+    private final FriendshipVerifier friendshipVerifier;
 
     @Transactional
     public ChatResult.Channel openGlobal(Long playerId, ChatCommand.OpenGlobal command) {
@@ -69,7 +69,7 @@ public class ChatService {
 
     @Transactional
     public ChatResult.Channel openFriend(Long playerId, Long friendId, ChatCommand.OpenFriend command) {
-        followReader.assertExistsFriend(playerId, friendId);
+        friendshipVerifier.verify(playerId, friendId);
 
         ChatSpec.OpenFriend spec = ChatSpec.OpenFriend.from(playerId, friendId, command);
         ChatChannel channel = chatWriter.ensureFriendChannel(spec.playerId(), spec.friendId(), spec.name());
