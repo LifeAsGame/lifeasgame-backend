@@ -16,7 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlayerCertificationService {
 
-    private final PlayerCertificationWriter playerCertificationWriter;
+    private final PlayerCertificationRegistrar playerCertificationRegistrar;
+    private final PlayerCertificationDateUpdater playerCertificationDateUpdater;
+    private final PlayerCertificationRevoker playerCertificationRevoker;
     private final PlayerCertificationReader playerCertificationReader;
 
     private final CertificationReader certificationReader;
@@ -34,7 +36,7 @@ public class PlayerCertificationService {
 
         Certification certification = certificationReader.getByIdOrThrow(command.certificationId());
 
-        PlayerCertification playerCertification = playerCertificationWriter.create(
+        PlayerCertification playerCertification = playerCertificationRegistrar.register(
                 PlayerCertification.create(
                         playerId,
                         command.certificationId(),
@@ -62,7 +64,7 @@ public class PlayerCertificationService {
 
     @Transactional
     public PlayerCertificationResult.Changed changePlayerCertification(Long playerId, PlayerCertificationCommand.Change command) {
-        PlayerCertification playerCertification = playerCertificationWriter.changeDates(
+        PlayerCertification playerCertification = playerCertificationDateUpdater.update(
                 playerId,
                 command.certificationId(),
                 command.acquiredDate(),
@@ -79,12 +81,12 @@ public class PlayerCertificationService {
 
     @Transactional
     public void deletePlayerCertification(Long playerId, Long certificationId) {
-        playerCertificationWriter.deletePlayerCertification(playerId, certificationId);
+        playerCertificationRevoker.revoke(playerId, certificationId);
     }
 
     @Transactional
     public PlayerCertificationResult.Revoked revokeCertification(Long playerId, Long certificationId) {
-        playerCertificationWriter.deletePlayerCertification(playerId, certificationId);
+        playerCertificationRevoker.revoke(playerId, certificationId);
         return new PlayerCertificationResult.Revoked(playerId, certificationId);
     }
 }

@@ -72,21 +72,19 @@ public class PlayerCertification extends AbstractTime {
             LocalDate acquiredDate,
             LocalDate expiresDate
     ) {
+        validateDateOrder(acquiredDate, expiresDate);
+        return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
+    }
+
+    public void changeDates(LocalDate acquiredDate, LocalDate expiresDate) {
+        validateDateOrder(acquiredDate, expiresDate);
+        this.acquiredDate = acquiredDate;
+        this.expiresDate = expiresDate;
+    }
+
+    private static void validateDateOrder(LocalDate acquiredDate, LocalDate expiresDate) {
         if (acquiredDate != null && expiresDate != null && expiresDate.isBefore(acquiredDate)) {
             throw new DomainException(PlayerCertificationError.EXPIRES_BEFORE_ACQUIRED);
         }
-        return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
-    }
-
-    public static PlayerCertification of(Long playerId, Long certificationId, LocalDate acquiredDate, LocalDate expiresDate) {
-        return new PlayerCertification(playerId, certificationId, acquiredDate, expiresDate);
-    }
-
-    public void changeDate(LocalDate acquiredDate, LocalDate expiresDate) {
-        if (expiresDate.isBefore(acquiredDate)) {
-            throw new DomainException(PlayerCertificationError.EXPIRES_BEFORE_ACQUIRED);
-        }
-        this.acquiredDate = acquiredDate;
-        this.expiresDate = expiresDate;
     }
 }
