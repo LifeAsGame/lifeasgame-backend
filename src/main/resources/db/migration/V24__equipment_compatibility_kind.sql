@@ -1,15 +1,5 @@
 ALTER TABLE items
-    ADD COLUMN equipment_compatibility_kind ENUM (
-        'WEAPON',
-        'HEAD',
-        'CHEST',
-        'LEGS',
-        'HANDS',
-        'FEET',
-        'NECK',
-        'RING',
-        'TRINKET'
-    ) NULL AFTER type;
+    ADD COLUMN equipment_compatibility_kind VARCHAR(20) NULL AFTER type;
 
 UPDATE items
 SET equipment_compatibility_kind = CASE
