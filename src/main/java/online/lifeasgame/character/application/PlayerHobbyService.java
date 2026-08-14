@@ -19,7 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlayerHobbyService {
 
-    private final PlayerHobbyWriter playerHobbyWriter;
+    private final PlayerHobbyRegistrar playerHobbyRegistrar;
+    private final PlayerHobbyUpdater playerHobbyUpdater;
+    private final PlayerHobbyRevoker playerHobbyRevoker;
     private final PlayerHobbyReader playerHobbyReader;
 
     private final HobbyReader hobbyReader;
@@ -37,7 +39,7 @@ public class PlayerHobbyService {
 
         Hobby hobby = hobbyReader.getByIdOrThrow(command.hobbyId());
 
-        PlayerHobby playerHobby = playerHobbyWriter.create(
+        PlayerHobby playerHobby = playerHobbyRegistrar.register(
                 PlayerHobby.create(
                         playerId,
                         command.hobbyId(),
@@ -68,15 +70,7 @@ public class PlayerHobbyService {
 
     @Transactional
     public PlayerHobbyResult.Changed changePlayerHobby(Long playerId, PlayerHobbyCommand.Change command) {
-        PlayerHobby playerHobby = playerHobbyReader.getByPlayerIdAndHobbyId(playerId, command.hobbyId());
-
-        playerHobby.changeHobby(
-                command.name(),
-                command.detail(),
-                command.proficiency(),
-                PlayerHobbyStatus.parse(command.status()),
-                command.startedOn()
-        );
+        PlayerHobby playerHobby = playerHobbyUpdater.update(playerId, command);
 
         return PlayerHobbyResult.Changed.from(playerHobby);
     }
@@ -88,12 +82,12 @@ public class PlayerHobbyService {
 
     @Transactional
     public void deletePlayerHobby(Long playerId, Long hobbyId) {
-        playerHobbyWriter.deleteByPlayerIdAndHobbyId(playerId, hobbyId);
+        playerHobbyRevoker.revoke(playerId, hobbyId);
     }
 
     @Transactional
     public PlayerHobbyResult.Revoked revokeHobby(Long playerId, Long hobbyId) {
-        playerHobbyWriter.deleteByPlayerIdAndHobbyId(playerId, hobbyId);
+        playerHobbyRevoker.revoke(playerId, hobbyId);
         return new PlayerHobbyResult.Revoked(playerId, hobbyId);
     }
 }
