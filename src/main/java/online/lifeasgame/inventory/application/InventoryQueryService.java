@@ -65,7 +65,10 @@ public class InventoryQueryService implements InventoryEquipmentReadApi {
                 item.itemInstanceId(),
                 item.itemId(),
                 item.category().name(),
-                item.type().name()
+                item.type().name(),
+                item.equipmentCompatibilityKind() == null
+                        ? null
+                        : item.equipmentCompatibilityKind().name()
         );
     }
 }

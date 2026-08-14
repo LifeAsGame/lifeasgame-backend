@@ -80,7 +80,8 @@ public class PlayerInventoryQueryAdapter implements InventoryQuery {
                 e.id,
                 i.id,
                 i.category,
-                i.type
+                i.type,
+                i.equipmentCompatibilityKind
             )
             FROM InventoryEntry e
             JOIN e.inventory inv

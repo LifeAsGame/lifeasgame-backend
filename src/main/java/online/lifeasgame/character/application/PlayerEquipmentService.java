@@ -36,7 +36,8 @@ public class PlayerEquipmentService {
         EquipmentCompatibilityPolicy.validate(
                 slot.getCategory(),
                 item.category(),
-                item.type()
+                item.type(),
+                item.equipmentCompatibilityKind()
         );
         playerEquipmentReader.assertNotEquipped(
                 playerId,
