@@ -16,7 +16,7 @@ public interface AdminItemApiSpecV1 {
     @Operation(summary = "아이템 등록", description = "아이템을 신규 등록합니다.")
     ResponseEntity<ApiResponse<AdminItemResponse.Id>> create(@Valid @RequestBody AdminItemRequest.Create request);
 
-    @Operation(summary = "아이템 수정", description = "아이템 속성을 일부 수정합니다.")
+    @Operation(summary = "아이템 수정", description = "아이템 정의를 요청 값 기준으로 수정합니다.")
     ResponseEntity<ApiResponse<AdminItemResponse.Id>> update(
             @PathVariable Long itemId,
             @Valid @RequestBody AdminItemRequest.Update request
