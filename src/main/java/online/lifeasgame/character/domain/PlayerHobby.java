@@ -15,6 +15,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.guard.Guard;
 
 @Getter
 @Entity
@@ -44,7 +45,7 @@ public class PlayerHobby {
     private String detail;
 
     @Column(name = "proficiency", nullable = false)
-    private int proficiency = 0; // 0~100 규약
+    private int proficiency = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
@@ -69,7 +70,7 @@ public class PlayerHobby {
         this.hobbyId = hobbyId;
         this.customName = customName;
         this.detail = detail;
-        this.proficiency = proficiency;
+        this.proficiency = validateProficiency(proficiency);
         this.status = status;
         this.startedOn = startedOn;
         this.xp = 0;
@@ -99,14 +100,19 @@ public class PlayerHobby {
     public void changeHobby(
             String name,
             String detail,
-            Integer proficiency,
+            int proficiency,
             PlayerHobbyStatus status,
             LocalDate startedOn
     ) {
+        int validatedProficiency = validateProficiency(proficiency);
         this.customName = name;
         this.detail = detail;
-        this.proficiency = proficiency;
+        this.proficiency = validatedProficiency;
         this.status = status;
         this.startedOn = startedOn;
+    }
+
+    private static int validateProficiency(int proficiency) {
+        return Guard.inRange(proficiency, 0, 100, "proficiency");
     }
 }
