@@ -153,6 +153,12 @@ public class MediaLog extends AbstractTime {
             WatchStatus watchStatus,
             MediaTags tags
     ) {
+        Guard.notNull(mediaCategory, "mediaCategory");
+        Guard.notNull(title, "title");
+        Guard.notNull(episodeProgress, "episodeProgress");
+        Guard.notNull(watchStatus, "watchStatus");
+        Guard.notNull(tags, "tags");
+
         this.category = mediaCategory;
         this.title = title;
         this.progress = episodeProgress;

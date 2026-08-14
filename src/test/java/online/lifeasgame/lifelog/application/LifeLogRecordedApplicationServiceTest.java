@@ -200,6 +200,7 @@ class LifeLogRecordedApplicationServiceTest {
         )).thenReturn(canonical);
         MediaLogService service = new MediaLogService(
                 reader,
+                mock(MediaLogUpdater.class),
                 writer,
                 recordRegistrar,
                 publisher,
