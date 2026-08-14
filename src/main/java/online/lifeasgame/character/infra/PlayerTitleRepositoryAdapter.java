@@ -25,8 +25,8 @@ public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository, Play
     }
 
     @Override
-    public void deleteByPlayerIdAndTitleId(Long playerId, Long titleId) {
-        jpaRepository.deleteByPlayerIdAndTitleId(playerId, titleId);
+    public long deleteByPlayerIdAndTitleId(Long playerId, Long titleId) {
+        return jpaRepository.deleteByPlayerIdAndTitleId(playerId, titleId);
     }
 
     @Override
