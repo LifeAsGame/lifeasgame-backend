@@ -24,6 +24,7 @@ import java.time.Instant;
 public class MediaLogService {
 
     private final MediaLogReader mediaLogReader;
+    private final MediaLogUpdater mediaLogUpdater;
     private final MediaLogWriter mediaLogWriter;
     private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
@@ -160,23 +161,7 @@ public class MediaLogService {
 
     @Transactional
     public MediaLogResult.Info update(Long playerId, Long mediaId, MediaLogCommand.Update command) {
-        MediaCategory mediaCategory = MediaCategory.parse(command.category());
-        Title title = Title.of(command.title(), command.originalTitle());
-        EpisodeProgress episodeProgress = EpisodeProgress.of(command.currentEpisode(), command.totalEpisode());
-        WatchStatus watchStatus = WatchStatus.parse(command.status());
-        MediaTags tags = MediaTags.of(command.tags());
-
-        MediaLog mediaLog = mediaLogReader.getByPlayerIdAndIdOrThrow(playerId, mediaId);
-
-        mediaLog.update(
-                mediaCategory,
-                title,
-                episodeProgress,
-                watchStatus,
-                tags
-        );
-
-        return MediaLogResult.Info.from(mediaLog);
+        return MediaLogResult.Info.from(mediaLogUpdater.update(playerId, mediaId, command));
     }
 
     @Transactional
