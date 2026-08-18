@@ -12,6 +12,7 @@ public enum SocialError implements ErrorCode {
     PARTY_NOT_FOUND("SOC-404-PARTY-NOT-FOUND","Party Not Found",404),
 
     FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404),
+    CONNECTION_PEER_NOT_FOUND("SOC-404-CONNECTION-PEER-NOT-FOUND", "Connection peer not found", 404),
     NOT_FRIEND("SOC-404-NOT-FRIEND", "Friend Not Found", 404),
 
     CHAT_CHANNEL_NOT_FOUND("SOC-404-CHANNEL-NOT-FOUND","Chat Channel Not Found",404),

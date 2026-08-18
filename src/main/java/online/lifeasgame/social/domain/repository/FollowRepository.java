@@ -4,6 +4,7 @@ import online.lifeasgame.social.domain.Follow;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface FollowRepository {
     Follow save(Follow f);
@@ -15,6 +16,8 @@ public interface FollowRepository {
     Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId);
 
     boolean existsActiveFollow(Long playerId, Long targetPlayerId);
+
+    List<Follow> findActiveFollowings(Long playerId, Set<Long> targetPlayerIds);
 
     List<Follow> findFollowings(Long playerId, int page, int size);
 
