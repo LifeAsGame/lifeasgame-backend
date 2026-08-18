@@ -77,6 +77,12 @@ public class Follow extends AbstractTime {
         this.muted = false;
     }
 
+    public void followAgain() {
+        Guard.checkState(this.state == FollowState.STOPPED, "already following");
+        this.state = FollowState.FOLLOWING;
+        this.muted = false;
+    }
+
     public void mute() {
         Guard.checkState(this.state == FollowState.FOLLOWING, "mute only when following");
         this.muted = true;

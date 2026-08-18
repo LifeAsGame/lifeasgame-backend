@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
-public class FollowWriter {
+public class FollowRegistrar {
 
     private final FollowRepository repository;
 
-    public Follow create(Follow follow) {
+    public Follow register(Follow follow) {
         return repository.save(follow);
     }
 }
