@@ -1,5 +1,6 @@
 package online.lifeasgame.social.api.player;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -61,7 +62,7 @@ public class PlayerFollowController implements PlayerFollowApiSpecV1 {
 
     @PostMapping
     public ResponseEntity<ApiResponse<PlayerFollowResponse.Info>> follow(
-            @RequestBody PlayerFollowRequest.Create request
+            @Valid @RequestBody PlayerFollowRequest.Create request
     ) {
         FollowResult.Info result = followFacade.follow(PlayerFollowWebMapper.toCreateCommand(request));
         return ApiResponses.ok(PlayerFollowWebMapper.toInfo(result));
