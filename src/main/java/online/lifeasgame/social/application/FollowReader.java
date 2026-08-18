@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +27,10 @@ public class FollowReader {
 
     public Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId) {
         return repository.findByPlayerIdAndTargetPlayerId(playerId, targetPlayerId);
+    }
+
+    public List<Follow> findActiveFollowings(Long playerId, Set<Long> targetPlayerIds) {
+        return repository.findActiveFollowings(playerId, targetPlayerIds);
     }
 
     public List<Follow> getFollowingsByPlayerId(Long playerId, int page, int size) {

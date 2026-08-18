@@ -46,6 +46,18 @@ public class FollowRepositoryAdapter implements FollowRepository {
     }
 
     @Override
+    public List<Follow> findActiveFollowings(Long playerId, Set<Long> targetPlayerIds) {
+        if (targetPlayerIds.isEmpty()) {
+            return List.of();
+        }
+        return followJpaRepository.findAllByPlayerIdAndTargetPlayerIdInAndState(
+                playerId,
+                targetPlayerIds,
+                FollowState.FOLLOWING
+        );
+    }
+
+    @Override
     public List<Follow> findFollowings(Long playerId, int page, int size) {
         Page<Long> idPage = followJpaRepository.findFollowingIds(
                 playerId,
