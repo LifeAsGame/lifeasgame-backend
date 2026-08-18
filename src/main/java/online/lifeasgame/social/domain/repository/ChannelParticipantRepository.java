@@ -4,6 +4,7 @@ import online.lifeasgame.social.domain.ChannelParticipant;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ChannelParticipantRepository {
 
@@ -13,6 +14,7 @@ public interface ChannelParticipantRepository {
 
     List<ChannelParticipant> findAllByUserId(Long userId);
 
+    List<ChannelParticipant> findAllByChannelIds(Set<Long> channelIds);
+
     boolean existsByChannelId(Long channelId);
 }
-

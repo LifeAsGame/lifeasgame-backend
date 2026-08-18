@@ -6,6 +6,8 @@ import online.lifeasgame.social.api.player.response.PlayerChatResponse;
 import online.lifeasgame.social.application.command.ChatCommand;
 import online.lifeasgame.social.application.result.ChatResult;
 
+import java.util.List;
+
 public final class PlayerChatWebMapper {
 
     private PlayerChatWebMapper() {}
@@ -44,6 +46,23 @@ public final class PlayerChatWebMapper {
                 result.readOnly(),
                 result.role()
         );
+    }
+
+    public static List<PlayerChatResponse.FriendChannel> toFriendChannels(
+            List<ChatResult.FriendChannel> results
+    ) {
+        return results.stream()
+                .map(result -> new PlayerChatResponse.FriendChannel(
+                        result.channelId(),
+                        new PlayerChatResponse.Peer(
+                                result.peer().playerId(),
+                                result.peer().name(),
+                                result.peer().job(),
+                                result.peer().level()
+                        ),
+                        result.readOnly()
+                ))
+                .toList();
     }
 
     public static PlayerChatResponse.MessagePage toMessagePage(ChatResult.MessagePage result) {

@@ -11,6 +11,7 @@ import online.lifeasgame.social.api.player.request.PlayerChatRequest;
 import online.lifeasgame.social.api.player.response.PlayerChatResponse;
 import online.lifeasgame.social.api.player.spec.PlayerChatApiSpecV1;
 import online.lifeasgame.social.application.ChatFacade;
+import online.lifeasgame.social.application.FriendChatQueryService;
 import online.lifeasgame.social.application.result.ChatResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,18 +22,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/chat")
 public class PlayerChatController implements PlayerChatApiSpecV1 {
 
     private final ChatFacade chatFacade;
+    private final FriendChatQueryService friendChatQueryService;
 
     @Override
     @GetMapping("/channels")
     public ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels() {
         ChatResult.ChannelGroup result = chatFacade.myChannels();
         return ApiResponses.ok(PlayerChatWebMapper.toChannelGroup(result));
+    }
+
+    @Override
+    @GetMapping("/channels/friends")
+    public ResponseEntity<ApiResponse<List<PlayerChatResponse.FriendChannel>>> friendChannels() {
+        return ApiResponses.ok(PlayerChatWebMapper.toFriendChannels(
+                friendChatQueryService.friendChannels()
+        ));
     }
 
     @Override
