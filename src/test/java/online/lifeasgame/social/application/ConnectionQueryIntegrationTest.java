@@ -9,6 +9,7 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.social.application.command.FollowCommand;
 import online.lifeasgame.social.application.result.ConnectionResult;
 import online.lifeasgame.social.application.result.FollowResult;
+import online.lifeasgame.social.domain.Follow;
 import online.lifeasgame.social.domain.error.SocialError;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -129,7 +130,8 @@ class ConnectionQueryIntegrationTest {
         @DisplayName("이름을 만들지 않고 controlled connection error로 거부한다")
         void rejectsMissingPlayerSummary() {
             Player current = currentPlayer();
-            follow(current.getId(), 999_999L);
+            entityManager.persist(Follow.create(current.getId(), 999_999L));
+            entityManager.flush();
 
             assertThatThrownBy(() -> connectionQueryService.followings(0, 20))
                     .isInstanceOfSatisfying(DomainException.class, exception ->

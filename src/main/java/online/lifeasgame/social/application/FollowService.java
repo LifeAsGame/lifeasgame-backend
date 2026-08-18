@@ -18,16 +18,19 @@ public class FollowService {
 
     private final FollowReader followReader;
     private final FollowRegistrar followRegistrar;
+    private final FollowTargetVerifier followTargetVerifier;
 
     @Transactional
     public FollowResult.Info follow(Long playerId, FollowCommand.Create command) {
+        Long targetPlayerId = command.targetPlayerId();
+        followTargetVerifier.verifyExists(targetPlayerId);
         Follow follow = followReader.findByPlayerIdAndTargetPlayerId(
                 playerId,
-                command.targetPlayerId()
+                targetPlayerId
         ).orElseGet(() -> followRegistrar.register(
                 Follow.create(
                         playerId,
-                        command.targetPlayerId()
+                        targetPlayerId
                 )
         ));
         if (follow.getState() == FollowState.STOPPED) {

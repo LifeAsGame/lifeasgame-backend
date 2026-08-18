@@ -1,6 +1,7 @@
 package online.lifeasgame.social.application;
 
 import jakarta.persistence.EntityManager;
+import online.lifeasgame.character.application.internal.PlayerExistenceReadApi;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.social.application.command.FollowCommand;
 import online.lifeasgame.social.application.result.FollowResult;
@@ -8,17 +9,21 @@ import online.lifeasgame.social.domain.Follow;
 import online.lifeasgame.social.domain.FollowState;
 import online.lifeasgame.social.domain.error.SocialError;
 import online.lifeasgame.social.domain.repository.FollowRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -40,6 +45,53 @@ class FollowLifecycleIntegrationTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @MockitoBean
+    private PlayerExistenceReadApi playerExistenceReadApi;
+
+    @BeforeEach
+    void targetExists() {
+        given(playerExistenceReadApi.existsByPlayerId(anyLong())).willReturn(true);
+    }
+
+    @Nested
+    @DisplayName("Follow target을 검증할 때")
+    class TargetValidation {
+
+        @Test
+        @DisplayName("존재하는 target이면 follow한다")
+        void followsExistingTarget() {
+            FollowResult.Info result = follow(PLAYER_ID, FRIEND_ID);
+
+            assertThat(result.targetPlayerId()).isEqualTo(FRIEND_ID);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 target이면 row를 생성하지 않는다")
+        void rejectsMissingTargetWithoutCreatingRow() {
+            given(playerExistenceReadApi.existsByPlayerId(FRIEND_ID)).willReturn(false);
+
+            assertTargetNotFound(() -> follow(PLAYER_ID, FRIEND_ID));
+
+            assertThat(pairRowCount(PLAYER_ID, FRIEND_ID)).isZero();
+        }
+
+        @Test
+        @DisplayName("기존 row가 STOPPED여도 target이 없으면 재활성화하지 않는다")
+        void keepsStoppedRowWhenTargetIsMissing() {
+            FollowResult.Info existing = follow(PLAYER_ID, FRIEND_ID);
+            followService.unfollow(PLAYER_ID, existing.id());
+            given(playerExistenceReadApi.existsByPlayerId(FRIEND_ID)).willReturn(false);
+
+            assertTargetNotFound(() -> follow(PLAYER_ID, FRIEND_ID));
+
+            Follow persisted = followRepository.findByPlayerIdAndTargetPlayerId(
+                    PLAYER_ID,
+                    FRIEND_ID
+            ).orElseThrow();
+            assertThat(persisted.getState()).isEqualTo(FollowState.STOPPED);
+        }
+    }
 
     @Nested
     @DisplayName("같은 pair를 다시 follow할 때")
@@ -152,6 +204,13 @@ class FollowLifecycleIntegrationTest {
         assertThatThrownBy(() -> friendshipVerifier.verify(PLAYER_ID, FRIEND_ID))
                 .isInstanceOfSatisfying(DomainException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(SocialError.NOT_FRIEND)
+                );
+    }
+
+    private void assertTargetNotFound(Runnable action) {
+        assertThatThrownBy(action::run)
+                .isInstanceOfSatisfying(DomainException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(SocialError.FOLLOW_TARGET_NOT_FOUND)
                 );
     }
 }
