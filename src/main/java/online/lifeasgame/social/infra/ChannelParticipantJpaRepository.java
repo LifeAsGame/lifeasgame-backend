@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface ChannelParticipantJpaRepository extends JpaRepository<ChannelParticipant, Long> {
@@ -24,6 +25,19 @@ public interface ChannelParticipantJpaRepository extends JpaRepository<ChannelPa
             """
     )
     List<ChannelParticipant> findAllWithChannelByUserId(@Param("userId") Long userId);
+
+    @Query(
+            """
+                    select cp
+                    from ChannelParticipant cp
+                    join fetch cp.channel c
+                    where c.id in :channelIds
+                    order by c.id, cp.id
+            """
+    )
+    List<ChannelParticipant> findAllWithChannelByChannelIds(
+            @Param("channelIds") Set<Long> channelIds
+    );
 
     boolean existsByChannelId(Long channelId);
 }

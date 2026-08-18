@@ -55,6 +55,21 @@ public final class ChatResult {
         }
     }
 
+    public record Peer(
+            Long playerId,
+            String name,
+            String job,
+            int level
+    ) {
+    }
+
+    public record FriendChannel(
+            Long channelId,
+            Peer peer,
+            boolean readOnly
+    ) {
+    }
+
     public record Message(
             Long id,
             Long channelId,

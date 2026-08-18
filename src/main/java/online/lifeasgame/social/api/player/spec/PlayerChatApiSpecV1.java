@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Tag(name = "Social Chat API V1 (Player)")
 public interface PlayerChatApiSpecV1 {
 
@@ -44,6 +46,9 @@ public interface PlayerChatApiSpecV1 {
 
     @Operation(summary = "내 채널 목록")
     ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels();
+
+    @Operation(summary = "친구 채널 목록")
+    ResponseEntity<ApiResponse<List<PlayerChatResponse.FriendChannel>>> friendChannels();
 
     @Operation(summary = "채널 메시지 조회")
     ResponseEntity<ApiResponse<PlayerChatResponse.MessagePage>> messages(

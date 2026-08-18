@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,6 +28,11 @@ public class ChannelParticipantRepositoryAdapter implements ChannelParticipantRe
     @Override
     public List<ChannelParticipant> findAllByUserId(Long userId) {
         return jpaRepository.findAllWithChannelByUserId(userId);
+    }
+
+    @Override
+    public List<ChannelParticipant> findAllByChannelIds(Set<Long> channelIds) {
+        return jpaRepository.findAllWithChannelByChannelIds(channelIds);
     }
 
     @Override
