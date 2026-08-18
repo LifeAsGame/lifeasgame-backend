@@ -10,7 +10,7 @@ import online.lifeasgame.social.api.player.mapper.PlayerChatWebMapper;
 import online.lifeasgame.social.api.player.request.PlayerChatRequest;
 import online.lifeasgame.social.api.player.response.PlayerChatResponse;
 import online.lifeasgame.social.api.player.spec.PlayerChatApiSpecV1;
-import online.lifeasgame.social.application.ChatFacade;
+import online.lifeasgame.social.application.ChatService;
 import online.lifeasgame.social.application.FriendChatQueryService;
 import online.lifeasgame.social.application.result.ChatResult;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +29,13 @@ import java.util.List;
 @RequestMapping("/api/v1/chat")
 public class PlayerChatController implements PlayerChatApiSpecV1 {
 
-    private final ChatFacade chatFacade;
+    private final ChatService chatService;
     private final FriendChatQueryService friendChatQueryService;
 
     @Override
     @GetMapping("/channels")
     public ResponseEntity<ApiResponse<PlayerChatResponse.ChannelGroup>> myChannels() {
-        ChatResult.ChannelGroup result = chatFacade.myChannels();
+        ChatResult.ChannelGroup result = chatService.myChannels();
         return ApiResponses.ok(PlayerChatWebMapper.toChannelGroup(result));
     }
 
@@ -52,7 +52,7 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openAdmin(
             @Valid @RequestBody PlayerChatRequest.OpenAdmin request
     ) {
-        ChatResult.Channel result = chatFacade.openAdmin(PlayerChatWebMapper.toOpenAdminCommand(request));
+        ChatResult.Channel result = chatService.openAdmin(PlayerChatWebMapper.toOpenAdminCommand(request));
         return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
@@ -61,21 +61,21 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGlobal(
             @Valid @RequestBody PlayerChatRequest.OpenGlobal request
     ) {
-        ChatResult.Channel result = chatFacade.openGlobal(PlayerChatWebMapper.toOpenGlobalCommand(request));
+        ChatResult.Channel result = chatService.openGlobal(PlayerChatWebMapper.toOpenGlobalCommand(request));
         return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
     @PostMapping("/channels/guild/{guildId}")
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openGuild(@PathVariable Long guildId) {
-        ChatResult.Channel result = chatFacade.openGuild(guildId);
+        ChatResult.Channel result = chatService.openGuild(guildId);
         return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
     @Override
     @PostMapping("/channels/party/{partyId}")
     public ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openParty(@PathVariable Long partyId) {
-        ChatResult.Channel result = chatFacade.openParty(partyId);
+        ChatResult.Channel result = chatService.openParty(partyId);
         return ApiResponses.ok(PlayerChatWebMapper.toChannel(result));
     }
 
@@ -85,7 +85,7 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @PathVariable Long friendId,
             @Valid @RequestBody PlayerChatRequest.OpenFriend request
     ) {
-        ChatResult.Channel result = chatFacade.openFriend(
+        ChatResult.Channel result = chatService.openFriend(
                 friendId,
                 PlayerChatWebMapper.toOpenFriendCommand(request)
         );
@@ -100,7 +100,7 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     ) {
-        ChatResult.MessagePage result = chatFacade.messages(channelId, cursor, size);
+        ChatResult.MessagePage result = chatService.messages(channelId, cursor, size);
         return ApiResponses.ok(PlayerChatWebMapper.toMessagePage(result));
     }
 
@@ -110,7 +110,7 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
             @PathVariable Long channelId,
             @Valid @RequestBody PlayerChatRequest.SendMessage request
     ) {
-        ChatResult.Message result = chatFacade.sendMessage(
+        ChatResult.Message result = chatService.sendMessage(
                 channelId,
                 PlayerChatWebMapper.toSendMessageCommand(request)
         );

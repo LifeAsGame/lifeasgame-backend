@@ -3,7 +3,7 @@ package online.lifeasgame.social.api.player;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
-import online.lifeasgame.social.application.ChatFacade;
+import online.lifeasgame.social.application.ChatService;
 import online.lifeasgame.social.application.FriendChatQueryService;
 import online.lifeasgame.social.application.result.ChatResult;
 import online.lifeasgame.support.WebMvcTestConfig;
@@ -37,7 +37,7 @@ class PlayerChatApiContractTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ChatFacade chatFacade;
+    private ChatService chatService;
 
     @MockitoBean
     private FriendChatQueryService friendChatQueryService;
