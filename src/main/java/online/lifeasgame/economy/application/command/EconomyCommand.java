@@ -15,8 +15,7 @@ public final class EconomyCommand {
     }
 
     public record OpenListing(
-            Long itemInstanceId,
-            Long itemId,
+            Long inventoryEntryId,
             long price,
             String currency
     ) {

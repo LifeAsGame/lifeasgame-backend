@@ -8,6 +8,7 @@ import online.lifeasgame.economy.api.player.request.EconomyRequest;
 import online.lifeasgame.economy.api.player.response.EconomyResponse;
 import online.lifeasgame.economy.api.player.spec.EconomyApiSpecV1;
 import online.lifeasgame.economy.application.EconomyFacade;
+import online.lifeasgame.economy.application.ListingOpenService;
 import online.lifeasgame.economy.application.result.EconomyResult;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EconomyController implements EconomyApiSpecV1 {
 
     private final EconomyFacade economyFacade;
+    private final ListingOpenService listingOpenService;
 
     @Override
     @GetMapping("/listings")
@@ -59,7 +61,7 @@ public class EconomyController implements EconomyApiSpecV1 {
     public ResponseEntity<ApiResponse<EconomyResponse.ListingId>> openListing(
             @Valid @RequestBody EconomyRequest.OpenListing request
     ) {
-        EconomyResult.ListingId id = economyFacade.openListing(EconomyWebMapper.toOpenListingCommand(request));
+        EconomyResult.ListingId id = listingOpenService.open(EconomyWebMapper.toOpenListingCommand(request));
         return ApiResponses.ok(EconomyWebMapper.toListingId(id));
     }
 

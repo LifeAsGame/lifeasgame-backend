@@ -8,6 +8,7 @@ public enum EconomyError implements ErrorCode {
     LISTING_NOT_AVAILABLE("ECON-LISTING-NOT-AVAILABLE", "Listing not available", 400),
     LISTING_RESERVATION_EXPIRED("ECON-LISTING-RESERVATION-EXPIRED", "Listing reservation expired", 410),
     LISTING_RESERVED_OTHER("ECON-LISTING-RESERVED-OTHER", "Listing reserved by other buyer", 409),
+    LISTING_ACTIVE_RESERVATION("ECON-LISTING-ACTIVE-RESERVATION", "Listing has an active reservation", 409),
     SHOP_ITEM_NOT_FOUND("ECON-SHOP-ITEM-NOT-FOUND", "Shop item not found", 404),
     SHOP_ITEM_DISABLED("ECON-SHOP-ITEM-DISABLED", "Shop item unavailable", 400),
     SHOP_STOCK_EXHAUSTED("ECON-SHOP-STOCK-EXHAUSTED", "Shop item is sold out", 409),

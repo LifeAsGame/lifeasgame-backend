@@ -132,6 +132,16 @@ public final class EconomyResult {
                     listing.getReservationExpiresAt()
             );
         }
+
+        public static ListingReservation from(Listing listing, Instant expiresAt) {
+            return new ListingReservation(
+                    listing.getId(),
+                    listing.getItemId(),
+                    listing.getPrice().amount(),
+                    listing.getPrice().currency().name(),
+                    expiresAt
+            );
+        }
     }
 
     public record ShopItemView(

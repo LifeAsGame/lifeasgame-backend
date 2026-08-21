@@ -10,8 +10,7 @@ public final class EconomyRequest {
     }
 
     public record OpenListing(
-            @NotNull Long itemInstanceId,
-            @NotNull Long itemId,
+            @NotNull Long inventoryEntryId,
             @Min(1) long price,
             @NotBlank String currency
     ) {

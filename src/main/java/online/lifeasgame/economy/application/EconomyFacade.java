@@ -15,11 +15,6 @@ public class EconomyFacade {
     private final TopUpService topUpService;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
-    public EconomyResult.ListingId openListing(EconomyCommand.OpenListing command) {
-        Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        return marketplaceService.open(playerId, command);
-    }
-
     public EconomyResult.Reservation reserveListing(EconomyCommand.ReserveListing command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return marketplaceService.reserve(playerId, command);

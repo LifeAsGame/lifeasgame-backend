@@ -43,6 +43,9 @@ public class Listing extends AbstractTime {
     @Column(name = "item_id")
     private Long itemId;
 
+    @Column(name = "sale_quantity")
+    private Integer saleQuantity;
+
     @Embedded
     private Money price = Money.of(0, Currency.GOLD);
 
@@ -68,54 +71,35 @@ public class Listing extends AbstractTime {
     @Version
     private Long version;
 
-    private Listing(Long sellerPlayerId, Long itemInstanceId, Long itemId, Money price) {
+    private Listing(
+            Long sellerPlayerId,
+            Long itemInstanceId,
+            Long itemId,
+            int saleQuantity,
+            Money price
+    ) {
         this.sellerPlayerId = Guard.notNull(sellerPlayerId, "sellerPlayerId");
         this.itemInstanceId = Guard.notNull(itemInstanceId, "itemInstanceId");
-        this.itemId = itemId;
+        this.itemId = Guard.notNull(itemId, "itemId");
+        this.saleQuantity = Guard.minValue(saleQuantity, 1, "saleQuantity");
         changePrice(price);
     }
 
-    public static Listing open(Long sellerPlayerId, Long itemInstanceId, Long itemId, Money price) {
-        return new Listing(sellerPlayerId, itemInstanceId, itemId, price);
+    public static Listing open(
+            Long sellerPlayerId,
+            Long itemInstanceId,
+            Long itemId,
+            int saleQuantity,
+            Money price
+    ) {
+        return new Listing(sellerPlayerId, itemInstanceId, itemId, saleQuantity, price);
     }
 
     public void changePrice(Money newPrice) {
         Guard.notNull(newPrice, "price");
         Guard.checkState(status == ListingStatus.OPEN, "price change only in OPEN");
+        Guard.minValue(newPrice.amount(), 1, "price");
         this.price = newPrice;
-    }
-
-    public ReservationToken reserve(Long buyerId, String holdId, Instant now, int ttlSeconds) {
-        Guard.checkState(status == ListingStatus.OPEN, "listing not open");
-        Guard.notNull(buyerId, "buyerId");
-        Guard.checkState(!sellerPlayerId.equals(buyerId), "seller cannot reserve own listing");
-        Guard.notBlank(holdId, "holdId");
-        Guard.notNull(now, "now");
-        Guard.minValue(ttlSeconds, 1, "ttlSeconds");
-
-        this.status = ListingStatus.RESERVED;
-        this.reservedBy = Guard.notNull(buyerId, "buyerId");
-        this.reservationToken = ReservationToken.newToken();
-        this.reservationExpiresAt = now.plusSeconds(ttlSeconds);
-        this.reservedHoldId = holdId;
-
-        return this.reservationToken;
-    }
-
-    public void releaseReservation(String token, Instant now) {
-        Guard.checkState(status == ListingStatus.RESERVED, "not reserved");
-        Guard.check(this.reservationToken != null && this.reservationToken.value().equals(token), "invalid token");
-        Guard.check(!now.isAfter(reservationExpiresAt), "already expired; use expire()");
-        clearReservation();
-        this.status = ListingStatus.OPEN;
-    }
-
-    public void expire(Instant now) {
-        if (status == ListingStatus.RESERVED && reservationExpiresAt != null && now.isAfter(reservationExpiresAt)) {
-            clearReservation();
-            this.status = ListingStatus.EXPIRED;
-            closeActive();
-        }
     }
 
     public Trade sellTo(Long buyerPlayerId, String token) {
@@ -136,7 +120,7 @@ public class Listing extends AbstractTime {
     }
 
     public void cancel(Long bySellerId) {
-        Guard.checkState(status == ListingStatus.OPEN || status == ListingStatus.RESERVED, "already closed");
+        Guard.checkState(status == ListingStatus.OPEN, "listing not open");
         Guard.checkState(sellerPlayerId.equals(bySellerId), "only seller can cancel");
         clearReservation();
         this.status = ListingStatus.CANCELED;
@@ -188,6 +172,10 @@ public class Listing extends AbstractTime {
 
     public Long getItemId() {
         return itemId;
+    }
+
+    public Integer getSaleQuantity() {
+        return saleQuantity;
     }
 
     public Long getId() {

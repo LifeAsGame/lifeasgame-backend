@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 
 @Component
@@ -25,12 +24,13 @@ public class ListingReader {
                 .orElseThrow(() -> new DomainException(EconomyError.LISTING_NOT_FOUND));
     }
 
-    public List<Listing> listOpen() {
-        return repository.findByStatus(ListingStatus.OPEN);
+    public Listing get(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new DomainException(EconomyError.LISTING_NOT_FOUND));
     }
 
-    public List<Listing> findReservedExpiringBefore(Instant cutoff) {
-        return repository.findByStatusAndReservationExpiresAtBefore(ListingStatus.RESERVED, cutoff);
+    public List<Listing> listOpen() {
+        return repository.findByStatus(ListingStatus.OPEN);
     }
 
     public List<Listing> listBySeller(Long sellerId) {
