@@ -6,6 +6,7 @@ import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.inventory.application.internal.InventoryEquipmentAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class PlayerEquipmentService {
     private final PlayerEquipmentReader playerEquipmentReader;
     private final EquipmentSlotReader equipmentSlotReader;
     private final InventoryEquipmentReadApi inventoryEquipmentReadApi;
+    private final InventoryEquipmentAvailabilityApi inventoryEquipmentAvailabilityApi;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
@@ -44,19 +46,31 @@ public class PlayerEquipmentService {
                 command.itemInstanceId()
         );
 
-        PlayerEquipment playerEquipment = playerEquipmentWriter.equip(
+        PlayerEquipmentWriter.EquipmentReplacement replacement =
+                playerEquipmentWriter.equip(
+                        playerId,
+                        command.slotId(),
+                        command.itemInstanceId()
+                );
+        inventoryEquipmentAvailabilityApi.replaceEquippedItem(
                 playerId,
-                command.slotId(),
+                replacement.previousItemInstanceId(),
                 command.itemInstanceId()
         );
 
-        return PlayerEquipmentResult.Equipped.from(playerEquipment);
+        return PlayerEquipmentResult.Equipped.from(replacement.equipment());
     }
 
     @Transactional
     public void unEquip(Long slotId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        playerEquipmentWriter.unEquip(playerId, slotId);
+        Long itemInstanceId = playerEquipmentWriter.unEquip(playerId, slotId);
+        if (itemInstanceId != null) {
+            inventoryEquipmentAvailabilityApi.releaseEquippedItem(
+                    playerId,
+                    itemInstanceId
+            );
+        }
     }
 
     @Transactional(readOnly = true)

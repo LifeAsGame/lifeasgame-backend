@@ -119,6 +119,12 @@ class PlayerEquipmentConcurrencyIntegrationTest {
                       AND item_inst_id = ?
                     """, Integer.class, PLAYER_ID, itemInstanceId))
                     .isEqualTo(1);
+            assertThat(jdbc.queryForObject("""
+                    SELECT availability
+                    FROM inventory_entries
+                    WHERE id = ?
+                    """, String.class, itemInstanceId))
+                    .isEqualTo("EQUIPPED");
         }
     }
 

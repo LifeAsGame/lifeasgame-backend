@@ -53,6 +53,10 @@ public class InventoryEntry extends AbstractTime {
     @Column(nullable = false)
     private boolean bound = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "availability", length = 32, nullable = false)
+    private InventoryAvailability availability = InventoryAvailability.FREE;
+
     @Convert(converter = InstanceAttrsConverter.class)
     @Column(name = "inst_attrs", columnDefinition = "json")
     private InstanceAttrs instAttrs = InstanceAttrs.empty();
@@ -101,6 +105,7 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public void increaseQuantity(int delta, ItemCarryPolicy itemCarryPolicy) {
+        assertOrdinaryMutationAllowed();
         Guard.minValue(delta, 1, "delta");
 
         int space = itemCarryPolicy.spaceInStack(quantity.value());
@@ -123,6 +128,7 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public void decreaseQuantity(int delta) {
+        assertOrdinaryMutationAllowed();
         Guard.minValue(delta, 1, "delta");
         int next;
         try {
@@ -160,6 +166,7 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public InventoryEntry splitTo(PlayerInventory playerInventory, SlotIndex to, int quantity, ItemCarryPolicy itemCarryPolicy) {
+        assertOrdinaryMutationAllowed();
         if (!itemCarryPolicy.stackable()) {
             throw new DomainException(InventoryError.INVALID_STACK_RULE);
         }
@@ -182,6 +189,70 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public void changeSlot(SlotIndex to) {
+        assertOrdinaryMutationAllowed();
         this.slotIndex = Guard.notNull(to, "slotIndex");
+    }
+
+    public void listForMarket() {
+        transition(InventoryAvailability.FREE, InventoryAvailability.LISTED);
+    }
+
+    public void reserveForTrade() {
+        transition(
+                InventoryAvailability.LISTED,
+                InventoryAvailability.RESERVED_FOR_TRADE
+        );
+    }
+
+    public void releaseTradeReservation() {
+        transition(
+                InventoryAvailability.RESERVED_FOR_TRADE,
+                InventoryAvailability.LISTED
+        );
+    }
+
+    public void releaseListing() {
+        transition(InventoryAvailability.LISTED, InventoryAvailability.FREE);
+    }
+
+    public void beginTransfer() {
+        transition(
+                InventoryAvailability.RESERVED_FOR_TRADE,
+                InventoryAvailability.TRANSFER_PROCESSING
+        );
+    }
+
+    void markEquipped() {
+        transition(InventoryAvailability.FREE, InventoryAvailability.EQUIPPED);
+    }
+
+    void releaseEquipped() {
+        transition(InventoryAvailability.EQUIPPED, InventoryAvailability.FREE);
+    }
+
+    boolean isFreeForOrdinaryStacking() {
+        return availability == InventoryAvailability.FREE;
+    }
+
+    void assertOrdinaryMutationAllowed() {
+        if (availability != InventoryAvailability.FREE) {
+            throw new DomainException(InventoryError.INVENTORY_ENTRY_UNAVAILABLE);
+        }
+    }
+
+    void assertAvailability(InventoryAvailability expected) {
+        if (availability != expected) {
+            throw new DomainException(
+                    InventoryError.INVALID_AVAILABILITY_TRANSITION
+            );
+        }
+    }
+
+    private void transition(
+            InventoryAvailability expected,
+            InventoryAvailability next
+    ) {
+        assertAvailability(expected);
+        availability = next;
     }
 }

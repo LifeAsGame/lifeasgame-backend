@@ -1,7 +1,9 @@
 package online.lifeasgame.character.application;
 
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.inventory.application.InventoryAvailabilityService;
 import online.lifeasgame.inventory.application.InventoryQueryService;
+import online.lifeasgame.inventory.application.internal.InventoryEquipmentAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +33,7 @@ class EquipmentArchitectureTest {
                             PlayerEquipmentReader.class,
                             EquipmentSlotReader.class,
                             InventoryEquipmentReadApi.class,
+                            InventoryEquipmentAvailabilityApi.class,
                             CurrentPlayerAccessor.class
                     );
             Set<Class<?>> inventoryDependencies = Arrays.stream(
@@ -41,7 +44,10 @@ class EquipmentArchitectureTest {
                     ))
                     .collect(Collectors.toSet());
             assertThat(inventoryDependencies)
-                    .containsExactlyInAnyOrder(InventoryEquipmentReadApi.class);
+                    .containsExactlyInAnyOrder(
+                            InventoryEquipmentReadApi.class,
+                            InventoryEquipmentAvailabilityApi.class
+                    );
         }
     }
 
@@ -56,6 +62,21 @@ class EquipmentArchitectureTest {
                     .isAssignableFrom(InventoryQueryService.class)).isTrue();
             assertThat(Arrays.stream(
                             InventoryQueryService.class.getDeclaredFields()
+                    ).map(Field::getType)
+                    .noneMatch(type -> type.getPackageName().startsWith(
+                            "online.lifeasgame.character"
+                    ))).isTrue();
+        }
+
+        @Test
+        @DisplayName("availability service도 Character 의존 없이 provider boundary를 구현한다")
+        void ownsAvailabilityWithoutCycle() {
+            assertThat(InventoryEquipmentAvailabilityApi.class
+                    .isAssignableFrom(InventoryAvailabilityService.class))
+                    .isTrue();
+            assertThat(Arrays.stream(
+                            InventoryAvailabilityService.class
+                                    .getDeclaredFields()
                     ).map(Field::getType)
                     .noneMatch(type -> type.getPackageName().startsWith(
                             "online.lifeasgame.character"
