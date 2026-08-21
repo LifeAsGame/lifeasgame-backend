@@ -25,11 +25,15 @@ class PlayerEquipmentWriter {
         return repository.save(playerEquipment);
     }
 
-    public PlayerEquipment equip(Long playerId, Long slotId, Long itemInstanceId) {
+    public EquipmentReplacement equip(Long playerId, Long slotId, Long itemInstanceId) {
         PlayerEquipment playerEquipment = getByPlayerIdAndSlotIdForUpdate(playerId, slotId);
+        Long previousItemInstanceId = playerEquipment.getItemInstanceId();
         playerEquipment.equip(itemInstanceId);
         try {
-            return repository.saveAndFlush(playerEquipment);
+            return new EquipmentReplacement(
+                    repository.saveAndFlush(playerEquipment),
+                    previousItemInstanceId
+            );
         } catch (DataIntegrityViolationException exception) {
             if (isEquippedItemConflict(exception)) {
                 throw new DomainException(
@@ -42,9 +46,17 @@ class PlayerEquipmentWriter {
         }
     }
 
-    public void unEquip(Long playerId, Long slotId) {
+    public Long unEquip(Long playerId, Long slotId) {
         PlayerEquipment playerEquipment = getByPlayerIdAndSlotIdForUpdate(playerId, slotId);
+        Long previousItemInstanceId = playerEquipment.getItemInstanceId();
         playerEquipment.unEquip();
+        return previousItemInstanceId;
+    }
+
+    record EquipmentReplacement(
+            PlayerEquipment equipment,
+            Long previousItemInstanceId
+    ) {
     }
 
     private PlayerEquipment getByPlayerIdAndSlotIdForUpdate(Long playerId, Long slotId) {

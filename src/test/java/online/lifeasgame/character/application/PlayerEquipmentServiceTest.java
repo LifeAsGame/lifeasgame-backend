@@ -7,6 +7,7 @@ import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.inventory.application.internal.InventoryEquipmentAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ class PlayerEquipmentServiceTest {
     private static final Long PLAYER_ID = 262L;
     private static final Long SLOT_ID = 21L;
     private static final Long ITEM_INSTANCE_ID = 31L;
+    private static final Long PREVIOUS_ITEM_INSTANCE_ID = 30L;
 
     @Mock
     private PlayerEquipmentWriter writer;
@@ -48,6 +50,9 @@ class PlayerEquipmentServiceTest {
     private InventoryEquipmentReadApi inventoryEquipmentReadApi;
 
     @Mock
+    private InventoryEquipmentAvailabilityApi inventoryEquipmentAvailabilityApi;
+
+    @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
     private PlayerEquipmentService service;
@@ -59,6 +64,7 @@ class PlayerEquipmentServiceTest {
                 reader,
                 slotReader,
                 inventoryEquipmentReadApi,
+                inventoryEquipmentAvailabilityApi,
                 currentPlayerAccessor
         );
         given(currentPlayerAccessor.currentPlayerIdOrThrow())
@@ -89,7 +95,10 @@ class PlayerEquipmentServiceTest {
                     ITEM_INSTANCE_ID
             )).willReturn(item);
             given(writer.equip(PLAYER_ID, SLOT_ID, ITEM_INSTANCE_ID))
-                    .willReturn(equipment);
+                    .willReturn(replacement(
+                            equipment,
+                            PREVIOUS_ITEM_INSTANCE_ID
+                    ));
 
             var result = service.equip(command(SLOT_ID, ITEM_INSTANCE_ID));
 
@@ -100,7 +109,8 @@ class PlayerEquipmentServiceTest {
                     slotReader,
                     inventoryEquipmentReadApi,
                     reader,
-                    writer
+                    writer,
+                    inventoryEquipmentAvailabilityApi
             );
             order.verify(currentPlayerAccessor).currentPlayerIdOrThrow();
             order.verify(slotReader).getByIdOrThrow(SLOT_ID);
@@ -117,6 +127,12 @@ class PlayerEquipmentServiceTest {
                     SLOT_ID,
                     ITEM_INSTANCE_ID
             );
+            order.verify(inventoryEquipmentAvailabilityApi)
+                    .replaceEquippedItem(
+                            PLAYER_ID,
+                            PREVIOUS_ITEM_INSTANCE_ID,
+                            ITEM_INSTANCE_ID
+                    );
         }
 
         @Test
@@ -137,23 +153,33 @@ class PlayerEquipmentServiceTest {
                     secondItemId
             )).willReturn(item(secondItemId, "ARMOR", "HELMET"));
             given(writer.equip(PLAYER_ID, SLOT_ID, ITEM_INSTANCE_ID))
-                    .willReturn(PlayerEquipment.create(
+                    .willReturn(replacement(PlayerEquipment.create(
                             PLAYER_ID,
                             SLOT_ID,
                             ITEM_INSTANCE_ID
-                    ));
+                    ), null));
             given(writer.equip(PLAYER_ID, secondSlotId, secondItemId))
-                    .willReturn(PlayerEquipment.create(
+                    .willReturn(replacement(PlayerEquipment.create(
                             PLAYER_ID,
                             secondSlotId,
                             secondItemId
-                    ));
+                    ), null));
 
             service.equip(command(SLOT_ID, ITEM_INSTANCE_ID));
             service.equip(command(secondSlotId, secondItemId));
 
             verify(writer).equip(PLAYER_ID, SLOT_ID, ITEM_INSTANCE_ID);
             verify(writer).equip(PLAYER_ID, secondSlotId, secondItemId);
+            verify(inventoryEquipmentAvailabilityApi).replaceEquippedItem(
+                    PLAYER_ID,
+                    null,
+                    ITEM_INSTANCE_ID
+            );
+            verify(inventoryEquipmentAvailabilityApi).replaceEquippedItem(
+                    PLAYER_ID,
+                    null,
+                    secondItemId
+            );
         }
     }
 
@@ -185,7 +211,7 @@ class PlayerEquipmentServiceTest {
                     PLAYER_ID,
                     ITEM_INSTANCE_ID
             );
-            verifyNoInteractions(writer);
+            verifyNoInteractions(writer, inventoryEquipmentAvailabilityApi);
         }
     }
 
@@ -221,20 +247,27 @@ class PlayerEquipmentServiceTest {
                             PlayerEquipmentError.ALREADY_EQUIPPED_ITEM
                     )
             );
-            verifyNoInteractions(writer);
+            verifyNoInteractions(writer, inventoryEquipmentAvailabilityApi);
         }
     }
 
     @Nested
-    @DisplayName("legacy 장착을 해제할 때")
-    class UnequipLegacyItem {
+    @DisplayName("장착을 해제할 때")
+    class UnequipItem {
 
         @Test
-        @DisplayName("slot compatibility나 Inventory ownership을 다시 검증하지 않는다")
-        void unequipsWithoutNewValidation() {
+        @DisplayName("equipment row 해제 후 Inventory availability를 FREE로 돌린다")
+        void releasesInventoryAvailability() {
+            given(writer.unEquip(PLAYER_ID, SLOT_ID))
+                    .willReturn(ITEM_INSTANCE_ID);
+
             service.unEquip(SLOT_ID);
 
             verify(writer).unEquip(PLAYER_ID, SLOT_ID);
+            verify(inventoryEquipmentAvailabilityApi).releaseEquippedItem(
+                    PLAYER_ID,
+                    ITEM_INSTANCE_ID
+            );
             verifyNoInteractions(slotReader, inventoryEquipmentReadApi, reader);
         }
     }
@@ -261,6 +294,16 @@ class PlayerEquipmentServiceTest {
                 category,
                 type,
                 null
+        );
+    }
+
+    private PlayerEquipmentWriter.EquipmentReplacement replacement(
+            PlayerEquipment equipment,
+            Long previousItemInstanceId
+    ) {
+        return new PlayerEquipmentWriter.EquipmentReplacement(
+                equipment,
+                previousItemInstanceId
         );
     }
 }

@@ -152,7 +152,8 @@ public class PlayerInventory extends AbstractTime {
                         entry.getItemId(),
                         entry.isBound(),
                         safeAttrs(entry.getInstAttrs()),
-                        entry.getQuantity().value()
+                        entry.getQuantity().value(),
+                        entry.isFreeForOrdinaryStacking()
                 ))
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
@@ -171,7 +172,8 @@ public class PlayerInventory extends AbstractTime {
 
             for (int index = 0; index < simulated.size() && remaining > 0; index++) {
                 SimulatedStack stack = simulated.get(index);
-                if (!Objects.equals(stack.itemId(), policy.itemId())
+                if (!stack.mergeEligible()
+                        || !Objects.equals(stack.itemId(), policy.itemId())
                         || !policy.sameStackKey(
                         stack.bound(),
                         stack.attrs(),
@@ -204,7 +206,8 @@ public class PlayerInventory extends AbstractTime {
                         policy.itemId(),
                         addition.bound(),
                         attrs,
-                        put
+                        put,
+                        true
                 ));
                 remaining -= put;
             }
@@ -215,10 +218,17 @@ public class PlayerInventory extends AbstractTime {
             Long itemId,
             boolean bound,
             Map<String, Object> attrs,
-            int quantity
+            int quantity,
+            boolean mergeEligible
     ) {
         private SimulatedStack withQuantity(int nextQuantity) {
-            return new SimulatedStack(itemId, bound, attrs, nextQuantity);
+            return new SimulatedStack(
+                    itemId,
+                    bound,
+                    attrs,
+                    nextQuantity,
+                    mergeEligible
+            );
         }
     }
 
@@ -266,6 +276,9 @@ public class PlayerInventory extends AbstractTime {
                 .orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
         InventoryEntry toEntry = findBySlot(to)
                 .orElseThrow(() -> new DomainException(InventoryError.SLOT_EMPTY));
+
+        fromEntry.assertOrdinaryMutationAllowed();
+        toEntry.assertOrdinaryMutationAllowed();
 
         if (!fromEntry.canMergeWith(toEntry, policy)) {
             throw new DomainException(InventoryError.MERGE_NOT_COMPATIBLE);
@@ -321,11 +334,45 @@ public class PlayerInventory extends AbstractTime {
         return Collections.unmodifiableList(entries);
     }
 
+    public InventoryEntry getEntryByIdOrThrow(Long inventoryEntryId) {
+        return entries.stream()
+                .filter(entry -> Objects.equals(
+                        entry.getId(),
+                        inventoryEntryId
+                ))
+                .findFirst()
+                .orElseThrow(() -> new DomainException(
+                        InventoryError.INVENTORY_ENTRY_NOT_FOUND
+                ));
+    }
+
+    public void replaceEquippedEntry(
+            Long previousInventoryEntryId,
+            Long inventoryEntryId
+    ) {
+        InventoryEntry next = getEntryByIdOrThrow(inventoryEntryId);
+        InventoryEntry previous = previousInventoryEntryId == null
+                ? null
+                : getEntryByIdOrThrow(previousInventoryEntryId);
+
+        next.assertAvailability(InventoryAvailability.FREE);
+        if (previous != null) {
+            previous.assertAvailability(InventoryAvailability.EQUIPPED);
+            previous.releaseEquipped();
+        }
+        next.markEquipped();
+    }
+
+    public void releaseEquippedEntry(Long inventoryEntryId) {
+        getEntryByIdOrThrow(inventoryEntryId).releaseEquipped();
+    }
+
     private List<InventoryEntry> stacksOf(ItemCarryPolicy policy, boolean bound, InstanceAttrs attrs) {
         Map<String, Object> target = (attrs == null) ? Map.of() : attrs.attrs();
         return entries.stream()
                 .filter(
-                        inventoryEntry -> Objects.equals(inventoryEntry.getItemId(), policy.itemId())
+                        inventoryEntry -> inventoryEntry.isFreeForOrdinaryStacking()
+                                && Objects.equals(inventoryEntry.getItemId(), policy.itemId())
                                 && policy.sameStackKey(
                                 inventoryEntry.isBound(),
                                 safeAttrs(inventoryEntry.getInstAttrs()),

@@ -24,7 +24,7 @@ public class InventoryService {
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
         Item item = itemReader.getByIdOrThrow(command.itemId());
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
 
         List<SlotIndex> slotIndexes = playerInventory.add(
                 ItemCarryPolicy.from(item),
@@ -45,7 +45,7 @@ public class InventoryService {
 
     @Transactional
     public void remove(Long playerId, InventoryCommand.Remove command) {
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
         playerInventory.remove(
                 SlotIndex.of(command.slotIndex()),
                 command.quantity()
@@ -54,7 +54,7 @@ public class InventoryService {
 
     @Transactional
     public void move(Long playerId, InventoryCommand.Move command) {
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
         playerInventory.moveWithin(
                 SlotIndex.of(command.from()),
                 SlotIndex.of(command.to())
@@ -71,7 +71,7 @@ public class InventoryService {
         SlotIndex from = SlotIndex.of(command.from());
         SlotIndex to = SlotIndex.of(command.to());
 
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
         InventoryEntry fromEntry = playerInventory.getEntry(from);
 
         Item item = itemReader.getByIdOrThrow(fromEntry.getItemId());
@@ -87,7 +87,7 @@ public class InventoryService {
 
     @Transactional
     public InventoryResult.Slot split(Long playerId, InventoryCommand.Split command) {
-        PlayerInventory playerInventory = inventoryReader.getByPlayerIdOrThrow(playerId);
+        PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
         InventoryEntry inventoryEntry = playerInventory.getEntry(SlotIndex.of(command.from()));
 
         Item item = itemReader.getByIdOrThrow(inventoryEntry.getItemId());
