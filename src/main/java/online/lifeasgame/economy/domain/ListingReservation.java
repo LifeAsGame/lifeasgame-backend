@@ -121,7 +121,7 @@ public class ListingReservation extends AbstractTime {
         close(ListingReservationState.EXPIRED);
     }
 
-    public void consume(Long buyerId, String reservationToken, Instant now) {
+    public void validatePurchase(Long buyerId, String reservationToken, Instant now) {
         if (isExpiredAt(now)) {
             throw new DomainException(EconomyError.LISTING_RESERVATION_EXPIRED);
         }
@@ -134,6 +134,10 @@ public class ListingReservation extends AbstractTime {
         if (!token.value().equals(reservationToken)) {
             throw new DomainException(EconomyError.INVALID_RESERVATION_TOKEN);
         }
+    }
+
+    public void consume(Long buyerId, String reservationToken, Instant now) {
+        validatePurchase(buyerId, reservationToken, now);
         close(ListingReservationState.CONSUMED);
     }
 

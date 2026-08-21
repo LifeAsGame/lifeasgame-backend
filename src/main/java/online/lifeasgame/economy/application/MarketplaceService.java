@@ -99,6 +99,14 @@ public class MarketplaceService {
         }
 
         var activeReservation = listingReservationReader.findActiveForUpdate(listing.getId());
+        if (activeReservation.isEmpty() && listing.getSaleQuantity() != null) {
+            throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
+        }
+        activeReservation.ifPresent(reservation -> reservation.validatePurchase(
+                buyerId,
+                command.reservationToken(),
+                now
+        ));
 
         Wallet buyerWallet = activeReservation.isPresent()
                 ? lockWallet(buyerId)
@@ -110,6 +118,10 @@ public class MarketplaceService {
             reservation.consume(buyerId, command.reservationToken(), now);
             buyerWallet.commitHold(reservation.getWalletHoldId());
             listingReservationWriter.save(reservation);
+            inventoryMarketAvailabilityApi.beginTransfer(
+                    listing.getSellerPlayerId(),
+                    listing.getItemInstanceId()
+            );
         } else if (listing.getStatus() == ListingStatus.RESERVED) {
             if (listing.getReservationExpiresAt() != null && now.isAfter(listing.getReservationExpiresAt())) {
                 throw new DomainException(EconomyError.LISTING_RESERVATION_EXPIRED);

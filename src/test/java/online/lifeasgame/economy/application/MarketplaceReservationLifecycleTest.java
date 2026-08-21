@@ -96,6 +96,102 @@ class MarketplaceReservationLifecycleTest {
     }
 
     @Nested
+    @DisplayName("구매자가 Listing 구매를 완료하면")
+    class Purchase {
+
+        @Test
+        @DisplayName("canonical ACTIVE 예약을 소비하고 Inventory transfer를 시작한 뒤 Listing을 판매 완료한다")
+        void purchasesCanonicalReservation() {
+            Listing listing = listing();
+            Wallet buyerWallet = fundedWallet();
+            Wallet sellerWallet = Wallet.open(SELLER_ID);
+            Instant now = Instant.now();
+            String holdId = buyerWallet.placeHold(listing.getPrice(), "test", now, 60);
+            ListingReservation reservation = ListingReservation.active(
+                    LISTING_ID,
+                    BUYER_ID,
+                    holdId,
+                    now,
+                    60
+            );
+            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
+            given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.of(reservation));
+            given(walletReader.getByOwnerIdForUpdate(BUYER_ID)).willReturn(Optional.of(buyerWallet));
+            given(walletReader.getByOwnerIdForUpdate(SELLER_ID)).willReturn(Optional.of(sellerWallet));
+            given(tradeWriter.create(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+            service.purchase(BUYER_ID, new EconomyCommand.PurchaseListing(
+                    LISTING_ID,
+                    reservation.getReservationToken(),
+                    "purchase-296"
+            ));
+
+            assertThat(reservation.getState()).isEqualTo(ListingReservationState.CONSUMED);
+            assertThat(listing.getStatus()).isEqualTo(ListingStatus.SOLD);
+            verify(inventoryApi).beginTransfer(SELLER_ID, ENTRY_ID);
+            verify(listingWriter).create(listing);
+            verify(tradeWriter).create(any());
+        }
+
+        @Test
+        @DisplayName("canonical OPEN Listing에 ACTIVE 예약이 없으면 아무 상태도 변경하지 않고 거절한다")
+        void rejectsCanonicalDirectPurchase() {
+            Listing listing = listing();
+            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
+            given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.purchase(
+                    BUYER_ID,
+                    new EconomyCommand.PurchaseListing(
+                            LISTING_ID,
+                            null,
+                            "direct-296"
+                    )
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(EconomyError.LISTING_NOT_AVAILABLE)
+            );
+
+            assertThat(listing.getStatus()).isEqualTo(ListingStatus.OPEN);
+            verifyNoInteractions(
+                    walletReader,
+                    walletWriter,
+                    listingWriter,
+                    tradeWriter,
+                    inventoryApi
+            );
+        }
+
+        @Test
+        @DisplayName("snapshot이 없는 legacy OPEN Listing만 기존 direct purchase를 유지한다")
+        void preservesLegacyDirectPurchase() {
+            Listing listing = listing();
+            ReflectionTestUtils.setField(listing, "saleQuantity", null);
+            Wallet buyerWallet = fundedWallet();
+            Wallet sellerWallet = Wallet.open(SELLER_ID);
+            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
+            given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.empty());
+            given(walletReader.getByOwnerIdForUpdate(BUYER_ID)).willReturn(Optional.of(buyerWallet));
+            given(walletReader.getByOwnerIdForUpdate(SELLER_ID)).willReturn(Optional.of(sellerWallet));
+            given(tradeWriter.create(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+            service.purchase(BUYER_ID, new EconomyCommand.PurchaseListing(
+                    LISTING_ID,
+                    null,
+                    "legacy-296"
+            ));
+
+            assertThat(listing.getStatus()).isEqualTo(ListingStatus.SOLD);
+            verifyNoInteractions(inventoryApi);
+            verify(tradeWriter).create(any());
+        }
+    }
+
+    @Nested
     @DisplayName("ACTIVE 예약이 만료되면")
     class Expire {
 
