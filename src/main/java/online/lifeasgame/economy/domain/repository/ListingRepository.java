@@ -11,5 +11,4 @@ public interface ListingRepository {
     Optional<Listing> findByIdForUpdate(Long id);
     List<Listing> findByStatus(ListingStatus status);
     List<Listing> findBySellerPlayerId(Long sellerId);
-    List<Listing> findByReservedBy(Long buyerId);
 }

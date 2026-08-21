@@ -102,17 +102,10 @@ public class Listing extends AbstractTime {
         this.price = newPrice;
     }
 
-    public Trade sellTo(Long buyerPlayerId, String token) {
+    public Trade sellTo(Long buyerPlayerId) {
         Guard.notNull(buyerPlayerId, "buyerPlayerId");
-
-        if (status == ListingStatus.OPEN) {
-            Guard.checkState(!sellerPlayerId.equals(buyerPlayerId), "seller cannot buy own listing");
-        } else {
-            Guard.checkState(status == ListingStatus.RESERVED, "listing not available");
-            Guard.checkState(this.reservedBy != null && this.reservedBy.equals(buyerPlayerId), "reserved by other buyer");
-            Guard.checkState(this.reservationToken != null && this.reservationToken.value().equals(token), "invalid token");
-            Guard.notBlank(this.reservedHoldId, "reservedHoldId");
-        }
+        Guard.checkState(status == ListingStatus.OPEN, "listing not available");
+        Guard.checkState(!sellerPlayerId.equals(buyerPlayerId), "seller cannot buy own listing");
         this.status = ListingStatus.SOLD;
         closeActive();
         clearReservation();

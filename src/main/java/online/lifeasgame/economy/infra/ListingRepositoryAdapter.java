@@ -39,8 +39,4 @@ public class ListingRepositoryAdapter implements ListingRepository {
         return jpaListingRepository.findBySellerPlayerId(sellerId);
     }
 
-    @Override
-    public List<Listing> findByReservedBy(Long buyerId) {
-        return jpaListingRepository.findByReservedBy(buyerId);
-    }
 }

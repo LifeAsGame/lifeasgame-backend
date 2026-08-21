@@ -37,7 +37,4 @@ public class ListingReader {
         return repository.findBySellerPlayerId(sellerId);
     }
 
-    public List<Listing> listByReservedBy(Long buyerId) {
-        return repository.findByReservedBy(buyerId);
-    }
 }

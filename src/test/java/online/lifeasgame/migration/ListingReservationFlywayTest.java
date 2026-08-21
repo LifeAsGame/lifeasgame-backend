@@ -5,6 +5,8 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -87,6 +89,51 @@ class ListingReservationFlywayTest {
                 "UPDATE listings SET sale_quantity = 0 WHERE id = ?",
                 listingId
         )).isInstanceOf(DataAccessException.class);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(LegacyHoldMismatch.class)
+    @DisplayName("hold 금융/만료 조건이 불완전하면 환불하고 Listing과 Inventory를 canonical available 상태로 복구한다")
+    void recoversInvalidLegacyReservation(LegacyHoldMismatch mismatch) {
+        jdbc.update("""
+                UPDATE inventory_entries
+                SET availability = 'RESERVED_FOR_TRADE'
+                WHERE id = ?
+                """, entryId);
+        applyMismatch(mismatch);
+
+        flyway(MigrationVersion.fromVersion("27")).migrate();
+
+        assertThat(jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM listing_reservations
+                WHERE listing_id = ? AND state = 'ACTIVE'
+                """, Integer.class, listingId)).isZero();
+        assertThat(jdbc.queryForMap("""
+                SELECT sale_quantity, status, reserved_by,
+                       reservation_token, reservation_expires_at,
+                       reserved_hold_id
+                FROM listings
+                WHERE id = ?
+                """, listingId))
+                .containsEntry("sale_quantity", null)
+                .containsEntry("status", "OPEN")
+                .containsEntry("reserved_by", null)
+                .containsEntry("reservation_token", null)
+                .containsEntry("reservation_expires_at", null)
+                .containsEntry("reserved_hold_id", null);
+        assertThat(jdbc.queryForObject("""
+                SELECT status
+                FROM wallet_holds
+                WHERE hold_id = 'legacy-hold-296'
+                """, String.class)).isEqualTo("CANCELED");
+        assertThat(walletBalance(mismatch.refundCurrency()))
+                .isEqualTo(mismatch.expectedBalance());
+        assertThat(jdbc.queryForObject("""
+                SELECT availability
+                FROM inventory_entries
+                WHERE id = ?
+                """, String.class, entryId)).isEqualTo("LISTED");
     }
 
     private Flyway flyway(MigrationVersion target) {
@@ -184,11 +231,61 @@ class ListingReservationFlywayTest {
                     hold_id, reason, currency, status
                 ) VALUES (
                     80, CURRENT_TIMESTAMP(6),
-                    DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 1 HOUR),
+                    DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 2 HOUR),
                     CURRENT_TIMESTAMP(6), ?, 'legacy-hold-296',
                     'legacy listing reservation', 'GOLD', 'OPEN'
                 )
                 """, walletId);
+    }
+
+    private void applyMismatch(LegacyHoldMismatch mismatch) {
+        switch (mismatch) {
+            case AMOUNT -> jdbc.update("""
+                    UPDATE wallet_holds
+                    SET amount = 70
+                    WHERE hold_id = 'legacy-hold-296'
+                    """);
+            case CURRENCY -> {
+                Long walletId = jdbc.queryForObject(
+                        "SELECT id FROM wallets WHERE owner_id = 296102",
+                        Long.class
+                );
+                jdbc.update("""
+                        INSERT INTO wallet_balances (
+                            amount, created_at, updated_at,
+                            wallet_id, currency
+                        ) VALUES (
+                            20, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
+                            ?, 'GEM'
+                        )
+                        """, walletId);
+                jdbc.update("""
+                        UPDATE wallet_holds
+                        SET currency = 'GEM'
+                        WHERE hold_id = 'legacy-hold-296'
+                        """);
+            }
+            case EXPIRY -> jdbc.update("""
+                    UPDATE wallet_holds hold
+                    JOIN listings listing
+                      ON listing.reserved_hold_id = hold.hold_id
+                    SET hold.expires_at = DATE_SUB(
+                        listing.reservation_expires_at,
+                        INTERVAL 1 SECOND
+                    )
+                    WHERE hold.hold_id = 'legacy-hold-296'
+                    """);
+        }
+    }
+
+    private long walletBalance(String currency) {
+        return jdbc.queryForObject("""
+                SELECT balance.amount
+                FROM wallet_balances balance
+                JOIN wallets wallet ON wallet.id = balance.wallet_id
+                WHERE wallet.owner_id = 296102
+                  AND balance.currency = ?
+                """, Long.class, currency);
     }
 
     private void insertActiveReservation(String token) {
@@ -202,5 +299,27 @@ class ListingReservationFlywayTest {
                     296103, ?, CURRENT_TIMESTAMP(6), 0, ?, 'second-hold-296', 'ACTIVE'
                 )
                 """, listingId, token);
+    }
+
+    private enum LegacyHoldMismatch {
+        AMOUNT("GOLD", 90L),
+        CURRENCY("GEM", 100L),
+        EXPIRY("GOLD", 100L);
+
+        private final String refundCurrency;
+        private final long expectedBalance;
+
+        LegacyHoldMismatch(String refundCurrency, long expectedBalance) {
+            this.refundCurrency = refundCurrency;
+            this.expectedBalance = expectedBalance;
+        }
+
+        String refundCurrency() {
+            return refundCurrency;
+        }
+
+        long expectedBalance() {
+            return expectedBalance;
+        }
     }
 }

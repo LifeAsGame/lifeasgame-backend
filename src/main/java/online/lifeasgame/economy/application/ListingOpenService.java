@@ -28,14 +28,14 @@ public class ListingOpenService {
 
     @Transactional
     public EconomyResult.ListingId open(EconomyCommand.OpenListing command) {
+        Money totalPrice = Money.of(
+                command.price(),
+                Currency.parseStrict(command.currency())
+        );
         Long sellerPlayerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         EntrySnapshot entry = inventoryMarketAvailabilityApi.listWholeEntry(
                 sellerPlayerId,
                 command.inventoryEntryId()
-        );
-        Money totalPrice = Money.of(
-                command.price(),
-                Currency.parseOptional(command.currency(), Currency.GOLD)
         );
         Listing listing = listingWriter.create(Listing.open(
                 sellerPlayerId,

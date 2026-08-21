@@ -67,6 +67,9 @@ FROM listings listing
 JOIN wallet_holds hold
   ON hold.hold_id = listing.reserved_hold_id
  AND hold.status = 'OPEN'
+ AND hold.amount = listing.price
+ AND hold.currency = listing.currency
+ AND hold.expires_at >= listing.reservation_expires_at
 JOIN wallets wallet
   ON wallet.id = hold.wallet_id
  AND wallet.owner_id = listing.reserved_by
@@ -87,6 +90,85 @@ SET listing.status = 'OPEN',
     listing.reservation_expires_at = NULL,
     listing.reserved_hold_id = NULL;
 
+CREATE TEMPORARY TABLE v27_invalid_legacy_holds AS
+SELECT DISTINCT
+    hold.id AS hold_row_id,
+    hold.wallet_id,
+    hold.currency,
+    hold.amount
+FROM listings listing
+JOIN wallet_holds hold
+  ON hold.hold_id = listing.reserved_hold_id
+ AND hold.status = 'OPEN'
+JOIN wallets wallet
+  ON wallet.id = hold.wallet_id
+ AND wallet.owner_id = listing.reserved_by
+LEFT JOIN listing_reservations reservation
+  ON reservation.listing_id = listing.id
+ AND reservation.state = 'ACTIVE'
+WHERE listing.status = 'RESERVED'
+  AND listing.active_flag = 1
+  AND reservation.id IS NULL;
+
+INSERT INTO wallet_balances (
+    amount,
+    created_at,
+    updated_at,
+    wallet_id,
+    currency
+)
+SELECT
+    0,
+    CURRENT_TIMESTAMP(6),
+    CURRENT_TIMESTAMP(6),
+    invalid.wallet_id,
+    invalid.currency
+FROM v27_invalid_legacy_holds invalid
+LEFT JOIN wallet_balances balance
+  ON balance.wallet_id = invalid.wallet_id
+ AND balance.currency = invalid.currency
+WHERE balance.id IS NULL
+GROUP BY invalid.wallet_id, invalid.currency;
+
+CREATE TEMPORARY TABLE v27_invalid_wallet_refunds AS
+SELECT
+    wallet_id,
+    currency,
+    SUM(amount) AS amount
+FROM v27_invalid_legacy_holds
+GROUP BY wallet_id, currency;
+
+UPDATE wallet_balances balance
+JOIN v27_invalid_wallet_refunds refund
+  ON refund.wallet_id = balance.wallet_id
+ AND refund.currency = balance.currency
+JOIN v27_invalid_legacy_holds invalid
+  ON invalid.wallet_id = refund.wallet_id
+ AND invalid.currency = refund.currency
+JOIN wallet_holds hold
+  ON hold.id = invalid.hold_row_id
+ AND hold.status = 'OPEN'
+SET balance.amount = balance.amount + refund.amount,
+    balance.updated_at = CURRENT_TIMESTAMP(6),
+    hold.status = 'CANCELED',
+    hold.updated_at = CURRENT_TIMESTAMP(6);
+
+DROP TEMPORARY TABLE v27_invalid_wallet_refunds;
+DROP TEMPORARY TABLE v27_invalid_legacy_holds;
+
+UPDATE listings listing
+LEFT JOIN listing_reservations reservation
+  ON reservation.listing_id = listing.id
+ AND reservation.state = 'ACTIVE'
+SET listing.status = 'OPEN',
+    listing.reserved_by = NULL,
+    listing.reservation_token = NULL,
+    listing.reservation_expires_at = NULL,
+    listing.reserved_hold_id = NULL
+WHERE listing.status = 'RESERVED'
+  AND listing.active_flag = 1
+  AND reservation.id IS NULL;
+
 UPDATE inventory_entries entry
 JOIN listings listing
   ON listing.item_inst_id = entry.id
@@ -95,6 +177,19 @@ SET entry.availability = 'LISTED'
 WHERE listing.status = 'OPEN'
   AND listing.active_flag = 1
   AND entry.availability = 'FREE';
+
+UPDATE inventory_entries entry
+JOIN listings listing
+  ON listing.item_inst_id = entry.id
+ AND listing.seller_player_id = entry.player_id
+LEFT JOIN listing_reservations reservation
+  ON reservation.listing_id = listing.id
+ AND reservation.state = 'ACTIVE'
+SET entry.availability = 'LISTED'
+WHERE listing.status = 'OPEN'
+  AND listing.active_flag = 1
+  AND reservation.id IS NULL
+  AND entry.availability = 'RESERVED_FOR_TRADE';
 
 UPDATE inventory_entries entry
 JOIN listings listing

@@ -9,6 +9,7 @@ import online.lifeasgame.economy.domain.ListingReservation;
 import online.lifeasgame.economy.domain.ListingReservationState;
 import online.lifeasgame.economy.domain.ListingStatus;
 import online.lifeasgame.economy.domain.Money;
+import online.lifeasgame.economy.domain.ReservationToken;
 import online.lifeasgame.economy.domain.Wallet;
 import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.inventory.application.internal.InventoryMarketAvailabilityApi;
@@ -166,28 +167,89 @@ class MarketplaceReservationLifecycleTest {
         }
 
         @Test
-        @DisplayName("snapshot이 없는 legacy OPEN Listing만 기존 direct purchase를 유지한다")
-        void preservesLegacyDirectPurchase() {
+        @DisplayName("snapshot이 없는 legacy OPEN Listing도 ACTIVE 예약 없이는 거절한다")
+        void rejectsLegacyDirectPurchase() {
             Listing listing = listing();
             ReflectionTestUtils.setField(listing, "saleQuantity", null);
-            Wallet buyerWallet = fundedWallet();
-            Wallet sellerWallet = Wallet.open(SELLER_ID);
             given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
             given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
             given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.empty());
-            given(walletReader.getByOwnerIdForUpdate(BUYER_ID)).willReturn(Optional.of(buyerWallet));
-            given(walletReader.getByOwnerIdForUpdate(SELLER_ID)).willReturn(Optional.of(sellerWallet));
-            given(tradeWriter.create(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-            service.purchase(BUYER_ID, new EconomyCommand.PurchaseListing(
-                    LISTING_ID,
-                    null,
-                    "legacy-296"
-            ));
+            assertThatThrownBy(() -> service.purchase(
+                    BUYER_ID,
+                    new EconomyCommand.PurchaseListing(
+                            LISTING_ID,
+                            null,
+                            "legacy-open-296"
+                    )
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(EconomyError.LISTING_NOT_AVAILABLE)
+            );
 
-            assertThat(listing.getStatus()).isEqualTo(ListingStatus.SOLD);
-            verifyNoInteractions(inventoryApi);
-            verify(tradeWriter).create(any());
+            assertThat(listing.getStatus()).isEqualTo(ListingStatus.OPEN);
+            verifyNoInteractions(
+                    walletReader,
+                    walletWriter,
+                    listingWriter,
+                    tradeWriter,
+                    inventoryApi
+            );
+        }
+
+        @Test
+        @DisplayName("embedded RESERVED legacy Listing도 canonical ACTIVE 예약 없이는 거절한다")
+        void rejectsLegacyEmbeddedReservationPurchase() {
+            Listing listing = listing();
+            ReflectionTestUtils.setField(listing, "saleQuantity", null);
+            ReflectionTestUtils.setField(
+                    listing,
+                    "status",
+                    ListingStatus.RESERVED
+            );
+            ReflectionTestUtils.setField(listing, "reservedBy", BUYER_ID);
+            ReflectionTestUtils.setField(
+                    listing,
+                    "reservationToken",
+                    ReservationToken.of("legacy-token-296")
+            );
+            ReflectionTestUtils.setField(
+                    listing,
+                    "reservationExpiresAt",
+                    Instant.now().plusSeconds(60)
+            );
+            ReflectionTestUtils.setField(
+                    listing,
+                    "reservedHoldId",
+                    "legacy-hold-296"
+            );
+            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
+            given(reservationReader.findActiveForUpdate(LISTING_ID))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.purchase(
+                    BUYER_ID,
+                    new EconomyCommand.PurchaseListing(
+                            LISTING_ID,
+                            "legacy-token-296",
+                            "legacy-reserved-296"
+                    )
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(EconomyError.LISTING_NOT_AVAILABLE)
+            );
+
+            assertThat(listing.getStatus()).isEqualTo(ListingStatus.RESERVED);
+            verifyNoInteractions(
+                    walletReader,
+                    walletWriter,
+                    listingWriter,
+                    tradeWriter,
+                    inventoryApi
+            );
         }
     }
 
@@ -202,6 +264,12 @@ class MarketplaceReservationLifecycleTest {
             Wallet wallet = fundedWallet();
             Instant createdAt = Instant.now().minusSeconds(30);
             String holdId = wallet.placeHold(Money.of(40L, Currency.GOLD), "test", createdAt, 1);
+            String unrelatedHoldId = wallet.placeHold(
+                    Money.of(20L, Currency.GOLD),
+                    "unrelated",
+                    createdAt,
+                    1
+            );
             ListingReservation reservation = ListingReservation.active(
                     LISTING_ID,
                     BUYER_ID,
@@ -218,6 +286,8 @@ class MarketplaceReservationLifecycleTest {
 
             assertThat(reservation.getState()).isEqualTo(ListingReservationState.EXPIRED);
             assertThat(listing.getStatus()).isEqualTo(ListingStatus.OPEN);
+            assertThat(wallet.getBalance(Currency.GOLD).available()).isEqualTo(80L);
+            wallet.cancelHold(unrelatedHoldId);
             assertThat(wallet.getBalance(Currency.GOLD).available()).isEqualTo(100L);
             verify(inventoryApi).releaseTradeReservation(SELLER_ID, ENTRY_ID);
             verify(reservationWriter).save(reservation);

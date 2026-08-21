@@ -21,5 +21,4 @@ public interface JpaListingRepository extends JpaRepository<Listing, Long> {
 
     List<Listing> findBySellerPlayerId(Long sellerId);
 
-    List<Listing> findByReservedBy(Long buyerId);
 }

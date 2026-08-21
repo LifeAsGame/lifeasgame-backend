@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -98,49 +97,29 @@ public class MarketplaceService {
             throw new DomainException(EconomyError.CANNOT_PURCHASE_OWN_LISTING);
         }
 
-        var activeReservation = listingReservationReader.findActiveForUpdate(listing.getId());
-        if (activeReservation.isEmpty() && listing.getSaleQuantity() != null) {
-            throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
-        }
-        activeReservation.ifPresent(reservation -> reservation.validatePurchase(
+        ListingReservation reservation = listingReservationReader
+                .findActiveForUpdate(listing.getId())
+                .orElseThrow(() -> new DomainException(
+                        EconomyError.LISTING_NOT_AVAILABLE
+                ));
+        reservation.validatePurchase(
                 buyerId,
                 command.reservationToken(),
                 now
-        ));
+        );
 
-        Wallet buyerWallet = activeReservation.isPresent()
-                ? lockWallet(buyerId)
-                : lockOrCreateWallet(buyerId);
+        Wallet buyerWallet = lockWallet(buyerId);
         Wallet sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
 
-        if (activeReservation.isPresent()) {
-            ListingReservation reservation = activeReservation.get();
-            reservation.consume(buyerId, command.reservationToken(), now);
-            buyerWallet.commitHold(reservation.getWalletHoldId());
-            listingReservationWriter.save(reservation);
-            inventoryMarketAvailabilityApi.beginTransfer(
-                    listing.getSellerPlayerId(),
-                    listing.getItemInstanceId()
-            );
-        } else if (listing.getStatus() == ListingStatus.RESERVED) {
-            if (listing.getReservationExpiresAt() != null && now.isAfter(listing.getReservationExpiresAt())) {
-                throw new DomainException(EconomyError.LISTING_RESERVATION_EXPIRED);
-            }
-            if (!buyerId.equals(listing.getReservedBy())) {
-                throw new DomainException(EconomyError.LISTING_RESERVED_OTHER);
-            }
-            if (listing.getReservationToken() == null
-                    || !listing.getReservationToken().value().equals(command.reservationToken())) {
-                throw new DomainException(EconomyError.INVALID_RESERVATION_TOKEN);
-            }
-            buyerWallet.commitHold(listing.getReservedHoldId());
-        } else if (listing.getStatus() == ListingStatus.OPEN) {
-            buyerWallet.withdraw(listing.getPrice());
-        } else {
-            throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
-        }
+        reservation.consume(buyerId, command.reservationToken(), now);
+        buyerWallet.commitHold(reservation.getWalletHoldId());
+        listingReservationWriter.save(reservation);
+        inventoryMarketAvailabilityApi.beginTransfer(
+                listing.getSellerPlayerId(),
+                listing.getItemInstanceId()
+        );
 
-        Trade trade = listing.sellTo(buyerId, command.reservationToken());
+        Trade trade = listing.sellTo(buyerId);
 
         sellerWallet.deposit(trade.getSellerProceeds());
 
@@ -204,7 +183,7 @@ public class MarketplaceService {
             ListingReservation reservation = activeReservation.get();
             reservation.expire(now);
             Wallet wallet = lockWallet(reservation.getBuyerPlayerId());
-            wallet.expireHolds(now);
+            wallet.expireHold(reservation.getWalletHoldId(), now);
             inventoryMarketAvailabilityApi.releaseTradeReservation(
                     listing.getSellerPlayerId(),
                     listing.getItemInstanceId()
@@ -235,20 +214,14 @@ public class MarketplaceService {
 
     @Transactional(readOnly = true)
     public EconomyResult.PlayerReservations listReservations(Long buyerId) {
-        List<EconomyResult.ListingReservation> reservations = new ArrayList<>();
-        // ponytail: this legacy unpaged endpoint uses one Listing lookup per active reservation;
-        // batch when reservation list volume or pagination makes it measurable.
-        for (ListingReservation reservation : listingReservationReader.listActiveByBuyer(buyerId)) {
-            Listing listing = listingReader.get(reservation.getListingId());
-            reservations.add(EconomyResult.ListingReservation.from(
-                    listing,
-                    reservation.getExpiresAt()
-            ));
-        }
-        listingReader.listByReservedBy(buyerId).stream()
-                .map(EconomyResult.ListingReservation::from)
-                .forEach(reservations::add);
-        return new EconomyResult.PlayerReservations(List.copyOf(reservations));
+        return new EconomyResult.PlayerReservations(
+                listingReservationReader.listActiveByBuyer(buyerId).stream()
+                        .map(reservation -> EconomyResult.ListingReservation.from(
+                                listingReader.get(reservation.getListingId()),
+                                reservation.getExpiresAt()
+                        ))
+                        .toList()
+        );
     }
 
     @Transactional(readOnly = true)

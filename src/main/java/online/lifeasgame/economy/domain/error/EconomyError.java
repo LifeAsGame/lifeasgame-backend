@@ -18,6 +18,7 @@ public enum EconomyError implements ErrorCode {
     HOLD_NOT_FOUND("ECON-HOLD-NOT-FOUND", "Hold not found", 404),
     CANNOT_PURCHASE_OWN_LISTING("ECON-CANNOT-PURCHASE-OWN", "Cannot purchase own listing", 400),
     INVALID_RESERVATION_TOKEN("ECON-INVALID-RESERVATION-TOKEN", "Invalid reservation token", 400),
+    INVALID_CURRENCY("ECON-INVALID-CURRENCY", "Invalid currency", 400),
     INVALID_LISTING_STATUS("ECON-INVALID-LISTING-STATUS", "Invalid listing status", 400),
     ;
 
