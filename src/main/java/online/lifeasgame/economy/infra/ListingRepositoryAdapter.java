@@ -1,6 +1,5 @@
 package online.lifeasgame.economy.infra;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +30,6 @@ public class ListingRepositoryAdapter implements ListingRepository {
     }
 
     @Override
-    public List<Listing> findByStatusAndReservationExpiresAtBefore(ListingStatus status, Instant expiresAt) {
-        return jpaListingRepository.findByStatusAndReservationExpiresAtBefore(status, expiresAt);
-    }
-
-    @Override
     public List<Listing> findByStatus(ListingStatus status) {
         return jpaListingRepository.findByStatus(status);
     }
@@ -45,8 +39,4 @@ public class ListingRepositoryAdapter implements ListingRepository {
         return jpaListingRepository.findBySellerPlayerId(sellerId);
     }
 
-    @Override
-    public List<Listing> findByReservedBy(Long buyerId) {
-        return jpaListingRepository.findByReservedBy(buyerId);
-    }
 }

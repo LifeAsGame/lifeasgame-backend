@@ -65,8 +65,7 @@ public final class EconomyWebMapper {
 
     public static EconomyCommand.OpenListing toOpenListingCommand(EconomyRequest.OpenListing request) {
         return new EconomyCommand.OpenListing(
-                request.itemInstanceId(),
-                request.itemId(),
+                request.inventoryEntryId(),
                 request.price(),
                 request.currency()
         );

@@ -60,14 +60,6 @@ public final class EconomyResult {
     }
 
     public record PlayerReservations(List<ListingReservation> reservations) {
-        public static PlayerReservations fromList(List<Listing> listings) {
-            return new PlayerReservations (
-                    listings.stream()
-                            .map(ListingReservation::from)
-                            .toList()
-            );
-        }
-
     }
 
     public record ShopPurchases(List<ShopPurchaseView> purchases) {
@@ -123,13 +115,13 @@ public final class EconomyResult {
     }
 
     public record ListingReservation(Long listingId, Long itemId, long price, String currency, Instant expiresAt) {
-        public static ListingReservation from(Listing listing) {
+        public static ListingReservation from(Listing listing, Instant expiresAt) {
             return new ListingReservation(
                     listing.getId(),
                     listing.getItemId(),
                     listing.getPrice().amount(),
                     listing.getPrice().currency().name(),
-                    listing.getReservationExpiresAt()
+                    expiresAt
             );
         }
     }

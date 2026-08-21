@@ -28,7 +28,6 @@ public class ShopService {
     private final ShopPurchaseWriter shopPurchaseWriter;
     private final WalletReader walletReader;
     private final WalletWriter walletWriter;
-    private final WalletHoldReader walletHoldReader;
     private final IdempotencyKeyStore idempotencyKeyStore;
     private final ShopReservationLimiter shopReservationLimiter;
     private final DomainEventPublisher domainEventPublisher;
@@ -191,15 +190,12 @@ public class ShopService {
         Instant now = Instant.now();
         List<ShopPurchase> purchases = shopPurchaseReader.findExpiringBefore(now);
         for (ShopPurchase purchase : purchases) {
-            purchase.expire(now);
             String holdId = purchase.getWalletHoldId();
+            purchase.expire(now);
 
             if (holdId != null) {
-                walletHoldReader.findByHoldId(holdId)
-                        .ifPresent(hold -> {
-                            Wallet wallet = lockOrCreateWallet(hold.getWallet().getOwnerId());
-                            wallet.expireHolds(now);
-                        });
+                Wallet wallet = lockOrCreateWallet(purchase.getPlayerId());
+                wallet.expireHold(holdId, now);
             }
 
             shopPurchaseWriter.create(purchase);

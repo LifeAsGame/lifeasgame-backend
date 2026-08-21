@@ -2,7 +2,9 @@ package online.lifeasgame.economy.domain;
 
 import jakarta.persistence.*;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.time.Instant;
@@ -87,20 +89,24 @@ public class Wallet extends AbstractTime {
         walletHold.cancel();
     }
 
-    public void expireHolds(Instant now) {
-        for (WalletHold walletHold : holds) {
-            if (walletHold.isOpen() && now.isAfter(walletHold.getExpiresAt())) {
-                balance(walletHold.getCurrency()).increase(walletHold.getAmount());
-                walletHold.expire();
-            }
-        }
+    public void expireHold(String holdId, Instant now) {
+        WalletHold walletHold = requireHold(holdId);
+        Guard.checkState(walletHold.isOpen(), "hold not open");
+        Guard.checkState(
+                Guard.notNull(now, "now").isAfter(walletHold.getExpiresAt()),
+                "hold not expired"
+        );
+        balance(walletHold.getCurrency()).increase(walletHold.getAmount());
+        walletHold.expire();
     }
 
     private WalletHold requireHold(String holdId){
         return holds.stream()
                 .filter(h -> Objects.equals(h.getHoldId(), holdId))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new DomainException(
+                        EconomyError.HOLD_NOT_FOUND
+                ));
     }
 
     private WalletBalance balance(Currency currency){
