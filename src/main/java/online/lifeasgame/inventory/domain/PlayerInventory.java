@@ -367,6 +367,144 @@ public class PlayerInventory extends AbstractTime {
         getEntryByIdOrThrow(inventoryEntryId).releaseEquipped();
     }
 
+    public MarketplaceTransfer transferWholeMarketplaceEntryTo(
+            PlayerInventory buyerInventory,
+            Long inventoryEntryId,
+            Long expectedItemId,
+            int expectedQuantity,
+            ItemCarryPolicy policy
+    ) {
+        InventoryEntry source = getEntryByIdOrThrow(inventoryEntryId);
+        if (buyerInventory == this
+                || !Objects.equals(source.getItemId(), expectedItemId)
+                || source.getQuantity().value() != expectedQuantity
+                || !Objects.equals(policy.itemId(), expectedItemId)
+                || source.getRarity() != policy.rarity()) {
+            throw new DomainException(
+                    InventoryError.MARKET_TRANSFER_CONFLICT
+            );
+        }
+        source.assertAvailability(InventoryAvailability.RESERVED_FOR_TRADE);
+        buyerInventory.assertCanReceiveMarketplaceTransfer(source, policy);
+
+        source.beginTransfer();
+        entries.remove(source);
+        buyerInventory.receiveMarketplaceTransfer(source, policy);
+
+        return new MarketplaceTransfer(
+                inventoryEntryId,
+                source.getItemId(),
+                source.getQuantity().value()
+        );
+    }
+
+    public record MarketplaceTransfer(
+            Long sourceInventoryEntryId,
+            Long itemId,
+            int quantity
+    ) {
+    }
+
+    private void assertCanReceiveMarketplaceTransfer(
+            InventoryEntry source,
+            ItemCarryPolicy policy
+    ) {
+        policy.assertValidInitialQuantity(source.getQuantity().value());
+        Integer durability = source.getDurability() == null
+                ? null
+                : source.getDurability().value();
+        if (!Objects.equals(
+                durability,
+                policy.normalizedDurability(durability)
+        )) {
+            throw new DomainException(
+                    InventoryError.MARKET_TRANSFER_CONFLICT
+            );
+        }
+
+        int remaining = source.getQuantity().value();
+        for (InventoryEntry stack : transferStacksOf(source, policy)) {
+            remaining -= policy.clampAddToLimit(
+                    stack.getQuantity().value(),
+                    remaining
+            );
+        }
+        if (entries.size() + policy.estimateNewStacksNeeded(remaining)
+                > capacitySlots) {
+            throw new DomainException(InventoryError.INVENTORY_FULL);
+        }
+    }
+
+    private void receiveMarketplaceTransfer(
+            InventoryEntry source,
+            ItemCarryPolicy policy
+    ) {
+        int remaining = source.getQuantity().value();
+        for (InventoryEntry stack : transferStacksOf(source, policy)) {
+            if (remaining == 0) {
+                break;
+            }
+            int added = policy.clampAddToLimit(
+                    stack.getQuantity().value(),
+                    remaining
+            );
+            if (added > 0) {
+                stack.increaseQuantity(added, policy);
+                remaining -= added;
+            }
+        }
+
+        while (remaining > 0) {
+            int put = policy.stackable()
+                    ? Math.min(policy.maxStack(), remaining)
+                    : 1;
+            entries.add(InventoryEntry.transferred(
+                    this,
+                    nextFreeSlot(),
+                    policy,
+                    Quantity.of(put),
+                    source.getRarity(),
+                    source.getDurability(),
+                    source.isBound(),
+                    source.getInstAttrs()
+            ));
+            remaining -= put;
+        }
+
+        recordEvent(InventoryItemAdded.of(
+                playerId,
+                source.getItemId(),
+                source.getRarity().name(),
+                policy.stackable(),
+                source.isBound(),
+                source.getQuantity().value()
+        ));
+    }
+
+    private List<InventoryEntry> transferStacksOf(
+            InventoryEntry source,
+            ItemCarryPolicy policy
+    ) {
+        return entries.stream()
+                .filter(entry -> entry.isFreeForOrdinaryStacking()
+                        && Objects.equals(
+                        entry.getItemId(),
+                        source.getItemId()
+                )
+                        && entry.getRarity() == source.getRarity()
+                        && Objects.equals(
+                        entry.getDurability(),
+                        source.getDurability()
+                )
+                        && policy.sameStackKey(
+                        entry.isBound(),
+                        safeAttrs(entry.getInstAttrs()),
+                        source.isBound(),
+                        safeAttrs(source.getInstAttrs())
+                ))
+                .toList();
+    }
+
     private List<InventoryEntry> stacksOf(ItemCarryPolicy policy, boolean bound, InstanceAttrs attrs) {
         Map<String, Object> target = (attrs == null) ? Map.of() : attrs.attrs();
         return entries.stream()

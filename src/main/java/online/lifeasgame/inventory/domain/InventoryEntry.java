@@ -104,6 +104,38 @@ public class InventoryEntry extends AbstractTime {
         );
     }
 
+    static InventoryEntry transferred(
+            PlayerInventory playerInventory,
+            SlotIndex slotIndex,
+            ItemCarryPolicy itemCarryPolicy,
+            Quantity quantity,
+            Rarity rarity,
+            Durability durability,
+            boolean bound,
+            InstanceAttrs instAttrs
+    ) {
+        itemCarryPolicy.assertValidInitialQuantity(quantity.value());
+        Integer durabilityValue = durability == null ? null : durability.value();
+        Integer normalizedDurability = itemCarryPolicy.normalizedDurability(
+                durabilityValue
+        );
+        if (!Objects.equals(durabilityValue, normalizedDurability)) {
+            throw new DomainException(
+                    InventoryError.MARKET_TRANSFER_CONFLICT
+            );
+        }
+        return new InventoryEntry(
+                playerInventory,
+                slotIndex,
+                itemCarryPolicy.itemId(),
+                Guard.notNull(rarity, "rarity"),
+                quantity,
+                durability,
+                bound,
+                instAttrs
+        );
+    }
+
     public void increaseQuantity(int delta, ItemCarryPolicy itemCarryPolicy) {
         assertOrdinaryMutationAllowed();
         Guard.minValue(delta, 1, "delta");

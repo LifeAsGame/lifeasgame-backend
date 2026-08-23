@@ -101,7 +101,7 @@ class NotificationApplicationIntegrationTest {
         @DisplayName("durable row를 만들고 같은 player replay만 무시한다")
         void appendsDurablyAndScopesReplayByPlayer() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("27");
+                    .isEqualTo("28");
 
             append(PLAYER_ID, "shared-event");
             append(PLAYER_ID, "shared-event");
