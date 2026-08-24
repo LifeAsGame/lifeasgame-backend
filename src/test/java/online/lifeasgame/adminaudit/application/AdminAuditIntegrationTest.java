@@ -5,7 +5,10 @@ import online.lifeasgame.adminaudit.application.result.AdminAuditQueryResult;
 import online.lifeasgame.adminaudit.domain.AdminAuditAction;
 import online.lifeasgame.adminaudit.domain.AdminAuditResult;
 import online.lifeasgame.adminaudit.domain.AdminAuditTargetType;
+import online.lifeasgame.core.error.AuthException;
+import online.lifeasgame.core.error.api.AuthError;
 import online.lifeasgame.core.security.CurrentUserAccessor;
+import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +29,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
+import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
@@ -75,6 +79,9 @@ class AdminAuditIntegrationTest {
     @MockitoBean
     private CurrentUserAccessor currentUserAccessor;
 
+    @MockitoBean
+    private UserAuthApi userAuthApi;
+
     private TransactionTemplate transaction;
 
     @BeforeEach
@@ -96,6 +103,14 @@ class AdminAuditIntegrationTest {
                 """, ACTOR_ID, "audit-admin@example.com", "hash", "audit-admin");
         given(currentUserAccessor.currentUserIdOrThrow())
                 .willReturn(ACTOR_ID);
+        given(userAuthApi.resolveAuthorization(ACTOR_ID))
+                .willReturn(Optional.of(
+                        new UserAuthApi.AccountAuthorization(true, true)
+                ));
+        given(userAuthApi.resolveAuthorization(MISSING_ACTOR_ID))
+                .willReturn(Optional.of(
+                        new UserAuthApi.AccountAuthorization(true, true)
+                ));
         transaction = new TransactionTemplate(transactionManager);
     }
 
@@ -145,6 +160,33 @@ class AdminAuditIntegrationTest {
                         "request-failure"
                 ));
             })).isInstanceOf(DataIntegrityViolationException.class);
+
+            assertThat(count("admin_audit_test_mutations")).isZero();
+            assertThat(count("admin_audit_events")).isZero();
+        }
+
+        @Test
+        @DisplayName("authenticated USER actor면 거부하고 business mutation도 rollback한다")
+        void rejectsNonAdminAndRollsBack() {
+            given(userAuthApi.resolveAuthorization(ACTOR_ID))
+                    .willReturn(Optional.of(
+                            new UserAuthApi.AccountAuthorization(true, false)
+                    ));
+
+            assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+                jdbc.update(
+                        "INSERT INTO admin_audit_test_mutations (id, note) VALUES (3, 'changed')"
+                );
+                auditApi.append(command(
+                        "USER_STATUS_CHANGE",
+                        "USER",
+                        "42",
+                        "request-non-admin"
+                ));
+            })).isInstanceOfSatisfying(AuthException.class, exception ->
+                    assertThat(exception.getErrorCode())
+                            .isEqualTo(AuthError.FORBIDDEN)
+            );
 
             assertThat(count("admin_audit_test_mutations")).isZero();
             assertThat(count("admin_audit_events")).isZero();

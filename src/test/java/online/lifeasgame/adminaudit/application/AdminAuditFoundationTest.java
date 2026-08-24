@@ -85,6 +85,34 @@ class AdminAuditFoundationTest {
     }
 
     @Nested
+    @DisplayName("operator reason을 기록할 때")
+    class Reason {
+
+        @Test
+        @DisplayName("주변 공백을 제거한 bounded operational rationale를 저장한다")
+        void normalizes() {
+            AdminAuditEvent event = event(
+                    "  Balance correction approved for support case CASE-1234  "
+            );
+
+            assertThat(event.getReason()).isEqualTo(
+                    "Balance correction approved for support case CASE-1234"
+            );
+        }
+
+        @Test
+        @DisplayName("blank control character와 multiline payload를 거부한다")
+        void rejectsUnsafeStructure() {
+            assertThatThrownBy(() -> event("   "))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> event("case\u0000payload"))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> event("case-1\nraw body"))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
     @DisplayName("audit event 목록을 조회할 때")
     class ListEvents {
 
@@ -151,6 +179,20 @@ class AdminAuditFoundationTest {
                 "USER",
                 "42",
                 "CASE-304",
+                AdminAuditResult.SUCCESS,
+                "request-304",
+                null,
+                OCCURRED_AT
+        );
+    }
+
+    private AdminAuditEvent event(String reason) {
+        return AdminAuditEvent.record(
+                304L,
+                new AdminAuditAction("USER_STATUS_CHANGE"),
+                new AdminAuditTargetType("USER"),
+                "42",
+                reason,
                 AdminAuditResult.SUCCESS,
                 "request-304",
                 null,

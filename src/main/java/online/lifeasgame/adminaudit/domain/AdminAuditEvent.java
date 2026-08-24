@@ -81,7 +81,7 @@ public class AdminAuditEvent {
                 "targetType"
         ).value();
         event.targetId = requireIdentifier(targetId, "targetId", 128);
-        event.reason = optionalText(reason, "reason", 512);
+        event.reason = optionalReason(reason);
         event.result = Objects.requireNonNull(result, "result");
         event.correlationId = requireIdentifier(
                 correlationId,
@@ -106,11 +106,23 @@ public class AdminAuditEvent {
         return value;
     }
 
-    private static String optionalText(String value, String field, int max) {
+    private static String optionalReason(String value) {
         if (value == null) {
             return null;
         }
-        return requireText(value, field, max);
+        if (value.codePoints().anyMatch(AdminAuditEvent::isUnsafeReasonCharacter)) {
+            throw new IllegalArgumentException(
+                    "reason must be a single-line operational rationale"
+            );
+        }
+        return requireText(value.strip(), "reason", 512);
+    }
+
+    private static boolean isUnsafeReasonCharacter(int value) {
+        int type = Character.getType(value);
+        return Character.isISOControl(value)
+                || type == Character.LINE_SEPARATOR
+                || type == Character.PARAGRAPH_SEPARATOR;
     }
 
     private static String requireIdentifier(

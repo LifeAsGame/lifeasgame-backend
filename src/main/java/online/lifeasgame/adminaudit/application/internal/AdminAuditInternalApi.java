@@ -11,8 +11,11 @@ import java.time.Instant;
  *
  * <p>Callers must invoke {@link #append(AppendCommand)} inside the same
  * transaction as the successful business mutation and let every append
- * exception propagate. Reason is nullable only for this foundation; Unit E
- * must require it for each approved high-risk command.</p>
+ * exception propagate. The implementation resolves the actor from the current
+ * authenticated ACTIVE ADMIN account; callers cannot supply an actor ID.
+ * Reason is nullable only for this foundation; Unit E must require it for each
+ * approved high-risk command. Callers must pass only a bounded operational
+ * rationale and never source private content, credentials, or raw payloads.</p>
  */
 public interface AdminAuditInternalApi {
 

@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.adminaudit.application.internal.AdminAuditInternalApi;
 import online.lifeasgame.adminaudit.domain.AdminAuditEvent;
 import online.lifeasgame.adminaudit.domain.repository.AdminAuditEventRepository;
+import online.lifeasgame.core.error.AuthException;
+import online.lifeasgame.core.error.api.AuthError;
 import online.lifeasgame.core.security.CurrentUserAccessor;
+import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ public class AdminAuditAppender implements AdminAuditInternalApi {
 
     private final AdminAuditEventRepository repository;
     private final CurrentUserAccessor currentUserAccessor;
+    private final UserAuthApi userAuthApi;
     private final Clock clock;
 
     @Override
@@ -27,7 +31,7 @@ public class AdminAuditAppender implements AdminAuditInternalApi {
         Objects.requireNonNull(command, "command must not be null");
         Instant occurredAt = Instant.now(clock);
         AdminAuditEvent event = repository.append(AdminAuditEvent.record(
-                currentUserAccessor.currentUserIdOrThrow(),
+                currentAdminId(),
                 command.action(),
                 command.targetType(),
                 command.targetId(),
@@ -38,5 +42,14 @@ public class AdminAuditAppender implements AdminAuditInternalApi {
                 occurredAt
         ));
         return new AppendResult(event.getId(), occurredAt);
+    }
+
+    private Long currentAdminId() {
+        Long userId = currentUserAccessor.currentUserIdOrThrow();
+        return userAuthApi.resolveAuthorization(userId)
+                .filter(UserAuthApi.AccountAuthorization::active)
+                .filter(UserAuthApi.AccountAuthorization::admin)
+                .map(authorization -> userId)
+                .orElseThrow(() -> new AuthException(AuthError.FORBIDDEN));
     }
 }

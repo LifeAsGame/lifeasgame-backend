@@ -10,19 +10,28 @@ business-domain event store.
 
 The provider-owned `AdminAuditInternalApi` accepts only action, target
 type/id, reason, result, correlation ID, and an optional idempotency key.
-The authenticated account ID and occurrence time are server-owned.
+The actor ID and occurrence time are server-owned. Append resolves the current
+authenticated account and rechecks persisted authorization; only an ACTIVE
+ADMIN account can be recorded as actor.
 
 Audit records never contain raw JWT/token values, passwords, Journal or
 LifeLog bodies, Person private fields, Direct Chat messages, full
 request/response payloads, arbitrary entity serialization, or generic JSON
 metadata.
 
+Reason remains a bounded free-form operational rationale because no global
+reason-code policy exists. A non-null reason is trimmed, limited to 512
+characters, and must be non-blank, single-line, and free of control characters.
+Callers must never copy source private content, credentials, or raw payloads
+into it.
+
 ## Transaction contract
 
 `append` requires an existing caller transaction. An approved high-risk
 command must perform its mutation and required audit append in that same
 transaction and must not swallow append failures. A missing transaction or
-failed audit persistence aborts the command transaction. Rolled-back attempts
+failed audit persistence or actor authorization aborts the command transaction.
+Rolled-back attempts
 do not retain a misleading same-transaction audit row; separate failed-attempt
 auditing is outside this foundation.
 
