@@ -20,8 +20,8 @@ The inspection covers all 23 production `api/admin` controllers, their class and
 | Classification | Count | Frontend rule |
 | --- | ---: | --- |
 | `SUPPORTED_READ` | 21 | `ALLOW` |
-| `SUPPORTED_COMMAND` | 48 | `ALLOW` |
-| `GATED_HIGH_RISK` | 2 | `GATE` |
+| `SUPPORTED_COMMAND` | 12 | `ALLOW` |
+| `GATED_HIGH_RISK` | 38 | `GATE` |
 | `IMPLEMENTATION_GAP` | 2 | `GATE` or `DEFER` as recorded |
 | `LEGACY` | 46 | `LEGACY_ONLY` |
 | `DEFERRED_PRIVATE` | 25 | `DEFER` |
@@ -29,11 +29,19 @@ The inspection covers all 23 production `api/admin` controllers, their class and
 ## Classification definitions
 
 - `SUPPORTED_READ`: a mapped route and current read use case with a usable response contract.
-- `SUPPORTED_COMMAND`: an already mapped command supported by the current domain policy. It does not authorize inventing adjacent commands.
-- `GATED_HIGH_RISK`: a command that must remain unavailable until Audit and command-hardening requirements are complete.
+- `SUPPORTED_COMMAND`: a mapped low-risk command currently approved for operator exposure. It does not authorize inventing adjacent commands or imply that every mapped command is safe for frontend exposure.
+- `GATED_HIGH_RISK`: a mapped or implemented command that must remain unavailable to the frontend until durable Admin Audit and command-hardening requirements are complete.
 - `IMPLEMENTATION_GAP`: a visible controller operation that is not a proven live contract.
 - `LEGACY`: Guild/Party behavior retained for compatibility only; no strategic expansion.
 - `DEFERRED_PRIVATE`: LifeLog and direct Chat surfaces unavailable to general Admin UI until a privacy decision exists.
+
+Mapping existence and frontend capability are separate. `SUPPORTED_COMMAND + ALLOW` means both mapped and currently approved; a mapped high-risk command remains `GATED_HIGH_RISK + GATE`.
+
+## Command risk decision
+
+All 48 previously supported command rows were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. These operations author definitions rather than directly changing a player, account, wallet, entitlement, current quest acceptance, or social relationship.
+
+The other 36 mapped commands are `GATE`: destructive catalog deletion, direct player-state correction, entitlement grant/revoke or delivery, live Shop/economy mutation, wallet adjustment, quest acceptance override, and social relationship mutation. Their routes remain mapped but are not frontend capabilities before durable Admin Audit and reason/idempotency/stale/conflict hardening.
 
 ## Known User gaps
 
