@@ -10,6 +10,7 @@ import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.inventory.application.internal.InventoryMarketAvailabilityApi;
+import online.lifeasgame.inventory.application.internal.InventoryMarketTransferApi;
 import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class MarketplaceService {
     private final WalletWriter walletWriter;
     private final WalletReader walletReader;
     private final InventoryMarketAvailabilityApi inventoryMarketAvailabilityApi;
+    private final InventoryMarketTransferApi inventoryMarketTransferApi;
     private final IdempotencyKeyStore idempotencyKeyStore;
     private final DomainEventPublisher domainEventPublisher;
 
@@ -39,7 +41,9 @@ public class MarketplaceService {
         Listing listing = listingReader.getForUpdate(command.listingId());
         Instant now = Instant.now();
 
-        if (listing.getStatus() != ListingStatus.OPEN) {
+        if (listing.getStatus() != ListingStatus.OPEN
+                || listing.getItemId() == null
+                || listing.getSaleQuantity() == null) {
             throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
         }
         if (buyerId.equals(listing.getSellerPlayerId())) {
@@ -96,6 +100,11 @@ public class MarketplaceService {
         if (buyerId.equals(listing.getSellerPlayerId())) {
             throw new DomainException(EconomyError.CANNOT_PURCHASE_OWN_LISTING);
         }
+        if (listing.getStatus() != ListingStatus.OPEN
+                || listing.getItemId() == null
+                || listing.getSaleQuantity() == null) {
+            throw new DomainException(EconomyError.LISTING_NOT_AVAILABLE);
+        }
 
         ListingReservation reservation = listingReservationReader
                 .findActiveForUpdate(listing.getId())
@@ -111,13 +120,16 @@ public class MarketplaceService {
         Wallet buyerWallet = lockWallet(buyerId);
         Wallet sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
 
-        reservation.consume(buyerId, command.reservationToken(), now);
         buyerWallet.commitHold(reservation.getWalletHoldId());
-        listingReservationWriter.save(reservation);
-        inventoryMarketAvailabilityApi.beginTransfer(
+        inventoryMarketTransferApi.transferWholeEntry(
                 listing.getSellerPlayerId(),
-                listing.getItemInstanceId()
+                buyerId,
+                listing.getItemInstanceId(),
+                listing.getItemId(),
+                listing.getSaleQuantity()
         );
+        reservation.consume(buyerId, command.reservationToken(), now);
+        listingReservationWriter.save(reservation);
 
         Trade trade = listing.sellTo(buyerId);
 

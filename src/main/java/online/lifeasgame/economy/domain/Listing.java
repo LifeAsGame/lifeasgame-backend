@@ -109,7 +109,15 @@ public class Listing extends AbstractTime {
         this.status = ListingStatus.SOLD;
         closeActive();
         clearReservation();
-        return Trade.of(this.id, buyerPlayerId, sellerPlayerId, itemInstanceId, price);
+        return Trade.of(
+                this.id,
+                buyerPlayerId,
+                sellerPlayerId,
+                itemInstanceId,
+                Guard.notNull(itemId, "itemId"),
+                Guard.notNull(saleQuantity, "saleQuantity"),
+                price
+        );
     }
 
     public void cancel(Long bySellerId) {

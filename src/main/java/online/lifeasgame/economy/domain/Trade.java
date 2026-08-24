@@ -53,6 +53,12 @@ public class Trade extends AbstractTime {
     @Column(name = "item_inst_id", nullable = false)
     private Long itemInstanceId;
 
+    @Column(name = "item_id")
+    private Long itemId;
+
+    @Column(name = "sale_quantity")
+    private Integer saleQuantity;
+
     @Embedded
     private Money price = Money.of(0, Currency.GOLD);
 
@@ -65,11 +71,26 @@ public class Trade extends AbstractTime {
     @Column(name = "fee_bps", nullable = false)
     private Integer feeBps = 100;
 
-    private Trade(Long listingId, Long buyerId, Long sellerId, Long itemInstId, Money price, int feeBps) {
+    private Trade(
+            Long listingId,
+            Long buyerId,
+            Long sellerId,
+            Long itemInstId,
+            Long itemId,
+            int saleQuantity,
+            Money price,
+            int feeBps
+    ) {
         this.listingId = Guard.notNull(listingId, "listingId");
         this.buyerPlayerId = Guard.notNull(buyerId, "buyerPlayerId");
         this.sellerPlayerId = Guard.notNull(sellerId, "sellerPlayerId");
         this.itemInstanceId = Guard.notNull(itemInstId, "itemInstanceId");
+        this.itemId = Guard.notNull(itemId, "itemId");
+        this.saleQuantity = Guard.minValue(
+                saleQuantity,
+                1,
+                "saleQuantity"
+        );
         this.price = Guard.notNull(price, "price");
         this.feeBps = feeBps;
         this.fee = price.percent(feeBps);
@@ -82,9 +103,20 @@ public class Trade extends AbstractTime {
             Long buyerId,
             Long sellerId,
             Long itemInstId,
+            Long itemId,
+            int saleQuantity,
             Money price
     ) {
-        return new Trade(listingId, buyerId, sellerId, itemInstId, price, 100);
+        return new Trade(
+                listingId,
+                buyerId,
+                sellerId,
+                itemInstId,
+                itemId,
+                saleQuantity,
+                price,
+                100
+        );
     }
 
     public Money getPrice() {
@@ -105,6 +137,14 @@ public class Trade extends AbstractTime {
 
     public Long getItemInstanceId() {
         return itemInstanceId;
+    }
+
+    public Long getItemId() {
+        return itemId;
+    }
+
+    public Integer getSaleQuantity() {
+        return saleQuantity;
     }
 
     public Long getListingId() {
