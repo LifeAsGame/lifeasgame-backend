@@ -1,0 +1,145 @@
+domain,controller,operation,http_method,path,request_type,response_type,classification,frontend_exposure,notes
+character,AdminAchievementController,create,POST,/admin/v1/achievements,AdminAchievementRequest.Create,AdminAchievementResponse.Info,SUPPORTED_COMMAND,ALLOW,AchievementService
+character,AdminAchievementController,list,GET,/admin/v1/achievements,query category[],AdminAchievementResponse.Infos,SUPPORTED_READ,ALLOW,AchievementService
+character,AdminAchievementController,get,GET,/admin/v1/achievements/{achievementId},-,AdminAchievementResponse.Info,SUPPORTED_READ,ALLOW,AchievementService
+character,AdminAchievementController,update,PATCH,/admin/v1/achievements/{achievementId},AdminAchievementRequest.Update,AdminAchievementResponse.Info,SUPPORTED_COMMAND,ALLOW,AchievementService
+character,AdminAchievementController,delete,DELETE,/admin/v1/achievements/{achievementId},-,AdminAchievementResponse.Deleted,SUPPORTED_COMMAND,ALLOW,AchievementService
+character,AdminCertificationController,create,POST,/admin/v1/certifications,AdminCertificationRequest.Create,AdminCertificationResponse.Info,SUPPORTED_COMMAND,ALLOW,CertificationService
+character,AdminCertificationController,list,GET,/admin/v1/certifications,query category[],AdminCertificationResponse.Infos,SUPPORTED_READ,ALLOW,CertificationService
+character,AdminCertificationController,get,GET,/admin/v1/certifications/{certificationId},-,AdminCertificationResponse.Info,SUPPORTED_READ,ALLOW,CertificationService
+character,AdminCertificationController,update,PATCH,/admin/v1/certifications/{certificationId},AdminCertificationRequest.Update,AdminCertificationResponse.Info,SUPPORTED_COMMAND,ALLOW,CertificationService
+character,AdminCertificationController,delete,DELETE,/admin/v1/certifications/{certificationId},-,AdminCertificationResponse.Deleted,SUPPORTED_COMMAND,ALLOW,CertificationService
+character,AdminHobbyController,create,POST,/admin/v1/hobbies,AdminHobbyRequest.Create,AdminHobbyResponse.Info,SUPPORTED_COMMAND,ALLOW,HobbyService
+character,AdminHobbyController,list,GET,/admin/v1/hobbies,query category[],AdminHobbyResponse.Infos,SUPPORTED_READ,ALLOW,HobbyService
+character,AdminHobbyController,get,GET,/admin/v1/hobbies/{hobbyId},-,AdminHobbyResponse.Info,SUPPORTED_READ,ALLOW,HobbyService
+character,AdminHobbyController,update,PATCH,/admin/v1/hobbies/{hobbyId},AdminHobbyRequest.Update,AdminHobbyResponse.Info,SUPPORTED_COMMAND,ALLOW,HobbyService
+character,AdminHobbyController,delete,DELETE,/admin/v1/hobbies/{hobbyId},-,AdminHobbyResponse.Deleted,SUPPORTED_COMMAND,ALLOW,HobbyService
+character,AdminPlayerAchievementController,grantAchievement,POST,/admin/v1/players/{playerId}/achievements/{achievementId},-,AdminPlayerAchievementResponse.Granted,SUPPORTED_COMMAND,ALLOW,PlayerAchievementService
+character,AdminPlayerAchievementController,revokeAchievement,DELETE,/admin/v1/players/{playerId}/achievements/{achievementId},-,AdminPlayerAchievementResponse.Revoked,SUPPORTED_COMMAND,ALLOW,PlayerAchievementService
+character,AdminPlayerCertificationController,grantCertification,POST,/admin/v1/players/{playerId}/certifications/{certificationId},AdminPlayerCertificationRequest.Create,AdminPlayerCertificationResponse.Granted,SUPPORTED_COMMAND,ALLOW,PlayerCertificationService
+character,AdminPlayerCertificationController,revokeCertification,DELETE,/admin/v1/players/{playerId}/certifications/{certificationId},-,AdminPlayerCertificationResponse.Revoked,SUPPORTED_COMMAND,ALLOW,PlayerCertificationService
+character,AdminPlayerController,grantExp,POST,/admin/v1/players/{playerId}/exp/grant,AdminPlayerRequest.GrantExp,AdminPlayerResponse.ExpGranted,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,setCurrentHp,PATCH,/admin/v1/players/{playerId}/health/current,AdminPlayerRequest.ChangeHp,AdminPlayerResponse.CurrentHp,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,setHpCapacity,PATCH,/admin/v1/players/{playerId}/health/capacity,AdminPlayerRequest.ChangeHpCapacity,AdminPlayerResponse.HpCapacity,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,setCurrentMp,PATCH,/admin/v1/players/{playerId}/mana/current,AdminPlayerRequest.ChangeMp,AdminPlayerResponse.CurrentMp,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,setMpCapacity,PATCH,/admin/v1/players/{playerId}/mana/capacity,AdminPlayerRequest.ChangeMpCapacity,AdminPlayerResponse.MpCapacity,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,grantCoreStats,POST,/admin/v1/players/{playerId}/core-stats/grant,AdminPlayerRequest.GrantCoreStats,AdminPlayerResponse.CoreStatsGranted,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,grantStatusEffects,POST,/admin/v1/players/{playerId}/status-effects/grant,AdminPlayerRequest.GrantStatusEffects,AdminPlayerResponse.StatusEffectsGranted,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,rename,PATCH,/admin/v1/players/{playerId}/rename,AdminPlayerRequest.Rename,AdminPlayerResponse.Renamed,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,updateTitle,PATCH,/admin/v1/players/{playerId}/titles/{titleId},-,AdminPlayerResponse.UpdatedTitle,SUPPORTED_COMMAND,ALLOW,PlayerService
+character,AdminPlayerController,get,GET,/admin/v1/players/{playerId},-,AdminPlayerResponse.PlayerInfo,SUPPORTED_READ,ALLOW,PlayerQueryService
+character,AdminPlayerController,getPlayerSummary,GET,/admin/v1/players,query userId,AdminPlayerResponse.PlayerSummary,SUPPORTED_READ,ALLOW,PlayerQueryService
+character,AdminPlayerHobbyController,grantHobby,POST,/admin/v1/players/{playerId}/hobbies/{hobbyId},AdminPlayerHobbyRequest.Grant,AdminPlayerHobbyResponse.Granted,SUPPORTED_COMMAND,ALLOW,PlayerHobbyService
+character,AdminPlayerHobbyController,revokeHobby,DELETE,/admin/v1/players/{playerId}/hobbies/{hobbyId},-,AdminPlayerHobbyResponse.Revoked,SUPPORTED_COMMAND,ALLOW,PlayerHobbyService
+character,AdminPlayerTitleController,grantTitle,POST,/admin/v1/players/{playerId}/titles/{titleId},-,AdminPlayerTitleResponse.Granted,SUPPORTED_COMMAND,ALLOW,PlayerTitleService
+character,AdminPlayerTitleController,revokeTitle,DELETE,/admin/v1/players/{playerId}/titles/{titleId},-,AdminPlayerTitleResponse.Revoked,SUPPORTED_COMMAND,ALLOW,PlayerTitleService
+character,AdminTitleController,create,POST,/admin/v1/titles,AdminTitleRequest.Create,AdminTitleResponse.Info,SUPPORTED_COMMAND,ALLOW,TitleService
+character,AdminTitleController,list,GET,/admin/v1/titles,query category[],AdminTitleResponse.Infos,SUPPORTED_READ,ALLOW,TitleService
+character,AdminTitleController,get,GET,/admin/v1/titles/{titleId},-,AdminTitleResponse.Info,SUPPORTED_READ,ALLOW,TitleService
+character,AdminTitleController,update,PATCH,/admin/v1/titles/{titleId},AdminTitleRequest.Update,AdminTitleResponse.Info,SUPPORTED_COMMAND,ALLOW,TitleService
+character,AdminTitleController,delete,DELETE,/admin/v1/titles/{titleId},-,AdminTitleResponse.Deleted,SUPPORTED_COMMAND,ALLOW,TitleService
+economy,AdminEconomyController,listShopItems,GET,/admin/v1/economy/shop/items,-,AdminEconomyResponse.ShopItems,SUPPORTED_READ,ALLOW,ShopService
+economy,AdminEconomyController,createShopItem,POST,/admin/v1/economy/shop/items,AdminEconomyRequest.CreateShopItem,AdminEconomyResponse.ShopItem,SUPPORTED_COMMAND,ALLOW,ShopService
+economy,AdminEconomyController,updateShopItem,PATCH,/admin/v1/economy/shop/items/{shopItemId},AdminEconomyRequest.UpdateShopItem,AdminEconomyResponse.ShopItem,SUPPORTED_COMMAND,ALLOW,ShopService
+economy,AdminEconomyController,toggleShopItem,PATCH,/admin/v1/economy/shop/items/{shopItemId}/availability,AdminEconomyRequest.ToggleShopItem,Void,SUPPORTED_COMMAND,ALLOW,ShopService
+economy,AdminEconomyController,listShopPurchases,GET,/admin/v1/economy/shop/purchases,-,AdminEconomyResponse.ShopPurchases,SUPPORTED_READ,ALLOW,ShopService
+economy,AdminEconomyController,adjustWallet,POST,/admin/v1/economy/wallets/{playerId}/adjust,AdminEconomyRequest.AdjustWallet,AdminEconomyResponse.WalletBalance,SUPPORTED_COMMAND,ALLOW,TopUpService
+inventory,AdminInventoryController,addToInventory,POST,/admin/v1/players/{playerId}/inventory/add,AdminInventoryRequest.Add,AdminInventoryResponse.Slots,SUPPORTED_COMMAND,ALLOW,InventoryService
+inventory,AdminItemController,create,POST,/admin/v1/items,AdminItemRequest.Create,AdminItemResponse.Id,SUPPORTED_COMMAND,ALLOW,ItemService
+inventory,AdminItemController,update,PUT,/admin/v1/items/{itemId},AdminItemRequest.Update,AdminItemResponse.Id,SUPPORTED_COMMAND,ALLOW,ItemService
+inventory,AdminItemController,delete,DELETE,/admin/v1/items/{itemId},-,AdminItemResponse.Deleted,SUPPORTED_COMMAND,ALLOW,ItemService
+inventory,AdminMailboxController,deliverToMailbox,POST,/admin/v1/players/{playerId}/mailbox/deliver,AdminMailboxRequest.Deliver,AdminMailboxResponse.Slot,SUPPORTED_COMMAND,ALLOW,MailboxService
+lifelog,AdminCollectionController,recent,GET,/admin/v1/players/{playerId}/collections/recent,query limit,List<AdminCollectionResponse.Info>,DEFERRED_PRIVATE,DEFER,CollectionLogQueryService private player data
+lifelog,AdminCollectionController,search,GET,/admin/v1/players/{playerId}/collections/search,query category titleLike page size,List<AdminCollectionResponse.Info>,DEFERRED_PRIVATE,DEFER,CollectionLogQueryService private player data
+lifelog,AdminCollectionController,create,POST,/admin/v1/players/{playerId}/collections,AdminCollectionRequest.Create,AdminCollectionResponse.Created,DEFERRED_PRIVATE,DEFER,CollectionLogService private player data
+lifelog,AdminCollectionController,update,POST,/admin/v1/players/{playerId}/collections/{collectionId},AdminCollectionRequest.Update,AdminCollectionResponse.Info,DEFERRED_PRIVATE,DEFER,CollectionLogService private player data
+lifelog,AdminCollectionController,get,GET,/admin/v1/players/{playerId}/collections/{collectionId},-,AdminCollectionResponse.Info,DEFERRED_PRIVATE,DEFER,CollectionLogQueryService private player data
+lifelog,AdminCollectionController,delete,DELETE,/admin/v1/players/{playerId}/collections/{collectionId},-,AdminCollectionResponse.Deleted,DEFERRED_PRIVATE,DEFER,CollectionLogService private player data
+lifelog,AdminExerciseController,recent,GET,/admin/v1/players/{playerId}/exercises/recent,query limit,List<AdminExerciseResponse.Info>,DEFERRED_PRIVATE,DEFER,ExerciseLogQueryService private player data
+lifelog,AdminExerciseController,search,GET,/admin/v1/players/{playerId}/exercises/search,query category from to page size,List<AdminExerciseResponse.Info>,DEFERRED_PRIVATE,DEFER,ExerciseLogQueryService private player data
+lifelog,AdminExerciseController,create,POST,/admin/v1/players/{playerId}/exercises,AdminExerciseRequest.Create,AdminExerciseResponse.Created,DEFERRED_PRIVATE,DEFER,ExerciseLogService private player data
+lifelog,AdminExerciseController,update,POST,/admin/v1/players/{playerId}/exercises/{exerciseId},AdminExerciseRequest.Update,AdminExerciseResponse.Info,DEFERRED_PRIVATE,DEFER,ExerciseLogService private player data
+lifelog,AdminExerciseController,get,GET,/admin/v1/players/{playerId}/exercises/{exerciseId},-,AdminExerciseResponse.Info,DEFERRED_PRIVATE,DEFER,ExerciseLogQueryService private player data
+lifelog,AdminExerciseController,delete,DELETE,/admin/v1/players/{playerId}/exercises/{exerciseId},-,AdminExerciseResponse.Deleted,DEFERRED_PRIVATE,DEFER,ExerciseLogService private player data
+lifelog,AdminMediaController,recent,GET,/admin/v1/players/{playerId}/media/recent,query limit,List<AdminMediaResponse.Info>,DEFERRED_PRIVATE,DEFER,MediaLogQueryService private player data
+lifelog,AdminMediaController,search,GET,/admin/v1/players/{playerId}/media/search,query category status titleLike page size,List<AdminMediaResponse.Info>,DEFERRED_PRIVATE,DEFER,MediaLogQueryService private player data
+lifelog,AdminMediaController,create,POST,/admin/v1/players/{playerId}/media,AdminMediaRequest.Create,AdminMediaResponse.Created,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+lifelog,AdminMediaController,rate,POST,/admin/v1/players/{playerId}/media/{mediaId}/rate,AdminMediaRequest.Rate,AdminMediaResponse.Info,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+lifelog,AdminMediaController,advance,POST,/admin/v1/players/{playerId}/media/{mediaId}/advance,AdminMediaRequest.Advance,AdminMediaResponse.Info,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+lifelog,AdminMediaController,markStatus,POST,/admin/v1/players/{playerId}/media/{mediaId}/status,AdminMediaRequest.MarkStatus,AdminMediaResponse.Info,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+lifelog,AdminMediaController,rewatch,POST,/admin/v1/players/{playerId}/media/{mediaId}/rewatch,-,AdminMediaResponse.Info,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+lifelog,AdminMediaController,get,GET,/admin/v1/players/{playerId}/media/{mediaId},-,AdminMediaResponse.Info,DEFERRED_PRIVATE,DEFER,MediaLogQueryService private player data
+lifelog,AdminMediaController,delete,DELETE,/admin/v1/players/{playerId}/media/{mediaId},-,AdminMediaResponse.Deleted,DEFERRED_PRIVATE,DEFER,MediaLogService private player data
+quest,AdminQuestController,catalog,GET,/admin/v1/quests/catalog,-,AdminQuestResponse.Blueprints,SUPPORTED_READ,ALLOW,QuestQueryService raw response
+quest,AdminQuestController,definitions,GET,/admin/v1/quests/definitions,-,AdminQuestResponse.Definitions,SUPPORTED_READ,ALLOW,QuestQueryService raw response
+quest,AdminQuestController,ensure,POST,/admin/v1/quests/definitions,AdminQuestRequest.Ensure,AdminQuestResponse.Definition,SUPPORTED_COMMAND,ALLOW,QuestService raw response
+quest,AdminQuestController,definition,GET,/admin/v1/quests/definitions/{questCode},-,AdminQuestResponse.Definition,SUPPORTED_READ,ALLOW,QuestQueryService raw response
+quest,AdminQuestController,update,PATCH,/admin/v1/quests/definitions/{questCode},AdminQuestRequest.Update,AdminQuestResponse.Definition,SUPPORTED_COMMAND,ALLOW,QuestService raw response
+quest,AdminQuestController,acceptances,GET,/admin/v1/quests/{questCode}/acceptances,query status,AdminQuestResponse.Acceptances,SUPPORTED_READ,ALLOW,QuestQueryService raw response
+quest,AdminQuestController,acceptance,GET,/admin/v1/quests/acceptances/{acceptanceId},-,AdminQuestResponse.Acceptance,SUPPORTED_READ,ALLOW,QuestQueryService raw response
+quest,AdminQuestController,adjustProgress,PATCH,/admin/v1/quests/acceptances/{acceptanceId}/progress,AdminQuestRequest.AdjustProgress,AdminQuestResponse.Acceptance,SUPPORTED_COMMAND,ALLOW,QuestService
+quest,AdminQuestController,changeStatus,PATCH,/admin/v1/quests/acceptances/{acceptanceId}/status,AdminQuestRequest.ChangeStatus,AdminQuestResponse.Acceptance,SUPPORTED_COMMAND,ALLOW,QuestService
+social,AdminChatController,channels,GET,/admin/v1/operators/{operatorId}/chat/channels,-,AdminChatResponse.ChannelGroup,DEFERRED_PRIVATE,DEFER,ChatService direct chat privacy
+social,AdminChatController,openAdmin,POST,/admin/v1/operators/{operatorId}/chat/channels/player/{playerId},AdminChatRequest.OpenAdmin,AdminChatResponse.Channel,DEFERRED_PRIVATE,DEFER,ChatService direct chat privacy
+social,AdminChatController,messages,GET,/admin/v1/operators/{operatorId}/chat/channels/{channelId}/messages,query cursor size,AdminChatResponse.MessagePage,DEFERRED_PRIVATE,DEFER,ChatService direct chat privacy
+social,AdminChatController,sendMessage,POST,/admin/v1/operators/{operatorId}/chat/channels/{channelId}/messages,AdminChatRequest.SendMessage,AdminChatResponse.Message,DEFERRED_PRIVATE,DEFER,ChatService direct chat privacy
+social,AdminFollowController,followings,GET,/admin/v1/players/{playerId}/follows/followings,query page size,AdminFollowResponse.Page<Summary>,SUPPORTED_READ,ALLOW,FollowService
+social,AdminFollowController,followers,GET,/admin/v1/players/{playerId}/follows/followers,query page size,AdminFollowResponse.Page<Summary>,SUPPORTED_READ,ALLOW,FollowService
+social,AdminFollowController,follow,POST,/admin/v1/players/{playerId}/follows,AdminFollowRequest.Create,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,unfollow,POST,/admin/v1/players/{playerId}/follows/{followId}/unfollow,-,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,mute,POST,/admin/v1/players/{playerId}/follows/{followId}/mute,-,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,unmute,POST,/admin/v1/players/{playerId}/follows/{followId}/unmute,-,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,block,POST,/admin/v1/players/{playerId}/follows/{followId}/block,-,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,unblock,POST,/admin/v1/players/{playerId}/follows/{followId}/unblock,-,Void,SUPPORTED_COMMAND,ALLOW,FollowService
+social,AdminFollowController,recent,GET,/admin/v1/players/{playerId}/follows/recent,query type limit,List<AdminFollowResponse.Summary>,SUPPORTED_READ,ALLOW,FollowService
+social,AdminGuildController,search,GET,/admin/v1/guilds/search,query keyword visibility page size,AdminGuildResponse.Page<Summary>,LEGACY,LEGACY_ONLY,GuildService maintenance only
+social,AdminGuildController,recent,GET,/admin/v1/guilds/recent,query limit,List<AdminGuildResponse.Summary>,LEGACY,LEGACY_ONLY,GuildService maintenance only
+social,AdminGuildController,getGuildInfo,GET,/admin/v1/players/{playerId}/guilds/{guildId},-,AdminGuildResponse.Info,LEGACY,LEGACY_ONLY,GuildService maintenance only
+social,AdminGuildController,create,POST,/admin/v1/players/{playerId}/guilds,AdminGuildRequest.Create,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,rename,POST,/admin/v1/players/{playerId}/guilds/{guildId}/rename,AdminGuildRequest.Rename,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,changePolicy,POST,/admin/v1/players/{playerId}/guilds/{guildId}/policy,AdminGuildRequest.ChangePolicy,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,changeDescription,POST,/admin/v1/players/{playerId}/guilds/{guildId}/description,AdminGuildRequest.ChangeDescription,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,changeEmblem,POST,/admin/v1/players/{playerId}/guilds/{guildId}/emblem,AdminGuildRequest.ChangeEmblem,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,addTag,POST,/admin/v1/players/{playerId}/guilds/{guildId}/tags/add,AdminGuildRequest.TagOp,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,removeTag,POST,/admin/v1/players/{playerId}/guilds/{guildId}/tags/remove,AdminGuildRequest.TagOp,AdminGuildResponse.Detail,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,requestJoin,POST,/admin/v1/players/{playerId}/guilds/{guildId}/request-join,AdminGuildRequest.RequestJoin,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,cancelJoin,POST,/admin/v1/players/{playerId}/guilds/{guildId}/cancel-join,-,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,approve,POST,/admin/v1/players/{playerId}/guilds/{guildId}/approve,AdminGuildRequest.Approve,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,reject,POST,/admin/v1/players/{playerId}/guilds/{guildId}/reject,AdminGuildRequest.Reject,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,invite,POST,/admin/v1/players/{playerId}/guilds/{guildId}/invite,AdminGuildRequest.Invite,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,acceptInvitation,POST,/admin/v1/players/{playerId}/guilds/{guildId}/accept-invitation,-,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,declineInvitation,POST,/admin/v1/players/{playerId}/guilds/{guildId}/decline-invitation,-,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,transferLeader,POST,/admin/v1/players/{playerId}/guilds/{guildId}/transfer-leader,AdminGuildRequest.TransferLeader,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,kick,POST,/admin/v1/players/{playerId}/guilds/{guildId}/kick,AdminGuildRequest.Kick,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,promote,POST,/admin/v1/players/{playerId}/guilds/{guildId}/promote,AdminGuildRequest.MemberOp,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,demote,POST,/admin/v1/players/{playerId}/guilds/{guildId}/demote,AdminGuildRequest.MemberOp,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,leave,POST,/admin/v1/players/{playerId}/guilds/{guildId}/leave,-,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminGuildController,disband,POST,/admin/v1/players/{playerId}/guilds/{guildId}/disband,-,Void,LEGACY,LEGACY_ONLY,GuildService no expansion
+social,AdminPartyController,search,GET,/admin/v1/parties/search,query keyword visibility page size,AdminPartyResponse.Page<Summary>,LEGACY,LEGACY_ONLY,PartyService maintenance only
+social,AdminPartyController,recent,GET,/admin/v1/parties/recent,query limit,List<AdminPartyResponse.Summary>,LEGACY,LEGACY_ONLY,PartyService maintenance only
+social,AdminPartyController,getPartyInfo,GET,/admin/v1/players/{playerId}/parties/{partyId},-,AdminPartyResponse.Info,LEGACY,LEGACY_ONLY,PartyService maintenance only
+social,AdminPartyController,create,POST,/admin/v1/players/{playerId}/parties,AdminPartyRequest.Create,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,rename,POST,/admin/v1/players/{playerId}/parties/{partyId}/rename,AdminPartyRequest.Rename,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,changePolicy,POST,/admin/v1/players/{playerId}/parties/{partyId}/policy,AdminPartyRequest.ChangePolicy,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,changeDescription,POST,/admin/v1/players/{playerId}/parties/{partyId}/description,AdminPartyRequest.ChangeDescription,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,changeEmblem,POST,/admin/v1/players/{playerId}/parties/{partyId}/emblem,AdminPartyRequest.ChangeEmblem,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,addTag,POST,/admin/v1/players/{playerId}/parties/{partyId}/tags/add,AdminPartyRequest.TagOp,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,removeTag,POST,/admin/v1/players/{playerId}/parties/{partyId}/tags/remove,AdminPartyRequest.TagOp,AdminPartyResponse.Detail,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,requestJoin,POST,/admin/v1/players/{playerId}/parties/{partyId}/request-join,AdminPartyRequest.RequestJoin,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,cancelJoin,POST,/admin/v1/players/{playerId}/parties/{partyId}/cancel-join,-,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,approve,POST,/admin/v1/players/{playerId}/parties/{partyId}/approve,AdminPartyRequest.Approve,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,reject,POST,/admin/v1/players/{playerId}/parties/{partyId}/reject,AdminPartyRequest.Reject,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,invite,POST,/admin/v1/players/{playerId}/parties/{partyId}/invite,AdminPartyRequest.Invite,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,acceptInvitation,POST,/admin/v1/players/{playerId}/parties/{partyId}/accept-invitation,-,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,declineInvitation,POST,/admin/v1/players/{playerId}/parties/{partyId}/decline-invitation,-,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,transferLeader,POST,/admin/v1/players/{playerId}/parties/{partyId}/transfer-leader,AdminPartyRequest.TransferLeader,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,kick,POST,/admin/v1/players/{playerId}/parties/{partyId}/kick,AdminPartyRequest.Kick,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,promote,POST,/admin/v1/players/{playerId}/parties/{partyId}/promote,AdminPartyRequest.MemberOp,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,demote,POST,/admin/v1/players/{playerId}/parties/{partyId}/demote,AdminPartyRequest.MemberOp,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,leave,POST,/admin/v1/players/{playerId}/parties/{partyId}/leave,-,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+social,AdminPartyController,disband,POST,/admin/v1/players/{playerId}/parties/{partyId}/disband,-,Void,LEGACY,LEGACY_ONLY,PartyService no expansion
+user,AdminUserController,search,GET,/admin/v1/users,query email nickname status page size,AdminUserResponse.UserList,SUPPORTED_READ,ALLOW,UserQueryService
+user,AdminUserController,get,-,-,path userId,AdminUserResponse.UserInfo,IMPLEMENTATION_GAP,GATE,Unmapped and mapper returns placeholder null fields
+user,AdminUserController,changeStatus,-,-,AdminUserRequest.ChangeStatus,AdminUserResponse.StatusChanged,GATED_HIGH_RISK,GATE,Unmapped until Audit reason idempotency and stale semantics
+user,AdminUserController,forceChangeNickname,-,-,AdminUserRequest.ForceChangeNickname,AdminUserResponse.NicknameChanged,GATED_HIGH_RISK,GATE,Unmapped until Audit reason idempotency and stale semantics
+user,AdminUserSettingController,updateSettings,-,-,AdminUserSettingRequest.UpdateSettings,AdminUserSettingResponse.Settings,IMPLEMENTATION_GAP,DEFER,Unmapped private settings surface
