@@ -26,9 +26,14 @@ class UserTest {
     class Register {
 
         @Test
-        @DisplayName("정상 생성 → ACTIVE 상태")
+        @DisplayName("정상 생성 → ACTIVE / USER 상태")
         void shouldBeActive() {
-            assertThat(activeUser().getStatus()).isEqualTo(UserStatus.ACTIVE);
+            User user = activeUser();
+
+            assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(user.getAccountAuthority())
+                    .isEqualTo(AccountAuthority.USER);
+            assertThat(user.isAdmin()).isFalse();
         }
 
         @Test

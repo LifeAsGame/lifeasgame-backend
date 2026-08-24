@@ -5,6 +5,7 @@ import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.support.WebMvcTestConfig;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
+import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,9 @@ class CorsSecurityContractTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private UserAuthApi userAuthApi;
 
     @MockitoBean
     private AppErrorProperties appErrorProperties;
@@ -133,9 +137,16 @@ class CorsSecurityContractTest {
         @DisplayName("유효한 JWT의 actual protected request를 허용하고 불필요한 header는 expose하지 않는다")
         void allowsActualRequestWithJwt() throws Exception {
             Claims claims = mock(Claims.class);
-            given(jwtProvider.parse("valid-access-token")).willReturn(Optional.of(claims));
+            given(jwtProvider.parseAccessToken("valid-access-token"))
+                    .willReturn(Optional.of(claims));
             given(claims.getSubject()).willReturn("1");
             given(claims.get("pid", Long.class)).willReturn(2L);
+            given(userAuthApi.resolveAuthorization(1L)).willReturn(
+                    Optional.of(new UserAuthApi.AccountAuthorization(
+                            true,
+                            false
+                    ))
+            );
 
             mockMvc.perform(get(PROTECTED_PATH)
                             .header(HttpHeaders.ORIGIN, PRODUCTION_ORIGIN)

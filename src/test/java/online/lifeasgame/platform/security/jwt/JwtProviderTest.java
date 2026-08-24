@@ -19,6 +19,8 @@ class JwtProviderTest {
         String token = provider.createAccessToken(10L, 42L);
         assertThat(provider.extractUserId(token)).contains(10L);
         assertThat(provider.extractPlayerId(token)).contains(42L);
+        assertThat(provider.parseAccessToken(token)).isPresent();
+        assertThat(provider.parseRefreshToken(token)).isEmpty();
     }
 
     @Test @DisplayName("accessToken — playerId=null 허용")
@@ -30,8 +32,25 @@ class JwtProviderTest {
     @Test @DisplayName("refreshToken — userId만 포함")
     void refreshToken_onlyUserId() {
         String token = provider.createRefreshToken(10L);
-        assertThat(provider.extractUserId(token)).contains(10L);
+        assertThat(provider.extractRefreshUserId(token)).contains(10L);
         assertThat(provider.extractPlayerId(token)).isEmpty();
+        assertThat(provider.parseAccessToken(token)).isEmpty();
+        assertThat(provider.parseRefreshToken(token)).isPresent();
+    }
+
+    @Test @DisplayName("위변조 refreshToken → refresh parser empty")
+    void tamperedRefreshToken_returnsEmpty() {
+        String token = provider.createRefreshToken(1L) + "x";
+        assertThat(provider.parseRefreshToken(token)).isEmpty();
+    }
+
+    @Test @DisplayName("만료 refreshToken → refresh parser empty")
+    void expiredRefreshToken_returnsEmpty() throws InterruptedException {
+        JwtProperties p = new JwtProperties(); p.setSecret(SECRET); p.setRefreshTokenExpiryMs(1L);
+        JwtProvider short$ = new JwtProvider(p);
+        String token = short$.createRefreshToken(1L);
+        Thread.sleep(10);
+        assertThat(short$.parseRefreshToken(token)).isEmpty();
     }
 
     @Test @DisplayName("위변조 → empty")

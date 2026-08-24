@@ -1,13 +1,11 @@
 package online.lifeasgame.auth.application;
 
 import online.lifeasgame.auth.application.result.AuthResult;
-import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -35,17 +33,9 @@ class AuthServiceTest {
 
     @Test @DisplayName("reissueToken — 유효한 refresh → 새 TokenPair")
     void reissueToken_success() {
-        when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
         when(jwtProvider.createAccessToken(1L, 2L)).thenReturn("new-access");
         when(jwtProvider.createRefreshToken(1L)).thenReturn("new-refresh");
-        AuthResult.TokenPair r = authService.reissueToken("rt", 2L);
+        AuthResult.TokenPair r = authService.reissueToken(1L, 2L);
         assertThat(r.accessToken()).isEqualTo("new-access");
-    }
-
-    @Test @DisplayName("reissueToken — 유효하지 않은 토큰 → 예외")
-    void reissueToken_invalid_throws() {
-        when(jwtProvider.extractUserId("bad")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> authService.reissueToken("bad", null))
-                .isInstanceOf(AuthException.class);
     }
 }

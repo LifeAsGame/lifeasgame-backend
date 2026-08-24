@@ -8,8 +8,11 @@ import online.lifeasgame.user.application.internal.UserAuthApi;
 import online.lifeasgame.user.application.model.RawPassword;
 import online.lifeasgame.user.domain.Nickname;
 import online.lifeasgame.user.domain.User;
+import online.lifeasgame.user.domain.UserStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +28,11 @@ public class UserAuthService implements UserAuthApi {
     public Long authenticate(String email, String rawPassword) {
         User user = userReader.findByEmailOrElseThrow(email);
 
-        if (!passwordHasher.matches(RawPassword.of(rawPassword), user.getPasswordHash())) {
+        boolean passwordMatches = passwordHasher.matches(
+                RawPassword.of(rawPassword),
+                user.getPasswordHash()
+        );
+        if (!passwordMatches || user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthException(AuthError.BAD_CREDENTIALS);
         }
 
@@ -45,6 +52,16 @@ public class UserAuthService implements UserAuthApi {
                 .orElseGet(() -> userWriter.registerByOAuth(
                         online.lifeasgame.user.domain.Email.of(email),
                         Nickname.of(resolveUniqueNickname(name))
+                ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<AccountAuthorization> resolveAuthorization(Long userId) {
+        return userReader.findById(userId)
+                .map(user -> new AccountAuthorization(
+                        user.getStatus() == UserStatus.ACTIVE,
+                        user.isAdmin()
                 ));
     }
 

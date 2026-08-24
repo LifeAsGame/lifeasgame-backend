@@ -56,6 +56,23 @@ public class JwtProvider {
         }
     }
 
+    public Optional<Claims> parseAccessToken(String token) {
+        return parse(token).filter(claims ->
+                "access".equals(claims.get("type", String.class))
+        );
+    }
+
+    public Optional<Claims> parseRefreshToken(String token) {
+        return parse(token).filter(claims ->
+                "refresh".equals(claims.get("type", String.class))
+        );
+    }
+
+    public Optional<Long> extractRefreshUserId(String token) {
+        return parseRefreshToken(token)
+                .map(claims -> Long.valueOf(claims.getSubject()));
+    }
+
     public Optional<Long> extractUserId(String token) {
         return parse(token).map(c -> Long.valueOf(c.getSubject()));
     }

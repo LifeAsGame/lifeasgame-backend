@@ -96,6 +96,7 @@ class UserServiceTest {
             User u = mock(User.class);
             when(u.getId()).thenReturn(1L);
             when(u.getPasswordHash()).thenReturn(TEST_HASH);
+            when(u.getStatus()).thenReturn(UserStatus.ACTIVE);
             when(userReader.findByEmailOrElseThrow(anyString())).thenReturn(u);
             when(passwordHasher.matches(any(RawPassword.class), any(HashedPassword.class)))
                     .thenReturn(true);

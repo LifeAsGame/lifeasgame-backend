@@ -20,7 +20,7 @@ public class JwtCurrentPlayerAccessor implements CurrentPlayerAccessor {
         }
 
         if (auth.getPrincipal() instanceof JwtPrincipal p) {
-            return Optional.of(p.playerId());
+            return Optional.ofNullable(p.playerId());
         }
 
         return Optional.empty();

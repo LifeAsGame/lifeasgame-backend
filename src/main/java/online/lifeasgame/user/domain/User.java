@@ -38,6 +38,10 @@ public class User extends AbstractTime {
     @Column(length=20, nullable=false)
     private UserStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_authority", length = 16, nullable = false)
+    private AccountAuthority accountAuthority = AccountAuthority.USER;
+
     @Transient
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
@@ -46,6 +50,7 @@ public class User extends AbstractTime {
         this.passwordHash = passwordHash;
         this.nickname = nickname;
         this.status = status;
+        this.accountAuthority = AccountAuthority.USER;
     }
 
     public static User register(Email email, HashedPassword passwordHash, Nickname nickname) {
@@ -77,6 +82,10 @@ public class User extends AbstractTime {
 
     public boolean isOAuthAccount() {
         return this.passwordHash != null && this.passwordHash.isOAuthAccount();
+    }
+
+    public boolean isAdmin() {
+        return accountAuthority == AccountAuthority.ADMIN;
     }
 
     public List<DomainEvent> pullEvents() {
