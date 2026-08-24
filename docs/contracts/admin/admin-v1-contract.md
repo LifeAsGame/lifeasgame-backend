@@ -11,15 +11,15 @@ This document freezes the backend-owned Admin contract inspected after PR #301. 
 
 ## Inventory scope
 
-The inspection covers all 23 production `api/admin` controllers, their class and method mappings, request/response DTOs, and called Query/Service owner.
+The inspection covers all 24 production Admin controllers, their class and method mappings, request/response DTOs, and called Query/Service owner.
 
-- Live mapped routes: 140
+- Live mapped routes: 141
 - Unmapped controller operations: 4
-- Total inventoried operations: 144
+- Total inventoried operations: 145
 
 | Classification | Count | Frontend rule |
 | --- | ---: | --- |
-| `SUPPORTED_READ` | 21 | `ALLOW` |
+| `SUPPORTED_READ` | 22 | `ALLOW` |
 | `SUPPORTED_COMMAND` | 12 | `ALLOW` |
 | `GATED_HIGH_RISK` | 38 | `GATE` |
 | `IMPLEMENTATION_GAP` | 2 | `GATE` or `DEFER` as recorded |
@@ -49,6 +49,15 @@ The other 36 mapped commands are `GATE`: destructive catalog deletion, direct pl
 - `AdminUserController.get` remains unmapped. Although `UserQueryService.getUserInfo(userId)` exists, `AdminUserWebMapper.toUserInfo()` currently returns placeholder null fields, so `GET /admin/v1/users/{userId}` is not safe to expose.
 - `changeStatus` and `forceChangeNickname` remain unmapped and `GATED_HIGH_RISK`. Do not map them before Admin Audit plus reason/idempotency/stale-command hardening.
 - `AdminUserSettingController.updateSettings` remains an unmapped private implementation gap.
+
+## Admin Audit read
+
+- `GET /admin/v1/audit-events` is the canonical safe metadata reader and is
+  `SUPPORTED_READ + ALLOW`.
+- Its durable append and transaction rules are defined in
+  [admin-audit-contract.md](admin-audit-contract.md).
+- Existing high-risk commands remain `GATED_HIGH_RISK + GATE` until Unit E
+  integrates reason, idempotency, stale/conflict handling, and audit append.
 
 ## Frontend migration rules
 

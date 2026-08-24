@@ -34,9 +34,9 @@ class AccountAuthorityFlywayTest {
         throughV28.migrate();
         insertUser(30001L, "existing@example.com");
 
-        Flyway latest = flyway(null);
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(1);
-        assertThat(latest.info().current().getVersion().getVersion())
+        Flyway throughV29 = flyway(MigrationVersion.fromVersion("29"));
+        assertThat(throughV29.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(throughV29.info().current().getVersion().getVersion())
                 .isEqualTo("29");
         assertThat(authority(30001L)).isEqualTo("USER");
 

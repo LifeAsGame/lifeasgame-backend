@@ -1,4 +1,5 @@
 domain,controller,operation,http_method,path,request_type,response_type,classification,frontend_exposure,notes
+adminaudit,AdminAuditController,list,GET,/admin/v1/audit-events,query actorUserId action targetType targetId result correlationId from to cursor size,AdminAuditResponse.Page,SUPPORTED_READ,ALLOW,AdminAuditQueryService safe metadata only
 character,AdminAchievementController,create,POST,/admin/v1/achievements,AdminAchievementRequest.Create,AdminAchievementResponse.Info,SUPPORTED_COMMAND,ALLOW,AchievementService
 character,AdminAchievementController,list,GET,/admin/v1/achievements,query category[],AdminAchievementResponse.Infos,SUPPORTED_READ,ALLOW,AchievementService
 character,AdminAchievementController,get,GET,/admin/v1/achievements/{achievementId},-,AdminAchievementResponse.Info,SUPPORTED_READ,ALLOW,AchievementService
