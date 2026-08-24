@@ -205,7 +205,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
         @DisplayName("legacy null은 허용하고 canonical quantity 제약은 보존한다")
         void validatesMigrationAndJpaContract() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("29");
+                    .isEqualTo("30");
             jdbc.update("""
                     INSERT INTO trades (
                         fee_bps, buyer_player_id, created_at, fee, item_inst_id,
