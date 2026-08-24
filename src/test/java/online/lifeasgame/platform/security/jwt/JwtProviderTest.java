@@ -32,6 +32,7 @@ class JwtProviderTest {
         String token = provider.createRefreshToken(10L);
         assertThat(provider.extractUserId(token)).contains(10L);
         assertThat(provider.extractPlayerId(token)).isEmpty();
+        assertThat(provider.parseAccessToken(token)).isEmpty();
     }
 
     @Test @DisplayName("위변조 → empty")

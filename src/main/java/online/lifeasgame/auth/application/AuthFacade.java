@@ -36,6 +36,11 @@ public class AuthFacade {
     public AuthResult.TokenPair refresh(String refreshToken) {
         Long userId = jwtProvider.extractUserId(refreshToken)
                 .orElseThrow(() -> new AuthException(AuthError.TOKEN_INVALID));
+        userAuthApi.resolveAuthorization(userId)
+                .filter(UserAuthApi.AccountAuthorization::active)
+                .orElseThrow(() -> new AuthException(
+                        AuthError.TOKEN_INVALID
+                ));
         Long playerId = playerLookupApi.findPlayerIdByUserId(userId);
         return authService.reissueToken(refreshToken, playerId);
     }

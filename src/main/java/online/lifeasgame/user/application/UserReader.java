@@ -29,6 +29,10 @@ class UserReader {
                 .orElseThrow(() -> new DomainException(UserError.USER_NOT_FOUND));
     }
 
+    public Optional<User> findById(Long userId) {
+        return userRepository.findById(userId);
+    }
+
     public User findByEmailOrElseThrow(String emailStr) {
         return userRepository.findByEmail(Email.of(emailStr))
                 .orElseThrow(() -> new DomainException(UserError.USER_NOT_FOUND));

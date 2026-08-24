@@ -1,11 +1,13 @@
 package online.lifeasgame.platform.security.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +24,7 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserAuthApi userAuthApi;
 
     @Override
     protected void doFilterInternal(
@@ -30,7 +33,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
-        extractToken(req).flatMap(jwtProvider::parse).ifPresent(this::setAuth);
+        extractToken(req)
+                .flatMap(jwtProvider::parseAccessToken)
+                .flatMap(this::parsePrincipal)
+                .flatMap(this::resolveAuthentication)
+                .ifPresent(this::setAuth);
         chain.doFilter(req, res);
     }
 
@@ -40,16 +47,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ? Optional.of(h.substring(7)) : Optional.empty();
     }
 
-    private void setAuth(Claims claims) {
-        JwtPrincipal principal = new JwtPrincipal(
-                Long.valueOf(claims.getSubject()),
-                claims.get("pid", Long.class)
-        );
+    private Optional<JwtPrincipal> parsePrincipal(
+            Claims claims
+    ) {
+        try {
+            return Optional.of(new JwtPrincipal(
+                    Long.valueOf(claims.getSubject()),
+                    claims.get("pid", Long.class)
+            ));
+        } catch (JwtException | IllegalArgumentException exception) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<ResolvedAuthentication> resolveAuthentication(
+            JwtPrincipal principal
+    ) {
+        return userAuthApi.resolveAuthorization(principal.userId())
+                .filter(UserAuthApi.AccountAuthorization::active)
+                .map(authorization -> new ResolvedAuthentication(
+                        principal,
+                        authorization.admin()
+                ));
+    }
+
+    private void setAuth(ResolvedAuthentication resolved) {
+        JwtPrincipal principal = resolved.principal();
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
                         principal, null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        resolved.admin()
+                                ? List.of(
+                                new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                                : List.of(
+                                new SimpleGrantedAuthority("ROLE_USER")
+                        )
                 )
         );
 
@@ -57,5 +92,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (principal.playerId() != null) {
             MDC.put("playerId", String.valueOf(principal.playerId()));
         }
+    }
+
+    private record ResolvedAuthentication(
+            JwtPrincipal principal,
+            boolean admin
+    ) {
     }
 }

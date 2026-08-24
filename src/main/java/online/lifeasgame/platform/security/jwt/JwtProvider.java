@@ -56,6 +56,12 @@ public class JwtProvider {
         }
     }
 
+    public Optional<Claims> parseAccessToken(String token) {
+        return parse(token).filter(claims ->
+                "access".equals(claims.get("type", String.class))
+        );
+    }
+
     public Optional<Long> extractUserId(String token) {
         return parse(token).map(c -> Long.valueOf(c.getSubject()));
     }

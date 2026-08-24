@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.security.jwt.JwtAuthenticationFilter;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
+import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,6 +24,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final UserAuthApi userAuthApi;
     private final WebCorsProperties webCorsProperties;
 
     @Bean
@@ -54,7 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider),
+                        new JwtAuthenticationFilter(jwtProvider, userAuthApi),
                         UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)

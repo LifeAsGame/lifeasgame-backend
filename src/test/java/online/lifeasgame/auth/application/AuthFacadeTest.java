@@ -88,6 +88,9 @@ class AuthFacadeTest {
         @Test @DisplayName("linkStart 후 refresh → playerId 포함 토큰 재발급")
         void afterLinkStart_playerId() {
             when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(userAuthApi.resolveAuthorization(1L)).thenReturn(
+                    activeAuthorization()
+            );
             when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(2L);  // linkStart 완료
             when(authService.reissueToken("rt",2L)).thenReturn(PAIR);
 
@@ -99,6 +102,9 @@ class AuthFacadeTest {
         @Test @DisplayName("linkStart 전 refresh → playerId=null")
         void beforeLinkStart_nullPlayerId() {
             when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(userAuthApi.resolveAuthorization(1L)).thenReturn(
+                    activeAuthorization()
+            );
             when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(null);
             when(authService.reissueToken("rt",null))
                     .thenReturn(new AuthResult.TokenPair("a","r",1L,null));
@@ -114,5 +120,24 @@ class AuthFacadeTest {
                     .isInstanceOf(AuthException.class);
             verifyNoInteractions(authService);
         }
+
+        @Test @DisplayName("revoked account의 refresh → 예외")
+        void revokedAccount_throws() {
+            when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(userAuthApi.resolveAuthorization(1L)).thenReturn(
+                    Optional.of(new UserAuthApi.AccountAuthorization(
+                            false,
+                            true
+                    ))
+            );
+
+            assertThatThrownBy(() -> authFacade.refresh("rt"))
+                    .isInstanceOf(AuthException.class);
+            verifyNoInteractions(playerLookupApi, authService);
+        }
+    }
+
+    private Optional<UserAuthApi.AccountAuthorization> activeAuthorization() {
+        return Optional.of(new UserAuthApi.AccountAuthorization(true, false));
     }
 }
