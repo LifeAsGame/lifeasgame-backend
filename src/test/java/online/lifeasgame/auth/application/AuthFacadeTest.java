@@ -87,12 +87,12 @@ class AuthFacadeTest {
 
         @Test @DisplayName("linkStart 후 refresh → playerId 포함 토큰 재발급")
         void afterLinkStart_playerId() {
-            when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(jwtProvider.extractRefreshUserId("rt")).thenReturn(Optional.of(1L));
             when(userAuthApi.resolveAuthorization(1L)).thenReturn(
                     activeAuthorization()
             );
             when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(2L);  // linkStart 완료
-            when(authService.reissueToken("rt",2L)).thenReturn(PAIR);
+            when(authService.reissueToken(1L,2L)).thenReturn(PAIR);
 
             AuthResult.TokenPair r = authFacade.refresh("rt");
 
@@ -101,29 +101,33 @@ class AuthFacadeTest {
 
         @Test @DisplayName("linkStart 전 refresh → playerId=null")
         void beforeLinkStart_nullPlayerId() {
-            when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(jwtProvider.extractRefreshUserId("rt")).thenReturn(Optional.of(1L));
             when(userAuthApi.resolveAuthorization(1L)).thenReturn(
                     activeAuthorization()
             );
             when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(null);
-            when(authService.reissueToken("rt",null))
+            when(authService.reissueToken(1L,null))
                     .thenReturn(new AuthResult.TokenPair("a","r",1L,null));
 
             assertThat(authFacade.refresh("rt").playerId()).isNull();
         }
 
-        @Test @DisplayName("유효하지 않은 refreshToken → 예외")
-        void invalid_throws() {
-            when(jwtProvider.extractUserId("bad")).thenReturn(Optional.empty());
+        @Test @DisplayName("access token을 refresh에 전달하면 TOKEN_INVALID")
+        void accessToken_throws() {
+            when(jwtProvider.extractRefreshUserId("access")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> authFacade.refresh("bad"))
-                    .isInstanceOf(AuthException.class);
+            assertThatThrownBy(() -> authFacade.refresh("access"))
+                    .isInstanceOfSatisfying(
+                            AuthException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(AuthError.TOKEN_INVALID)
+                    );
             verifyNoInteractions(authService);
         }
 
         @Test @DisplayName("revoked account의 refresh → 예외")
         void revokedAccount_throws() {
-            when(jwtProvider.extractUserId("rt")).thenReturn(Optional.of(1L));
+            when(jwtProvider.extractRefreshUserId("rt")).thenReturn(Optional.of(1L));
             when(userAuthApi.resolveAuthorization(1L)).thenReturn(
                     Optional.of(new UserAuthApi.AccountAuthorization(
                             false,
