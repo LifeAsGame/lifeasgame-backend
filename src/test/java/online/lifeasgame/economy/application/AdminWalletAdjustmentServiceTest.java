@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -58,6 +60,15 @@ class AdminWalletAdjustmentServiceTest {
                     "unsafe correlation"
             )).isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("unsafe format");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"\u200B", "\u00A0", " \u200B \u00A0 "})
+        @DisplayName("invisible-only reason을 거부한다")
+        void rejectsInvisibleReason(String reason) {
+            assertThatThrownBy(() -> command(reason, "key-306", null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("visible character");
         }
 
         @Test

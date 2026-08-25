@@ -39,7 +39,7 @@ public final class AdminEconomyRequest {
             boolean debit,
             @NotBlank
             @Size(max = 512)
-            @Pattern(regexp = "[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
             String reason
     ) {
     }

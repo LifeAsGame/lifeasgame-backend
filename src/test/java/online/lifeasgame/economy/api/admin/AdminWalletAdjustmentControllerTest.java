@@ -14,11 +14,14 @@ import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,7 +32,10 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,6 +126,27 @@ class AdminWalletAdjustmentControllerTest {
     }
 
     @Test
+    @DisplayName("Admin command custom header의 browser preflight를 허용한다")
+    void allowsCommandHeaderPreflight() throws Exception {
+        mockMvc.perform(options("/admin/v1/economy/wallets/306/adjust")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(
+                                HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS,
+                                "authorization, content-type, idempotency-key, x-correlation-id"
+                        ))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        containsString("idempotency-key")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        containsString("x-correlation-id")
+                ));
+    }
+
+    @Test
     @DisplayName("Idempotency-Key가 없으면 400이고 mutation에 진입하지 않는다")
     void requiresIdempotencyKey() throws Exception {
         allowAdmin();
@@ -150,6 +177,29 @@ class AdminWalletAdjustmentControllerTest {
                                   "reason": "CASE-306\\nprivate"
                                 }
                                 """))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(adjustmentService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\u200B", "\u00A0", " \u200B \u00A0 "})
+    @DisplayName("invisible-only reason은 400이고 mutation에 진입하지 않는다")
+    void rejectsInvisibleReason(String reason) throws Exception {
+        allowAdmin();
+
+        mockMvc.perform(post("/admin/v1/economy/wallets/306/adjust")
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "wallet-adjust-306")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "amount": 30,
+                                  "currency": "GOLD",
+                                  "debit": false,
+                                  "reason": "%s"
+                                }
+                                """.formatted(reason)))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(adjustmentService);

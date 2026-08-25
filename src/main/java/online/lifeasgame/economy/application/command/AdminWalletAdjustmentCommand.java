@@ -46,6 +46,13 @@ public record AdminWalletAdjustmentCommand(
                     "reason must be a single-line operational rationale"
             );
         }
+        if (reason.codePoints().noneMatch(
+                AdminWalletAdjustmentCommand::isVisibleReasonCharacter
+        )) {
+            throw new IllegalArgumentException(
+                    "reason must contain a visible character"
+            );
+        }
         return reason;
     }
 
@@ -54,6 +61,12 @@ public record AdminWalletAdjustmentCommand(
         return Character.isISOControl(value)
                 || type == Character.LINE_SEPARATOR
                 || type == Character.PARAGRAPH_SEPARATOR;
+    }
+
+    private static boolean isVisibleReasonCharacter(int value) {
+        int type = Character.getType(value);
+        return type != Character.FORMAT
+                && type != Character.SPACE_SEPARATOR;
     }
 
     private static String requireIdentifier(
