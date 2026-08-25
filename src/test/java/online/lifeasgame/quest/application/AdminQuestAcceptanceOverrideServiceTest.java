@@ -60,8 +60,26 @@ class AdminQuestAcceptanceOverrideServiceTest {
         @DisplayName("invisible-only reason을 거부한다")
         void rejectsInvisibleReason(String reason) {
             assertThatThrownBy(() -> progress(1, reason, "key-308", null))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("visible character");
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("embedded Unicode format reason을 두 command 모두 거부한다")
+        void rejectsEmbeddedFormatReason() {
+            assertThatThrownBy(() -> progress(
+                    1,
+                    "CASE-308\u202Eprivate",
+                    "progress-key-308",
+                    null
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("single-line");
+            assertThatThrownBy(() -> status(
+                    "CANCELED",
+                    "CASE-308\u202Eprivate",
+                    "status-key-308",
+                    null
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("single-line");
         }
 
         @Test

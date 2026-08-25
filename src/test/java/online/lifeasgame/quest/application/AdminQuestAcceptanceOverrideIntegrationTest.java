@@ -270,6 +270,58 @@ class AdminQuestAcceptanceOverrideIntegrationTest {
     }
 
     @Test
+    @DisplayName("concurrent progress와 cancel은 legal serial order로 완료된다")
+    void serializesProgressAndCancel() throws Exception {
+        long acceptanceId = seedAcceptance();
+
+        List<Outcome> outcomes = concurrently(
+                () -> overrideService.adjustProgress(progress(
+                        acceptanceId,
+                        2,
+                        "cross-command-progress",
+                        "request-cross-progress"
+                )),
+                () -> overrideService.changeStatus(status(
+                        acceptanceId,
+                        "CANCELED",
+                        "cross-command-status",
+                        "request-cross-status"
+                ))
+        );
+
+        Outcome progressOutcome = outcomes.get(0);
+        Outcome cancelOutcome = outcomes.get(1);
+        assertThat(cancelOutcome.success()).isTrue();
+        assertThat(status(acceptanceId)).isEqualTo("CANCELED");
+        assertThat(successAuditCount("QUEST_ACCEPTANCE_STATUS_CHANGE"))
+                .isEqualTo(1);
+
+        if (progressOutcome.success()) {
+            assertThat(progress(acceptanceId)).isEqualTo(2);
+            assertThat(successAuditCount(
+                    "QUEST_ACCEPTANCE_PROGRESS_ADJUST"
+            )).isEqualTo(1);
+            assertThat(auditCount()).isEqualTo(2);
+            assertThat(outboxTypes()).containsExactly("QUEST_PROGRESS");
+        } else {
+            assertThat(progressOutcome.failure())
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(
+                                            QuestError.QUEST_ACCEPTANCE_PROGRESS_NOT_ALLOWED
+                                    )
+                    );
+            assertThat(progress(acceptanceId)).isZero();
+            assertThat(successAuditCount(
+                    "QUEST_ACCEPTANCE_PROGRESS_ADJUST"
+            )).isZero();
+            assertThat(auditCount()).isEqualTo(1);
+            assertThat(outboxCount()).isZero();
+        }
+    }
+
+    @Test
     @DisplayName("Audit failure는 progress/status와 outbox를 모두 rollback한다")
     void rollsBackAuditFailure() {
         long progressAcceptanceId = seedAcceptance();
@@ -468,6 +520,14 @@ class AdminQuestAcceptanceOverrideIntegrationTest {
                 "SELECT COUNT(*) FROM admin_audit_events",
                 Integer.class
         );
+    }
+
+    private int successAuditCount(String action) {
+        return jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM admin_audit_events
+                WHERE action = ? AND result = 'SUCCESS'
+                """, Integer.class, action);
     }
 
     private int outboxCount() {

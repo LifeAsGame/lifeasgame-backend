@@ -128,6 +128,7 @@ public class AdminAuditEvent {
     private static boolean isUnsafeReasonCharacter(int value) {
         int type = Character.getType(value);
         return Character.isISOControl(value)
+                || type == Character.FORMAT
                 || type == Character.LINE_SEPARATOR
                 || type == Character.PARAGRAPH_SEPARATOR;
     }

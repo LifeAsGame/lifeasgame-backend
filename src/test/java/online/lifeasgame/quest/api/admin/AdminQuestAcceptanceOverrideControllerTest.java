@@ -205,6 +205,18 @@ class AdminQuestAcceptanceOverrideControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(progressBody(1, "CASE-308\\nprivate")))
                 .andExpect(status().isBadRequest());
+        mockMvc.perform(patch(progressPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "quest-progress-format")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(progressBody(1, "CASE-308\u202Eprivate")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(patch(statusPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "quest-status-format")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(statusBody("CANCELED", "CASE-308\u202Eprivate")))
+                .andExpect(status().isBadRequest());
 
         verifyNoInteractions(overrideService);
     }

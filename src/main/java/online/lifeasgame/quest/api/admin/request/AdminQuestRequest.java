@@ -63,7 +63,7 @@ public final class AdminQuestRequest {
             @NotNull @PositiveOrZero Integer delta,
             @NotBlank
             @Size(max = 512)
-            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*")
             String reason
     ) {
     }
@@ -72,7 +72,7 @@ public final class AdminQuestRequest {
             @NotBlank String status,
             @NotBlank
             @Size(max = 512)
-            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*")
             String reason
     ) {
     }
