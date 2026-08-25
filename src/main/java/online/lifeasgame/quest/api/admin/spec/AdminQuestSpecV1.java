@@ -3,12 +3,15 @@ package online.lifeasgame.quest.api.admin.spec;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "Admin Quest API V1")
 public interface AdminQuestSpecV1 {
@@ -26,7 +29,9 @@ public interface AdminQuestSpecV1 {
     ResponseEntity<AdminQuestResponse.Definitions> definitions();
 
     @Operation(summary = "Quest Definition 생성/보장", description = "Blueprint code 기준으로 Quest Definition을 생성(또는 존재 보장)합니다.")
-    ResponseEntity<AdminQuestResponse.Definition> ensure(AdminQuestRequest.Ensure request);
+    ResponseEntity<AdminQuestResponse.Definition> ensure(
+            @Valid @RequestBody AdminQuestRequest.Ensure request
+    );
 
     @Operation(summary = "Quest Definition 단건 조회", description = "questCode로 Quest Definition을 조회합니다.")
     ResponseEntity<AdminQuestResponse.Definition> definition(String questCode);
@@ -46,15 +51,27 @@ public interface AdminQuestSpecV1 {
     @Operation(summary = "Quest Acceptance 단건 조회", description = "acceptanceId로 Acceptance 상세를 조회합니다.")
     ResponseEntity<AdminQuestResponse.Acceptance> acceptance(Long acceptanceId);
 
-    @Operation(summary = "Acceptance 진행도 조정", description = "운영/CS 목적으로 Acceptance 진행도를 SET/ADD 방식으로 조정합니다. (멱등키 권장)")
+    @Operation(summary = "Acceptance 진행도 조정", description = "운영/CS 목적으로 Acceptance 진행도를 non-negative delta로 조정합니다.")
     ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> adjustProgress(
-            @PathVariable Long acceptanceId,
+            @PathVariable @Positive Long acceptanceId,
+            @RequestHeader("Idempotency-Key")
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
+            String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false)
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
+            String correlationId,
             @Valid @RequestBody AdminQuestRequest.AdjustProgress request
     );
 
-    @Operation(summary = "Acceptance 상태 변경", description = "허용된 상태 전이만 수행합니다. DONE 입력은 COMPLETED로 해석합니다. (멱등키 권장)")
+    @Operation(summary = "Acceptance 상태 변경", description = "허용된 상태 전이만 수행합니다. DONE 입력은 COMPLETED로 해석합니다.")
     ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> changeStatus(
-            @PathVariable Long acceptanceId,
+            @PathVariable @Positive Long acceptanceId,
+            @RequestHeader("Idempotency-Key")
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
+            String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false)
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
+            String correlationId,
             @Valid @RequestBody AdminQuestRequest.ChangeStatus request
     );
 }

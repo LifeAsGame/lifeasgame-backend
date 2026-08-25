@@ -1,6 +1,8 @@
 package online.lifeasgame.quest.api.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -8,6 +10,7 @@ import online.lifeasgame.quest.api.admin.mapper.AdminQuestWebMapper;
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
 import online.lifeasgame.quest.api.admin.spec.AdminQuestSpecV1;
+import online.lifeasgame.quest.application.AdminQuestAcceptanceOverrideService;
 import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.QuestQueryService;
 import online.lifeasgame.quest.application.result.QuestResult;
@@ -23,6 +26,7 @@ public class AdminQuestController implements AdminQuestSpecV1 {
 
     private final QuestService questService;
     private final QuestQueryService questQueryService;
+    private final AdminQuestAcceptanceOverrideService acceptanceOverrideService;
 
     @Override
     @GetMapping("/catalog")
@@ -95,12 +99,22 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @Override
     @PatchMapping("/acceptances/{acceptanceId}/progress")
     public ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> adjustProgress(
-            @PathVariable Long acceptanceId,
+            @PathVariable @Positive Long acceptanceId,
+            @RequestHeader("Idempotency-Key")
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
+            String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false)
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
+            String correlationId,
             @Valid @RequestBody AdminQuestRequest.AdjustProgress request
     ) {
-        QuestResult.Acceptance result = questService.adjustAcceptanceProgress(
-                acceptanceId,
-                AdminQuestWebMapper.toAdjustProgressCommand(request)
+        QuestResult.Acceptance result = acceptanceOverrideService.adjustProgress(
+                AdminQuestWebMapper.toAdjustProgressCommand(
+                        acceptanceId,
+                        request,
+                        idempotencyKey,
+                        correlationId
+                )
         );
         return ApiResponses.ok(AdminQuestWebMapper.toAcceptance(result));
     }
@@ -108,12 +122,22 @@ public class AdminQuestController implements AdminQuestSpecV1 {
     @Override
     @PatchMapping("/acceptances/{acceptanceId}/status")
     public ResponseEntity<ApiResponse<AdminQuestResponse.Acceptance>> changeStatus(
-            @PathVariable Long acceptanceId,
+            @PathVariable @Positive Long acceptanceId,
+            @RequestHeader("Idempotency-Key")
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
+            String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false)
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
+            String correlationId,
             @Valid @RequestBody AdminQuestRequest.ChangeStatus request
     ) {
-        QuestResult.Acceptance result = questService.changeAcceptanceStatus(
-                acceptanceId,
-                AdminQuestWebMapper.toChangeStatusCommand(request)
+        QuestResult.Acceptance result = acceptanceOverrideService.changeStatus(
+                AdminQuestWebMapper.toChangeStatusCommand(
+                        acceptanceId,
+                        request,
+                        idempotencyKey,
+                        correlationId
+                )
         );
         return ApiResponses.ok(AdminQuestWebMapper.toAcceptance(result));
     }

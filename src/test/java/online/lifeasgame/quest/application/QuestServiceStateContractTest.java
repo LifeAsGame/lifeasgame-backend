@@ -102,12 +102,13 @@ class QuestServiceStateContractTest {
         void completesAsAlias() {
             Quest quest = quest();
             QuestAcceptance acceptance = goalReachedAcceptance(quest);
-            given(questReader.getAcceptance(ACCEPTANCE_ID)).willReturn(acceptance);
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
+                    .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 
             QuestResult.Acceptance result = service.changeAcceptanceStatus(
                     ACCEPTANCE_ID,
-                    new QuestCommand.ChangeStatus("DONE", "legacy client")
+                    new QuestCommand.ChangeStatus("DONE")
             );
 
             assertThat(result.status()).isEqualTo(QuestStatus.COMPLETED.name());
@@ -157,7 +158,7 @@ class QuestServiceStateContractTest {
                     "id",
                     ACCEPTANCE_ID
             );
-            given(questReader.getAcceptance(ACCEPTANCE_ID))
+            given(questReader.getAcceptanceForUpdate(ACCEPTANCE_ID))
                     .willReturn(acceptance);
             given(questReader.getById(QUEST_ID)).willReturn(quest);
 

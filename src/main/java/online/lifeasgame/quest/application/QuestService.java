@@ -216,7 +216,7 @@ public class QuestService {
 
     @Transactional
     public QuestResult.Acceptance adjustAcceptanceProgress(Long acceptanceId, QuestCommand.AdjustProgress command) {
-        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        QuestAcceptance acceptance = questReader.getAcceptanceForUpdate(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
         Instant transitionAt = clock.instant();
         acceptance.addProgress(command.delta(), quest, transitionAt);
@@ -234,7 +234,7 @@ public class QuestService {
     @Transactional
     public QuestResult.Acceptance changeAcceptanceStatus(Long acceptanceId, QuestCommand.ChangeStatus command) {
         QuestStatus questStatus = QuestStatus.parse(command.status());
-        QuestAcceptance acceptance = questReader.getAcceptance(acceptanceId);
+        QuestAcceptance acceptance = questReader.getAcceptanceForUpdate(acceptanceId);
         Quest quest = questReader.getById(acceptance.getQuestId());
         Instant transitionAt = clock.instant();
         boolean changed = acceptance.changeStatus(questStatus, transitionAt);
