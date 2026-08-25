@@ -1,8 +1,10 @@
 package online.lifeasgame.quest.api.admin.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -58,17 +60,20 @@ public final class AdminQuestRequest {
     }
 
     public record AdjustProgress(
-            @NotBlank String type,
-            Integer delta,
-            Integer value,
-            @Size(max = 120) String idempotencyKey
+            @NotNull @PositiveOrZero Integer delta,
+            @NotBlank
+            @Size(max = 512)
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
+            String reason
     ) {
     }
 
     public record ChangeStatus(
             @NotBlank String status,
-            @Size(max = 200) String reason,
-            @Size(max = 120) String idempotencyKey
+            @NotBlank
+            @Size(max = 512)
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Zl}\\p{Zp}]*")
+            String reason
     ) {
     }
 

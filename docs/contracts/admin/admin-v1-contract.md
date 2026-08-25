@@ -20,8 +20,8 @@ The inspection covers all 24 production Admin controllers, their class and metho
 | Classification | Count | Frontend rule |
 | --- | ---: | --- |
 | `SUPPORTED_READ` | 22 | `ALLOW` |
-| `SUPPORTED_COMMAND` | 13 | `ALLOW` |
-| `GATED_HIGH_RISK` | 37 | `GATE` |
+| `SUPPORTED_COMMAND` | 15 | `ALLOW` |
+| `GATED_HIGH_RISK` | 35 | `GATE` |
 | `IMPLEMENTATION_GAP` | 2 | `GATE` or `DEFER` as recorded |
 | `LEGACY` | 46 | `LEGACY_ONLY` |
 | `DEFERRED_PRIVATE` | 25 | `DEFER` |
@@ -39,9 +39,9 @@ Mapping existence and frontend capability are separate. `SUPPORTED_COMMAND + ALL
 
 ## Command risk decision
 
-All 48 previously supported command rows were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. The Wallet adjustment command is also `ALLOW` after Unit E1 added required reason, durable Audit-backed idempotency, correlation, pessimistic locking, and atomic rollback. Its exact contract is [admin-wallet-adjustment-contract.md](admin-wallet-adjustment-contract.md).
+All 48 previously supported command rows were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. The Wallet adjustment command and two Quest Acceptance override commands are also `ALLOW` after their Unit E hardening. Their exact contracts are [admin-wallet-adjustment-contract.md](admin-wallet-adjustment-contract.md) and [admin-quest-acceptance-contract.md](admin-quest-acceptance-contract.md).
 
-The other 35 mapped commands are `GATE`: destructive catalog deletion, direct player-state correction, entitlement grant/revoke or delivery, live Shop/economy mutation, quest acceptance override, and social relationship mutation. Their routes remain mapped but are not frontend capabilities before durable Admin Audit and reason/idempotency/stale/conflict hardening.
+The other 33 mapped commands are `GATE`: destructive catalog deletion, direct player-state correction, entitlement grant/revoke or delivery, live Shop/economy mutation, and social relationship mutation. Their routes remain mapped but are not frontend capabilities before durable Admin Audit and reason/idempotency/stale/conflict hardening.
 
 ## Known User gaps
 
@@ -56,8 +56,9 @@ The other 35 mapped commands are `GATE`: destructive catalog deletion, direct pl
   `SUPPORTED_READ + ALLOW`.
 - Its durable append and transaction rules are defined in
   [admin-audit-contract.md](admin-audit-contract.md).
-- Except for the hardened Wallet adjustment command, existing high-risk
-  commands remain `GATED_HIGH_RISK + GATE` until their own Unit E integration.
+- Except for the hardened Wallet adjustment and Quest Acceptance override
+  commands, existing high-risk commands remain `GATED_HIGH_RISK + GATE`
+  until their own Unit E integration.
 
 ## Frontend migration rules
 

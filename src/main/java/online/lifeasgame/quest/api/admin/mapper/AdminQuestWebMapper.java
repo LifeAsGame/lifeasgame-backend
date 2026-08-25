@@ -2,6 +2,7 @@ package online.lifeasgame.quest.api.admin.mapper;
 
 import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.quest.api.admin.response.AdminQuestResponse;
+import online.lifeasgame.quest.application.command.AdminQuestAcceptanceOverrideCommand;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.query.QuestQuery;
 import online.lifeasgame.quest.application.result.QuestResult;
@@ -141,16 +142,33 @@ public final class AdminQuestWebMapper {
         );
     }
 
-    public static QuestCommand.AdjustProgress toAdjustProgressCommand(AdminQuestRequest.AdjustProgress request) {
-        return new QuestCommand.AdjustProgress(
-                request.delta()
+    public static AdminQuestAcceptanceOverrideCommand.AdjustProgress toAdjustProgressCommand(
+            Long acceptanceId,
+            AdminQuestRequest.AdjustProgress request,
+            String idempotencyKey,
+            String correlationId
+    ) {
+        return new AdminQuestAcceptanceOverrideCommand.AdjustProgress(
+                acceptanceId,
+                request.delta(),
+                request.reason(),
+                idempotencyKey,
+                correlationId
         );
     }
 
-    public static QuestCommand.ChangeStatus toChangeStatusCommand(AdminQuestRequest.ChangeStatus request) {
-        return new QuestCommand.ChangeStatus(
+    public static AdminQuestAcceptanceOverrideCommand.ChangeStatus toChangeStatusCommand(
+            Long acceptanceId,
+            AdminQuestRequest.ChangeStatus request,
+            String idempotencyKey,
+            String correlationId
+    ) {
+        return new AdminQuestAcceptanceOverrideCommand.ChangeStatus(
+                acceptanceId,
                 request.status(),
-                request.reason()
+                request.reason(),
+                idempotencyKey,
+                correlationId
         );
     }
 }

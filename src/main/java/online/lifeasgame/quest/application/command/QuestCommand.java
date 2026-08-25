@@ -77,8 +77,7 @@ public final class QuestCommand {
     }
 
     public record ChangeStatus(
-            String status,
-            String reason
+            String status
     ) {
     }
 }
