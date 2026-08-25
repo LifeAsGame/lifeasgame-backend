@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,13 @@ import java.util.regex.Pattern;
 
 @Getter
 @Entity
-@Table(name = "admin_audit_events")
+@Table(
+        name = "admin_audit_events",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_admin_audit_action_idempotency",
+                columnNames = {"action", "idempotency_key"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AdminAuditEvent {
 

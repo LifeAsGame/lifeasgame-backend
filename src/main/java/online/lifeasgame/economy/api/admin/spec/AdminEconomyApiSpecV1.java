@@ -2,12 +2,15 @@ package online.lifeasgame.economy.api.admin.spec;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.economy.api.admin.request.AdminEconomyRequest;
 import online.lifeasgame.economy.api.admin.response.AdminEconomyResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 public interface AdminEconomyApiSpecV1 {
 
@@ -54,7 +57,13 @@ public interface AdminEconomyApiSpecV1 {
             description = "특정 플레이어의 지갑 잔액을 관리자 권한으로 조정합니다. 보상, 환불, 제재 등에 사용됩니다."
     )
     ResponseEntity<ApiResponse<AdminEconomyResponse.WalletBalance>> adjustWallet(
-            @PathVariable Long playerId,
+            @PathVariable @Positive Long playerId,
+            @RequestHeader("Idempotency-Key")
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
+            String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false)
+            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
+            String correlationId,
             @Valid @RequestBody AdminEconomyRequest.AdjustWallet request
     );
 }
