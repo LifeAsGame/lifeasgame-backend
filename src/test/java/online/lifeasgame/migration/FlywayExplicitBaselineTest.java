@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V30까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V31까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,13 +72,13 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(29);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(30);
             assertThat(history).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
                             "14", "15", "16", "17", "18", "19", "20",
-                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"
+                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"
                     );
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
@@ -118,7 +118,8 @@ class FlywayExplicitBaselineTest {
                             "V27__canonical_listing_reservations.sql",
                             "V28__canonical_trade_item_snapshot.sql",
                             "V29__user_account_authority.sql",
-                            "V30__admin_audit_foundation.sql"
+                            "V30__admin_audit_foundation.sql",
+                            "V31__admin_audit_idempotency_uniqueness.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -138,7 +139,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("30");
+                        .isEqualTo("31");
             }
         }
     }

@@ -2,6 +2,7 @@ package online.lifeasgame.economy.api.admin.mapper;
 
 import online.lifeasgame.economy.api.admin.request.AdminEconomyRequest;
 import online.lifeasgame.economy.api.admin.response.AdminEconomyResponse;
+import online.lifeasgame.economy.application.command.AdminWalletAdjustmentCommand;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
 
@@ -81,16 +82,20 @@ public final class AdminEconomyWebMapper {
         );
     }
 
-    public static EconomyCommand.AdjustWallet toAdjustWalletCommand(
+    public static AdminWalletAdjustmentCommand toAdjustWalletCommand(
             Long playerId,
-            AdminEconomyRequest.AdjustWallet request
+            AdminEconomyRequest.AdjustWallet request,
+            String idempotencyKey,
+            String correlationId
     ) {
-        return new EconomyCommand.AdjustWallet(
+        return new AdminWalletAdjustmentCommand(
                 playerId,
                 request.amount(),
                 request.currency(),
                 request.debit(),
-                request.reason()
+                request.reason(),
+                idempotencyKey,
+                correlationId
         );
     }
 

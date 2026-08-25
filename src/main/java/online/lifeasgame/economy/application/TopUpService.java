@@ -61,7 +61,7 @@ public class TopUpService {
 
     @Transactional
     public EconomyResult.WalletBalance adjust(EconomyCommand.AdjustWallet command) {
-        Currency currency = Currency.parseOptional(command.currency(), Currency.GOLD);
+        Currency currency = Currency.parseStrict(command.currency());
         Wallet wallet = lockOrCreateWallet(command.playerId());
         Money money = Money.of(command.amount(), currency);
         if (command.debit()) {
