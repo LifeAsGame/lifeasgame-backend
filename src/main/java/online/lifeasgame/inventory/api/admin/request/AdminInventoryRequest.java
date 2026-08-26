@@ -1,19 +1,24 @@
 package online.lifeasgame.inventory.api.admin.request;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.Map;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 public final class AdminInventoryRequest {
 
     private AdminInventoryRequest() {}
 
     public record Add(
-            @NotNull Long itemId,
+            @NotNull @Positive Long itemId,
             @Min(1) int quantity,
-            Map<String, Object> instanceAttrs,
-            boolean bound
+            boolean bound,
+            @NotBlank
+            @Size(max = 512)
+            @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*")
+            String reason
     ) {
     }
 

@@ -25,11 +25,10 @@ public class MailboxService {
 
     @Transactional
     public MailboxResult.Slot deliver(Long playerId, MailboxCommand.Deliver command) {
-        Item item = itemReader.getByIdOrThrow(command.itemId());
-        ItemCarryPolicy policy = ItemCarryPolicy.from(item);
-
         PlayerMailbox playerMailbox = mailboxReader
                 .getByPlayerIdForUpdateOrThrow(playerId);
+        Item item = itemReader.getByIdOrThrow(command.itemId());
+        ItemCarryPolicy policy = ItemCarryPolicy.from(item);
         SlotIndex slotIndex = playerMailbox.deliver(
                 policy,
                 command.quantity(),
