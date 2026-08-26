@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @Tag(name = "Mailbox API V1 (Admin)")
 public interface AdminMailboxApiSpecV1 {
 
+    @Operation(summary = "플레이어 우편함 조회(관리자)", description = "플레이어의 bounded 우편함 상태를 조회합니다.")
+    ResponseEntity<ApiResponse<AdminMailboxResponse.Entries>> listMailbox(
+            @PathVariable @Positive Long playerId
+    );
+
     @Operation(summary = "우편 지급(관리자)", description = "특정 플레이어 우편함에 아이템을 지급합니다.")
     ResponseEntity<ApiResponse<AdminMailboxResponse.Slot>> deliverToMailbox(
             @PathVariable @Positive Long playerId,

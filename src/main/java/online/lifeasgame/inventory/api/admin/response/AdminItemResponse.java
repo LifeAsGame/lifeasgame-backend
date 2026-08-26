@@ -15,6 +15,7 @@ public final class AdminItemResponse {
 
     public record Summary(
             Long id,
+            String code,
             String name,
             String category,
             String type,
@@ -25,6 +26,7 @@ public final class AdminItemResponse {
 
     public record Detail(
             Long id,
+            String code,
             String name,
             String category,
             String type,

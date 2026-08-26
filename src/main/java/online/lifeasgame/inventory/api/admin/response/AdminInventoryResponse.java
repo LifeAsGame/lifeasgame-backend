@@ -1,7 +1,6 @@
 package online.lifeasgame.inventory.api.admin.response;
 
 import java.util.List;
-import java.util.Map;
 
 public final class AdminInventoryResponse {
 
@@ -28,9 +27,10 @@ public final class AdminInventoryResponse {
             int maxStack,
             int quantity,
             boolean bound,
-            Integer durability,
-            Map<String, Object> instanceAttrs
+            Integer durability
     ) {}
+
+    public record Entries(Long playerId, List<Entry> entries) {}
 
     public record View(Meta meta, List<Entry> entries) {}
 

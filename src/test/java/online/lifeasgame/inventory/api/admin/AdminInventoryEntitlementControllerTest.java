@@ -3,6 +3,8 @@ package online.lifeasgame.inventory.api.admin;
 import online.lifeasgame.inventory.api.admin.request.AdminInventoryRequest;
 import online.lifeasgame.inventory.api.admin.request.AdminMailboxRequest;
 import online.lifeasgame.inventory.application.AdminInventoryEntitlementService;
+import online.lifeasgame.inventory.application.InventoryQueryService;
+import online.lifeasgame.inventory.application.MailboxQueryService;
 import online.lifeasgame.inventory.application.command.AdminInventoryEntitlementCommand;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.application.result.MailboxResult;
@@ -66,6 +68,12 @@ class AdminInventoryEntitlementControllerTest {
 
     @MockitoBean
     private AdminInventoryEntitlementService entitlementService;
+
+    @MockitoBean
+    private InventoryQueryService inventoryQueryService;
+
+    @MockitoBean
+    private MailboxQueryService mailboxQueryService;
 
     @MockitoBean
     private AppErrorProperties appErrorProperties;
