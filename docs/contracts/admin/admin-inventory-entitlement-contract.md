@@ -11,7 +11,9 @@ characters. `X-Correlation-Id` is optional; a safe server UUID is generated
 when absent.
 
 Both bodies contain exactly `itemId`, positive `quantity`, `bound`, and
-`reason`. `instanceAttrs` is not an Admin input. The current `InstanceAttrs`
+`reason`. `instanceAttrs` is not an Admin input; a legacy non-null
+`instanceAttrs` JSON value is rejected with `400` rather than silently ignored.
+The current `InstanceAttrs`
 domain type accepts an unbounded `Map<String, Object>` and only copies,
 serializes, and compares it as a stack key; neither Item nor ItemCarryPolicy
 defines an attribute schema. Admin entitlements therefore use canonical empty

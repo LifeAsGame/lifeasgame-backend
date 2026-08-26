@@ -1,8 +1,5 @@
 package online.lifeasgame.inventory.api.admin;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.inventory.application.AdminInventoryEntitlementService;
@@ -25,14 +22,10 @@ public class AdminInventoryController implements AdminInventoryApiSpecV1 {
     @Override
     @PostMapping("/{playerId}/inventory/add")
     public ResponseEntity<ApiResponse<AdminInventoryResponse.Slots>> addToInventory(
-            @PathVariable @Positive Long playerId,
-            @RequestHeader("Idempotency-Key")
-            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
-            String idempotencyKey,
-            @RequestHeader(value = "X-Correlation-Id", required = false)
-            @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
-            String correlationId,
-            @Valid @RequestBody AdminInventoryRequest.Add request
+            @PathVariable Long playerId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId,
+            @RequestBody AdminInventoryRequest.Add request
     ) {
         InventoryResult.Slots result = entitlementService.addToInventory(
                 AdminInventoryWebMapper.toAddCommand(

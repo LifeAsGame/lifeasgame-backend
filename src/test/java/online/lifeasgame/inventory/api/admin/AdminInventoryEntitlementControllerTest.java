@@ -150,10 +150,34 @@ class AdminInventoryEntitlementControllerTest {
     }
 
     @Test
+    @DisplayName("spec-owned playerId constraint는 0과 음수를 400으로 거부한다")
+    void rejectsInvalidPlayerId() throws Exception {
+        allowAdmin();
+
+        mockMvc.perform(post("/admin/v1/players/0/inventory/add")
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "inventory-310")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(2, "CASE-310-INVENTORY")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/admin/v1/players/-1/mailbox/deliver")
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "mailbox-310")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(1, "CASE-310-MAILBOX")))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(entitlementService);
+    }
+
+    @Test
     @DisplayName("두 command 모두 unsafe reason과 header를 400으로 거부한다")
     void rejectsUnsafeMetadata() throws Exception {
         allowAdmin();
 
+        mockMvc.perform(inventoryRequest(ADMIN_ID)
+                        .header("Idempotency-Key", "unsafe key"))
+                .andExpect(status().isBadRequest());
         mockMvc.perform(post(inventoryPath())
                         .header("Authorization", bearer(ADMIN_ID))
                         .header("Idempotency-Key", "inventory-310")
@@ -172,6 +196,54 @@ class AdminInventoryEntitlementControllerTest {
                         .header("X-Correlation-Id", "unsafe correlation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(1, "CASE-310-MAILBOX")))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(entitlementService);
+    }
+
+    @Test
+    @DisplayName("spec-owned body cascade는 invalid itemId quantity와 reason을 400으로 거부한다")
+    void rejectsInvalidBody() throws Exception {
+        allowAdmin();
+
+        mockMvc.perform(post(inventoryPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "invalid-item")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(0L, 2, "CASE-310-INVENTORY")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(mailboxPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "invalid-quantity")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(3100L, 0, "CASE-310-MAILBOX")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(inventoryPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "invalid-reason")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(3100L, 2, " ")))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(entitlementService);
+    }
+
+    @Test
+    @DisplayName("두 endpoint는 legacy non-null instanceAttrs를 400으로 거부한다")
+    void rejectsLegacyInstanceAttrs() throws Exception {
+        allowAdmin();
+
+        mockMvc.perform(post(inventoryPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "inventory-legacy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(legacyBody(2, "CASE-310-INVENTORY")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(mailboxPath())
+                        .header("Authorization", bearer(ADMIN_ID))
+                        .header("Idempotency-Key", "mailbox-legacy")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(legacyBody(1, "CASE-310-MAILBOX")))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(entitlementService);
@@ -237,12 +309,28 @@ class AdminInventoryEntitlementControllerTest {
     }
 
     private String body(int quantity, String reason) {
+        return body(3100L, quantity, reason);
+    }
+
+    private String body(long itemId, int quantity, String reason) {
+        return """
+                {
+                  "itemId": %d,
+                  "quantity": %d,
+                  "bound": true,
+                  "reason": "%s"
+                }
+                """.formatted(itemId, quantity, reason);
+    }
+
+    private String legacyBody(int quantity, String reason) {
         return """
                 {
                   "itemId": 3100,
                   "quantity": %d,
                   "bound": true,
-                  "reason": "%s"
+                  "reason": "%s",
+                  "instanceAttrs": {"legacy": "value"}
                 }
                 """.formatted(quantity, reason);
     }

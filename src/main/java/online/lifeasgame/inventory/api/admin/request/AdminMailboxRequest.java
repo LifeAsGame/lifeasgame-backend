@@ -1,5 +1,6 @@
 package online.lifeasgame.inventory.api.admin.request;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,16 @@ public final class AdminMailboxRequest {
             @Pattern(regexp = "(?=.*[^\\p{Cf}\\p{Zs}])[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*")
             String reason
     ) {
+
+        /** Rejects the removed legacy input; this is not a business field. */
+        @JsonAnySetter
+        public void rejectLegacyInstanceAttrs(String name, Object value) {
+            if ("instanceAttrs".equals(name) && value != null) {
+                throw new IllegalArgumentException(
+                        "instanceAttrs is not supported"
+                );
+            }
+        }
     }
 
     public record Delete(
