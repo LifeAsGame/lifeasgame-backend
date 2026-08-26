@@ -23,8 +23,8 @@ public class InventoryService {
 
     @Transactional
     public InventoryResult.Slots add(Long playerId, InventoryCommand.Add command) {
-        Item item = itemReader.getByIdOrThrow(command.itemId());
         PlayerInventory playerInventory = inventoryReader.getByPlayerIdForUpdateOrThrow(playerId);
+        Item item = itemReader.getByIdOrThrow(command.itemId());
 
         List<SlotIndex> slotIndexes = playerInventory.add(
                 ItemCarryPolicy.from(item),
