@@ -7,11 +7,14 @@ import online.lifeasgame.character.api.admin.request.AdminPlayerCertificationReq
 import online.lifeasgame.character.api.admin.response.AdminPlayerCertificationResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerCertificationApiSpecV1;
 import online.lifeasgame.character.application.PlayerCertificationService;
+import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +22,19 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPlayerCertificationController implements AdminPlayerCertificationApiSpecV1 {
 
     private final PlayerCertificationService playerCertificationService;
+    private final PlayerHolderQueryService playerHolderQueryService;
+
+    @Override
+    @GetMapping("/{playerId}/certifications")
+    public ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Infos>> getCertifications(
+            @PathVariable Long playerId
+    ) {
+        List<PlayerCertificationResult.Info> result =
+                playerHolderQueryService.getCertificationInfos(playerId);
+        return ApiResponses.ok(
+                AdminPlayerCertificationWebMapper.toInfos(playerId, result)
+        );
+    }
 
     @Override
     @PostMapping("/{playerId}/certifications/{certificationId}")

@@ -5,11 +5,14 @@ import online.lifeasgame.character.api.admin.mapper.AdminPlayerAchievementWebMap
 import online.lifeasgame.character.api.admin.response.AdminPlayerAchievementResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerAchievementApiSpecV1;
 import online.lifeasgame.character.application.PlayerAchievementService;
+import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.result.PlayerAchievementResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,6 +20,19 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPlayerAchievementController implements AdminPlayerAchievementApiSpecV1 {
 
     private final PlayerAchievementService playerAchievementService;
+    private final PlayerHolderQueryService playerHolderQueryService;
+
+    @Override
+    @GetMapping("/{playerId}/achievements")
+    public ResponseEntity<ApiResponse<AdminPlayerAchievementResponse.Infos>> getAchievements(
+            @PathVariable Long playerId
+    ) {
+        List<PlayerAchievementResult.Info> result =
+                playerHolderQueryService.getAchievementInfos(playerId);
+        return ApiResponses.ok(
+                AdminPlayerAchievementWebMapper.toInfos(playerId, result)
+        );
+    }
 
     @Override
     @PostMapping("/{playerId}/achievements/{achievementId}")

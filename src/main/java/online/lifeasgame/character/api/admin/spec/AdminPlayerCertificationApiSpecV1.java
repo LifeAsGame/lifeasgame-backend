@@ -3,6 +3,7 @@ package online.lifeasgame.character.api.admin.spec;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import online.lifeasgame.character.api.admin.request.AdminPlayerCertificationRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerCertificationResponse;
 import online.lifeasgame.core.response.ApiResponse;
@@ -12,6 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Admin Player Certification API V1")
 public interface AdminPlayerCertificationApiSpecV1 {
+
+    @Operation(summary = "Player Certification 조회", description = "Player의 Certification holder summary를 조회합니다.")
+    ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Infos>> getCertifications(
+            @PathVariable @Positive Long playerId
+    );
 
     @Operation(summary = "Player Certification 지급", description = "Player에게 Certification를 지급합니다")
     ResponseEntity<ApiResponse<AdminPlayerCertificationResponse.Granted>> grantCertification(
