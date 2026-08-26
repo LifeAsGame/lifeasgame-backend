@@ -16,7 +16,7 @@ public class PlayerTitleRepositoryAdapter implements PlayerTitleRepository, Play
     private final JpaPlayerTitleRepository jpaRepository;
 
     public PlayerTitle save(PlayerTitle playerTitle) {
-        return jpaRepository.save(playerTitle);
+        return jpaRepository.saveAndFlush(playerTitle);
     }
 
     @Override

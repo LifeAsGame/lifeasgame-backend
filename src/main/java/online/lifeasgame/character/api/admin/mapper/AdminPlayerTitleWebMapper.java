@@ -1,7 +1,9 @@
 package online.lifeasgame.character.api.admin.mapper;
 
 import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
+import online.lifeasgame.character.api.admin.request.AdminPlayerHolderGrantRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
+import online.lifeasgame.character.application.command.AdminPlayerHolderGrantCommand;
 import online.lifeasgame.character.application.result.PlayerTitleResult;
 
 import java.util.List;
@@ -9,6 +11,22 @@ import java.util.List;
 public final class AdminPlayerTitleWebMapper {
 
     private AdminPlayerTitleWebMapper() {}
+
+    public static AdminPlayerHolderGrantCommand.GrantTitle toGrantCommand(
+            Long playerId,
+            Long titleId,
+            AdminPlayerHolderGrantRequest.Grant request,
+            String idempotencyKey,
+            String correlationId
+    ) {
+        return new AdminPlayerHolderGrantCommand.GrantTitle(
+                playerId,
+                titleId,
+                request.reason(),
+                idempotencyKey,
+                correlationId
+        );
+    }
 
     public static AdminPlayerTitleResponse.Infos toInfos(
             Long playerId,

@@ -1,6 +1,7 @@
 package online.lifeasgame.character.api.admin;
 
 import online.lifeasgame.character.application.PlayerAchievementService;
+import online.lifeasgame.character.application.AdminPlayerHolderGrantService;
 import online.lifeasgame.character.application.PlayerCertificationService;
 import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.PlayerHobbyService;
@@ -74,6 +75,9 @@ class AdminPlayerHolderInspectionControllerTest {
 
     @MockitoBean
     private PlayerHolderQueryService holderQueryService;
+
+    @MockitoBean
+    private AdminPlayerHolderGrantService holderGrantService;
 
     @MockitoBean
     private PlayerAchievementService achievementService;

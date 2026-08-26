@@ -2,8 +2,10 @@ package online.lifeasgame.character.api.admin;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.api.admin.mapper.AdminPlayerAchievementWebMapper;
+import online.lifeasgame.character.api.admin.request.AdminPlayerHolderGrantRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerAchievementResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerAchievementApiSpecV1;
+import online.lifeasgame.character.application.AdminPlayerHolderGrantService;
 import online.lifeasgame.character.application.PlayerAchievementService;
 import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.result.PlayerAchievementResult;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerAchievementController implements AdminPlayerAchievementApiSpecV1 {
 
+    private final AdminPlayerHolderGrantService holderGrantService;
     private final PlayerAchievementService playerAchievementService;
     private final PlayerHolderQueryService playerHolderQueryService;
 
@@ -38,9 +41,20 @@ public class AdminPlayerAchievementController implements AdminPlayerAchievementA
     @PostMapping("/{playerId}/achievements/{achievementId}")
     public ResponseEntity<ApiResponse<AdminPlayerAchievementResponse.Granted>> grantAchievement(
             @PathVariable Long playerId,
-            @PathVariable Long achievementId
+            @PathVariable Long achievementId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId,
+            @RequestBody AdminPlayerHolderGrantRequest.Grant request
     ) {
-        PlayerAchievementResult.Granted result = playerAchievementService.grantAchievement(playerId, achievementId);
+        PlayerAchievementResult.Granted result = holderGrantService.grantAchievement(
+                AdminPlayerAchievementWebMapper.toGrantCommand(
+                        playerId,
+                        achievementId,
+                        request,
+                        idempotencyKey,
+                        correlationId
+                )
+        );
         return ApiResponses.ok(AdminPlayerAchievementWebMapper.toGranted(result));
     }
 

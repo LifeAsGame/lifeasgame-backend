@@ -2,8 +2,10 @@ package online.lifeasgame.character.api.admin;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.api.admin.mapper.AdminPlayerTitleWebMapper;
+import online.lifeasgame.character.api.admin.request.AdminPlayerHolderGrantRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerTitleApiSpecV1;
+import online.lifeasgame.character.application.AdminPlayerHolderGrantService;
 import online.lifeasgame.character.application.PlayerTitleService;
 import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.result.PlayerTitleResult;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequestMapping("/admin/v1/players")
 public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
 
+    private final AdminPlayerHolderGrantService holderGrantService;
     private final PlayerTitleService playerTitleService;
     private final PlayerHolderQueryService playerHolderQueryService;
 
@@ -36,9 +39,20 @@ public class AdminPlayerTitleController implements AdminPlayerTitleApiSpecV1 {
     @PostMapping("/{playerId}/titles/{titleId}")
     public ResponseEntity<ApiResponse<AdminPlayerTitleResponse.Granted>> grantTitle(
             @PathVariable Long playerId,
-            @PathVariable Long titleId
+            @PathVariable Long titleId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId,
+            @RequestBody AdminPlayerHolderGrantRequest.Grant request
     ) {
-        PlayerTitleResult.Created result = playerTitleService.createTitle(playerId, titleId);
+        PlayerTitleResult.Created result = holderGrantService.grantTitle(
+                AdminPlayerTitleWebMapper.toGrantCommand(
+                        playerId,
+                        titleId,
+                        request,
+                        idempotencyKey,
+                        correlationId
+                )
+        );
         return ApiResponses.ok(AdminPlayerTitleWebMapper.toGrantedTitle(result));
     }
 

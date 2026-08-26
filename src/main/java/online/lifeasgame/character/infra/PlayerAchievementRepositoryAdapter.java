@@ -23,7 +23,7 @@ public class PlayerAchievementRepositoryAdapter implements
 
     @Override
     public PlayerAchievement save(PlayerAchievement playerAchievement) {
-        return jpaRepository.save(playerAchievement);
+        return jpaRepository.saveAndFlush(playerAchievement);
     }
 
     @Override
