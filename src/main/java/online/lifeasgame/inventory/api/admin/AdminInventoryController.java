@@ -3,6 +3,7 @@ package online.lifeasgame.inventory.api.admin;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.inventory.application.AdminInventoryEntitlementService;
+import online.lifeasgame.inventory.application.InventoryQueryService;
 import online.lifeasgame.inventory.application.result.InventoryResult;
 import online.lifeasgame.inventory.api.admin.mapper.AdminInventoryWebMapper;
 import online.lifeasgame.inventory.api.admin.request.AdminInventoryRequest;
@@ -18,6 +19,16 @@ import org.springframework.web.bind.annotation.*;
 public class AdminInventoryController implements AdminInventoryApiSpecV1 {
 
     private final AdminInventoryEntitlementService entitlementService;
+    private final InventoryQueryService inventoryQueryService;
+
+    @Override
+    @GetMapping("/{playerId}/inventory")
+    public ResponseEntity<ApiResponse<AdminInventoryResponse.Entries>> listInventory(
+            @PathVariable Long playerId
+    ) {
+        InventoryResult.Entries result = inventoryQueryService.list(playerId);
+        return ApiResponses.ok(AdminInventoryWebMapper.toEntries(playerId, result));
+    }
 
     @Override
     @PostMapping("/{playerId}/inventory/add")

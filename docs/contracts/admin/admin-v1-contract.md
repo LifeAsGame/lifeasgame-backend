@@ -13,13 +13,13 @@ This document freezes the backend-owned Admin contract inspected after PR #301. 
 
 The inspection covers all 24 production Admin controllers, their class and method mappings, request/response DTOs, and called Query/Service owner.
 
-- Live mapped routes: 141
+- Live mapped routes: 145
 - Unmapped controller operations: 4
-- Total inventoried operations: 145
+- Total inventoried operations: 149
 
 | Classification | Count | Frontend rule |
 | --- | ---: | --- |
-| `SUPPORTED_READ` | 22 | `ALLOW` |
+| `SUPPORTED_READ` | 26 | `ALLOW` |
 | `SUPPORTED_COMMAND` | 17 | `ALLOW` |
 | `GATED_HIGH_RISK` | 33 | `GATE` |
 | `IMPLEMENTATION_GAP` | 2 | `GATE` or `DEFER` as recorded |
@@ -42,6 +42,12 @@ Mapping existence and frontend capability are separate. `SUPPORTED_COMMAND + ALL
 All 50 mapped command rows in the supported/gated command classifications were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. The Wallet adjustment command, two Quest Acceptance override commands, and Inventory/Mailbox entitlement commands are also `ALLOW` after their Unit E hardening. Their exact contracts are [admin-wallet-adjustment-contract.md](admin-wallet-adjustment-contract.md), [admin-quest-acceptance-contract.md](admin-quest-acceptance-contract.md), and [admin-inventory-entitlement-contract.md](admin-inventory-entitlement-contract.md).
 
 The other 33 mapped high-risk commands remain `GATE`: destructive catalog deletion, direct player-state correction, other entitlement grant/revoke operations, live Shop/economy mutation, and social relationship mutation. Their routes remain mapped but are not frontend capabilities before durable Admin Audit and reason/idempotency/stale/conflict hardening.
+
+## Inventory inspection reads
+
+The four bounded Item, Inventory, and Mailbox reads are defined in
+[admin-inventory-inspection-contract.md](admin-inventory-inspection-contract.md).
+They reuse Inventory-owned QueryServices and expose no per-instance attributes.
 
 ## Known User gaps
 

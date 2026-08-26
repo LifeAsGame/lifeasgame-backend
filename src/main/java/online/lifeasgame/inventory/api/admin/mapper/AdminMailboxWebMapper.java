@@ -30,4 +30,33 @@ public final class AdminMailboxWebMapper {
     public static AdminMailboxResponse.Slot toSlot(MailboxResult.Slot result) {
         return new AdminMailboxResponse.Slot(result.slot());
     }
+
+    public static AdminMailboxResponse.Entries toEntries(
+            Long playerId,
+            MailboxResult.Entries result
+    ) {
+        return new AdminMailboxResponse.Entries(
+                playerId,
+                result.entries().stream()
+                        .map(AdminMailboxWebMapper::toEntry)
+                        .toList()
+        );
+    }
+
+    private static AdminMailboxResponse.Entry toEntry(MailboxResult.Entry result) {
+        return new AdminMailboxResponse.Entry(
+                result.mailId(),
+                result.slotIndex(),
+                result.itemId(),
+                result.itemName(),
+                result.category(),
+                result.type(),
+                result.rarity(),
+                result.stackable(),
+                result.maxStack(),
+                result.quantity(),
+                result.bound(),
+                result.durability()
+        );
+    }
 }

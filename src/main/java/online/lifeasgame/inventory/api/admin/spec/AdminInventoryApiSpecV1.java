@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @Tag(name = "Inventory API V1 (Admin)")
 public interface AdminInventoryApiSpecV1 {
 
+    @Operation(summary = "플레이어 인벤토리 조회(관리자)", description = "플레이어의 bounded 인벤토리 상태를 조회합니다.")
+    ResponseEntity<ApiResponse<AdminInventoryResponse.Entries>> listInventory(
+            @PathVariable @Positive Long playerId
+    );
+
     @Operation(summary = "인벤토리 아이템 지급(관리자)", description = "특정 플레이어 인벤토리에 아이템을 지급합니다.")
     ResponseEntity<ApiResponse<AdminInventoryResponse.Slots>> addToInventory(
             @PathVariable @Positive Long playerId,

@@ -30,4 +30,33 @@ public final class AdminInventoryWebMapper {
     public static AdminInventoryResponse.Slots toSlots(InventoryResult.Slots result) {
         return new AdminInventoryResponse.Slots(result.slots());
     }
+
+    public static AdminInventoryResponse.Entries toEntries(
+            Long playerId,
+            InventoryResult.Entries result
+    ) {
+        return new AdminInventoryResponse.Entries(
+                playerId,
+                result.entryViews().stream()
+                        .map(AdminInventoryWebMapper::toEntry)
+                        .toList()
+        );
+    }
+
+    private static AdminInventoryResponse.Entry toEntry(InventoryResult.Entry result) {
+        return new AdminInventoryResponse.Entry(
+                result.itemInstanceId(),
+                result.slotIndex(),
+                result.itemId(),
+                result.itemName(),
+                result.category(),
+                result.type(),
+                result.rarity(),
+                result.stackable(),
+                result.maxStack(),
+                result.quantity(),
+                result.bound(),
+                result.durability()
+        );
+    }
 }
