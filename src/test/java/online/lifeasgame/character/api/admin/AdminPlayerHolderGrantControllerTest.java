@@ -203,6 +203,23 @@ class AdminPlayerHolderGrantControllerTest {
     }
 
     @Test
+    @DisplayName("독립적으로 보이지 않는 reason은 400이고 grant service를 호출하지 않는다")
+    void rejectsNonVisibleReason() throws Exception {
+        allowAdmin();
+
+        mockMvc.perform(grantRequest(
+                        achievementPath(), ADMIN_ID, "\u0301"
+                ).header("Idempotency-Key", "achievement-316"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(grantRequest(
+                        titlePath(), ADMIN_ID, "\u0378"
+                ).header("Idempotency-Key", "title-316"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(holderGrantService);
+    }
+
+    @Test
     @DisplayName("persisted USER authority는 두 grant를 403으로 거부한다")
     void rejectsUser() throws Exception {
         given(userAuthApi.resolveAuthorization(USER_ID)).willReturn(
@@ -243,10 +260,15 @@ class AdminPlayerHolderGrantControllerTest {
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
     grantRequest(String path, long userId) {
+        return grantRequest(path, userId, "CASE-316");
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+    grantRequest(String path, long userId, String reason) {
         return post(path)
                 .header("Authorization", bearer(userId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body("CASE-316"));
+                .content(body(reason));
     }
 
     private String achievementPath() {

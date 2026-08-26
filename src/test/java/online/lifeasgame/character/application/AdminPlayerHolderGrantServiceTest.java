@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -90,6 +92,32 @@ class AdminPlayerHolderGrantServiceTest {
                 assertThat(command.reason()).isEqualTo("CASE-316");
                 assertThat(command.correlationId()).matches("[a-f0-9-]{36}");
             });
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"\u0301", "\u0378"})
+        @DisplayName("독립적으로 보이지 않는 reason은 두 grant command가 거부한다")
+        void rejectsNonVisibleReason(String reason) {
+            assertThatThrownBy(() -> achievement(
+                    PLAYER_ID, DEFINITION_ID, reason, "key-316", null
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("visible character");
+            assertThatThrownBy(() -> title(
+                    PLAYER_ID, DEFINITION_ID, reason, "key-316", null
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("visible character");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"운영 사유", "運用理由", "Latin reason", "😀"})
+        @DisplayName("한국어 일본어 Latin emoji reason은 허용한다")
+        void acceptsVisibleReason(String reason) {
+            assertThat(achievement(
+                    PLAYER_ID, DEFINITION_ID, reason, "key-316", null
+            ).reason()).isEqualTo(reason);
+            assertThat(title(
+                    PLAYER_ID, DEFINITION_ID, reason, "key-316", null
+            ).reason()).isEqualTo(reason);
         }
     }
 

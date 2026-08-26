@@ -89,8 +89,11 @@ public final class AdminPlayerHolderGrantCommand {
 
     private static boolean isVisibleReasonCharacter(int value) {
         int type = Character.getType(value);
-        return type != Character.FORMAT
-                && type != Character.SPACE_SEPARATOR;
+        return Character.isDefined(value)
+                && type != Character.FORMAT
+                && type != Character.SPACE_SEPARATOR
+                && type != Character.NON_SPACING_MARK
+                && type != Character.ENCLOSING_MARK;
     }
 
     private static String resolveCorrelationId(String correlationId) {
