@@ -1,6 +1,7 @@
 package online.lifeasgame.character.api.admin;
 
 import online.lifeasgame.character.application.PlayerTitleService;
+import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.support.ControllerSliceTest;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
@@ -23,6 +24,9 @@ class AdminPlayerTitleMappingContractTest {
 
     @MockitoBean
     private PlayerTitleService playerTitleService;
+
+    @MockitoBean
+    private PlayerHolderQueryService playerHolderQueryService;
 
     @MockitoBean
     private AppErrorProperties appErrorProperties;

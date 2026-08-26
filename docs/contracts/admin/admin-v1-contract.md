@@ -13,13 +13,13 @@ This document freezes the backend-owned Admin contract inspected after PR #301. 
 
 The inspection covers all 24 production Admin controllers, their class and method mappings, request/response DTOs, and called Query/Service owner.
 
-- Live mapped routes: 145
+- Live mapped routes: 149
 - Unmapped controller operations: 4
-- Total inventoried operations: 149
+- Total inventoried operations: 153
 
 | Classification | Count | Frontend rule |
 | --- | ---: | --- |
-| `SUPPORTED_READ` | 26 | `ALLOW` |
+| `SUPPORTED_READ` | 30 | `ALLOW` |
 | `SUPPORTED_COMMAND` | 17 | `ALLOW` |
 | `GATED_HIGH_RISK` | 33 | `GATE` |
 | `IMPLEMENTATION_GAP` | 2 | `GATE` or `DEFER` as recorded |
@@ -48,6 +48,14 @@ The other 33 mapped high-risk commands remain `GATE`: destructive catalog deleti
 The four bounded Item, Inventory, and Mailbox reads are defined in
 [admin-inventory-inspection-contract.md](admin-inventory-inspection-contract.md).
 They reuse Inventory-owned QueryServices and expose no per-instance attributes.
+
+## Player holder inspection reads
+
+The four bounded Achievement, Certification, Hobby, and Title holder reads are
+defined in
+[admin-player-holder-inspection-contract.md](admin-player-holder-inspection-contract.md).
+They use the requested path `playerId`; free-form holder content and definition
+bodies are excluded.
 
 ## Known User gaps
 

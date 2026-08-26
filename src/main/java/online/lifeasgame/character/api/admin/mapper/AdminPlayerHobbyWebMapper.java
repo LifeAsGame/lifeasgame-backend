@@ -5,9 +5,31 @@ import online.lifeasgame.character.api.admin.response.AdminPlayerHobbyResponse;
 import online.lifeasgame.character.application.command.PlayerHobbyCommand;
 import online.lifeasgame.character.application.result.PlayerHobbyResult;
 
+import java.util.List;
+
 public final class AdminPlayerHobbyWebMapper {
 
     private AdminPlayerHobbyWebMapper() {}
+
+    public static AdminPlayerHobbyResponse.Infos toInfos(
+            Long playerId,
+            List<PlayerHobbyResult.Info> results
+    ) {
+        return new AdminPlayerHobbyResponse.Infos(
+                playerId,
+                results.stream()
+                        .map(result -> new AdminPlayerHobbyResponse.Info(
+                                result.hobbyId(),
+                                result.name(),
+                                result.category(),
+                                result.proficiency(),
+                                result.status(),
+                                result.startedOn(),
+                                result.xp()
+                        ))
+                        .toList()
+        );
+    }
 
     public static PlayerHobbyCommand.Create toCreatedCommand(
             Long hobbyId,

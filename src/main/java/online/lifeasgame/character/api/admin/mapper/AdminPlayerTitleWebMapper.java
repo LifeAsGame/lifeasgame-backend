@@ -4,9 +4,29 @@ import online.lifeasgame.character.api.admin.request.AdminTitleRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerTitleResponse;
 import online.lifeasgame.character.application.result.PlayerTitleResult;
 
+import java.util.List;
+
 public final class AdminPlayerTitleWebMapper {
 
     private AdminPlayerTitleWebMapper() {}
+
+    public static AdminPlayerTitleResponse.Infos toInfos(
+            Long playerId,
+            List<PlayerTitleResult.Info> results
+    ) {
+        return new AdminPlayerTitleResponse.Infos(
+                playerId,
+                results.stream()
+                        .map(result -> new AdminPlayerTitleResponse.Info(
+                                result.titleId(),
+                                result.code(),
+                                result.name(),
+                                result.category(),
+                                result.acquiredAt()
+                        ))
+                        .toList()
+        );
+    }
 
     public static AdminPlayerTitleResponse.Granted toGrantedTitle(PlayerTitleResult.Created result) {
         return new AdminPlayerTitleResponse.Granted(

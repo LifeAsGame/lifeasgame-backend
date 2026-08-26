@@ -7,11 +7,14 @@ import online.lifeasgame.character.api.admin.request.AdminPlayerHobbyRequest;
 import online.lifeasgame.character.api.admin.response.AdminPlayerHobbyResponse;
 import online.lifeasgame.character.api.admin.spec.AdminPlayerHobbyApiSpecV1;
 import online.lifeasgame.character.application.PlayerHobbyService;
+import online.lifeasgame.character.application.PlayerHolderQueryService;
 import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +22,19 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPlayerHobbyController implements AdminPlayerHobbyApiSpecV1 {
 
     private final PlayerHobbyService playerHobbyService;
+    private final PlayerHolderQueryService playerHolderQueryService;
+
+    @Override
+    @GetMapping("/{playerId}/hobbies")
+    public ResponseEntity<ApiResponse<AdminPlayerHobbyResponse.Infos>> getHobbies(
+            @PathVariable Long playerId
+    ) {
+        List<PlayerHobbyResult.Info> result =
+                playerHolderQueryService.getHobbyInfos(playerId);
+        return ApiResponses.ok(
+                AdminPlayerHobbyWebMapper.toInfos(playerId, result)
+        );
+    }
 
     @Override
     @PostMapping("/{playerId}/hobbies/{hobbyId}")

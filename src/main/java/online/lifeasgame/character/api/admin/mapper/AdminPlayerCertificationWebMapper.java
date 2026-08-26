@@ -5,9 +5,31 @@ import online.lifeasgame.character.api.admin.response.AdminPlayerCertificationRe
 import online.lifeasgame.character.application.command.PlayerCertificationCommand;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 
+import java.util.List;
+
 public final class AdminPlayerCertificationWebMapper {
 
     private AdminPlayerCertificationWebMapper() {}
+
+    public static AdminPlayerCertificationResponse.Infos toInfos(
+            Long playerId,
+            List<PlayerCertificationResult.Info> results
+    ) {
+        return new AdminPlayerCertificationResponse.Infos(
+                playerId,
+                results.stream()
+                        .map(result -> new AdminPlayerCertificationResponse.Info(
+                                result.certificationId(),
+                                result.name(),
+                                result.issuer(),
+                                result.category(),
+                                result.acquiredDate(),
+                                result.expiresDate(),
+                                result.grantedAt()
+                        ))
+                        .toList()
+        );
+    }
 
     public static PlayerCertificationCommand.Create toCreateCommand(
             Long certificationId,
