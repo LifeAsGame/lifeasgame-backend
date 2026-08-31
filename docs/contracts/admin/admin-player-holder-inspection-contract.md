@@ -29,9 +29,9 @@ inferred from ownership.
 
 ## Mutation gate
 
-These reads satisfy only the holder-query prerequisite. Existing grant/revoke
-routes remain `GATED_HIGH_RISK + GATE`. Future AR-012 commands still require an
-Admin-specific command boundary, reason, durable idempotency, Admin Audit,
-duplicate and concurrent-holder semantics, rollback, input validation,
-representative-title side-effect review, and focused persistence proof where
-needed. This read contract adds no mutation, lock, audit write, or migration.
+These reads satisfy only the holder-query prerequisite. Achievement and Title
+grant are separately hardened in
+[admin-player-holder-grant-contract.md](admin-player-holder-grant-contract.md).
+Their revoke routes and all Certification/Hobby mutations remain
+`GATED_HIGH_RISK + GATE`. This read contract itself adds no mutation, lock,
+audit write, or migration.

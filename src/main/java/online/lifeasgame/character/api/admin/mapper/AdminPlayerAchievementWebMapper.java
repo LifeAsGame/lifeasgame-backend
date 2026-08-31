@@ -1,6 +1,8 @@
 package online.lifeasgame.character.api.admin.mapper;
 
 import online.lifeasgame.character.api.admin.response.AdminPlayerAchievementResponse;
+import online.lifeasgame.character.api.admin.request.AdminPlayerHolderGrantRequest;
+import online.lifeasgame.character.application.command.AdminPlayerHolderGrantCommand;
 import online.lifeasgame.character.application.result.PlayerAchievementResult;
 
 import java.util.List;
@@ -8,6 +10,22 @@ import java.util.List;
 public final class AdminPlayerAchievementWebMapper {
 
     private AdminPlayerAchievementWebMapper() {}
+
+    public static AdminPlayerHolderGrantCommand.GrantAchievement toGrantCommand(
+            Long playerId,
+            Long achievementId,
+            AdminPlayerHolderGrantRequest.Grant request,
+            String idempotencyKey,
+            String correlationId
+    ) {
+        return new AdminPlayerHolderGrantCommand.GrantAchievement(
+                playerId,
+                achievementId,
+                request.reason(),
+                idempotencyKey,
+                correlationId
+        );
+    }
 
     public static AdminPlayerAchievementResponse.Infos toInfos(
             Long playerId,
