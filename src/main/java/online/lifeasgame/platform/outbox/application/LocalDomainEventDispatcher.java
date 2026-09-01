@@ -11,7 +11,10 @@ public class LocalDomainEventDispatcher {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void dispatch(DomainEvent event) {
+    public void dispatch(String eventId, DomainEvent event) {
         applicationEventPublisher.publishEvent(event);
+        applicationEventPublisher.publishEvent(
+                new OutboxEventDelivery(eventId, event)
+        );
     }
 }

@@ -20,6 +20,6 @@ public class OutboxDispatchAttempt {
                 claim.eventType(),
                 claim.payload()
         );
-        dispatcher.dispatch(event);
+        dispatcher.dispatch(claim.eventId(), event);
     }
 }
