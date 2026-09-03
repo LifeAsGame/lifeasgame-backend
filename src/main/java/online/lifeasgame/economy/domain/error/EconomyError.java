@@ -14,6 +14,8 @@ public enum EconomyError implements ErrorCode {
     SHOP_STOCK_EXHAUSTED("ECON-SHOP-STOCK-EXHAUSTED", "Shop item is sold out", 409),
     SHOP_PER_PLAYER_LIMIT("ECON-SHOP-PER-PLAYER-LIMIT", "Per-player purchase limit exceeded", 409),
     DUPLICATE_REQUEST("ECON-DUPLICATE-REQUEST", "Duplicate request detected", 409),
+    INVALID_IDEMPOTENCY_KEY("ECON-INVALID-IDEMPOTENCY-KEY", "Invalid idempotency key", 400),
+    IDEMPOTENCY_PAYLOAD_CONFLICT("ECON-IDEMPOTENCY-PAYLOAD-CONFLICT", "Idempotency key payload conflict", 409),
     PAYMENT_REJECTED("ECON-PAYMENT-REJECTED", "Payment gateway rejected", 402),
     HOLD_NOT_FOUND("ECON-HOLD-NOT-FOUND", "Hold not found", 404),
     CANNOT_PURCHASE_OWN_LISTING("ECON-CANNOT-PURCHASE-OWN", "Cannot purchase own listing", 400),

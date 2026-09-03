@@ -8,14 +8,15 @@ import online.lifeasgame.economy.domain.Listing;
 import online.lifeasgame.economy.domain.ListingReservation;
 import online.lifeasgame.economy.domain.ListingReservationState;
 import online.lifeasgame.economy.domain.ListingStatus;
+import online.lifeasgame.economy.domain.MarketplacePurchaseReceipt;
 import online.lifeasgame.economy.domain.Money;
 import online.lifeasgame.economy.domain.ReservationToken;
 import online.lifeasgame.economy.domain.Trade;
 import online.lifeasgame.economy.domain.Wallet;
 import online.lifeasgame.economy.domain.error.EconomyError;
+import online.lifeasgame.economy.domain.repository.MarketplacePurchaseReceiptRepository;
 import online.lifeasgame.inventory.application.internal.InventoryMarketAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryMarketTransferApi;
-import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ class MarketplaceReservationLifecycleTest {
     @Mock
     private InventoryMarketTransferApi inventoryTransferApi;
     @Mock
-    private IdempotencyKeyStore idempotencyKeyStore;
+    private MarketplacePurchaseReceiptRepository purchaseReceiptRepository;
     @Mock
     private DomainEventPublisher eventPublisher;
     @InjectMocks
@@ -119,12 +120,21 @@ class MarketplaceReservationLifecycleTest {
                     now,
                     60
             );
-            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            MarketplacePurchaseReceipt receipt = givenPurchaseReceipt(
+                    BUYER_ID,
+                    LISTING_ID,
+                    reservation.getReservationToken(),
+                    "purchase-296"
+            );
             given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
             given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.of(reservation));
             given(walletReader.getByOwnerIdForUpdate(BUYER_ID)).willReturn(Optional.of(buyerWallet));
             given(walletReader.getByOwnerIdForUpdate(SELLER_ID)).willReturn(Optional.of(sellerWallet));
-            given(tradeWriter.create(any())).willAnswer(invocation -> invocation.getArgument(0));
+            given(tradeWriter.create(any())).willAnswer(invocation -> {
+                Trade saved = invocation.getArgument(0);
+                ReflectionTestUtils.setField(saved, "id", 2960L);
+                return saved;
+            });
 
             service.purchase(BUYER_ID, new EconomyCommand.PurchaseListing(
                     LISTING_ID,
@@ -148,13 +158,20 @@ class MarketplaceReservationLifecycleTest {
             verify(tradeWriter).create(trade.capture());
             assertThat(trade.getValue().getItemId()).isEqualTo(40L);
             assertThat(trade.getValue().getSaleQuantity()).isEqualTo(3);
+            assertThat(receipt.getTradeId()).isEqualTo(2960L);
+            verify(purchaseReceiptRepository).saveAndFlush(receipt);
         }
 
         @Test
         @DisplayName("canonical OPEN Listing에 ACTIVE 예약이 없으면 아무 상태도 변경하지 않고 거절한다")
         void rejectsCanonicalDirectPurchase() {
             Listing listing = listing();
-            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            givenPurchaseReceipt(
+                    BUYER_ID,
+                    LISTING_ID,
+                    null,
+                    "direct-296"
+            );
             given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
             given(reservationReader.findActiveForUpdate(LISTING_ID)).willReturn(Optional.empty());
 
@@ -194,7 +211,12 @@ class MarketplaceReservationLifecycleTest {
                     Instant.now(),
                     60
             );
-            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            givenPurchaseReceipt(
+                    BUYER_ID,
+                    LISTING_ID,
+                    reservation.getReservationToken(),
+                    "legacy-open-296"
+            );
             given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
 
             assertThatThrownBy(() -> service.purchase(
@@ -247,7 +269,12 @@ class MarketplaceReservationLifecycleTest {
                     "reservedHoldId",
                     "legacy-hold-296"
             );
-            given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
+            givenPurchaseReceipt(
+                    BUYER_ID,
+                    LISTING_ID,
+                    "legacy-token-296",
+                    "legacy-reserved-296"
+            );
             given(listingReader.getForUpdate(LISTING_ID)).willReturn(listing);
 
             assertThatThrownBy(() -> service.purchase(
@@ -347,6 +374,28 @@ class MarketplaceReservationLifecycleTest {
             verify(inventoryApi, never()).releaseListing(any(), any());
             verifyNoInteractions(walletReader, walletWriter);
         }
+    }
+
+    private MarketplacePurchaseReceipt givenPurchaseReceipt(
+            Long buyerId,
+            Long listingId,
+            String reservationToken,
+            String idempotencyKey
+    ) {
+        MarketplacePurchaseReceipt receipt =
+                MarketplacePurchaseReceipt.claim(
+                        buyerId,
+                        idempotencyKey,
+                        MarketplacePurchaseReceipt.fingerprint(
+                                listingId,
+                                reservationToken
+                        )
+                );
+        given(purchaseReceiptRepository.findByIdentityForUpdate(
+                buyerId,
+                idempotencyKey
+        )).willReturn(Optional.of(receipt));
+        return receipt;
     }
 
     private Listing listing() {

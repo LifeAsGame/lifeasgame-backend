@@ -9,13 +9,12 @@ import online.lifeasgame.economy.domain.*;
 import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
+import online.lifeasgame.economy.domain.repository.MarketplacePurchaseReceiptRepository;
 import online.lifeasgame.inventory.application.internal.InventoryMarketAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryMarketTransferApi;
-import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class MarketplaceService {
     private final WalletReader walletReader;
     private final InventoryMarketAvailabilityApi inventoryMarketAvailabilityApi;
     private final InventoryMarketTransferApi inventoryMarketTransferApi;
-    private final IdempotencyKeyStore idempotencyKeyStore;
+    private final MarketplacePurchaseReceiptRepository purchaseReceiptRepository;
     private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
@@ -90,8 +89,28 @@ public class MarketplaceService {
 
     @Transactional
     public EconomyResult.TradeSummary purchase(Long buyerId, EconomyCommand.PurchaseListing command) {
-        if (!idempotencyKeyStore.acquire(command.idempotencyKey(), Duration.ofMinutes(5))) {
-            throw new DomainException(EconomyError.DUPLICATE_REQUEST);
+        String idempotencyKey = MarketplacePurchaseReceipt
+                .normalizeIdempotencyKey(command.idempotencyKey());
+        String requestFingerprint = MarketplacePurchaseReceipt.fingerprint(
+                command.listingId(),
+                command.reservationToken()
+        );
+        purchaseReceiptRepository.claim(
+                buyerId,
+                idempotencyKey,
+                requestFingerprint,
+                Instant.now()
+        );
+        MarketplacePurchaseReceipt receipt = purchaseReceiptRepository
+                .findByIdentityForUpdate(buyerId, idempotencyKey)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Marketplace purchase receipt claim was not found"
+                ));
+        receipt.assertRequestFingerprint(requestFingerprint);
+        if (receipt.isCompleted()) {
+            return EconomyResult.TradeSummary.from(
+                    tradeReader.getReceiptResult(receipt.getTradeId())
+            );
         }
 
         Listing listing = listingReader.getForUpdate(command.listingId());
@@ -138,6 +157,8 @@ public class MarketplaceService {
         listingWriter.create(listing);
 
         Trade savedTrade = tradeWriter.create(trade);
+        receipt.complete(savedTrade.getId());
+        purchaseReceiptRepository.saveAndFlush(receipt);
 
         domainEventPublisher.publish(
                 EconomyEvent.builder(EconomyEventType.LISTING_PURCHASED)

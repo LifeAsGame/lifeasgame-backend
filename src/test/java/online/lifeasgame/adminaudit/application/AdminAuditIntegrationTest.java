@@ -134,7 +134,7 @@ class AdminAuditIntegrationTest {
             });
 
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("31");
+                    .isEqualTo("32");
             assertThat(count("admin_audit_test_mutations")).isEqualTo(1);
             assertThat(count("admin_audit_events")).isEqualTo(1);
             assertThat(jdbc.queryForObject(
