@@ -1,0 +1,52 @@
+LifeAsGame #321 Runtime Configuration and Mock Boundaries
+
+Production profile and schema
+- application.yml defaults SPRING_PROFILES_ACTIVE to local, JPA ddl-auto none, Flyway false, Redis localhost, and app.outbox.enabled from OUTBOX_ENABLED with default true.
+- application-local.yml uses JPA validate and Flyway true.
+- application-prod.yml uses JPA validate but Flyway ${FLYWAY_ENABLED:false}. This is REGRESSION_RISK: startup validation can fail or an older schema can run only if deployment separately applies V1-V31. The repository does not contain deployed Flyway history.
+- Latest migration is V31. PR #320 adds no migration and depends on V25 player_notifications and V8 outbox.
+
+Identity/security runtime
+- FixedDevCurrentUserAccessor and FixedDevCurrentPlayerAccessor are @Profile("test") only.
+- JwtCurrentUserAccessor and JwtCurrentPlayerAccessor are @Profile({"prod", "local"}).
+- JwtAuthenticationFilter re-resolves UserAuthApi.AccountAuthorization on every request, so persisted downgrade/revocation takes effect on the next request; AdminAuthorizationContractTest proves it.
+- SecurityConfig permits the real /api/v1/auth register/login/refresh paths, but also permits unmapped /api/v1/users/register: CONTRACT_DRIFT.
+- Production CORS origin is required from LIFEASGAME_WEB_ALLOWED_ORIGINS; CorsSecurityContractTest proves exact-origin behavior in a web test, not the deployed value.
+
+Transactional outbox
+- OutboxRelayScheduler is conditional on app.outbox.enabled=true with matchIfMissing=true and runs a single scheduled relay per instance.
+- V8 stores event_id uniquely. Claim, dispatch, completion, and failure each use explicit transactions; claims use MySQL FOR UPDATE SKIP LOCKED and leases.
+- TransactionalOutboxIntegrationTest proves append commit/rollback, retry, max failure, concurrent claim, stale lease recovery, and at-least-once redelivery.
+- Test profile disables the scheduler to avoid competition; most focused integration tests call relay stages explicitly. This is a correct test boundary, but it does not prove production scheduler health, queue age, or failed-row alerting.
+
+Quest definition activation
+- QuestDefinitionBootstrapper defaults enabled when app.quest.definition-bootstrap.enabled is missing. application-test.yml disables it; application-migration-test.yml explicitly enables it; prod does not override it.
+- Bootstrap iterates all 21 StaticQuestBlueprintCatalog rows and materializes missing DB definitions. It does not update existing rows and does not persist SeedLevel1 status/copy metadata.
+- This is REGRESSION_RISK for content governance: production startup behavior is active by default, while no authoritative release manifest or persisted activation filter exists.
+
+Redis boundaries
+- Quest/ Economy Redis event bridges are explicitly disabled in local and prod. Quest completion/reward Notification uses local outbox delivery, not those Redis bridges.
+- RedisQuestProgressStore is supportive; V7 QuestSignalReceipt and DB Acceptance state remain the correctness boundary.
+- RedisShopReservationLimiter is a stock-pressure helper and fails open on Redis exceptions; DB ShopItem locking/counts remain partial authority.
+- RedisIdempotencyKeyStore is the only IdempotencyKeyStore and is incorrectly used as final correctness authority by MarketplaceService.purchase, ShopService.purchase, and TopUpService.topUp. Keys are acquired outside durable business receipts and expire. This is REGRESSION_RISK.
+- ChatRedisRealtimeGateway is unconditional and ChatWriter publishes synchronously after saving a message within the transaction. There is no no-op prod adapter, outbox, or focused DB+Redis failure test. Direct Chat REST write availability therefore depends on Redis behavior and remains IMPLEMENTED_NOT_RUNTIME_VERIFIED.
+- ChatWebSocketConfig exposes authenticated SockJS/STOMP at /ws, accepts sends at /app/social/chat/{channelId}/send, uses the in-process simple broker, and Redis-subscribes to /topic/social/chat/** for cross-instance fanout. ChatWebSocketOriginContractTest proves JWT/origin handshake only; it does not prove CurrentPlayerAccessor on a STOMP message thread or cross-instance delivery.
+
+Mail/realtime flags
+- lifeasgame.mail.enabled is false in local/prod and no MAIL_RECEIVED Notification source is wired.
+- lifeasgame.economy.events.enabled and lifeasgame.quest.events.enabled are false in local/prod; their Redis publishers are not production notification sources.
+- Notification is polling/read-model only. No SSE/WebSocket/Redis Notification runtime is present, consistent with Stage 1 scope.
+
+Mock boundaries that limit claims
+- MarketplaceTradeFulfillmentIntegrationTest mocks IdempotencyKeyStore to always acquire. It proves the MySQL business transaction, not duplicate request correctness.
+- QuestCompletionNotificationHandlerTest and QuestRewardReadyNotificationHandlerTest mock NotificationAppendApi. NotificationApplicationIntegrationTest proves the provider separately. No combined source-to-row Testcontainers scenario exists.
+- ChatServiceCurrentPlayerTest mocks ChatWriter/FriendshipVerifier. FriendChatQueryIntegrationTest uses MySQL for reads but does not send through Redis.
+- AuthFacadeTest, UserServiceTest, and PlayerFacadeTest are mock/unit tests; there is no real DB register -> login -> Player link -> equipment/container test.
+- Content tests prove enum/catalog invariants and bootstrap materialization. They do not prove an externally authorized final content release or deployed active rows.
+
+Production evidence required before First Completion sign-off
+1. Effective prod profile and redacted environment values for Flyway/outbox/CORS/MySQL/Redis.
+2. flyway_schema_history showing V1-V31 success.
+3. Outbox PENDING age, PROCESSING lease recovery, FAILED count/alert, and scheduler instance identity.
+4. Representative runtime smoke evidence for Auth -> Player, Quick Record -> reward, Notification inbox, Mailbox claim, and marketplace rollback/replay.
+5. Versioned content activation manifest and DB/runtime reconciliation report.

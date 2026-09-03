@@ -1,0 +1,69 @@
+LifeAsGame Backend #321 — Audit Manifest
+
+Audit identity
+- Scope authority: GitHub Issue #321 and the user-service runtime gap audit request.
+- Repository: LifeAsGame/lifeasgame-backend
+- Branch inspected: chore/#321-user-service-runtime-gap-audit
+- HEAD: ad6de2b5008af31c2f0643db4b52ff7c0c8543d9
+- Baseline confirmation: develop == origin/develop == HEAD; HEAD is PR #320 merge and contains QuestRewardReadyNotificationHandler.
+- Latest Flyway migration inspected: V31__admin_audit_idempotency_uniqueness.sql
+- Audit date/timezone: 2026-09-01 Asia/Seoul
+
+Created files — exactly 10
+1. 00_EXECUTIVE_SUMMARY.txt
+2. 01_RUNTIME_CAPABILITY_MATRIX.csv
+3. 02_PUBLIC_API_GAP_MATRIX.csv
+4. 03_CONTENT_RUNTIME_MATRIX.csv
+5. 04_CLOSED_LOOP_EVIDENCE.txt
+6. 05_RUNTIME_CONFIG_AND_MOCK_BOUNDARIES.txt
+7. 06_BACKEND_NEXT_PR_PLAN.txt
+8. 07_FILE_EVIDENCE_MATRIX.csv
+9. 08_BLOCKERS_AND_EXTERNAL_HANDOFFS.txt
+10. 09_AUDIT_MANIFEST.txt
+
+Method
+- Inspected the initial Git status, branch, HEAD, and five latest commits without changing Git state.
+- Traced production controllers -> mappers/DTOs -> application services -> provider-owned APIs -> entities/repositories -> DB constraints/locks/transactions.
+- Cross-checked material claims against focused unit/web/MySQL Testcontainers scenarios without treating test presence alone as runtime activation.
+- Inspected all Flyway V1-V31 files for schema/content seeds and kept Catalog rows, Flyway seed, DB rows, status fields, runtime filters, and external activation authority separate.
+- Inspected application.yml, application-local.yml, application-prod.yml, test/migration-test configuration, profiles, conditional beans, outbox scheduler, Redis bridges, and mock boundaries.
+- Rated the 14 requested loops only where a production path and behavioral test joined enough of the flow.
+- Used only the request's classification values for capability/content/API verdicts.
+
+Areas covered
+- Auth/User/Player and Growth identity
+- Role/Person/RoleRelation/RoleEvent
+- LifeLog/Quick Record/Journal
+- Quest/QuestRoute and Reward/EXP
+- Inventory/Mailbox/Gear
+- Achievement/Certification/Hobby/Title
+- Connections/Direct Chat
+- Notification including PR #318/#320 adapters and remaining type readiness
+- Economy Marketplace/Shop/Wallet
+- Transactional outbox, runtime/prod config, public API, Flyway/content runtime
+
+Explicit non-claims
+- No production environment, database, Redis, queue, or content service was accessed.
+- No class/test existence was treated as proof of deployed activation.
+- No content was reconstructed from intermediate docs.
+- No Quest completion was interpreted as automatic QuestRoute advancement.
+- No remaining Notification type was selected automatically.
+- No Admin/frontend/production/test/config/Flyway/source file was modified.
+- No Gradle command was run, as required.
+- No Git/GitHub mutation or remote issue/PR operation was performed.
+
+Validation
+- Allowed changed paths are exactly:
+  1. docs/architecture/audits/user-service-runtime-gap-v1/00_EXECUTIVE_SUMMARY.txt
+  2. docs/architecture/audits/user-service-runtime-gap-v1/01_RUNTIME_CAPABILITY_MATRIX.csv
+  3. docs/architecture/audits/user-service-runtime-gap-v1/02_PUBLIC_API_GAP_MATRIX.csv
+  4. docs/architecture/audits/user-service-runtime-gap-v1/03_CONTENT_RUNTIME_MATRIX.csv
+  5. docs/architecture/audits/user-service-runtime-gap-v1/04_CLOSED_LOOP_EVIDENCE.txt
+  6. docs/architecture/audits/user-service-runtime-gap-v1/05_RUNTIME_CONFIG_AND_MOCK_BOUNDARIES.txt
+  7. docs/architecture/audits/user-service-runtime-gap-v1/06_BACKEND_NEXT_PR_PLAN.txt
+  8. docs/architecture/audits/user-service-runtime-gap-v1/07_FILE_EVIDENCE_MATRIX.csv
+  9. docs/architecture/audits/user-service-runtime-gap-v1/08_BLOCKERS_AND_EXTERNAL_HANDOFFS.txt
+  10. docs/architecture/audits/user-service-runtime-gap-v1/09_AUDIT_MANIFEST.txt
+- Before commit, newly created documents must be checked from staged contents with `git diff --cached --check`.
+- After commit, the actual PR diff must pass `git diff --check origin/develop...HEAD`.
+- The committed changed-path list must match the exact ten-path allowlist above.

@@ -1,0 +1,47 @@
+LifeAsGame Backend #321 — User-Service Runtime Gap Audit v1
+
+Baseline
+- Branch inspected: chore/#321-user-service-runtime-gap-audit
+- HEAD inspected: ad6de2b5008af31c2f0643db4b52ff7c0c8543d9
+- develop and origin/develop both resolved to the same HEAD during the audit.
+- HEAD is merge commit "merge: connect Quest reward-ready production notifications (#320)" and contains QuestRewardReadyNotificationHandler plus its focused test.
+- Latest Flyway migration is V31__admin_audit_idempotency_uniqueness.sql.
+
+Overall backend First Completion verdict: INTEGRATION_GAP
+
+The repository contains production implementations and MySQL evidence for the main user loops: Current Player ownership, durable LifeLog facts, Quest progress/completion, RewardSettlement, EXP and ITEM fulfillment, Mailbox claim, explicit QuestRoute advancement, Notification inbox state, and atomic marketplace fulfillment. First Completion still has integration gaps because paid Shop completion has no entitlement consumer and marketplace request idempotency is not DB-authoritative. Separately, production runtime remains IMPLEMENTED_NOT_RUNTIME_VERIFIED and final content activation is BLOCKED_BY_EXTERNAL_AUTHORITY.
+
+Strengths
+- DB-authoritative idempotency/locking exists in Quick Record, Quest signal receipts, RewardSettlement lines, Inventory reward delivery, Notification source-event uniqueness, QuestRoute advancement, marketplace reservations, and marketplace transfer/trade persistence.
+- Provider-owned boundaries are used for Reward -> Inventory, Economy -> Inventory, RoleEvent -> LifeLog context, and Auth/User/Player identity lookup.
+- V8 outbox plus TransactionalOutboxIntegrationTest proves commit/rollback, SKIP LOCKED claim, retry, lease recovery, and at-least-once delivery.
+- V19/V21 and their MySQL tests preserve Role, Person, RoleRelation, RoleEvent, and explicit LifeLog linkage semantics.
+- V25 plus NotificationApplicationIntegrationTest proves durable append, per-player sourceEventId uniqueness, cursor inbox, unread count support, and ownership-safe read mutation.
+
+P0 blockers
+1. Marketplace purchase idempotency is Redis-only. MarketplaceService.purchase calls IdempotencyKeyStore.acquire before entering the DB mutation, RedisIdempotencyKeyStore is the only implementation, and MarketplaceTradeFulfillmentIntegrationTest mocks that store. A Redis key can be consumed on business rollback, expires after five minutes, is not scoped by buyer/action in the DB, and cannot authoritatively replay or reject a committed purchase.
+2. ShopService can mark a purchase COMPLETED and withdraw/commit Wallet funds, but no Inventory/Mailbox provider consumes FULFILLMENT_READY. EconomySagaCoordinator only republishes another EconomyEvent. The public shop purchase/confirm endpoints therefore do not prove paid entitlement fulfillment.
+3. Final content activation cannot be established. Quest SeedLevel1 metadata says ACTIVE, but SeedLevel1QuestBlueprintAdapter/Quest persistence do not preserve that status, QuestQueryService.getCatalog returns all static blueprints, and no authoritative machine-readable release manifest exists for the requested content families.
+4. Production deployment state is external. application-prod.yml defaults Flyway off and repository evidence cannot prove that V31 is applied, the outbox scheduler is enabled in the deployed environment, or PENDING/FAILED rows are healthy.
+
+P1 gaps
+- PlayerFacade.linkStart spans separate Player and equipment transactions, issues tokens between them, creates fixed slot IDs 1..11, and does not provision Inventory/Mailbox containers. No real onboarding DB integration test proves the complete post-registration state; equipment_slots has no Flyway seed.
+- Quest Accept/Cancel DTO idempotencyKey fields are discarded by QuestWebMapper. Inventory mutation and Mailbox delete DTO idempotencyKey fields are also discarded. These are CONTRACT_DRIFT, not idempotent capabilities.
+- Quest Accept persists caller-provided legacy partyId/guildId without a provider-owned membership/ownership check. They must not be reinterpreted as RoleParty or Role context.
+- Inventory detail includeItem/includeInstanceAttrs parameters are ignored; InventoryWebMapper always builds the same result and returns a null top-level item projection.
+- Quest catalog/list/detail use bare response bodies while most user APIs use ApiResponse, creating response-envelope drift.
+- Connections and Direct Chat have MySQL query and Current Player tests, but no real mutual-follow -> friend-channel -> durable message -> Redis delivery closed-loop test.
+- Quest completion and reward-ready Notification adapters have focused mapping/failure tests, while Notification persistence has separate MySQL tests; a single actual Quest outbox -> durable notification test is absent.
+- MAIL_RECEIVED has no source fact; LISTING_SOLD is the Notification type, while the durable V8 source event is LISTING_PURCHASED. That source event identifies the buyer as actor and omits the intended seller recipient; ACHIEVEMENT_UNLOCK has no gameplay unlock fact; QUEST_PROGRESS and SYSTEM_NOTICE require product policy. None is automatically the next PR.
+
+External blockers
+- Product/content authority must provide a versioned activation manifest rather than prose: stable code, definition version, status, availability window, locale/copy keys, references, ordering, and release cohort for every content family.
+- Economy product authority must define shop fulfillment destination, capacity/failure behavior, reservation-confirm delivery timing, refund/retry semantics, and durable idempotency response behavior.
+- Notification product authority must define recipient, trigger threshold, aggregation/noise policy, copy keys, and privacy rules for the five remaining types.
+- Platform/operations must provide deployed profile/environment evidence, Flyway V31 history, outbox scheduler state, queue age/failure metrics, MySQL/Redis connectivity, and rollback/runbook ownership.
+
+NEXT_IMPLEMENTATION_PR
+Durable marketplace purchase idempotency: replace RedisIdempotencyKeyStore as the correctness authority for POST /api/v1/economy/listings/{listingId}/purchase with a DB-backed, buyer/action-scoped request receipt committed in the same transaction as Listing SOLD, reservation CONSUMED, Wallet effects, Inventory transfer, and Trade. Prove same-key sequential/concurrent exactly-once, payload conflict, committed replay/conflict semantics, and failure without key consumption. Redis may remain an optimization only. This work needs no missing content or product policy and closes the clearest unblocked P0 invariant.
+
+Frontend real-integration verdict
+Parallel work is safe for Auth/User profile, Role/Person/RoleRelation/RoleEvent, LifeLog/Quick Record, Quest acceptance/manual-check/Route, Growth, Inventory/Mailbox reads and claims, Notification inbox/read, and marketplace happy-path exploration when the documented risks are accepted. Do not treat final content lists, gear catalogs, shop purchase completion, dead idempotency fields, or production Notification delivery as frozen contracts. Production sign-off remains blocked by the P0 items above.
