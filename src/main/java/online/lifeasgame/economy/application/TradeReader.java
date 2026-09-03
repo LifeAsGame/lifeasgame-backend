@@ -16,6 +16,13 @@ public class TradeReader {
 
     private final TradeRepository repository;
 
+    public Trade getReceiptResult(Long tradeId) {
+        return repository.findById(tradeId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Marketplace purchase receipt trade not found"
+                ));
+    }
+
     public List<Trade> findByPlayer(Long playerId) {
         return repository.findByBuyerPlayerIdOrSellerPlayerId(playerId, playerId);
     }

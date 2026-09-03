@@ -5,6 +5,8 @@ import online.lifeasgame.economy.domain.Trade;
 import online.lifeasgame.economy.domain.repository.TradeRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class TradeRepositoryAdapter implements TradeRepository {
@@ -14,6 +16,11 @@ public class TradeRepositoryAdapter implements TradeRepository {
     @Override
     public Trade save(Trade trade) {
         return jpaTradeRepository.save(trade);
+    }
+
+    @Override
+    public Optional<Trade> findById(Long id) {
+        return jpaTradeRepository.findById(id);
     }
 
     @Override

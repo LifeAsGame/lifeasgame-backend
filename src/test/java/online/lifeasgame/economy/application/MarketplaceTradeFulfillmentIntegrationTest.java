@@ -2,8 +2,9 @@ package online.lifeasgame.economy.application;
 
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.economy.application.command.EconomyCommand;
+import online.lifeasgame.economy.application.result.EconomyResult;
+import online.lifeasgame.economy.domain.error.EconomyError;
 import online.lifeasgame.inventory.domain.error.InventoryError;
-import online.lifeasgame.platform.idempotency.IdempotencyKeyStore;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,17 +17,22 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
-@DisplayName("Marketplace whole-entry fulfillment MySQL integration")
+@DisplayName("Marketplace purchase fulfillment/idempotency MySQL integration")
 class MarketplaceTradeFulfillmentIntegrationTest {
 
     private static final long SELLER_ID = 298001L;
@@ -64,9 +70,6 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     @Autowired
     private Flyway flyway;
 
-    @MockitoBean
-    private IdempotencyKeyStore idempotencyKeyStore;
-
     private Long itemId;
     private Long sourceEntryId;
     private Long listingId;
@@ -74,6 +77,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     @BeforeEach
     void setUp() {
         jdbc.update("DELETE FROM outbox_events");
+        jdbc.update("DELETE FROM marketplace_purchase_receipts");
         jdbc.update("DELETE FROM trades");
         jdbc.update("DELETE FROM listing_reservations");
         jdbc.update("DELETE FROM wallet_holds");
@@ -98,7 +102,6 @@ class MarketplaceTradeFulfillmentIntegrationTest {
         insertEntry(BUYER_ID, itemId, 0, 4, "FREE");
         listingId = insertListing();
         insertWalletsAndReservation();
-        given(idempotencyKeyStore.acquire(any(), any())).willReturn(true);
     }
 
     @Nested
@@ -108,7 +111,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
         @Test
         @DisplayName("Economy terminal state와 seller removal 및 buyer fulfillment를 함께 commit한다")
         void commitsWholeBusinessEffect() {
-            marketplaceService.purchase(
+            EconomyResult.TradeSummary result = marketplaceService.purchase(
                     BUYER_ID,
                     purchaseCommand("purchase-success-298")
             );
@@ -144,6 +147,101 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                     .containsEntry("sale_quantity", 7)
                     .containsEntry("buyer_player_id", BUYER_ID)
                     .containsEntry("seller_player_id", SELLER_ID);
+            assertThat(tradeCount()).isOne();
+            assertThat(receiptTradeId(BUYER_ID, "purchase-success-298"))
+                    .isEqualTo(result.id());
+            assertThat(listingPurchasedEventCount()).isOne();
+        }
+    }
+
+    @Nested
+    @DisplayName("durable purchase receipt를 재사용하면")
+    class DurableIdempotency {
+
+        @Test
+        @DisplayName("같은 buyer/key/payload는 원래 Trade를 반환하고 effect를 반복하지 않는다")
+        void replaysCommittedTrade() {
+            EconomyCommand.PurchaseListing command =
+                    purchaseCommand("purchase-replay-323");
+
+            EconomyResult.TradeSummary first = marketplaceService.purchase(
+                    BUYER_ID,
+                    command
+            );
+            EconomyResult.TradeSummary replay = marketplaceService.purchase(
+                    BUYER_ID,
+                    command
+            );
+
+            assertThat(replay).isEqualTo(first);
+            assertThat(tradeCount()).isOne();
+            assertThat(receiptCount()).isOne();
+            assertThat(listingPurchasedEventCount()).isOne();
+            assertThat(sellerBalance()).isEqualTo(109L);
+            assertThat(totalQuantity(BUYER_ID, itemId)).isEqualTo(11L);
+        }
+
+        @Test
+        @DisplayName("같은 buyer/key의 다른 listing은 payload conflict다")
+        void rejectsDifferentListing() {
+            String key = "purchase-listing-conflict-323";
+            marketplaceService.purchase(BUYER_ID, purchaseCommand(key));
+
+            assertPayloadConflict(new EconomyCommand.PurchaseListing(
+                    listingId + 1,
+                    RESERVATION_TOKEN,
+                    key
+            ));
+        }
+
+        @Test
+        @DisplayName("같은 buyer/key의 다른 reservation token은 payload conflict다")
+        void rejectsDifferentReservationToken() {
+            String key = "purchase-token-conflict-323";
+            marketplaceService.purchase(BUYER_ID, purchaseCommand(key));
+
+            assertPayloadConflict(new EconomyCommand.PurchaseListing(
+                    listingId,
+                    RESERVATION_TOKEN + "-different",
+                    key
+            ));
+        }
+
+        @Test
+        @DisplayName("같은 key라도 buyer가 다르면 기존 Trade를 replay하지 않는다")
+        void scopesReceiptByBuyer() {
+            String key = "purchase-buyer-scope-323";
+            marketplaceService.purchase(BUYER_ID, purchaseCommand(key));
+
+            assertThatThrownBy(() -> marketplaceService.purchase(
+                    BUYER_ID + 1,
+                    purchaseCommand(key)
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(EconomyError.LISTING_NOT_AVAILABLE)
+            );
+
+            assertThat(receiptCount()).isOne();
+            assertThat(receiptCount(BUYER_ID + 1, key)).isZero();
+            assertThat(tradeCount()).isOne();
+        }
+
+        @Test
+        @DisplayName("동시 같은 buyer/key/payload는 하나의 Trade와 effect만 commit한다")
+        void serializesConcurrentReplay() throws Exception {
+            List<EconomyResult.TradeSummary> results = concurrentPurchases(
+                    purchaseCommand("purchase-concurrent-323")
+            );
+
+            assertThat(results).extracting(EconomyResult.TradeSummary::id)
+                    .containsOnly(results.getFirst().id());
+            assertThat(tradeCount()).isOne();
+            assertThat(receiptCount()).isOne();
+            assertThat(listingPurchasedEventCount()).isOne();
+            assertThat(sellerBalance()).isEqualTo(109L);
+            assertThat(entryCount(SELLER_ID, itemId)).isZero();
+            assertThat(totalQuantity(BUYER_ID, itemId)).isEqualTo(11L);
         }
     }
 
@@ -152,8 +250,9 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     class CapacityFailure {
 
         @Test
-        @DisplayName("구매 전 Economy와 Inventory 상태를 전부 유지한다")
+        @DisplayName("구매 상태와 receipt를 rollback하고 같은 key retry를 허용한다")
         void rollsBackWholeBusinessEffect() {
+            String key = "purchase-capacity-298";
             jdbc.update(
                     "DELETE FROM inventory_entries WHERE player_id = ?",
                     BUYER_ID
@@ -166,7 +265,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
 
             assertThatThrownBy(() -> marketplaceService.purchase(
                     BUYER_ID,
-                    purchaseCommand("purchase-capacity-298")
+                    purchaseCommand(key)
             )).isInstanceOfSatisfying(
                     DomainException.class,
                     exception -> assertThat(exception.getErrorCode())
@@ -194,18 +293,40 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                     "SELECT COUNT(*) FROM outbox_events",
                     Long.class
             )).isZero();
+            assertThat(receiptCount(BUYER_ID, key)).isZero();
+
+            jdbc.update(
+                    "DELETE FROM inventory_entries WHERE player_id = ?",
+                    BUYER_ID
+            );
+            jdbc.update(
+                    "UPDATE player_inventory SET capacity_slots = 3 WHERE player_id = ?",
+                    BUYER_ID
+            );
+
+            EconomyResult.TradeSummary retried = marketplaceService.purchase(
+                    BUYER_ID,
+                    purchaseCommand(key)
+            );
+
+            assertThat(receiptTradeId(BUYER_ID, key))
+                    .isEqualTo(retried.id());
+            assertThat(tradeCount()).isOne();
+            assertThat(listingPurchasedEventCount()).isOne();
+            assertThat(listingStatus()).isEqualTo("SOLD");
+            assertThat(totalQuantity(BUYER_ID, itemId)).isEqualTo(7L);
         }
     }
 
     @Nested
-    @DisplayName("V28 Trade snapshot schema를 검증하면")
+    @DisplayName("V32 receipt와 V28 Trade snapshot schema를 검증하면")
     class TradeSnapshotSchema {
 
         @Test
         @DisplayName("legacy null은 허용하고 canonical quantity 제약은 보존한다")
         void validatesMigrationAndJpaContract() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("31");
+                    .isEqualTo("32");
             jdbc.update("""
                     INSERT INTO trades (
                         fee_bps, buyer_player_id, created_at, fee, item_inst_id,
@@ -240,6 +361,54 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                 RESERVATION_TOKEN,
                 key
         );
+    }
+
+    private void assertPayloadConflict(
+            EconomyCommand.PurchaseListing command
+    ) {
+        assertThatThrownBy(() -> marketplaceService.purchase(
+                BUYER_ID,
+                command
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> {
+                    assertThat(exception.getErrorCode()).isEqualTo(
+                            EconomyError.IDEMPOTENCY_PAYLOAD_CONFLICT
+                    );
+                    assertThat(exception.getErrorCode().status())
+                            .isEqualTo(409);
+                }
+        );
+        assertThat(tradeCount()).isOne();
+        assertThat(receiptCount()).isOne();
+        assertThat(listingPurchasedEventCount()).isOne();
+    }
+
+    private List<EconomyResult.TradeSummary> concurrentPurchases(
+            EconomyCommand.PurchaseListing command
+    ) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<EconomyResult.TradeSummary>> futures = new ArrayList<>();
+        try {
+            for (int index = 0; index < 2; index++) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    start.await();
+                    return marketplaceService.purchase(BUYER_ID, command);
+                }));
+            }
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            List<EconomyResult.TradeSummary> results = new ArrayList<>();
+            for (Future<EconomyResult.TradeSummary> future : futures) {
+                results.add(future.get(30, TimeUnit.SECONDS));
+            }
+            return results;
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private Long insertItem() {
@@ -427,5 +596,46 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                 SELECT COALESCE(SUM(quantity), 0) FROM inventory_entries
                 WHERE player_id = ? AND item_id = ?
                 """, Long.class, playerId, entryItemId);
+    }
+
+    private long tradeCount() {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM trades WHERE listing_id = ?",
+                Long.class,
+                listingId
+        );
+    }
+
+    private long receiptCount() {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM marketplace_purchase_receipts",
+                Long.class
+        );
+    }
+
+    private long receiptCount(long buyerId, String key) {
+        return jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM marketplace_purchase_receipts
+                WHERE buyer_player_id = ? AND idempotency_key = ?
+                """, Long.class, buyerId, key);
+    }
+
+    private Long receiptTradeId(long buyerId, String key) {
+        return jdbc.queryForObject("""
+                SELECT trade_id
+                FROM marketplace_purchase_receipts
+                WHERE buyer_player_id = ? AND idempotency_key = ?
+                """, Long.class, buyerId, key);
+    }
+
+    private long listingPurchasedEventCount() {
+        return jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM outbox_events
+                WHERE event_type = 'economy.event.v1'
+                  AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.type')) =
+                      'LISTING_PURCHASED'
+                """, Long.class);
     }
 }
