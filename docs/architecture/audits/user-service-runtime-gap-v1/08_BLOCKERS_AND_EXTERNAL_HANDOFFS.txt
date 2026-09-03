@@ -1,0 +1,68 @@
+LifeAsGame #321 — Blockers and External Handoffs
+
+1. Product Content Authority
+Owner/role needed: Product content lead with domain owners for Quest/Growth/Inventory.
+Artifact needed: versioned, machine-readable First Completion content activation manifest; not a planning document or prose table.
+Required fields:
+- common: contentType, stableCode, definitionVersion, lifecycleStatus, enabled, availabilityStartAt, availabilityEndAt, releaseCohort, sortOrder, locale/copy references, source revision, approvedBy
+- Quest: semanticCategory, progressSource, completionPolicy, repeatPolicy, target/unit, timezone policy, rewardProfileCode, role-context policy
+- QuestRoute/Step: routeCode, stepCode/order, criterion, requiredEvidenceCount, userAdvanceRequired, retroactiveEvidenceAllowed, skipAllowed, linked questCode and requirementType
+- Item/Equipment/Consumable/ItemSet: item code/category/type/rarity/carry policy, compatibility slot, attrs schema, durability, set membership/effects, consume behavior
+- Reward: definition/profile codes, type, amount/item code, line order/override, active status
+- Achievement/Certification/Hobby/Title: stable code, display metadata, unlock/grant policy, lifecycle/visibility, ordering
+Why backend cannot infer it: StaticQuestBlueprintCatalog, SeedLevel1 enums, Flyway rows, and tests represent different subsets. Several content types have schema but zero rows; status/copy metadata is not persisted. Intermediate intent cannot authorize production activation.
+Blocked work: final seed/import, activation fields and filters, reference validation, representative/bulk reconciliation, final consumer catalog contract, content-dependent Notification sources.
+
+2. Localization/Copy Authority
+Owner/role needed: Product copy/localization owner.
+Artifact needed: versioned locale bundles or content service export keyed by stable copy keys.
+Required fields: locale, key, text, version, status, fallback locale, interpolation parameters, review state, effective window; icon/color tokens need their owning asset/token manifest.
+Why backend cannot infer it: SeedLevel1QuestDefinition contains Korean strings and result/empty/icon/color keys, but no resolver/resource bundle exists and SeedLevel1QuestBlueprintAdapter drops most of this metadata.
+Blocked work: localized catalog responses, Notification copy keys, result/empty-state copy, final UI contract.
+
+3. Economy Shop Product Authority
+Owner/role needed: Economy product owner plus Inventory owner.
+Artifact needed: approved shop purchase fulfillment contract.
+Required fields: delivery destination (Inventory or Mailbox), quantity/stack/bound/instance attrs, capacity-full behavior, immediate vs reserved confirmation timing, hold commit/refund rules, expiry behavior, duplicate/replay response, failure/recovery state machine, stock reconciliation authority.
+Why backend cannot infer it: ShopService can complete payment and EconomySagaCoordinator emits FULFILLMENT_READY, but no provider consumes it. Choosing Inventory vs Mailbox or refund behavior changes product semantics and transaction design.
+Blocked work: safe shop purchase/confirm activation, entitlement delivery, durable shop idempotency, recovery tests. Existing public command remains INTEGRATION_GAP.
+
+4. Equipment Content Authority
+Owner/role needed: Character/Inventory product owner.
+Artifact needed: stable equipment-slot manifest.
+Required fields: slot code/name/category/role/order/enabled/version; whether empty PlayerEquipment rows are eager or lazy. Starter gear, if later authorized, requires a separate starter-gear assignment artifact rather than being inferred from slot metadata.
+Why backend cannot infer it: V1 creates equipment_slots without rows; PlayerEquipmentService.init assumes IDs 1..11, which are database allocation details rather than content identity.
+Blocked work: deterministic onboarding equipment-slot initialization. Starter gear and real gear catalog/equip smoke proof remain separately content-dependent.
+
+5. Notification Product Authority
+Owner/role needed: Notification product owner with source-domain owners.
+Artifact needed: per-type trigger/recipient/copy/privacy policy for MAIL_RECEIVED, QUEST_PROGRESS, LISTING_SOLD, ACHIEVEMENT_UNLOCK, SYSTEM_NOTICE.
+Required fields: canonical source fact/type/version, sourceEventId rule, recipient resolution, trigger threshold, aggregation/dedup window, title/body copy keys, sensitive-field exclusions, occurredAt semantics, retry/expiry policy.
+Why backend cannot infer it:
+- MAIL_RECEIVED: mailbox mutation has no durable source fact.
+- QUEST_PROGRESS: Quest event exists, but notifying every delta may be noisy and no threshold/aggregation is approved.
+- LISTING_SOLD: V8 durably carries LISTING_PURCHASED, but actor is buyer and the fact omits seller recipient; the disabled Redis bridge is irrelevant to durable source identity.
+- ACHIEVEMENT_UNLOCK: Admin holder grant is not a gameplay unlock fact; definitions/rules are absent.
+- SYSTEM_NOTICE: no authorized sender/audience/scheduling policy exists.
+Blocked work: production adapters for these types. They are not automatically the next implementation.
+
+6. Quest Legacy Context Authority
+Owner/role needed: Quest product owner and Social/Role architecture owner.
+Artifact needed: decision record to remove or retain QuestRequest.Accept.partyId/guildId.
+Required fields if retained: precise legacy context meaning, provider-owned membership lookup, authorization timing, snapshot semantics, lifecycle behavior, and explicit statement that it is not RoleParty/Role.
+Why backend cannot infer it: QuestService currently persists caller IDs without membership validation; project locks say RoleParty is distinct from legacy Party/Guild and Quest is not a container.
+Blocked work: truthful Quest acceptance contract cleanup when retention is desired. Safe default is removal, not reinterpretation.
+
+7. Platform/Operations Runtime Authority
+Owner/role needed: deployment/SRE owner.
+Artifact needed: redacted production deployment evidence and runbook.
+Required fields: deployed commit SHA, effective profiles, FLYWAY_ENABLED and flyway_schema_history through V31, OUTBOX_ENABLED, instance IDs, DB/Redis endpoints/health, pending oldest age, processing lease age, failed count and alerts, retry/runbook owner, CORS origins, smoke-test timestamps/results.
+Why backend cannot infer it: application-prod.yml is a default configuration, not observed runtime state; Flyway defaults false and outbox can be overridden.
+Blocked work: production First Completion sign-off and RUNTIME_ACTIVE claims.
+
+8. Frontend/API Consumer Coordination
+Owner/role needed: frontend integration owner.
+Artifact needed: accepted API drift list or coordinated contract-change plan.
+Required fields: Quest bare-vs-ApiResponse envelope, real auth register path, ignored Inventory detail flags, dead idempotency fields, canonical Connections vs legacy Follows, content fields allowed before activation.
+Why backend cannot infer it: accepting current drift as product contract would cement fake capability and inconsistent envelopes.
+Blocked work: freezing generated clients around the affected endpoints. Other verified APIs can integrate in parallel.

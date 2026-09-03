@@ -1,0 +1,46 @@
+LifeAsGame #321 — Necessary Remaining Backend PRs
+
+Order 1 — NEXT_IMPLEMENTATION_PR: Durable marketplace purchase idempotency
+Why first: MarketplaceTradeFulfillmentIntegrationTest proves the monetary/Inventory transaction only after mocking IdempotencyKeyStore. MarketplaceService.purchase currently acquires a five-minute Redis key before DB work, violating the DB-authority lock and allowing rollback key consumption/expiry-based replay.
+Scope:
+- Introduce the smallest Economy-owned durable purchase request receipt, scoped by buyer and purchase action/key.
+- Bind the receipt to a stable request hash covering listingId and reservationToken; reject key/payload conflict.
+- Commit receipt/result identity in the same transaction as Listing SOLD, ListingReservation CONSUMED, buyer hold COMMITTED, seller proceeds, provider-owned Inventory transfer, and Trade.
+- Define committed duplicate behavior using the stored Trade response or an explicit conflict; never run a second effect.
+- Prove sequential and concurrent same-key exactly-once, payload conflict, rollback without key consumption, and retry after business failure in the existing focused MySQL class where practical.
+- Keep Redis optional/supportive; do not widen into partial listing, payment, shop, notification, or frontend work.
+Prerequisites: none; V27/V28 and the current provider-owned Inventory transfer boundary already exist.
+Exit: POST /api/v1/economy/listings/{listingId}/purchase no longer depends on Redis for correctness.
+
+Order 2 — Fail-close or complete Shop purchase entitlement
+Why necessary: ShopService withdraws/commits funds and marks ShopPurchase COMPLETED; EconomySagaCoordinator only emits FULFILLMENT_READY, and no provider fulfills the Item.
+Prerequisite authority: Economy product owner must select Inventory vs Mailbox delivery, capacity failure/refund behavior, confirm timing, retry semantics, and idempotency response. Until supplied, the public purchase/confirm capability should not be advertised as fulfilled.
+Scope after authority: provider-owned delivery boundary, same-transaction or explicit durable saga semantics, durable command idempotency, and paid-without-entitlement rollback/recovery proof.
+
+Order 3 — Make Player onboarding state atomic and content-independent
+Why necessary: PlayerFacade creates Player, issues tokens, then creates fixed PlayerEquipment rows in separate transactions; Inventory/Mailbox are not provisioned. No real DB test covers the aggregate startup state.
+Scope: one application transaction for DB-owned onboarding effects, provider-owned idempotent Inventory/Mailbox provisioning, token issuance after durable state succeeds, and a MySQL failure/retry test. Do not invent equipment slot content; use externally supplied stable slot definitions or defer equipment row materialization until definitions exist.
+Prerequisite authority: equipment slot manifest if slot creation remains part of onboarding.
+
+Order 4 — Remove public DTO fake capabilities and untrusted legacy context
+Why necessary: Quest Accept/Cancel, Inventory mutations, Mailbox delete, and Media commands expose idempotency fields that their mappers discard; Inventory detail flags are ignored. Quest Accept persists caller partyId/guildId without provider verification.
+Scope: either implement a real DB contract where replay correctness is required or remove the field; align response envelope/filter behavior; remove legacy party/guild acceptance context unless an explicit provider-owned membership contract is authorized. Do not reinterpret legacy Party/Guild as RoleParty or Role.
+Prerequisite authority: product decision only where retaining party/guild Quest context is desired.
+
+Order 5 — Add source-to-row runtime proofs for existing Notification adapters
+Why necessary: PR #318/#320 handlers and V25 persistence are proven separately.
+Scope: one focused MySQL test for actual Quest completion/reward-ready OutboxEventDelivery to durable player_notifications, including replay and append failure/retry. No new Notification type/realtime/deep-link/preferences.
+Prerequisites: Orders 1-4 are higher correctness risk; no content authority is needed.
+
+Order 6 — Deliver authoritative content activation
+Why necessary: schema/catalog/seed/runtime-active states differ and most content families are empty.
+Prerequisite authority: versioned machine-readable content/localization manifests listed in 08_BLOCKERS_AND_EXTERNAL_HANDOFFS.txt.
+Scope after authority: validate references, persist stable codes/version/status/windows, filter runtime reads, provide append-only seed/import strategy, and prove representative plus bulk reconciliation. Do not reconstruct from prose or intermediate documents.
+
+Not selected automatically
+- MAIL_RECEIVED: source fact/identity absent.
+- QUEST_PROGRESS: source exists but aggregation/noise meaning is unauthorized.
+- LISTING_SOLD: V8 makes LISTING_PURCHASED durable, but its fact omits the seller recipient and identifies only the buyer actor.
+- ACHIEVEMENT_UNLOCK: gameplay unlock source and content are absent.
+- SYSTEM_NOTICE: sender/audience/copy/privacy policy absent.
+These Notification types remain classified by readiness; none displaces the unblocked DB-correctness PR selected above.

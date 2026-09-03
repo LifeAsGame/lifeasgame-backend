@@ -1,0 +1,49 @@
+LifeAsGame #321 Closed-Loop Evidence
+
+1. QuickRecord -> LifeLogRecorded: VERIFIED
+Production: QuickRecordService dispatches to existing subtype services, reserves/completes V9 receipt, and LifeLogRecordRegistrar writes the V15 canonical header while TransactionalOutboxDomainEventPublisher appends the fact. Evidence: QuickRecordServiceIntegrationTest proves subtype creation, canonical metadata, sequential/concurrent replay, payload conflict, and rollback; LifeLogRecordedOutboxIntegrationTest proves source/fact commit and rollback.
+
+2. LifeLogRecorded -> Quest progress: VERIFIED
+Production: LifeLogRecordedQuestTrigger accepts content-ready owned facts and QuestSignalProcessingAttempt uses durable V7 receipts. Evidence: LifeLogRecordedQuestProgressIntegrationTest proves acceptance time boundaries, multi-Quest progress, replay with alternate eventId, concurrent duplicate exactly once, and weekly exact-period policy.
+
+3. Quest -> completion: VERIFIED
+Production: QuestAcceptance transition rules and Quest transition/completion factories append facts through V8. Evidence: QuestCompletionRewardTransactionalOutboxIntegrationTest#completesActualLifeLogAutoClosedLoop and #completesActualManualCheckClosedLoop start from actual LifeLog/manual commands and reach completion.
+
+4. completion -> RewardSettlement: VERIFIED
+Production: typed QuestRewardReadyFact and QuestCompletionRewardService create V3 settlement/lines. Evidence: QuestCompletionRewardTransactionalOutboxIntegrationTest proves RP_NONE, EXP, EXP+ITEM, duplicate delivery, failure persistence, and profile snapshot conflict.
+
+5. EXP -> Player growth: VERIFIED
+Production: PlayerRewardExpGrantService locks Player and records V4 player_growth_changes by reward line. Evidence: QuestCompletionRewardTransactionalOutboxIntegrationTest proves exact-once EXP; GrowthQueryIntegrationTest proves bounded current-player provenance reads.
+
+6. ITEM -> Mailbox: VERIFIED
+Production: InventoryRewardDeliveryApi is provider-owned, joins the caller transaction, resolves stable ItemCode, locks Mailbox, and saves V17 receipt. Evidence: InventoryRewardDeliveryIntegrationTest proves stable payload, stacking, sequential/concurrent replay, full-mailbox rollback, and caller rollback; the actual three-LifeLog loop proves the P0 item.
+
+7. Mailbox claim -> Inventory: VERIFIED
+Production: MailboxService locks Mailbox and Inventory, preflights the whole batch, then applies both mutations in one transaction. Evidence: MailboxClaimIntegrationTest proves single/all claims, attrs/bound preservation, merge/new stack, and rollback on late quantity/item/capacity failures.
+
+8. Quest completion -> Notification: PARTIALLY_VERIFIED
+Production adapter exists: QuestCompletionNotificationHandler consumes only QUEST_COMPLETED OutboxEventDelivery and uses the canonical outbox eventId. Handler tests prove mapping, ignore rules, and fail propagation. V25/NotificationApplicationIntegrationTest separately prove durable idempotent append. Missing: one real Quest completion -> relay -> player_notifications integration scenario.
+
+9. Quest reward-ready -> Notification: PARTIALLY_VERIFIED
+PR #320 production adapter exists at HEAD: QuestRewardReadyNotificationHandler consumes typed QuestRewardReadyFact and preserves OutboxEventDelivery.eventId. Its test rejects reconstruction from generic QuestEvent and propagates append failure. V25 persistence is separately proven. Missing: one actual reward-ready outbox -> durable notification integration scenario.
+
+10. Quest completion does not advance Route: VERIFIED
+QuestRouteApplicationIntegrationTest#neverAutoAdvancesOnQuestCompletion proves the current step remains unchanged. Role/Quest semantic locks are preserved; no listener performs route advancement.
+
+11. explicit Route advance: VERIFIED
+QuestRouteAdvanceService requires expectedStepId, locks the player route, evaluates required completion evidence, and advances one step. QuestRouteApplicationIntegrationTest proves unsatisfied rejection, one-step transition, stale replay rejection, concurrent maximum-one transition, and final completion.
+
+12. Connections -> Direct Chat: PARTIALLY_VERIFIED
+ConnectionQueryIntegrationTest proves active Current Player connections. FriendshipVerifier requires mutual active follows before ChatService.openFriend; ChatServiceCurrentPlayerTest proves resolved identity, and FriendChatQueryIntegrationTest proves real DB friend projection. Missing: one real mutual-follow -> channel creation -> participant persistence -> message persistence -> Redis subscriber delivery flow and Redis failure behavior.
+
+13. Notification append -> inbox/unread/read: VERIFIED
+NotificationAppender, NotificationQueryService, and NotificationReadMarker use V25. NotificationApplicationIntegrationTest proves durable and concurrent source replay, per-player scoping, newest-first cursor pagination, idempotent single read with ownership hiding, mark-all isolation, and unread-state updates.
+
+14. Listing -> reservation -> purchase -> transfer -> Trade: PARTIALLY_VERIFIED
+ListingOpenService uses InventoryMarketAvailabilityApi and whole-entry snapshots. MarketplaceReservationConcurrencyIntegrationTest proves Listing locking and the V27 active reservation invariant. MarketplaceTradeFulfillmentIntegrationTest proves Listing SOLD, reservation CONSUMED, hold COMMITTED, seller proceeds, seller removal, buyer fulfillment, V28 Trade snapshot, and full rollback on buyer capacity failure in one transaction. Missing: one test beginning at actual listing open and reservation through purchase, and durable purchase-request idempotency; the purchase integration mocks Redis IdempotencyKeyStore. The atomic business effect is verified for one accepted command, but the complete public replay loop is not.
+
+Summary
+- VERIFIED: 1, 2, 3, 4, 5, 6, 7, 10, 11, 13
+- PARTIALLY_VERIFIED: 8, 9, 12, 14
+- NOT_VERIFIED: none among the named loops
+- BLOCKED: none among the named loops; broader content/product release remains externally blocked
