@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V32까지 적용되고 Marketplace purchase receipt를 추가한다")
+        @DisplayName("V1부터 V33까지 적용되고 stable equipment slot authority를 추가한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -51,6 +51,7 @@ class FlywayMigrationTest {
                     flyway(MigrationVersion.fromVersion("12")).migrate();
             insertLegacyLifeLogs();
             insertLegacyQuestAcceptance();
+            insertLegacyEquipmentSlot();
             Flyway flyway = flyway();
 
             MigrateResult result = flyway.migrate();
@@ -58,14 +59,26 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(20);
+            assertThat(result.migrationsExecuted).isEqualTo(21);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
                             "14", "15", "16", "17", "18", "19", "20",
-                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"
+                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"
                     );
+            assertThat(equipmentSlotDefinitionCount()).isEqualTo(17);
+            assertThat(legacyEquipmentSlot()).isEqualTo(
+                    new LegacyEquipmentSlot(
+                            "1.0.0",
+                            "AVATAR",
+                            "HEAD",
+                            "SINGLE",
+                            true,
+                            "ACTIVE",
+                            true
+                    )
+            );
             assertThat(existingTables(
                     "users",
                     "player",
@@ -750,6 +763,57 @@ class FlywayMigrationTest {
         }
     }
 
+    private void insertLegacyEquipmentSlot() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             var statement = connection.prepareStatement("""
+                     INSERT INTO equipment_slots (
+                         code, name, category, role, created_at, updated_at
+                     ) VALUES (
+                         'HEAD', 'legacy head', 'HEAD', 'SINGLE',
+                         CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)
+                     )
+                     """)) {
+            statement.executeUpdate();
+        }
+    }
+
+    private int equipmentSlotDefinitionCount() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT COUNT(*)
+                     FROM equipment_slots
+                     WHERE definition_version = '1.0.0'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private LegacyEquipmentSlot legacyEquipmentSlot() throws SQLException {
+        try (Connection connection = MYSQL.createConnection("");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("""
+                     SELECT definition_version, logical_category,
+                            category, role, enabled, lifecycle_status,
+                            eager_on_link_start
+                     FROM equipment_slots
+                     WHERE code = 'HEAD'
+                       AND definition_version = '1.0.0'
+                     """)) {
+            assertThat(resultSet.next()).isTrue();
+            return new LegacyEquipmentSlot(
+                    resultSet.getString("definition_version"),
+                    resultSet.getString("logical_category"),
+                    resultSet.getString("category"),
+                    resultSet.getString("role"),
+                    resultSet.getBoolean("enabled"),
+                    resultSet.getString("lifecycle_status"),
+                    resultSet.getBoolean("eager_on_link_start")
+            );
+        }
+    }
+
     private QuestAcceptanceFactContextColumns
     questAcceptanceFactContextColumns() throws SQLException {
         try (Connection connection = MYSQL.createConnection("");
@@ -1389,6 +1453,17 @@ class FlywayMigrationTest {
             String acceptedAtNullable,
             String periodKeyNullable,
             int periodKeyLength
+    ) {
+    }
+
+    private record LegacyEquipmentSlot(
+            String definitionVersion,
+            String logicalCategory,
+            String category,
+            String role,
+            boolean enabled,
+            String lifecycleStatus,
+            boolean eagerOnLinkStart
     ) {
     }
 

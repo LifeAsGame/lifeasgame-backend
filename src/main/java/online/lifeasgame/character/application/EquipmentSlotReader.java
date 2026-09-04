@@ -39,4 +39,8 @@ class EquipmentSlotReader {
         return repository.findById(slotId)
                 .orElseThrow(() -> new DomainException(EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND));
     }
+
+    public List<EquipmentSlot> getAll() {
+        return repository.findAll();
+    }
 }

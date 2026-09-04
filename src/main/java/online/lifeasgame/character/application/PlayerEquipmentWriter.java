@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
@@ -20,9 +22,17 @@ class PlayerEquipmentWriter {
 
     private final PlayerEquipmentRepository repository;
 
-    public PlayerEquipment create(Long playerId, Long slotId) {
-        PlayerEquipment playerEquipment = PlayerEquipment.create(playerId, slotId, null);
-        return repository.save(playerEquipment);
+    public List<PlayerEquipment> createEmpty(
+            Long playerId,
+            List<Long> slotIds
+    ) {
+        return repository.saveAllAndFlush(slotIds.stream()
+                .map(slotId -> PlayerEquipment.create(
+                        playerId,
+                        slotId,
+                        null
+                ))
+                .toList());
     }
 
     public EquipmentReplacement equip(Long playerId, Long slotId, Long itemInstanceId) {

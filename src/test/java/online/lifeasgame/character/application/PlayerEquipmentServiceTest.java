@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -69,6 +70,33 @@ class PlayerEquipmentServiceTest {
         );
         given(currentPlayerAccessor.currentPlayerIdOrThrow())
                 .willReturn(PLAYER_ID);
+    }
+
+    @Nested
+    @DisplayName("호환성이 승인되지 않은 authority slot에 장착할 때")
+    class EquipInapplicableSlot {
+
+        @Test
+        @DisplayName("Inventory를 조회하기 전에 unsupported로 거부한다")
+        void rejectsWithoutActivatingCompatibility() {
+            EquipmentSlot slot = mock(EquipmentSlot.class);
+            given(slotReader.getByIdOrThrow(SLOT_ID)).willReturn(slot);
+
+            assertThatThrownBy(() -> service.equip(command(
+                    SLOT_ID,
+                    ITEM_INSTANCE_ID
+            ))).isInstanceOfSatisfying(DomainException.class, exception ->
+                    assertThat(exception.getErrorCode()).isEqualTo(
+                            PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+                    )
+            );
+            verifyNoInteractions(
+                    inventoryEquipmentReadApi,
+                    reader,
+                    writer,
+                    inventoryEquipmentAvailabilityApi
+            );
+        }
     }
 
     @Nested

@@ -33,12 +33,6 @@ class PlayerReader {
         }
     }
 
-    public void assertNotExistsByUserId(Long userId) {
-        if (repository.existsByUserId(userId)) {
-            throw new DomainException(PlayerError.PLAYER_ALREADY_EXISTS);
-        }
-    }
-
     public Player getByUserIdOrThrow(Long userId) {
         return repository.findByUserId(userId)
                 .orElseThrow(() -> new DomainException(PlayerError.PLAYER_NOT_FOUND));
@@ -48,5 +42,13 @@ class PlayerReader {
         return repository.findByUserId(userId).stream()
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Player getByUserIdForUpdateOrThrow(Long userId) {
+        return repository.findByUserIdForUpdate(userId)
+                .orElseThrow(() -> new DomainException(
+                        PlayerError.PLAYER_NOT_FOUND
+                ));
     }
 }
