@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface PlayerRepository {
     Player save(Player player);
 
-    boolean existsByUserId(Long userId);
+    Player saveAndFlush(Player player);
 
     Optional<Player> findById(Long playerId);
 
@@ -16,4 +16,6 @@ public interface PlayerRepository {
     boolean existsById(Long playerId);
 
     Optional<Player> findByUserId(Long userId);
+
+    Optional<Player> findByUserIdForUpdate(Long userId);
 }

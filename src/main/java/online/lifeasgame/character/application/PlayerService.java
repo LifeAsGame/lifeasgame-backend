@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.command.PlayerCommand;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.character.domain.*;
-import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,29 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerService {
 
-    private final PlayerWriter playerWriter;
     private final PlayerReader playerReader;
     private final PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
     private final PlayerExpGrantService playerExpGrantService;
-    private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
-
-    @Transactional
-    public PlayerResult.Created linkStart(Long userId, PlayerCommand.Register register) {
-        playerReader.assertNotExistsByUserId(userId);
-
-        Player player = Player.linkStart(
-                userId,
-                Name.of(register.name()),
-                GenderType.parse(register.gender())
-        );
-
-        playerWriter.create(player);
-
-        domainEventPublisher.publishAll(player.pullEvents());
-
-        return new PlayerResult.Created(player.getId());
-    }
 
     @Transactional
     public PlayerResult.UpdatedTitle changeRepresentativeTitle(Long titleId) {

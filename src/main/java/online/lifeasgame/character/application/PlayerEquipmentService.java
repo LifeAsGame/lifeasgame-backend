@@ -5,6 +5,8 @@ import online.lifeasgame.character.application.command.PlayerEquipmentCommand.Eq
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.PlayerEquipment;
+import online.lifeasgame.character.domain.error.PlayerEquipmentError;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadApi;
@@ -12,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,11 @@ public class PlayerEquipmentService {
         EquipmentSlot slot = equipmentSlotReader.getByIdOrThrow(
                 command.slotId()
         );
+        if (!slot.supportsEquipmentCommand()) {
+            throw new DomainException(
+                    PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+            );
+        }
         InventoryEquipmentReadApi.OwnedEquipmentItem item =
                 inventoryEquipmentReadApi.getOwnedItem(
                         playerId,
@@ -76,16 +86,29 @@ public class PlayerEquipmentService {
     @Transactional(readOnly = true)
     public List<PlayerEquipmentResult.Info> getPlayerEquipmentInfos() {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        List<PlayerEquipment> playerEquipmentInfos = playerEquipmentReader.getByPlayerId(playerId);
+        Map<Long, EquipmentSlot> slotsById = equipmentSlotReader.getAll()
+                .stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        EquipmentSlot::getId,
+                        Function.identity()
+                ));
+        List<PlayerEquipment> playerEquipmentInfos =
+                playerEquipmentReader.getByPlayerId(playerId);
         return playerEquipmentInfos.stream()
-                .map(PlayerEquipmentResult.Info::from)
+                .filter(equipment -> slotsById.containsKey(
+                        equipment.getSlotId()
+                ))
+                .filter(equipment -> slotsById.get(equipment.getSlotId())
+                        .isVisiblePlayerEquipmentSlot())
+                .sorted((left, right) -> Integer.compare(
+                        slotsById.get(left.getSlotId()).getSortOrder(),
+                        slotsById.get(right.getSlotId()).getSortOrder()
+                ))
+                .map(equipment -> PlayerEquipmentResult.Info.from(
+                        equipment,
+                        slotsById.get(equipment.getSlotId())
+                ))
                 .toList();
     }
 
-    @Transactional
-    public void init(Long playerId) {
-        for (int i = 1; i < 12; i++) {
-            playerEquipmentWriter.create(playerId, (long) i);
-        }
-    }
 }

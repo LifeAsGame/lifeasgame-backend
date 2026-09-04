@@ -5,6 +5,11 @@ import online.lifeasgame.core.error.ErrorCode;
 public enum EquipmentSlotError implements ErrorCode {
     INVALID_EQUIPMENT_SLOT_CATEGORY("EQS-400-INVALID-EQUIPMENT_SLOT-CATEGORY", "Invalid equipment slot category", 400),
     INVALID_EQUIPMENT_SLOT_ROLE("EQS-400-INVALID-EQUIPMENT_SLOT-ROLE", "Invalid equipment slot role", 400),
+    EQUIPMENT_SLOT_AUTHORITY_CONFLICT(
+            "EQS-409-AUTHORITY-CONFLICT",
+            "Equipment slot authority catalog is incomplete or conflicting",
+            409
+    ),
     EQUIPMENT_SLOT_NOT_FOUND("EQS-404-NOT_FOUND", "Equipment slot not found", 404);
 
     private final String code;

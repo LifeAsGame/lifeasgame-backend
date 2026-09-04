@@ -1,5 +1,6 @@
 package online.lifeasgame.character.application.result;
 
+import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.PlayerEquipment;
 
 public final class PlayerEquipmentResult {
@@ -24,13 +25,20 @@ public final class PlayerEquipmentResult {
             String slotRole,
             Long itemInstanceId
     ) {
-        public static Info from(PlayerEquipment playerEquipment) {
+        public static Info from(
+                PlayerEquipment playerEquipment,
+                EquipmentSlot slot
+        ) {
             return new Info(
                     playerEquipment.getSlotId(),
-                    null,
-                    null,
-                    null,
-                    null,
+                    slot.getCode(),
+                    slot.getName(),
+                    slot.getCategory() == null
+                            ? null
+                            : slot.getCategory().name(),
+                    slot.getRole() == null
+                            ? null
+                            : slot.getRole().name(),
                     playerEquipment.getItemInstanceId()
             );
         }

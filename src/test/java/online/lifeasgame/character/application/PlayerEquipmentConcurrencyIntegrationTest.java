@@ -171,10 +171,11 @@ class PlayerEquipmentConcurrencyIntegrationTest {
     private Long insertSlot(String code, String name, String role) {
         jdbc.update("""
                 INSERT INTO equipment_slots (
-                    created_at, updated_at, code, name, category, role
+                    created_at, updated_at, code, name, category, role,
+                    definition_version, enabled, lifecycle_status
                 ) VALUES (
                     CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
-                    ?, ?, 'WEAPON', ?
+                    ?, ?, 'WEAPON', ?, 'LEGACY', b'1', 'ACTIVE'
                 )
                 """, code, name, role);
         return jdbc.queryForObject(
