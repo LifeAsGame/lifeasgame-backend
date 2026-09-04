@@ -11,7 +11,6 @@ import online.lifeasgame.inventory.api.player.response.InventoryResponse.Slot;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Inventory API V1")
 public interface InventoryApiSpecV1 {
@@ -21,9 +20,7 @@ public interface InventoryApiSpecV1 {
 
     @Operation(summary = "인벤토리 엔트리 단건 조회", description = "itemInstanceId(=InventoryEntry.id) 기준으로 엔트리 상세를 조회합니다.")
     ResponseEntity<ApiResponse<InventoryResponse.EntryDetail>> getEntry(
-            @PathVariable Long itemInstanceId,
-            @RequestParam(defaultValue = "true") boolean includeItem,
-            @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
+            @PathVariable Long itemInstanceId
     );
 
     @Operation(summary = "인벤토리 슬롯 이동", description = "from 슬롯의 엔트리를 to 슬롯으로 이동합니다.")

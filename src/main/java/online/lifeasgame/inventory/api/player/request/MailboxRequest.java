@@ -27,7 +27,6 @@ public final class MailboxRequest {
     ) {}
 
     public record Delete(
-            @Min(0) int slotIndex,
-            String idempotencyKey
+            @Min(0) int slotIndex
     ) {}
 }

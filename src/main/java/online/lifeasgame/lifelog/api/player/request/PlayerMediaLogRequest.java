@@ -84,20 +84,17 @@ public final class PlayerMediaLogRequest {
     ) {}
 
     public record Rate(
-            @DecimalMin("0.0") @DecimalMax("5.0") Double score,
-            String idempotencyKey
+            @DecimalMin("0.0") @DecimalMax("5.0") Double score
     ) {
     }
 
     public record Advance(
-            @Min(1) Integer step,
-            String idempotencyKey
+            @Min(1) Integer step
     ) {
     }
 
     public record MarkStatus(
-            @NotBlank String status,
-            String idempotencyKey
+            @NotBlank String status
     ) {
     }
 }

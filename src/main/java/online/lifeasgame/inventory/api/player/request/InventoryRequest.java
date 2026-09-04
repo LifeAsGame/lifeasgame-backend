@@ -8,30 +8,26 @@ public final class InventoryRequest {
 
     public record Remove(
             @Min(0) int slotIndex,
-            @Min(1) int quantity,
-            String idempotencyKey
+            @Min(1) int quantity
     ) {
     }
 
     public record Move(
             @Min(0) int from,
-            @Min(0) int to,
-            String idempotencyKey
+            @Min(0) int to
     ) {
     }
 
     public record Merge(
             @Min(0) int from,
-            @Min(0) int to,
-            String idempotencyKey
+            @Min(0) int to
     ) {
     }
 
     public record Split(
             @Min(0) int from,
             Integer to,
-            @Min(1) int quantity,
-            String idempotencyKey
+            @Min(1) int quantity
     ) {
     }
 }

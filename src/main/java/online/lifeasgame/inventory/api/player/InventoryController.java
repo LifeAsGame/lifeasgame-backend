@@ -32,9 +32,7 @@ public class InventoryController implements InventoryApiSpecV1 {
     @Override
     @GetMapping("/{itemInstanceId}")
     public ResponseEntity<ApiResponse<InventoryResponse.EntryDetail>> getEntry(
-            @PathVariable Long itemInstanceId,
-            @RequestParam(defaultValue = "true") boolean includeItem,
-            @RequestParam(defaultValue = "true") boolean includeInstanceAttrs
+            @PathVariable Long itemInstanceId
     ) {
         InventoryResult.Entry result =
                 inventoryQueryService.getEntry(itemInstanceId);
