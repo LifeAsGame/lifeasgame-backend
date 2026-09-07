@@ -12,7 +12,9 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import online.lifeasgame.character.domain.error.EquipmentSlotError;
 import online.lifeasgame.core.annotation.AggregateRoot;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 @Getter
@@ -128,5 +130,14 @@ public class EquipmentSlot extends AbstractTime {
         return enabled
                 && lifecycleStatus == EquipmentSlotLifecycleStatus.ACTIVE
                 && eagerOnLinkStart;
+    }
+
+    public int requireSortOrder() {
+        if (sortOrder == null) {
+            throw new DomainException(
+                    EquipmentSlotError.EQUIPMENT_SLOT_AUTHORITY_CONFLICT
+            );
+        }
+        return sortOrder;
     }
 }

@@ -13,6 +13,7 @@ import online.lifeasgame.inventory.application.internal.InventoryEquipmentReadAp
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -94,16 +95,21 @@ public class PlayerEquipmentService {
                 ));
         List<PlayerEquipment> playerEquipmentInfos =
                 playerEquipmentReader.getByPlayerId(playerId);
-        return playerEquipmentInfos.stream()
+        List<PlayerEquipment> visibleEquipment = playerEquipmentInfos.stream()
                 .filter(equipment -> slotsById.containsKey(
                         equipment.getSlotId()
                 ))
                 .filter(equipment -> slotsById.get(equipment.getSlotId())
                         .isVisiblePlayerEquipmentSlot())
-                .sorted((left, right) -> Integer.compare(
-                        slotsById.get(left.getSlotId()).getSortOrder(),
-                        slotsById.get(right.getSlotId()).getSortOrder()
-                ))
+                .toList();
+        visibleEquipment.forEach(equipment -> slotsById
+                .get(equipment.getSlotId())
+                .requireSortOrder());
+
+        return visibleEquipment.stream()
+                .sorted(Comparator.comparingInt(equipment -> slotsById
+                        .get(equipment.getSlotId())
+                        .requireSortOrder()))
                 .map(equipment -> PlayerEquipmentResult.Info.from(
                         equipment,
                         slotsById.get(equipment.getSlotId())

@@ -24,9 +24,15 @@ public class EquipmentSlotService {
                 EquipmentSlotRole.parse(roles)
         );
 
-        return EquipmentSlotResult.Info.fromList(equipmentSlots.stream()
+        List<EquipmentSlot> supportedSlots = equipmentSlots.stream()
                 .filter(EquipmentSlot::supportsEquipmentCommand)
-                .sorted(Comparator.comparingInt(EquipmentSlot::getSortOrder))
+                .toList();
+        supportedSlots.forEach(EquipmentSlot::requireSortOrder);
+
+        return EquipmentSlotResult.Info.fromList(supportedSlots.stream()
+                .sorted(Comparator.comparingInt(
+                        EquipmentSlot::requireSortOrder
+                ))
                 .toList());
     }
 

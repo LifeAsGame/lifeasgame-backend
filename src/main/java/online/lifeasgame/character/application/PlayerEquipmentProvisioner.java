@@ -2,6 +2,7 @@ package online.lifeasgame.character.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.EquipmentSlot;
+import online.lifeasgame.character.domain.EquipmentSlotLifecycleStatus;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
 import online.lifeasgame.core.error.DomainException;
@@ -61,9 +62,10 @@ class PlayerEquipmentProvisioner {
             List<PlayerEquipment> equipment,
             Map<Long, EquipmentSlot> slotsById
     ) {
+        validateExistingRows(equipment, slotsById);
+
         Map<String, List<PlayerEquipment>> rowsByRequiredCode = equipment
                 .stream()
-                .filter(row -> slotsById.containsKey(row.getSlotId()))
                 .filter(row -> PlayerEquipmentProvisioningPolicy
                         .REQUIRED_CODES.contains(
                                 slotsById.get(row.getSlotId()).getCode()
@@ -89,6 +91,35 @@ class PlayerEquipmentProvisioner {
             }
         }
         return missing;
+    }
+
+    private void validateExistingRows(
+            List<PlayerEquipment> equipment,
+            Map<Long, EquipmentSlot> slotsById
+    ) {
+        for (PlayerEquipment row : equipment) {
+            EquipmentSlot slot = slotsById.get(row.getSlotId());
+            if (slot == null) {
+                throw onboardingConflict();
+            }
+            if (PlayerEquipmentProvisioningPolicy.REQUIRED_CODES.contains(
+                    slot.getCode()
+            )) {
+                continue;
+            }
+            if ("TITLE".equals(slot.getCode())
+                    || !isPreservableHistoricalExtra(slot)) {
+                throw onboardingConflict();
+            }
+        }
+    }
+
+    private boolean isPreservableHistoricalExtra(EquipmentSlot slot) {
+        EquipmentSlotLifecycleStatus lifecycle = slot.getLifecycleStatus();
+        return !slot.isEnabled()
+                && !slot.isEagerOnLinkStart()
+                && lifecycle != null
+                && lifecycle != EquipmentSlotLifecycleStatus.ACTIVE;
     }
 
     private DomainException onboardingConflict() {

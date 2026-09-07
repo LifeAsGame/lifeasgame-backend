@@ -372,6 +372,38 @@ class PlayerOnboardingIntegrationTest {
             assertThat(requiredPlayerCodes(playerId)).isEmpty();
             verifyNoInteractions(authTokenApi);
         }
+
+        @Test
+        @DisplayName("TITLE row는 보존하되 onboarding을 fail closed한다")
+        void rejectsTitleRow() {
+            Long playerId = insertPlayer(
+                    currentUserId.get(),
+                    "title-conflict-player",
+                    "male"
+            );
+            insertEquipment(playerId, slotId("TITLE", "1.0.0"));
+
+            assertOnboardingConflict(() -> register("ignored", "FEMALE"));
+
+            assertThat(equipmentCount(playerId)).isEqualTo(1);
+            verifyNoInteractions(authTokenApi);
+        }
+
+        @Test
+        @DisplayName("non-required ACTIVE row는 보존하되 onboarding을 fail closed한다")
+        void rejectsNonRequiredActiveRow() {
+            Long playerId = insertPlayer(
+                    currentUserId.get(),
+                    "active-extra-player",
+                    "male"
+            );
+            insertEquipment(playerId, insertActiveExtraDefinition());
+
+            assertOnboardingConflict(() -> register("ignored", "FEMALE"));
+
+            assertThat(equipmentCount(playerId)).isEqualTo(1);
+            verifyNoInteractions(authTokenApi);
+        }
     }
 
     @Test
@@ -550,6 +582,31 @@ class PlayerOnboardingIntegrationTest {
                 )
                 """, version);
         return slotId("HEAD", version);
+    }
+
+    private Long insertActiveExtraDefinition() {
+        jdbc.update("""
+                INSERT INTO equipment_slots (
+                    created_at, updated_at, code, name, category, role,
+                    definition_version, enabled, lifecycle_status,
+                    eager_on_link_start
+                ) VALUES (
+                    CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
+                    'LEGACY_ACTIVE_EXTRA', 'legacy active extra',
+                    'HEAD', 'SINGLE', 'LEGACY', b'1', 'ACTIVE', b'0'
+                )
+                """);
+        return slotId("LEGACY_ACTIVE_EXTRA", "LEGACY");
+    }
+
+    private void assertOnboardingConflict(Runnable action) {
+        assertThatThrownBy(action::run)
+                .isInstanceOfSatisfying(
+                        DomainException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(PlayerEquipmentError
+                                        .PLAYER_EQUIPMENT_ONBOARDING_CONFLICT)
+                );
     }
 
     private List<Throwable> race(Runnable first, Runnable second)
