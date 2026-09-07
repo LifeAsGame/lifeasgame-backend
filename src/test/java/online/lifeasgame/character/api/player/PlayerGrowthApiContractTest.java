@@ -4,6 +4,7 @@ import online.lifeasgame.character.application.GrowthQueryService;
 import online.lifeasgame.character.application.PlayerFacade;
 import online.lifeasgame.character.application.PlayerQueryService;
 import online.lifeasgame.character.application.PlayerService;
+import online.lifeasgame.character.application.command.PlayerCommand;
 import online.lifeasgame.character.application.result.GrowthResult;
 import online.lifeasgame.character.application.result.PlayerResult;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,8 +31,11 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,6 +69,60 @@ class PlayerGrowthApiContractTest {
 
     @MockitoBean
     private ErrorDocLinker errorDocLinker;
+
+    @Nested
+    @DisplayName("POST /api/v1/players/register")
+    class RegisterPlayer {
+
+        @Test
+        @DisplayName("기존 request/response와 201 Location 계약을 보존한다")
+        void preservesPublicContract() throws Exception {
+            given(playerFacade.linkStart(new PlayerCommand.Register(
+                    "새 플레이어",
+                    "MALE"
+            ))).willReturn(new PlayerResult.CreatedWithToken(
+                    331L,
+                    "access-token",
+                    "refresh-token"
+            ));
+
+            mockMvc.perform(post("/api/v1/players/register")
+                            .with(authentication(userAuthentication()))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "name": "새 플레이어",
+                                      "gender": "MALE"
+                                    }
+                                    """))
+                    .andExpect(status().isCreated())
+                    .andExpect(header().string(
+                            "Location",
+                            "/api/v1/players/331"
+                    ))
+                    .andExpect(jsonPath("$.result.id").value(331))
+                    .andExpect(jsonPath("$.result.accessToken")
+                            .value("access-token"))
+                    .andExpect(jsonPath("$.result.refreshToken")
+                            .value("refresh-token"));
+
+            verify(playerFacade).linkStart(new PlayerCommand.Register(
+                    "새 플레이어",
+                    "MALE"
+            ));
+        }
+
+        @Test
+        @DisplayName("인증이 없으면 401이다")
+        void requiresAuthentication() throws Exception {
+            mockMvc.perform(post("/api/v1/players/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"name":"새 플레이어","gender":"MALE"}
+                                    """))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
 
     @Nested
     @DisplayName("GET /api/v1/players/growth")
@@ -197,6 +256,14 @@ class PlayerGrowthApiContractTest {
     private UsernamePasswordAuthenticationToken playerAuthentication() {
         return new UsernamePasswordAuthenticationToken(
                 new JwtPrincipal(264L, 26401L),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+    }
+
+    private UsernamePasswordAuthenticationToken userAuthentication() {
+        return new UsernamePasswordAuthenticationToken(
+                new JwtPrincipal(264L, null),
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );

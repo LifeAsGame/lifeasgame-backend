@@ -13,8 +13,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class PlayerFacadeTest {
@@ -23,10 +25,7 @@ class PlayerFacadeTest {
     private CurrentUserAccessor currentUserAccessor;
 
     @Mock
-    private PlayerService playerService;
-
-    @Mock
-    private PlayerEquipmentService playerEquipmentService;
+    private PlayerOnboardingInitializer onboardingInitializer;
 
     @Mock
     private AuthTokenApi authTokenApi;
@@ -35,21 +34,40 @@ class PlayerFacadeTest {
     private PlayerFacade playerFacade;
 
     @Test
-    void onboardingKeepsCreateTokenAndEquipmentOrchestrationOrder() {
+    void issuesTokenOnlyAfterTransactionalInitializationReturns() {
         PlayerCommand.Register command = new PlayerCommand.Register("player", "MALE");
         given(currentUserAccessor.currentUserIdOrThrow()).willReturn(23L);
-        given(playerService.linkStart(23L, command)).willReturn(new PlayerResult.Created(239L));
+        given(onboardingInitializer.initialize(23L, command)).willReturn(
+                new PlayerResult.Created(239L)
+        );
         given(authTokenApi.issueToken(23L, 239L)).willReturn(
                 new AuthResult.TokenPair("access", "refresh", 23L, 239L)
         );
 
         PlayerResult.CreatedWithToken result = playerFacade.linkStart(command);
 
-        InOrder order = inOrder(playerService, authTokenApi, playerEquipmentService);
-        order.verify(playerService).linkStart(23L, command);
+        InOrder order = inOrder(onboardingInitializer, authTokenApi);
+        order.verify(onboardingInitializer).initialize(23L, command);
         order.verify(authTokenApi).issueToken(23L, 239L);
-        order.verify(playerEquipmentService).init(239L);
         assertThat(result.accessToken()).isEqualTo("access");
         assertThat(result.refreshToken()).isEqualTo("refresh");
+    }
+
+    @Test
+    void doesNotIssueTokenWhenInitializationFails() {
+        PlayerCommand.Register command = new PlayerCommand.Register(
+                "player",
+                "MALE"
+        );
+        given(currentUserAccessor.currentUserIdOrThrow()).willReturn(23L);
+        RuntimeException failure = new RuntimeException("slot failure");
+        given(onboardingInitializer.initialize(23L, command))
+                .willThrow(failure);
+
+        assertThatThrownBy(() ->
+                playerFacade.linkStart(command)
+        ).isSameAs(failure);
+
+        verifyNoInteractions(authTokenApi);
     }
 }

@@ -29,6 +29,15 @@ class PlayerEquipmentWriterTest {
     @Mock
     private PlayerEquipmentRepository repository;
 
+    @Test
+    @DisplayName("empty row는 item과 equippedAt이 모두 null이다")
+    void createsEmptyUnequippedState() {
+        PlayerEquipment equipment = emptyEquipment();
+
+        assertThat(equipment.getItemInstanceId()).isNull();
+        assertThat(equipment.getEquippedAt()).isNull();
+    }
+
     @Nested
     @DisplayName("DB unique conflict가 발생하면")
     class UniqueConflict {

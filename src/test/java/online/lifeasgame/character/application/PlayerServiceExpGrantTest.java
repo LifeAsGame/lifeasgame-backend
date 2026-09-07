@@ -1,7 +1,6 @@
 package online.lifeasgame.character.application;
 
 import online.lifeasgame.character.domain.Player;
-import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,9 +19,6 @@ import static org.mockito.Mockito.verify;
 class PlayerServiceExpGrantTest {
 
     @Mock
-    private PlayerWriter playerWriter;
-
-    @Mock
     private PlayerReader playerReader;
 
     @Mock
@@ -32,9 +28,6 @@ class PlayerServiceExpGrantTest {
     private PlayerExpGrantService playerExpGrantService;
 
     @Mock
-    private DomainEventPublisher domainEventPublisher;
-
-    @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
     private PlayerService service;
@@ -42,11 +35,9 @@ class PlayerServiceExpGrantTest {
     @BeforeEach
     void setUp() {
         service = new PlayerService(
-                playerWriter,
                 playerReader,
                 playerTitleOwnershipVerifier,
                 playerExpGrantService,
-                domainEventPublisher,
                 currentPlayerAccessor
         );
     }

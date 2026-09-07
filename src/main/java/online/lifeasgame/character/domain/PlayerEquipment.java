@@ -49,7 +49,7 @@ public class PlayerEquipment extends AbstractTime {
         this.playerId = Guard.notNull(playerId, "playerId");
         this.slotId = Guard.notNull(slotId, "slotId");
         this.itemInstanceId = itemInstanceId;
-        this.equippedAt = Instant.now();
+        this.equippedAt = itemInstanceId == null ? null : Instant.now();
     }
 
     public static PlayerEquipment create(Long playerId, Long slotId, Long itemInstanceId) {

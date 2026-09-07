@@ -25,4 +25,11 @@ public interface JpaPlayerEquipmentRepository extends JpaRepository<PlayerEquipm
     );
 
     List<PlayerEquipment> findByPlayerId(Long playerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({
+            @QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000")
+    })
+    @Query("SELECT pe FROM PlayerEquipment pe WHERE pe.playerId = :playerId")
+    List<PlayerEquipment> findByPlayerIdForUpdate(Long playerId);
 }

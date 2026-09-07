@@ -41,7 +41,19 @@ public class PlayerEquipmentRepositoryAdapter implements PlayerEquipmentReposito
     }
 
     @Override
+    public List<PlayerEquipment> saveAllAndFlush(
+            List<PlayerEquipment> playerEquipment
+    ) {
+        return jpaRepository.saveAllAndFlush(playerEquipment);
+    }
+
+    @Override
     public List<PlayerEquipment> findByPlayerId(Long playerId) {
         return jpaRepository.findByPlayerId(playerId);
+    }
+
+    @Override
+    public List<PlayerEquipment> findByPlayerIdForUpdate(Long playerId) {
+        return jpaRepository.findByPlayerIdForUpdate(playerId);
     }
 }

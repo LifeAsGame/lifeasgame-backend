@@ -24,6 +24,11 @@ class PlayerEquipmentReader {
         return repository.findByPlayerId(playerId);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public List<PlayerEquipment> getByPlayerIdForUpdate(Long playerId) {
+        return repository.findByPlayerIdForUpdate(playerId);
+    }
+
     public void assertNotEquipped(Long playerId, Long instanceId) {
         if (repository.existsByPlayerIdAndItemInstanceId(
                 playerId,

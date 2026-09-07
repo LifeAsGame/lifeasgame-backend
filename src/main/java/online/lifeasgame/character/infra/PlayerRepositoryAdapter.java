@@ -19,8 +19,8 @@ public class PlayerRepositoryAdapter implements PlayerRepository {
     }
 
     @Override
-    public boolean existsByUserId(Long userId) {
-        return jpa.existsByUserId(userId);
+    public Player saveAndFlush(Player player) {
+        return jpa.saveAndFlush(player);
     }
 
     @Override
@@ -41,5 +41,10 @@ public class PlayerRepositoryAdapter implements PlayerRepository {
     @Override
     public Optional<Player> findByUserId(Long userId) {
         return jpa.findByUserId(userId);
+    }
+
+    @Override
+    public Optional<Player> findByUserIdForUpdate(Long userId) {
+        return jpa.findByUserIdForUpdate(userId);
     }
 }

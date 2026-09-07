@@ -4,6 +4,11 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum PlayerEquipmentError implements ErrorCode {
     PLAYER_EQUIPMENT_NOT_FOUND("PEQ-404-NOT-FOUND", "Player equipment not found", 404),
+    PLAYER_EQUIPMENT_ONBOARDING_CONFLICT(
+            "PEQ-409-ONBOARDING-CONFLICT",
+            "Player equipment onboarding state conflicts with the approved slot authority",
+            409
+    ),
     ALREADY_EQUIPPED_ITEM("PEQ-409-ALREADY-EQUIPPED", "Item is already equipped", 409),
     INVALID_ITEM_INSTANCE_ID("PEQ-400-INVALID-ITEM-INSTANCE", "Item instance id is required", 400),
     ITEM_NOT_OWNED_BY_PLAYER("PEQ-403-NOT-OWNER", "Item is not owned by the player", 403),

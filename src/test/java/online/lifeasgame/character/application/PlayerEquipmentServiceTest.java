@@ -4,6 +4,7 @@ import online.lifeasgame.character.application.command.PlayerEquipmentCommand;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
 import online.lifeasgame.character.domain.PlayerEquipment;
+import online.lifeasgame.character.domain.error.EquipmentSlotError;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
@@ -18,18 +19,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Player equipment write")
+@DisplayName("Player equipment")
 class PlayerEquipmentServiceTest {
 
     private static final Long PLAYER_ID = 262L;
@@ -69,6 +74,78 @@ class PlayerEquipmentServiceTest {
         );
         given(currentPlayerAccessor.currentPlayerIdOrThrow())
                 .willReturn(PLAYER_ID);
+    }
+
+    @Nested
+    @DisplayName("visible equipment 목록을 조회할 때")
+    class GetPlayerEquipmentInfos {
+
+        @Test
+        @DisplayName("sortOrder가 없으면 authority conflict로 거부한다")
+        void rejectsMissingSortOrder() {
+            EquipmentSlot slot = visibleSlot(SLOT_ID, "HEAD", null);
+            given(slotReader.getAll()).willReturn(List.of(slot));
+            given(reader.getByPlayerId(PLAYER_ID)).willReturn(List.of(
+                    PlayerEquipment.create(PLAYER_ID, SLOT_ID, null)
+            ));
+
+            assertThatThrownBy(service::getPlayerEquipmentInfos)
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(EquipmentSlotError
+                                            .EQUIPMENT_SLOT_AUTHORITY_CONFLICT)
+                    );
+        }
+
+        @Test
+        @DisplayName("유효한 equipment는 slot sortOrder 순으로 반환한다")
+        void sortsBySlotSortOrder() {
+            Long secondSlotId = 22L;
+            given(slotReader.getAll()).willReturn(List.of(
+                    visibleSlot(secondSlotId, "BODY", 20),
+                    visibleSlot(SLOT_ID, "HEAD", 10)
+            ));
+            given(reader.getByPlayerId(PLAYER_ID)).willReturn(List.of(
+                    PlayerEquipment.create(
+                            PLAYER_ID,
+                            secondSlotId,
+                            null
+                    ),
+                    PlayerEquipment.create(PLAYER_ID, SLOT_ID, null)
+            ));
+
+            assertThat(service.getPlayerEquipmentInfos())
+                    .extracting(result -> result.slotCode())
+                    .containsExactly("HEAD", "BODY");
+        }
+    }
+
+    @Nested
+    @DisplayName("호환성이 승인되지 않은 authority slot에 장착할 때")
+    class EquipInapplicableSlot {
+
+        @Test
+        @DisplayName("Inventory를 조회하기 전에 unsupported로 거부한다")
+        void rejectsWithoutActivatingCompatibility() {
+            EquipmentSlot slot = mock(EquipmentSlot.class);
+            given(slotReader.getByIdOrThrow(SLOT_ID)).willReturn(slot);
+
+            assertThatThrownBy(() -> service.equip(command(
+                    SLOT_ID,
+                    ITEM_INSTANCE_ID
+            ))).isInstanceOfSatisfying(DomainException.class, exception ->
+                    assertThat(exception.getErrorCode()).isEqualTo(
+                            PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+                    )
+            );
+            verifyNoInteractions(
+                    inventoryEquipmentReadApi,
+                    reader,
+                    writer,
+                    inventoryEquipmentAvailabilityApi
+            );
+        }
     }
 
     @Nested
@@ -281,6 +358,22 @@ class PlayerEquipmentServiceTest {
 
     private EquipmentSlot slot(EquipmentSlotCategory category) {
         return EquipmentSlot.of("SLOT_" + category, "slot", category);
+    }
+
+    private EquipmentSlot visibleSlot(
+            Long id,
+            String code,
+            Integer sortOrder
+    ) {
+        EquipmentSlot slot = EquipmentSlot.of(
+                code,
+                code,
+                EquipmentSlotCategory.HEAD
+        );
+        ReflectionTestUtils.setField(slot, "id", id);
+        ReflectionTestUtils.setField(slot, "sortOrder", sortOrder);
+        ReflectionTestUtils.setField(slot, "eagerOnLinkStart", true);
+        return slot;
     }
 
     private InventoryEquipmentReadApi.OwnedEquipmentItem item(

@@ -6,7 +6,6 @@ import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.error.PlayerTitleError;
 import online.lifeasgame.character.domain.repository.PlayerTitleRepository;
 import online.lifeasgame.core.error.DomainException;
-import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,13 +46,7 @@ class CharacterApplicationBoundaryTest {
     private TitleReader titleReader;
 
     @Mock
-    private PlayerWriter playerWriter;
-
-    @Mock
     private PlayerExpGrantService playerExpGrantService;
-
-    @Mock
-    private DomainEventPublisher domainEventPublisher;
 
     @Mock
     private PlayerAchievementReader playerAchievementReader;
@@ -185,11 +178,9 @@ class CharacterApplicationBoundaryTest {
 
     private PlayerService playerService() {
         return new PlayerService(
-                playerWriter,
                 playerReader,
                 playerTitleOwnershipVerifier,
                 playerExpGrantService,
-                domainEventPublisher,
                 currentPlayerAccessor
         );
     }

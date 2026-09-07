@@ -5,8 +5,11 @@ import online.lifeasgame.character.application.result.EquipmentSlotResult;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
 import online.lifeasgame.character.domain.EquipmentSlotRole;
+import online.lifeasgame.character.domain.error.PlayerEquipmentError;
+import online.lifeasgame.core.error.DomainException;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -21,11 +24,25 @@ public class EquipmentSlotService {
                 EquipmentSlotRole.parse(roles)
         );
 
-        return EquipmentSlotResult.Info.fromList(equipmentSlots);
+        List<EquipmentSlot> supportedSlots = equipmentSlots.stream()
+                .filter(EquipmentSlot::supportsEquipmentCommand)
+                .toList();
+        supportedSlots.forEach(EquipmentSlot::requireSortOrder);
+
+        return EquipmentSlotResult.Info.fromList(supportedSlots.stream()
+                .sorted(Comparator.comparingInt(
+                        EquipmentSlot::requireSortOrder
+                ))
+                .toList());
     }
 
     public EquipmentSlotResult.Info getEquipmentSlot(Long slotId) {
         EquipmentSlot equipmentSlot = equipmentSlotReader.getByIdOrThrow(slotId);
+        if (!equipmentSlot.supportsEquipmentCommand()) {
+            throw new DomainException(
+                    PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+            );
+        }
         return EquipmentSlotResult.Info.from(equipmentSlot);
     }
 }

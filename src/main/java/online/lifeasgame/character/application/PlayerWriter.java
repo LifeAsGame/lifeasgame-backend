@@ -15,7 +15,7 @@ class PlayerWriter {
     private final PlayerRepository repository;
 
     public Long create(Player player) {
-        Player saved = repository.save(player);
+        Player saved = repository.saveAndFlush(player);
         saved.markRegistered();
         return saved.getId();
     }

@@ -10,6 +10,8 @@ public interface PlayerEquipmentRepository {
 
     List<PlayerEquipment> findByPlayerId(Long playerId);
 
+    List<PlayerEquipment> findByPlayerIdForUpdate(Long playerId);
+
     boolean existsByPlayerIdAndItemInstanceId(
             Long playerId,
             Long instanceId
@@ -18,4 +20,8 @@ public interface PlayerEquipmentRepository {
     PlayerEquipment save(PlayerEquipment playerEquipment);
 
     PlayerEquipment saveAndFlush(PlayerEquipment playerEquipment);
+
+    List<PlayerEquipment> saveAllAndFlush(
+            List<PlayerEquipment> playerEquipment
+    );
 }

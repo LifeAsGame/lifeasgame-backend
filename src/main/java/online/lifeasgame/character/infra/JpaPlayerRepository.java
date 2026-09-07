@@ -15,7 +15,9 @@ public interface JpaPlayerRepository extends JpaRepository<Player, Long> {
     @Query("select player from Player player where player.id = :playerId")
     Optional<Player> findByIdForUpdate(@Param("playerId") Long playerId);
 
-    boolean existsByUserId(Long userId);
-
     Optional<Player> findByUserId(Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select player from Player player where player.userId = :userId")
+    Optional<Player> findByUserIdForUpdate(@Param("userId") Long userId);
 }

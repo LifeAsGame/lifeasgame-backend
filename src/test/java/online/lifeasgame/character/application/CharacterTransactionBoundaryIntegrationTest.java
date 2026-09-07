@@ -60,6 +60,9 @@ class CharacterTransactionBoundaryIntegrationTest {
     private PlayerService playerService;
 
     @Autowired
+    private PlayerOnboardingInitializer onboardingInitializer;
+
+    @Autowired
     private PlayerTitleService playerTitleService;
 
     @Autowired
@@ -236,7 +239,7 @@ class CharacterTransactionBoundaryIntegrationTest {
 
     private Long createPlayer() {
         long sequence = SEQUENCE.incrementAndGet();
-        return playerService.linkStart(
+        return onboardingInitializer.initialize(
                 sequence,
                 new PlayerCommand.Register(
                         "player-" + sequence,
