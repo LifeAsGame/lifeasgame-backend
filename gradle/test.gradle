@@ -2,6 +2,10 @@ tasks.named('test') {
     useJUnitPlatform()
     maxHeapSize = '2g'
     systemProperty 'spring.test.context.cache.maxSize', '8'
+    inputs.property(
+            'contentActivationInput',
+            providers.environmentVariable('CONTENT_ACTIVATION_INPUT').orElse('')
+    )
 }
 
 ext['testcontainers.version'] = '1.21.4'

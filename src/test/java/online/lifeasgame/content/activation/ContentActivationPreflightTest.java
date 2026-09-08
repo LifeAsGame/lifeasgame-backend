@@ -12,34 +12,67 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-@DisplayName("AUTH-CONT-001 v1.0.0 activation preflight")
+@DisplayName("content activation input preflight")
 class ContentActivationPreflightTest {
 
-    private static final Path AUTHORITY = Path.of(
-            ".codex-local/issue-333/authority"
+    private static final String INPUT_ENV = "CONTENT_ACTIVATION_INPUT";
+    private static final String MANIFEST_FILE =
+            "content/01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv";
+    private static final String REFERENCES_FILE =
+            "content/02_REFERENCE_INTEGRITY_MATRIX.csv";
+    private static final String COPY_FILE =
+            "content/07_COPY_AUTHORITY_ADDENDUM.csv";
+    private static final String CAPABILITY_FILE =
+            "capability/01_CONSUMER_FIRST_COMPLETION_CAPABILITY_MANIFEST.csv";
+
+    private static final String MANIFEST_HEADER = String.join(",",
+            "contentType", "stableCode", "definitionVersion",
+            "activationWave", "active", "gated", "deferred",
+            "lifecycleStatus", "replacementCode", "replacementVersion",
+            "priority", "capabilityId", "availabilityStartAt",
+            "availabilityEndAt", "releaseCohort", "sortOrder",
+            "rewardProfileCode", "itemCode", "equipmentSlotCode",
+            "copyKeyReferences", "referenceIntegrityStatus",
+            "decisionRationale", "sourceRevision", "approvedBy"
     );
-    private static final Path CONTENT = AUTHORITY.resolve("content");
+    private static final String REFERENCE_HEADER = String.join(",",
+            "sourceType", "sourceCode", "sourceVersion", "referenceType",
+            "targetType", "targetCode", "targetVersion",
+            "requiredForActive", "status", "failureReason",
+            "owningAuthority"
+    );
+    private static final String COPY_HEADER = String.join(",",
+            "copyKey", "sourceType", "sourceCode", "locale", "text",
+            "definitionVersion", "lifecycleStatus", "parameterNames",
+            "maxLength", "sensitiveContextRule", "sourceRevision",
+            "approvedBy"
+    );
+    private static final String CAPABILITY_HEADER = String.join(",",
+            "capabilityId", "firstCompletionClass", "p0OrP1",
+            "primaryOwner", "sourceRevision", "approvedBy"
+    );
 
     @TempDir
     Path tempDir;
 
     @Nested
-    @DisplayName("승인된 snapshot을 검증하면")
-    class ApprovedSnapshot {
+    @DisplayName("self-contained input을 검증하면")
+    class SelfContainedInput {
 
         @Test
-        @DisplayName("manifest/reference는 유효하고 payload/runtime은 별도 미완료 상태다")
-        void reportsSeparateOutcomes() {
-            var report = validate(AUTHORITY);
+        @DisplayName("manifest/reference와 payload/runtime 결과를 분리한다")
+        void reportsSeparateOutcomes() throws IOException {
+            var report = validateFixture(createFixture("valid"));
 
             assertThat(report.authoritySnapshotValidation())
                     .isEqualTo(ContentActivationPreflight
@@ -59,211 +92,155 @@ class ContentActivationPreflightTest {
                             ContentActivationPreflight.PreflightReport::manifestRows,
                             ContentActivationPreflight.PreflightReport::activeRows,
                             ContentActivationPreflight.PreflightReport::gatedRows,
-                            ContentActivationPreflight.PreflightReport::deferredRows,
                             ContentActivationPreflight.PreflightReport::referenceRows,
                             ContentActivationPreflight.PreflightReport
                                     ::activeRequiredReferencesResolved,
                             ContentActivationPreflight.PreflightReport
-                                    ::activeRequiredReferencesNotApplicable,
-                            ContentActivationPreflight.PreflightReport
                                     ::deliveredCopyPayloads
                     )
-                    .containsExactly(796, 102, 449, 245, 2203, 195, 3, 16);
-            assertThat(report.missingCopyPayloads())
-                    .hasSize(58)
-                    .contains(new ContentActivationPreflight.ContentIdentity(
+                    .containsExactly(5, 2, 3, 3, 1, 0);
+            assertThat(report.missingCopyPayloads()).containsExactly(
+                    new ContentActivationPreflight.ContentIdentity(
                             "COPY",
-                            "quest.q_record_first_trace.title",
+                            "copy.active.title",
                             "1"
-                    ));
-        }
-
-        @Test
-        @DisplayName("optional gated candidate를 active grant로 승격하지 않는다")
-        void permitsOptionalGatedCandidateWithoutActivation() {
-            var manifest = ContentActivationPreflight.readCsv(
-                    CONTENT.resolve(
-                            "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv"
                     )
             );
-            var references = ContentActivationPreflight.readCsv(
-                    CONTENT.resolve("02_REFERENCE_INTEGRITY_MATRIX.csv")
-            );
-
-            assertThat(manifest.rows()).anySatisfy(row -> {
-                assertThat(row).containsEntry("contentType", "ACHIEVEMENT");
-                assertThat(row).containsEntry("stableCode", "ACH_FIRST_LIFELOG");
-                assertThat(row).containsEntry("gated", "true");
-            });
-            assertThat(references.rows()).anySatisfy(row -> {
-                assertThat(row).containsEntry("sourceCode", "Q_RECORD_FIRST_TRACE");
-                assertThat(row).containsEntry("referenceType", "ACHIEVEMENT_CANDIDATE");
-                assertThat(row).containsEntry("targetCode", "ACH_FIRST_LIFELOG");
-                assertThat(row).containsEntry("requiredForActive", "false");
-            });
-            assertThatCode(() -> validate(AUTHORITY)).doesNotThrowAnyException();
         }
 
         @Test
-        @DisplayName("외부 authority edge는 content row 누락과 구분한다")
-        void classifiesExternalAuthorityEdges() {
-            var report = validate(AUTHORITY);
+        @DisplayName("optional gated target을 active로 승격하지 않는다")
+        void permitsOptionalGatedTarget() throws IOException {
+            var report = validateFixture(createFixture("optional-gated"));
 
-            assertThat(report.externalReferences()).anySatisfy(edge -> {
-                assertThat(edge.target().contentType())
-                        .isEqualTo("QUEST_FAMILY_TAXONOMY");
-                assertThat(edge.classification()).isEqualTo(
-                        ContentActivationPreflight
-                                .ExternalReferenceClassification
-                                .DECLARED_EXTERNAL_AUTHORITY
-                );
-            });
-            assertThat(report.externalReferences()).anySatisfy(edge -> {
-                assertThat(edge.target().contentType())
-                        .isEqualTo("EQUIPMENT_SLOT_AUTHORITY");
-                assertThat(edge.classification()).isEqualTo(
-                        ContentActivationPreflight
-                                .ExternalReferenceClassification
-                                .DELIVERED_AUTHORITY_INPUT
-                );
-            });
+            assertThat(report.activeRows()).isEqualTo(2);
+            assertThat(report.gatedRows()).isEqualTo(3);
         }
 
-    }
-
-    @Nested
-    @DisplayName("manifest invariant가 깨지면")
-    class InvalidManifest {
-
         @Test
-        @DisplayName("boolean 대소문자나 truthy 값을 허용하지 않는다")
-        void rejectsNonCanonicalBoolean() throws IOException {
-            Path snapshot = copySnapshot();
+        @DisplayName("strict boolean, exclusive state와 lifecycle을 강제한다")
+        void rejectsInvalidStateSemantics() throws IOException {
+            Path badBoolean = createFixture("bad-boolean");
+            mutateAndRehash(badBoolean, MANIFEST_FILE, content -> replaceRequired(
+                    content,
+                    "Q_ACTIVE,1,WAVE,true,false,false,ACTIVE",
+                    "Q_ACTIVE,1,WAVE,TRUE,false,false,ACTIVE"
+            ));
+            Path badState = createFixture("bad-state");
+            mutateAndRehash(badState, MANIFEST_FILE, content -> replaceRequired(
+                    content,
+                    "Q_ACTIVE,1,WAVE,true,false,false,ACTIVE",
+                    "Q_ACTIVE,1,WAVE,true,true,false,ACTIVE"
+            ));
+            Path badLifecycle = createFixture("bad-lifecycle");
             mutateAndRehash(
-                    snapshot,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
+                    badLifecycle,
+                    MANIFEST_FILE,
                     content -> replaceRequired(
                             content,
-                            ",false,true,false,GATED,",
-                            ",false,TRUE,false,GATED,"
+                            "Q_ACTIVE,1,WAVE,true,false,false,ACTIVE",
+                            "Q_ACTIVE,1,WAVE,true,false,false,GATED"
                     )
             );
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
-                    .hasMessageContaining("Invalid boolean gated=TRUE");
-        }
-
-        @Test
-        @DisplayName("active/gated/deferred 중 둘 이상을 허용하지 않는다")
-        void rejectsContradictoryState() throws IOException {
-            Path snapshot = copySnapshot();
-            mutateAndRehash(
-                    snapshot,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
-                    content -> replaceRequired(
-                            content,
-                            ",false,true,false,GATED,",
-                            ",true,true,false,GATED,"
-                    )
-            );
-
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(badBoolean))
+                    .hasMessageContaining("Invalid boolean active=TRUE");
+            assertThatThrownBy(() -> validateFixture(badState))
                     .hasMessageContaining("Exactly one state");
+            assertThatThrownBy(() -> validateFixture(badLifecycle))
+                    .hasMessageContaining("Lifecycle/state mismatch");
         }
 
         @Test
-        @DisplayName("동일 stable identity 중복을 거부한다")
-        void rejectsDuplicateIdentity() throws IOException {
-            Path snapshot = copySnapshot();
+        @DisplayName("stable identity 중복과 version 정규화를 거부한다")
+        void keepsStableIdentityExact() throws IOException {
+            Path duplicate = createFixture("duplicate");
+            mutateAndRehash(duplicate, MANIFEST_FILE, content -> content
+                    + content.lines()
+                    .filter(line -> line.startsWith("QUEST,Q_ACTIVE,1,"))
+                    .findFirst()
+                    .orElseThrow()
+                    + System.lineSeparator());
+            Path changedVersion = createFixture("changed-version");
             mutateAndRehash(
-                    snapshot,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
-                    content -> content + content.lines()
-                            .filter(line -> line.startsWith(
-                                    "QUEST,Q_RECORD_FIRST_TRACE,1,"
-                            ))
-                            .findFirst()
-                            .orElseThrow()
-                            + System.lineSeparator()
+                    changedVersion,
+                    REFERENCES_FILE,
+                    content -> replaceRequired(
+                            content,
+                            "COPY,copy.active.title,1,true,RESOLVED",
+                            "COPY,copy.active.title,1.0.0,true,RESOLVED"
+                    )
             );
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(duplicate))
                     .hasMessageContaining("Duplicate stable identity")
-                    .hasMessageContaining("Q_RECORD_FIRST_TRACE@1");
+                    .hasMessageContaining("Q_ACTIVE@1");
+            assertThatThrownBy(() -> validateFixture(changedVersion))
+                    .hasMessageContaining("Resolved manifest target is missing")
+                    .hasMessageContaining("@1.0.0");
         }
 
         @Test
-        @DisplayName("canonical capability manifest에 없는 ID를 거부한다")
-        void rejectsUnknownCapability() throws IOException {
-            Path snapshot = copySnapshot();
+        @DisplayName("capability, 숫자와 window를 결정적으로 검증한다")
+        void rejectsMalformedBindingsAndScalars() throws IOException {
+            Path unknownCapability = createFixture("unknown-capability");
             mutateAndRehash(
-                    snapshot,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
+                    unknownCapability,
+                    MANIFEST_FILE,
                     content -> replaceRequired(
                             content,
-                            "CFC-JNY-001",
-                            "CFC-UNKNOWN-333"
+                            "CFC-TEST-001",
+                            "CFC-UNKNOWN"
                     )
             );
+            Path badSort = createFixture("bad-sort");
+            mutateAndRehash(badSort, MANIFEST_FILE, content -> replaceRequired(
+                    content,
+                    "TEST_COHORT,10,,,,,RESOLVED",
+                    "TEST_COHORT,NaN,,,,,RESOLVED"
+            ));
+            Path badWindow = createFixture("bad-window");
+            mutateAndRehash(badWindow, MANIFEST_FILE, content -> replaceRequired(
+                    content,
+                    "CFC-TEST-001,,,TEST_COHORT",
+                    "CFC-TEST-001,not-an-instant,,TEST_COHORT"
+            ));
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
-                    .hasMessageContaining("Unknown capabilityId CFC-UNKNOWN-333");
-        }
-
-        @Test
-        @DisplayName("malformed sortOrder와 availability window를 결정적으로 거부한다")
-        void rejectsMalformedScalarFields() throws IOException {
-            Path badSort = copySnapshot("bad-sort");
-            mutateAndRehash(
-                    badSort,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
-                    content -> replaceRequired(
-                            content,
-                            "CONSUMER_FIRST_COMPLETION_AUTHORITY_GATED,1,RP_NONE",
-                            "CONSUMER_FIRST_COMPLETION_AUTHORITY_GATED,NaN,RP_NONE"
-                    )
-            );
-            Path badWindow = copySnapshot("bad-window");
-            mutateAndRehash(
-                    badWindow,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
-                    content -> replaceRequired(
-                            content,
-                            "CFC-JNY-001;CFC-JNY-002;CFC-JNY-003,,,"
-                                    + "CONSUMER_FIRST_COMPLETION_AUTHORITY_GATED",
-                            "CFC-JNY-001;CFC-JNY-002;CFC-JNY-003,not-an-instant,,"
-                                    + "CONSUMER_FIRST_COMPLETION_AUTHORITY_GATED"
-                    )
-            );
-
-            assertThatThrownBy(() -> validate(badSort))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(unknownCapability))
+                    .hasMessageContaining("Unknown capabilityId CFC-UNKNOWN");
+            assertThatThrownBy(() -> validateFixture(badSort))
                     .hasMessageContaining("Malformed numeric value");
-            assertThatThrownBy(() -> validate(badWindow))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(badWindow))
                     .hasMessageContaining("Malformed availability start");
         }
 
         @Test
-        @DisplayName("replacement는 matrix의 explicit type/code/version 선언을 요구한다")
-        void rejectsImplicitReplacement() throws IOException {
-            Path snapshot = copySnapshot();
+        @DisplayName("required internal target과 replacement declaration을 강제한다")
+        void rejectsBrokenReferences() throws IOException {
+            Path missingTarget = createFixture("missing-target");
             mutateAndRehash(
-                    snapshot,
-                    "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv",
+                    missingTarget,
+                    REFERENCES_FILE,
                     content -> replaceRequired(
                             content,
-                            ",GATED,,,P0,CFC-JNY-001",
-                            ",GATED,Q_RECORD_FIRST_TRACE,1,P0,CFC-JNY-001"
+                            "COPY,copy.active.title,1,true,RESOLVED",
+                            "COPY,copy.missing.title,1,true,RESOLVED"
                     )
             );
+            Path missingReplacement = createFixture("missing-replacement");
+            mutateAndRehash(
+                    missingReplacement,
+                    REFERENCES_FILE,
+                    content -> content.lines()
+                            .filter(line -> !line.contains(",REPLACED_BY,"))
+                            .collect(Collectors.joining(System.lineSeparator()))
+                            + System.lineSeparator()
+            );
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(missingTarget))
+                    .hasMessageContaining("Resolved manifest target is missing")
+                    .hasMessageContaining("copy.missing.title@1");
+            assertThatThrownBy(() -> validateFixture(missingReplacement))
                     .hasMessageContaining(
                             "Replacement requires one explicit typed declaration"
                     );
@@ -271,97 +248,44 @@ class ContentActivationPreflightTest {
     }
 
     @Nested
-    @DisplayName("reference declaration이 깨지면")
-    class InvalidReference {
+    @DisplayName("input delivery boundary를 검증하면")
+    class InputBoundary {
 
         @Test
-        @DisplayName("RESOLVED인 active internal edge의 missing target을 거부한다")
-        void rejectsMissingActiveInternalTarget() throws IOException {
-            Path snapshot = copySnapshot();
-            mutateAndRehash(
-                    snapshot,
-                    "02_REFERENCE_INTEGRITY_MATRIX.csv",
-                    content -> replaceRequired(
-                            content,
-                            "COPY,quest.q_record_first_trace.accepted,1,true,RESOLVED",
-                            "COPY,missing.copy.key,1,true,RESOLVED"
-                    )
-            );
-
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
-                    .hasMessageContaining("Resolved manifest target is missing")
-                    .hasMessageContaining("missing.copy.key@1");
-        }
-
-        @Test
-        @DisplayName("definitionVersion을 숫자로 정규화하지 않고 exact string으로 비교한다")
-        void keepsVersionIdentityStrict() throws IOException {
-            Path snapshot = copySnapshot();
-            mutateAndRehash(
-                    snapshot,
-                    "02_REFERENCE_INTEGRITY_MATRIX.csv",
-                    content -> replaceRequired(
-                            content,
-                            "COPY,quest.q_record_first_trace.accepted,1,true,RESOLVED",
-                            "COPY,quest.q_record_first_trace.accepted,1.0.0,true,RESOLVED"
-                    )
-            );
-
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
-                    .hasMessageContaining("Resolved manifest target is missing")
-                    .hasMessageContaining("@1.0.0");
-        }
-    }
-
-    @Nested
-    @DisplayName("snapshot delivery boundary를 검증하면")
-    class SnapshotBoundary {
-
-        @Test
-        @DisplayName("authority file의 byte tampering을 hash gate에서 거부한다")
+        @DisplayName("checksum과 실제 bytes가 다르면 거부한다")
         void rejectsTamperedBytes() throws IOException {
-            Path snapshot = copySnapshot();
-            Path verdict = snapshot.resolve(
-                    "content/00_EXECUTIVE_ACTIVATION_VERDICT.txt"
-            );
+            Path fixture = createFixture("tampered");
+            Path manifest = fixture.resolve(MANIFEST_FILE);
             Files.writeString(
-                    verdict,
-                    Files.readString(verdict, StandardCharsets.UTF_8) + " ",
+                    manifest,
+                    Files.readString(manifest, StandardCharsets.UTF_8) + " ",
                     StandardCharsets.UTF_8
             );
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(fixture))
                     .hasMessageContaining("SHA-256 mismatch")
-                    .hasMessageContaining("00_EXECUTIVE_ACTIVATION_VERDICT.txt");
+                    .hasMessageContaining(
+                            "01_CONSUMER_RUNTIME_ACTIVATION_MANIFEST.csv"
+                    );
         }
 
         @Test
         @DisplayName("checksum path가 supplied root 밖으로 나갈 수 없다")
         void rejectsPathEscape() throws IOException {
-            Path snapshot = copySnapshot();
-            Path checksums = snapshot.resolve("SHA256SUMS.txt");
-            String content = Files.readString(checksums, StandardCharsets.UTF_8);
+            Path fixture = createFixture("path-escape");
             Files.writeString(
-                    checksums,
-                    replaceRequired(
-                            content,
-                            "  content/00_EXECUTIVE_ACTIVATION_VERDICT.txt",
-                            "  ../00_EXECUTIVE_ACTIVATION_VERDICT.txt"
-                    ),
+                    fixture.resolve("SHA256SUMS.txt"),
+                    "0".repeat(64) + "  ../outside.csv\n",
                     StandardCharsets.UTF_8
             );
 
-            assertThatThrownBy(() -> validate(snapshot))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+            assertThatThrownBy(() -> validateFixture(fixture))
                     .hasMessageContaining("Authority path escapes root");
         }
 
         @Test
-        @DisplayName("UTF-8 BOM과 quoted delimiter, escaped quote, multiline을 보존해 읽는다")
-        void parsesRequiredCsvForms() throws IOException {
+        @DisplayName("UTF-8 BOM, quoted delimiter, escaped quote와 multiline을 읽는다")
+        void parsesCsvForms() throws IOException {
             Path csv = tempDir.resolve("quoted.csv");
             Files.writeString(
                     csv,
@@ -377,100 +301,223 @@ class ContentActivationPreflightTest {
                     "identity", "one",
                     "text", "delimiter, escaped \"quote\"\nnext line"
             ));
+        }
 
-            Path duplicateHeader = tempDir.resolve("duplicate-header.csv");
+        @Test
+        @DisplayName("duplicate header를 거부한다")
+        void rejectsDuplicateHeader() throws IOException {
+            Path csv = tempDir.resolve("duplicate-header.csv");
             Files.writeString(
-                    duplicateHeader,
+                    csv,
                     "identity,identity\none,two\n",
                     StandardCharsets.UTF_8
             );
-            assertThatThrownBy(() -> ContentActivationPreflight.readCsv(
-                    duplicateHeader
-            ))
-                    .isInstanceOf(ContentActivationPreflight.PreflightException.class)
+
+            assertThatThrownBy(() -> ContentActivationPreflight.readCsv(csv))
                     .hasMessageContaining("duplicate");
         }
 
         @Test
-        @DisplayName("runtime package와 migration을 추가하지 않는다")
-        void remainsTestOnlyWithoutRuntimeWiring() throws IOException {
-            assertThat(Path.of("src/main/java/online/lifeasgame/content"))
-                    .doesNotExist();
-            try (var migrations = Files.list(Path.of(
-                    "src/main/resources/db/migration"
-            ))) {
-                assertThat(migrations.map(path -> path.getFileName().toString()))
-                        .noneMatch(name -> name.contains("content_activation"));
-            }
+        @DisplayName("external input 미지정과 invalid 지정을 구분한다")
+        void distinguishesAbsentAndInvalidExternalInput() throws IOException {
+            assertThat(requestedExternalInput(null)).isEmpty();
+            assertThat(requestedExternalInput("  ")).isEmpty();
+            assertThatThrownBy(() -> requestedExternalInput(
+                    tempDir.resolve("missing").toString()
+            )).hasMessageContaining(INPUT_ENV + " directory does not exist");
+
+            Path invalid = Files.createDirectory(tempDir.resolve("invalid"));
+            assertThatThrownBy(() -> ContentActivationPreflight.validate(invalid))
+                    .hasMessageContaining("Cannot read authority checksums");
         }
     }
 
-    private ContentActivationPreflight.PreflightReport validate(Path authority) {
-        assumeTrue(
-                Files.isDirectory(authority),
-                "Issue #333 local authority input is required"
-        );
-        return ContentActivationPreflight.validate(authority);
-    }
+    @Nested
+    @DisplayName("explicit external snapshot을 요청하면")
+    class ExternalSnapshot {
 
-    private Path copySnapshot() throws IOException {
-        return copySnapshot("snapshot");
-    }
+        @Test
+        @DisplayName("accepted full input을 승인 전용 정책까지 검증한다")
+        void validatesAcceptedInput() {
+            Optional<Path> requested = requestedExternalInput(
+                    System.getenv(INPUT_ENV)
+            );
+            assumeTrue(
+                    requested.isPresent(),
+                    INPUT_ENV + " is not set; full snapshot validation is opt-in"
+            );
 
-    private Path copySnapshot(String name) throws IOException {
-        assumeTrue(
-                Files.isDirectory(AUTHORITY),
-                "Issue #333 local authority input is required"
-        );
-        Path target = tempDir.resolve(name);
-        try (var files = Files.walk(AUTHORITY)) {
-            for (Path source : files.toList()) {
-                Path destination = target.resolve(AUTHORITY.relativize(source));
-                if (Files.isDirectory(source)) {
-                    Files.createDirectories(destination);
-                } else {
-                    Files.copy(source, destination);
-                }
-            }
+            var report = ContentActivationPreflight.validate(
+                    requested.orElseThrow()
+            );
+
+            assertThat(report)
+                    .extracting(
+                            ContentActivationPreflight.PreflightReport::manifestRows,
+                            ContentActivationPreflight.PreflightReport::activeRows,
+                            ContentActivationPreflight.PreflightReport::gatedRows,
+                            ContentActivationPreflight.PreflightReport::deferredRows,
+                            ContentActivationPreflight.PreflightReport::referenceRows,
+                            ContentActivationPreflight.PreflightReport
+                                    ::activeRequiredReferencesResolved,
+                            ContentActivationPreflight.PreflightReport
+                                    ::activeRequiredReferencesNotApplicable,
+                            ContentActivationPreflight.PreflightReport
+                                    ::deliveredCopyPayloads
+                    )
+                    .containsExactly(796, 102, 449, 245, 2203, 195, 3, 16);
+            assertThat(report.missingCopyPayloads()).hasSize(58);
         }
-        return target;
+    }
+
+    private ContentActivationPreflight.PreflightReport validateFixture(Path root) {
+        return ContentActivationPreflight.validateGenericInput(root);
+    }
+
+    private Path createFixture(String name) throws IOException {
+        Path root = tempDir.resolve(name);
+        write(root, CAPABILITY_FILE, CAPABILITY_HEADER + "\n"
+                + "CFC-TEST-001,REQUIRED_ACTIVE,P0,Content,TEST,tester\n");
+        write(root, MANIFEST_FILE, MANIFEST_HEADER + "\n"
+                + manifestRow("QUEST", "Q_ACTIVE", "1", "ACTIVE", "", "", 10)
+                + manifestRow(
+                        "COPY",
+                        "copy.active.title",
+                        "1",
+                        "ACTIVE",
+                        "",
+                        "",
+                        20
+                )
+                + manifestRow(
+                        "ACHIEVEMENT",
+                        "ACH_OPTIONAL",
+                        "1",
+                        "GATED",
+                        "",
+                        "",
+                        30
+                )
+                + manifestRow(
+                        "QUEST",
+                        "Q_OLD",
+                        "1",
+                        "GATED",
+                        "Q_NEW",
+                        "1",
+                        40
+                )
+                + manifestRow("QUEST", "Q_NEW", "1", "GATED", "", "", 50));
+        write(root, REFERENCES_FILE, REFERENCE_HEADER + "\n"
+                + "QUEST,Q_ACTIVE,1,COPY,COPY,copy.active.title,1,"
+                + "true,RESOLVED,,Content\n"
+                + "QUEST,Q_ACTIVE,1,ACHIEVEMENT_CANDIDATE,ACHIEVEMENT,"
+                + "ACH_OPTIONAL,1,false,RESOLVED,,Content\n"
+                + "QUEST,Q_OLD,1,REPLACED_BY,QUEST,Q_NEW,1,"
+                + "false,RESOLVED,,Content\n");
+        write(root, COPY_FILE, COPY_HEADER + "\n");
+        writeChecksums(root);
+        return root;
+    }
+
+    private String manifestRow(
+            String type,
+            String code,
+            String version,
+            String lifecycle,
+            String replacementCode,
+            String replacementVersion,
+            int sortOrder
+    ) {
+        boolean active = lifecycle.equals("ACTIVE");
+        boolean gated = lifecycle.equals("GATED");
+        return String.join(",",
+                type,
+                code,
+                version,
+                "WAVE",
+                Boolean.toString(active),
+                Boolean.toString(gated),
+                Boolean.toString(!active && !gated),
+                lifecycle,
+                replacementCode,
+                replacementVersion,
+                "P0",
+                "CFC-TEST-001",
+                "",
+                "",
+                "TEST_COHORT",
+                Integer.toString(sortOrder),
+                "",
+                "",
+                "",
+                "",
+                "RESOLVED",
+                "fixture",
+                "TEST",
+                "tester"
+        ) + System.lineSeparator();
+    }
+
+    private Optional<Path> requestedExternalInput(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return Optional.empty();
+        }
+        Path path = Path.of(configured).toAbsolutePath().normalize();
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException(
+                    INPUT_ENV + " directory does not exist: " + path
+            );
+        }
+        return Optional.of(path);
     }
 
     private void mutateAndRehash(
-            Path snapshot,
-            String fileName,
+            Path root,
+            String relativeName,
             UnaryOperator<String> mutation
     ) throws IOException {
-        String relativeName = "content/" + fileName;
-        Path file = snapshot.resolve(relativeName);
+        Path file = root.resolve(relativeName);
         String before = Files.readString(file, StandardCharsets.UTF_8);
         String after = mutation.apply(before);
         assertThat(after).isNotEqualTo(before);
         Files.writeString(file, after, StandardCharsets.UTF_8);
+        writeChecksums(root);
+    }
 
-        Path checksums = snapshot.resolve("SHA256SUMS.txt");
-        String marker = "  " + relativeName;
-        String beforeChecksums = Files.readString(
+    private void writeChecksums(Path root) throws IOException {
+        List<Path> files;
+        try (var paths = Files.walk(root)) {
+            files = paths.filter(Files::isRegularFile)
+                    .filter(path -> !path.getFileName().toString()
+                            .equals("SHA256SUMS.txt"))
+                    .sorted()
+                    .toList();
+        }
+        String checksums = files.stream()
+                .map(path -> sha256(path) + "  " + root.relativize(path))
+                .collect(Collectors.joining(System.lineSeparator()))
+                + System.lineSeparator();
+        Files.writeString(
+                root.resolve("SHA256SUMS.txt"),
                 checksums,
                 StandardCharsets.UTF_8
         );
-        String updatedHash = sha256(file);
-        String afterChecksums = beforeChecksums.lines()
-                .map(line -> line.endsWith(marker)
-                        ? updatedHash + marker
-                        : line)
-                .collect(Collectors.joining(System.lineSeparator()))
-                + System.lineSeparator();
-        assertThat(afterChecksums).isNotEqualTo(beforeChecksums);
-        Files.writeString(checksums, afterChecksums, StandardCharsets.UTF_8);
     }
 
-    private String sha256(Path path) throws IOException {
+    private void write(Path root, String relativeName, String content)
+            throws IOException {
+        Path file = root.resolve(relativeName);
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, content, StandardCharsets.UTF_8);
+    }
+
+    private String sha256(Path path) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(Files.readAllBytes(path));
             return HexFormat.of().formatHex(digest.digest());
-        } catch (NoSuchAlgorithmException exception) {
+        } catch (IOException | NoSuchAlgorithmException exception) {
             throw new IllegalStateException(exception);
         }
     }

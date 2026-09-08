@@ -123,8 +123,19 @@ final class ContentActivationPreflight {
     static PreflightReport validate(
             Path authorityRoot
     ) {
+        return validate(authorityRoot, true);
+    }
+
+    static PreflightReport validateGenericInput(Path inputRoot) {
+        return validate(inputRoot, false);
+    }
+
+    private static PreflightReport validate(
+            Path authorityRoot,
+            boolean approvedSnapshot
+    ) {
         Path root = authorityRoot.toAbsolutePath().normalize();
-        validateAuthorityFiles(root);
+        validateAuthorityFiles(root, approvedSnapshot);
         Path contentRoot = root.resolve(CONTENT);
         Path capabilityManifest = root.resolve(CAPABILITY_MANIFEST);
         Path equipmentManifest = root.resolve(EQUIPMENT_MANIFEST);
@@ -136,12 +147,15 @@ final class ContentActivationPreflight {
                 contentRoot.resolve(MANIFEST),
                 capabilities
         );
-        validateApprovedActiveSet(manifest);
-        validateEquipmentAuthority(manifest, equipmentManifest);
+        if (approvedSnapshot) {
+            validateApprovedActiveSet(manifest);
+            validateEquipmentAuthority(manifest, equipmentManifest);
+        }
 
         ReferenceResult referenceResult = validateReferences(
                 contentRoot.resolve(REFERENCES),
-                manifest
+                manifest,
+                approvedSnapshot
         );
         CopyResult copyResult = validateCopyPayload(
                 contentRoot.resolve(COPY_ADDENDUM),
@@ -214,7 +228,10 @@ final class ContentActivationPreflight {
         return reader;
     }
 
-    private static void validateAuthorityFiles(Path root) {
+    private static void validateAuthorityFiles(
+            Path root,
+            boolean approvedSnapshot
+    ) {
         Path checksumFile = root.resolve("SHA256SUMS.txt");
         Set<Path> expectedFiles = new HashSet<>();
         try {
@@ -239,16 +256,21 @@ final class ContentActivationPreflight {
                     exception
             );
         }
-        if (expectedFiles.size() != 21
+        if (approvedSnapshot && (expectedFiles.size() != 21
                 || countUnder(expectedFiles, "content") != 8
                 || countUnder(expectedFiles, "capability") != 6
-                || countUnder(expectedFiles, "equipment") != 7) {
+                || countUnder(expectedFiles, "equipment") != 7)) {
             fail("Authority checksum inventory must be content=8, capability=6, "
                     + "equipment=7");
         }
 
         Set<Path> actualFiles = new HashSet<>();
-        for (String directory : List.of("content", "capability", "equipment")) {
+        Set<String> directories = new TreeSet<>();
+        expectedFiles.stream()
+                .filter(path -> path.getNameCount() > 1)
+                .map(path -> path.getName(0).toString())
+                .forEach(directories::add);
+        for (String directory : directories) {
             Path path = root.resolve(directory);
             try (var files = Files.walk(path)) {
                 files.filter(Files::isRegularFile)
@@ -558,7 +580,8 @@ final class ContentActivationPreflight {
 
     private static ReferenceResult validateReferences(
             Path path,
-            List<ManifestRow> manifest
+            List<ManifestRow> manifest,
+            boolean approvedSnapshot
     ) {
         CsvTable table = readCsv(path);
         requireHeaders(path, table.headers(), REFERENCE_COLUMNS);
@@ -679,7 +702,9 @@ final class ContentActivationPreflight {
             ));
         }
         validateReplacementDeclarations(manifest, replacementTargets);
-        validateRouteReferences(requiredQuestTargets, activeRouteSteps);
+        if (approvedSnapshot) {
+            validateRouteReferences(requiredQuestTargets, activeRouteSteps);
+        }
         external.sort(Comparator
                 .comparing((ExternalReference edge) -> edge.target().toString())
                 .thenComparing(edge -> edge.source().toString()));
