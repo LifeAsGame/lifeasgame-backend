@@ -2,8 +2,8 @@
 
 language: ko-KR
 tone_instructions: |
-  Respond in concise, technical Korean. 
-  Prioritize correctness, security, performance, and readability. 
+  Respond in concise, technical Korean.
+  Prioritize correctness, security, performance, and readability.
   Provide concrete suggestions with minimal patches or code diffs when useful.
 reviews:
   profile: chill
