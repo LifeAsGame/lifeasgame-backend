@@ -226,10 +226,12 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public void listForMarket() {
+        assertMarketForwardTransitionAllowed();
         transition(InventoryAvailability.FREE, InventoryAvailability.LISTED);
     }
 
     public void reserveForTrade() {
+        assertMarketForwardTransitionAllowed();
         transition(
                 InventoryAvailability.LISTED,
                 InventoryAvailability.RESERVED_FOR_TRADE
@@ -248,6 +250,7 @@ public class InventoryEntry extends AbstractTime {
     }
 
     public void beginTransfer() {
+        assertMarketForwardTransitionAllowed();
         transition(
                 InventoryAvailability.RESERVED_FOR_TRADE,
                 InventoryAvailability.TRANSFER_PROCESSING
@@ -276,6 +279,14 @@ public class InventoryEntry extends AbstractTime {
         if (availability != expected) {
             throw new DomainException(
                     InventoryError.INVALID_AVAILABILITY_TRANSITION
+            );
+        }
+    }
+
+    private void assertMarketForwardTransitionAllowed() {
+        if (bound) {
+            throw new DomainException(
+                    InventoryError.BOUND_ENTRY_MARKET_RESTRICTED
             );
         }
     }

@@ -5,6 +5,7 @@ import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +65,34 @@ class InventoryAvailabilityTest {
             assertThat(entry.getAvailability())
                     .isEqualTo(InventoryAvailability.LISTED);
         }
+
+        @Test
+        @DisplayName("bound entry는 market 전진을 거절하고 historical 상태 해제는 허용한다")
+        void rejectsBoundForwardTransitionsAndAllowsRecovery() {
+            InventoryEntry free = entry(5, true);
+            assertBoundMarketRestricted(free::listForMarket);
+            assertThat(free.getAvailability()).isEqualTo(InventoryAvailability.FREE);
+
+            InventoryEntry listed = entry(5, true);
+            ReflectionTestUtils.setField(listed, "availability", InventoryAvailability.LISTED);
+            assertBoundMarketRestricted(listed::reserveForTrade);
+            assertThat(listed.getAvailability()).isEqualTo(InventoryAvailability.LISTED);
+            listed.releaseListing();
+            assertThat(listed.getAvailability()).isEqualTo(InventoryAvailability.FREE);
+
+            InventoryEntry reserved = entry(5, true);
+            ReflectionTestUtils.setField(
+                    reserved,
+                    "availability",
+                    InventoryAvailability.RESERVED_FOR_TRADE
+            );
+            assertBoundMarketRestricted(reserved::beginTransfer);
+            assertThat(reserved.getAvailability())
+                    .isEqualTo(InventoryAvailability.RESERVED_FOR_TRADE);
+            reserved.releaseTradeReservation();
+            reserved.releaseListing();
+            assertThat(reserved.getAvailability()).isEqualTo(InventoryAvailability.FREE);
+        }
     }
 
     @Nested
@@ -104,7 +133,7 @@ class InventoryAvailabilityTest {
         @DisplayName("LISTED stack을 merge 대상으로 쓰지 않고 새 FREE stack을 만든다")
         void skipsListedStackInPreflightAndActualAdd() {
             PlayerInventory inventory = PlayerInventory.of(294L, 2);
-            inventory.add(STACKABLE, 9, InstanceAttrs.empty(), true);
+            inventory.add(STACKABLE, 9, InstanceAttrs.empty(), false);
             InventoryEntry listed = inventory.getEntries().getFirst();
             listed.listForMarket();
 
@@ -112,9 +141,9 @@ class InventoryAvailabilityTest {
                     STACKABLE,
                     1,
                     InstanceAttrs.empty(),
-                    true
+                    false
             );
-            inventory.add(STACKABLE, 1, InstanceAttrs.empty(), true);
+            inventory.add(STACKABLE, 1, InstanceAttrs.empty(), false);
 
             assertThat(inventory.getEntries()).hasSize(2);
             assertThat(listed.getQuantity().value()).isEqualTo(9);
@@ -128,14 +157,14 @@ class InventoryAvailabilityTest {
         @DisplayName("LISTED stack만 남은 full inventory는 preflight에서 거절한다")
         void rejectsCapacityThatOnlyListedStackCouldAbsorb() {
             PlayerInventory inventory = PlayerInventory.of(294L, 1);
-            inventory.add(STACKABLE, 9, InstanceAttrs.empty(), true);
+            inventory.add(STACKABLE, 9, InstanceAttrs.empty(), false);
             inventory.getEntries().getFirst().listForMarket();
 
             assertThatThrownBy(() -> inventory.assertCanAdd(
                     STACKABLE,
                     1,
                     InstanceAttrs.empty(),
-                    true
+                    false
             )).isInstanceOfSatisfying(
                     DomainException.class,
                     exception -> assertThat(exception.getErrorCode())
@@ -145,14 +174,27 @@ class InventoryAvailabilityTest {
     }
 
     private InventoryEntry entry(int quantity) {
+        return entry(quantity, false);
+    }
+
+    private InventoryEntry entry(int quantity, boolean bound) {
         PlayerInventory inventory = PlayerInventory.of(294L, 10);
         inventory.add(
                 STACKABLE,
                 quantity,
                 InstanceAttrs.empty(),
-                true
+                bound
         );
         return inventory.getEntries().getFirst();
+    }
+
+    private void assertBoundMarketRestricted(Runnable operation) {
+        assertThatThrownBy(operation::run)
+                .isInstanceOfSatisfying(
+                        DomainException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(InventoryError.BOUND_ENTRY_MARKET_RESTRICTED)
+                );
     }
 
     private void assertUnavailable(Runnable operation) {
