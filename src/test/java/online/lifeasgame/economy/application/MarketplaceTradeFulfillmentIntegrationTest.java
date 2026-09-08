@@ -319,14 +319,14 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     }
 
     @Nested
-    @DisplayName("V33 schema에서 V32 receipt와 V28 Trade snapshot을 검증하면")
+    @DisplayName("V34 schema에서 V32 receipt와 V28 Trade snapshot을 검증하면")
     class TradeSnapshotSchema {
 
         @Test
         @DisplayName("legacy null은 허용하고 canonical quantity 제약은 보존한다")
         void validatesMigrationAndJpaContract() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("33");
+                    .isEqualTo("34");
             jdbc.update("""
                     INSERT INTO trades (
                         fee_bps, buyer_player_id, created_at, fee, item_inst_id,

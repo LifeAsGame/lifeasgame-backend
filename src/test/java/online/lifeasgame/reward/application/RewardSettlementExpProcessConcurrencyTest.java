@@ -4,6 +4,7 @@ import online.lifeasgame.character.domain.error.PlayerError;
 import online.lifeasgame.character.domain.event.PlayerLeveledUp;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.platform.outbox.application.OutboxRelayService;
+import online.lifeasgame.platform.outbox.application.OutboxRelayResult;
 import online.lifeasgame.reward.application.result.RewardSettlementExpProcessResult;
 import online.lifeasgame.reward.application.result.RewardSettlementLineRetryPreparationResult;
 import online.lifeasgame.reward.domain.RewardSettlement;
@@ -190,7 +191,9 @@ class RewardSettlementExpProcessConcurrencyTest {
                     processService.process(settlement.getId(), lineId);
             RewardSettlementExpProcessResult replay =
                     processService.process(settlement.getId(), lineId);
-            outboxRelayService.relayBatch();
+            assertThat(outboxEventCount()).isEqualTo(1);
+            assertThat(outboxEventStatus()).isEqualTo("PENDING");
+            OutboxRelayResult relay = outboxRelayService.relayBatch();
 
             assertThat(first.replayed()).isFalse();
             assertThat(replay.replayed()).isTrue();
@@ -198,6 +201,7 @@ class RewardSettlementExpProcessConcurrencyTest {
             assertThat(playerExp()).isEqualTo(105L);
             assertThat(playerLevel()).isEqualTo(2);
             assertThat(growthChangeCount()).isEqualTo(1);
+            assertThat(relay).isEqualTo(new OutboxRelayResult(0, 1, 1, 0));
             assertThat(levelUpCommitProbe.count()).isEqualTo(1);
         }
     }
@@ -438,6 +442,18 @@ class RewardSettlementExpProcessConcurrencyTest {
     private int growthChangeCount() {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM player_growth_changes", Integer.class
+        );
+    }
+
+    private int outboxEventCount() {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM outbox_events", Integer.class
+        );
+    }
+
+    private String outboxEventStatus() {
+        return jdbcTemplate.queryForObject(
+                "SELECT status FROM outbox_events", String.class
         );
     }
 

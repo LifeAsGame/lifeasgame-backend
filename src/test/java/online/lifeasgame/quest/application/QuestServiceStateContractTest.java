@@ -75,6 +75,7 @@ class QuestServiceStateContractTest {
     void setUp() {
         service = new QuestService(
                 mock(QuestDefinitionProvisioner.class),
+                new StaticQuestBlueprintCatalog(),
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
@@ -258,10 +259,29 @@ class QuestServiceStateContractTest {
     class AcceptByRepeatPolicy {
 
         @Test
+        @DisplayName("승인 catalog에 없는 persisted legacy code는 조회 전에 거부한다")
+        void rejectsLegacyDefinitionBeforePersistenceLookup() {
+            assertThatThrownBy(() -> service.accept(
+                    PLAYER_ID,
+                    new QuestCommand.Accept(
+                            QuestCode.PLAYER_WELCOME.name(),
+                            null,
+                            null
+                    )
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(QuestError.QUEST_NOT_FOUND)
+            );
+
+            verifyNoInteractions(questReader, questWriter);
+        }
+
+        @Test
         @DisplayName("ONCE는 영구 Acceptance 기간을 생성한다")
         void acceptsOnceWithForeverPeriod() {
             Quest quest = finalQuest(QuestRepeatRule.ONCE);
-            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+            given(questReader.getByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                     .willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(null);
@@ -272,7 +292,7 @@ class QuestServiceStateContractTest {
             QuestResult.Acceptance result = service.accept(
                     PLAYER_ID,
                     new QuestCommand.Accept(
-                            QuestCode.PLAYER_WELCOME.name(),
+                            QuestCode.Q_RECORD_FIRST_TRACE.name(),
                             null,
                             null
                     )
@@ -299,7 +319,7 @@ class QuestServiceStateContractTest {
             );
             previous.reachGoal(Instant.now().minusSeconds(60));
             previous.complete(Instant.now().minusSeconds(30));
-            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+            given(questReader.getByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                     .willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(previous);
@@ -310,7 +330,7 @@ class QuestServiceStateContractTest {
             QuestResult.Acceptance result = service.accept(
                     PLAYER_ID,
                     new QuestCommand.Accept(
-                            QuestCode.PLAYER_WELCOME.name(),
+                            QuestCode.Q_RECORD_FIRST_TRACE.name(),
                             null,
                             null
                     )
@@ -331,7 +351,7 @@ class QuestServiceStateContractTest {
                     ACCEPTED_AT.minusSeconds(60),
                     null
             );
-            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+            given(questReader.getByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                     .willReturn(quest);
             given(questReader.findLatest(QUEST_ID, PLAYER_ID))
                     .willReturn(previous);
@@ -339,7 +359,7 @@ class QuestServiceStateContractTest {
             assertThatThrownBy(() -> service.accept(
                     PLAYER_ID,
                     new QuestCommand.Accept(
-                            QuestCode.PLAYER_WELCOME.name(),
+                            QuestCode.Q_RECORD_FIRST_TRACE.name(),
                             null,
                             null
                     )
@@ -442,7 +462,7 @@ class QuestServiceStateContractTest {
             );
             completed.reachGoal(ACCEPTED_AT.minusSeconds(30));
             completed.complete(ACCEPTED_AT.minusSeconds(20));
-            given(questReader.getByCode(QuestCode.PLAYER_WELCOME))
+            given(questReader.getByCode(QuestCode.Q_RECORD_FIRST_TRACE))
                     .willReturn(quest);
 
             for (QuestAcceptance previous :
@@ -453,7 +473,7 @@ class QuestServiceStateContractTest {
                 assertThatThrownBy(() -> service.accept(
                         PLAYER_ID,
                         new QuestCommand.Accept(
-                                QuestCode.PLAYER_WELCOME.name(),
+                                QuestCode.Q_RECORD_FIRST_TRACE.name(),
                                 null,
                                 null
                         )
@@ -576,15 +596,15 @@ class QuestServiceStateContractTest {
 
     private Quest finalQuest(QuestRepeatRule repeatPolicy) {
         Quest quest = Quest.createDefinition(
-                QuestCode.PLAYER_WELCOME.value(),
-                2,
-                QuestCategory.MAIN,
-                QuestSemanticCategory.GROWTH,
+                QuestCode.Q_RECORD_FIRST_TRACE.value(),
+                1,
+                null,
+                QuestSemanticCategory.RECORD,
                 QuestTitle.of("Repeat 수락 계약"),
                 "Repeat 수락 계약 테스트",
                 QuestTarget.of(QuestTargetType.COUNT, 1),
-                QuestProgressSource.COUNT,
-                RewardProfileRef.of("RP_EXP_10"),
+                QuestProgressSource.RECORD_CREATED,
+                RewardProfileRef.of("RP_EXP_TINY_10"),
                 repeatPolicy,
                 null,
                 QuestCompletionPolicy.USER_CONFIRM,

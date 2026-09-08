@@ -3,11 +3,13 @@ package online.lifeasgame.inventory.application;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.api.player.request.MailboxRequest;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
 import online.lifeasgame.inventory.domain.*;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +45,9 @@ class MailboxClaimBoundaryTest {
     private ItemReader itemReader;
 
     @Mock
+    private DomainEventPublisher domainEventPublisher;
+
+    @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
     private MailboxService service;
@@ -53,6 +58,7 @@ class MailboxClaimBoundaryTest {
                 mailboxReader,
                 inventoryReader,
                 itemReader,
+                domainEventPublisher,
                 currentPlayerAccessor
         );
     }
@@ -104,7 +110,12 @@ class MailboxClaimBoundaryTest {
                     InventoryError.MAILBOX_CLAIM_TOO_LARGE
             );
 
-            verifyNoInteractions(mailboxReader, inventoryReader, itemReader);
+            verifyNoInteractions(
+                    mailboxReader,
+                    inventoryReader,
+                    itemReader,
+                    domainEventPublisher
+            );
         }
 
         @Test
@@ -135,7 +146,12 @@ class MailboxClaimBoundaryTest {
                     InventoryError.INVALID_QUANTITY
             );
 
-            verifyNoInteractions(mailboxReader, inventoryReader, itemReader);
+            verifyNoInteractions(
+                    mailboxReader,
+                    inventoryReader,
+                    itemReader,
+                    domainEventPublisher
+            );
         }
     }
 
@@ -144,7 +160,7 @@ class MailboxClaimBoundaryTest {
     class LockMailboxMutation {
 
         @Test
-        @DisplayName("claim은 Mailbox 후 Inventory를 잠그고 snapshot을 그대로 옮긴다")
+        @DisplayName("claim은 Mailbox 후 Inventory를 잠그고 bound Item과 Outbox fact를 함께 만든다")
         void locksInCanonicalOrderAndClaims() {
             Item item = item();
             ItemCarryPolicy policy = ItemCarryPolicy.from(item);
@@ -167,6 +183,17 @@ class MailboxClaimBoundaryTest {
             assertThat(mailbox.getEntries()).isEmpty();
             assertThat(inventory.getEntries()).hasSize(1);
             assertThat(inventory.getEntries().getFirst().isBound()).isTrue();
+            verify(domainEventPublisher).publishAll(argThat(events -> {
+                if (events.size() != 1
+                        || !(events.iterator().next()
+                        instanceof InventoryItemAdded event)) {
+                    return false;
+                }
+                return event.playerId().equals(PLAYER_ID)
+                        && event.itemId().equals(ITEM_ID)
+                        && event.bound()
+                        && event.quantity() == 1;
+            }));
         }
 
         @Test

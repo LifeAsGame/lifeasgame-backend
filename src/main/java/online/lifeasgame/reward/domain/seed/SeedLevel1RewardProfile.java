@@ -14,9 +14,9 @@ public enum SeedLevel1RewardProfile {
                     RewardProfileStatus.ACTIVE,
                     List.of(
                             new RewardProfileLineSeedDefinition(
-                                    RewardDefinitionContentCode.RD_EXP_10,
-                                    0,
-                                    null
+                                    RewardDefinitionContentCode.EXP_PLAYER,
+                                    1,
+                                    10L
                             )
                     )
             )
@@ -29,14 +29,14 @@ public enum SeedLevel1RewardProfile {
                     RewardProfileStatus.ACTIVE,
                     List.of(
                             new RewardProfileLineSeedDefinition(
-                                    RewardDefinitionContentCode.RD_EXP_20,
-                                    0,
-                                    null
+                                    RewardDefinitionContentCode.EXP_PLAYER,
+                                    1,
+                                    20L
                             ),
                             new RewardProfileLineSeedDefinition(
-                                    RewardDefinitionContentCode.RD_ITEM_FIRST_STEP_FRAGMENT_1,
-                                    1,
-                                    null
+                                    RewardDefinitionContentCode.ITEM_DEFINITION,
+                                    2,
+                                    1L
                             )
                     )
             )

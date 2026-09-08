@@ -2,6 +2,7 @@ package online.lifeasgame.inventory.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.inventory.application.command.MailboxCommand;
 import online.lifeasgame.inventory.application.result.MailboxResult;
@@ -21,6 +22,7 @@ public class MailboxService {
     private final MailboxReader mailboxReader;
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
+    private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
@@ -96,6 +98,7 @@ public class MailboxService {
                 addition.attrs(),
                 addition.bound()
         ));
+        domainEventPublisher.publishAll(inventory.pullEvents());
     }
 
     private PlayerMailbox.ClaimPlan planClaim(

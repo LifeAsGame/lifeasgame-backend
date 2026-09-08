@@ -100,7 +100,7 @@ class QuestSignalProcessingAttemptTest {
             );
             InOrder order = inOrder(receiptRepository, definitionProvisioner);
             order.verify(receiptRepository).saveAndFlush(any());
-            order.verify(definitionProvisioner).ensure(signal.questCode());
+            order.verify(definitionProvisioner).resolve(signal.questCode());
 
             List<QuestEvent> events = publishedEvents(4);
             assertThat(events).extracting(QuestEvent::type)
@@ -133,6 +133,32 @@ class QuestSignalProcessingAttemptTest {
             verify(questProgressStore).reset(
                     QuestCode.PLAYER_WELCOME,
                     PLAYER_ID
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("catalog에서 제거된 legacy Quest Signal을 적용할 때")
+    class ApplyRetiredLegacySignal {
+
+        @Test
+        @DisplayName("Receipt만 저장하고 후속 event delivery를 막지 않는다")
+        void storesReceiptWithoutMaterializingQuest() {
+            QuestSignal signal = signal(OCCURRED_AT);
+            stubReceipt(signal);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.empty());
+
+            QuestSignalProcessingResult result =
+                    attempt.process(signal, FINGERPRINT);
+
+            assertThat(result).isEqualTo(
+                    QuestSignalProcessingResult.applied(RECEIPT_ID)
+            );
+            verifyNoInteractions(
+                    questAcceptanceRepository,
+                    questProgressStore,
+                    domainEventPublisher
             );
         }
     }
@@ -189,7 +215,8 @@ class QuestSignalProcessingAttemptTest {
             );
             acceptance.setProgress(2, quest, OCCURRED_AT.minusSeconds(60));
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode())).willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -225,8 +252,8 @@ class QuestSignalProcessingAttemptTest {
             );
             QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -259,8 +286,8 @@ class QuestSignalProcessingAttemptTest {
             ReflectionTestUtils.setField(acceptance, "id", 904L);
             QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -293,8 +320,8 @@ class QuestSignalProcessingAttemptTest {
                     "2026-W29"
             );
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -324,8 +351,8 @@ class QuestSignalProcessingAttemptTest {
             ReflectionTestUtils.setField(acceptance, "id", 906L);
             QuestSignal signal = existingOnlySignal(OCCURRED_AT, null);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -359,8 +386,8 @@ class QuestSignalProcessingAttemptTest {
                     null
             );
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -395,8 +422,8 @@ class QuestSignalProcessingAttemptTest {
                     acceptance.getAcceptedAt()
             );
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -431,8 +458,8 @@ class QuestSignalProcessingAttemptTest {
                     acceptance.getAcceptedAt().plusSeconds(1)
             );
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -463,8 +490,8 @@ class QuestSignalProcessingAttemptTest {
                     acceptance.getAcceptedAt()
             );
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -506,8 +533,8 @@ class QuestSignalProcessingAttemptTest {
                     )
                     .build();
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -540,7 +567,8 @@ class QuestSignalProcessingAttemptTest {
             acceptance.reachGoal(OCCURRED_AT.minusSeconds(60));
             QuestSignal signal = signal(OCCURRED_AT);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode())).willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -582,7 +610,8 @@ class QuestSignalProcessingAttemptTest {
             QuestSignal signal = signal(now);
             AtomicLong generatedId = new AtomicLong(1000L);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode())).willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -717,8 +746,8 @@ class QuestSignalProcessingAttemptTest {
             completed.complete(OCCURRED_AT.minusSeconds(30));
             QuestSignal signal = signal(OCCURRED_AT);
             stubReceipt(signal);
-            given(definitionProvisioner.ensure(signal.questCode()))
-                    .willReturn(quest);
+            given(definitionProvisioner.resolve(signal.questCode()))
+                    .willReturn(Optional.of(quest));
             given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                     QUEST_ID,
                     PLAYER_ID
@@ -746,7 +775,8 @@ class QuestSignalProcessingAttemptTest {
     }
 
     private void stubNewAcceptance(Quest quest, QuestSignal signal) {
-        given(definitionProvisioner.ensure(signal.questCode())).willReturn(quest);
+        given(definitionProvisioner.resolve(signal.questCode()))
+                .willReturn(Optional.of(quest));
         given(questAcceptanceRepository.findLatestByQuestAndPlayer(
                 QUEST_ID,
                 PLAYER_ID

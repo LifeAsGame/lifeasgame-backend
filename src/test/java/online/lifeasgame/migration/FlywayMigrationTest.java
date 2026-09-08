@@ -39,7 +39,7 @@ class FlywayMigrationTest {
     class MigrateCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V33까지 적용되고 stable equipment slot authority를 추가한다")
+        @DisplayName("V1부터 V34까지 적용되고 Consumer content를 reconciliation한다")
         void migratesSchemaAndSeedsRewardProfiles() throws Exception {
             Flyway throughV10 = flyway(MigrationVersion.fromVersion("10"));
             MigrateResult legacyResult = throughV10.migrate();
@@ -59,13 +59,13 @@ class FlywayMigrationTest {
             assertThat(legacyResult.migrationsExecuted).isEqualTo(10);
             assertThat(semanticResult.migrationsExecuted).isEqualTo(1);
             assertThat(itemResult.migrationsExecuted).isEqualTo(1);
-            assertThat(result.migrationsExecuted).isEqualTo(21);
+            assertThat(result.migrationsExecuted).isEqualTo(22);
             assertThat(appliedVersions())
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
                             "14", "15", "16", "17", "18", "19", "20",
-                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"
+                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34"
                     );
             assertThat(equipmentSlotDefinitionCount()).isEqualTo(17);
             assertThat(legacyEquipmentSlot()).isEqualTo(
@@ -158,7 +158,7 @@ class FlywayMigrationTest {
                             "ACTIVE",
                             0,
                             null,
-                            "RD_EXP_10",
+                            "EXP_PLAYER",
                             "EXP",
                             10,
                             null,
@@ -168,9 +168,9 @@ class FlywayMigrationTest {
                             "RP_EXP_TINY_10",
                             "소량 EXP",
                             "ACTIVE",
-                            0,
-                            null,
-                            "RD_EXP_10",
+                            1,
+                            10L,
+                            "EXP_PLAYER",
                             "EXP",
                             10,
                             null,
@@ -393,12 +393,12 @@ class FlywayMigrationTest {
                             "RP_EXP_AND_ITEM_FIRST_STEP_20",
                             "EXP 20 + First Step Fragment",
                             "ACTIVE",
-                            0,
-                            null,
-                            "RD_EXP_20",
-                            "EXP 20",
+                            1,
+                            20L,
+                            "EXP_PLAYER",
+                            "Player EXP",
                             "EXP",
-                            20,
+                            10,
                             null,
                             true,
                             null
@@ -407,10 +407,10 @@ class FlywayMigrationTest {
                             "RP_EXP_AND_ITEM_FIRST_STEP_20",
                             "EXP 20 + First Step Fragment",
                             "ACTIVE",
-                            1,
-                            null,
-                            "RD_ITEM_FIRST_STEP_FRAGMENT_1",
-                            "First Step Fragment x1",
+                            2,
+                            1L,
+                            "ITEM_DEFINITION",
+                            "Item Definition",
                             "ITEM",
                             1,
                             itemSeed.id(),
@@ -532,7 +532,7 @@ class FlywayMigrationTest {
              ResultSet resultSet = statement.executeQuery("""
                      SELECT COUNT(*)
                      FROM reward_definitions
-                     WHERE code = 'RD_EXP_10'
+                     WHERE code = 'EXP_PLAYER'
                      """)) {
             resultSet.next();
             return resultSet.getInt(1);

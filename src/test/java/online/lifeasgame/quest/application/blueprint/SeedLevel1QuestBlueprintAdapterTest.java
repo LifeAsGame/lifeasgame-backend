@@ -1,7 +1,6 @@
 package online.lifeasgame.quest.application.blueprint;
 
 import online.lifeasgame.quest.domain.QuestBlueprint;
-import online.lifeasgame.quest.domain.QuestCategory;
 import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.QuestCompletionPolicy;
 import online.lifeasgame.quest.domain.QuestProgressSource;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -111,16 +109,12 @@ class SeedLevel1QuestBlueprintAdapterTest {
     }
 
     @Test
-    @DisplayName("Static Catalog는 legacy를 유지하고 신규 5개를 sortOrder 순서로 제공한다")
-    void extendsStaticCatalogWithoutReinterpretingLegacyBlueprints() {
+    @DisplayName("Static Catalog는 승인된 5개만 sortOrder 순서로 제공한다")
+    void exposesOnlyApprovedBlueprints() {
         StaticQuestBlueprintCatalog catalog =
                 new StaticQuestBlueprintCatalog();
-        Set<QuestCode> seedCodes = SeedLevel1Quest.definitions().stream()
-                .map(definition -> definition.questCode())
-                .collect(Collectors.toSet());
 
-        assertThat(catalog.all().stream()
-                .filter(blueprint -> seedCodes.contains(blueprint.code())))
+        assertThat(catalog.all())
                 .extracting(QuestBlueprint::code)
                 .containsExactly(
                         QuestCode.Q_RECORD_FIRST_TRACE,
@@ -129,11 +123,7 @@ class SeedLevel1QuestBlueprintAdapterTest {
                         QuestCode.Q_GROWTH_ONE_FOCUS,
                         QuestCode.Q_RECOVERY_REST_TEN
                 );
-
-        QuestBlueprint legacy = catalog.require(QuestCode.PLAYER_WELCOME);
-        assertThat(legacy.category()).isEqualTo(QuestCategory.MAIN);
-        assertThat(legacy.semanticCategory()).isNull();
-        assertThat(legacy.progressSource()).isNull();
+        assertThat(catalog.find(QuestCode.PLAYER_WELCOME)).isEmpty();
     }
 
     @Test

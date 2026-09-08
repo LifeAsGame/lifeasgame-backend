@@ -88,6 +88,7 @@ class InventorySelfIdentityTest {
                     mock(MailboxReader.class),
                     mock(InventoryReader.class),
                     mock(ItemReader.class),
+                    mock(online.lifeasgame.core.event.DomainEventPublisher.class),
                     accessor
             ));
             query = mock(MailboxQuery.class);

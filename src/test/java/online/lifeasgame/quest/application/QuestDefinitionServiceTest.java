@@ -61,6 +61,7 @@ class QuestDefinitionServiceTest {
     void setUp() {
         service = new QuestService(
                 definitionProvisioner,
+                blueprintCatalog,
                 questReader,
                 questWriter,
                 rewardProfileLookupApi,
@@ -283,8 +284,8 @@ class QuestDefinitionServiceTest {
         );
         given(questReader.findByCode(QuestCode.PLAYER_WELCOME))
                 .willReturn(Optional.empty());
-        given(blueprintCatalog.require(QuestCode.PLAYER_WELCOME))
-                .willReturn(blueprint);
+        given(blueprintCatalog.find(QuestCode.PLAYER_WELCOME))
+                .willReturn(Optional.of(blueprint));
         given(rewardProfileLookupApi.getActiveByCode("RP_EXP_30"))
                 .willReturn(reference("RP_EXP_30"));
         given(questWriter.create(any())).willAnswer(
