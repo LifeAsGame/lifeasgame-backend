@@ -273,8 +273,8 @@ class JpaValidateAfterMigrationTest {
                         step.user_advance_required
                     FROM quest_route_steps step
                     JOIN quest_routes route ON route.id = step.route_id
-                    JOIN quest_route_step_quests link ON link.step_id = step.id
-                    JOIN quests required_quest ON required_quest.id = link.quest_id
+                    LEFT JOIN quest_route_step_quests link ON link.step_id = step.id
+                    LEFT JOIN quests required_quest ON required_quest.id = link.quest_id
                     WHERE route.code = 'ROUTE_RECORD_START'
                     ORDER BY step.step_order
                     """, (resultSet, rowNumber) -> new RouteStepRow(

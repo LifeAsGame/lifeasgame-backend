@@ -9,33 +9,33 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Component
 public class StaticQuestBlueprintCatalog implements QuestBlueprintCatalog {
 
-    private final Map<QuestCode, QuestBlueprint> blueprints =
-            Collections.unmodifiableMap(initialize());
+    private final List<QuestBlueprint> orderedBlueprints;
+    private final Map<QuestCode, QuestBlueprint> blueprintsByCode;
 
-    private static Map<QuestCode, QuestBlueprint> initialize() {
-        EnumMap<QuestCode, QuestBlueprint> map = new EnumMap<>(QuestCode.class);
-        SeedLevel1Quest.definitions().forEach(definition ->
-                map.put(
-                        definition.questCode(),
-                        SeedLevel1QuestBlueprintAdapter.toBlueprint(definition)
-                )
-        );
-        return map;
+    public StaticQuestBlueprintCatalog() {
+        orderedBlueprints = SeedLevel1Quest.definitions().stream()
+                .map(SeedLevel1QuestBlueprintAdapter::toBlueprint)
+                .toList();
+
+        EnumMap<QuestCode, QuestBlueprint> byCode = new EnumMap<>(QuestCode.class);
+        orderedBlueprints.forEach(blueprint -> byCode.put(blueprint.code(), blueprint));
+        blueprintsByCode = Collections.unmodifiableMap(byCode);
     }
 
     @Override
     public Collection<QuestBlueprint> all() {
-        return blueprints.values();
+        return orderedBlueprints;
     }
 
     @Override
     public Optional<QuestBlueprint> find(QuestCode code) {
-        return Optional.ofNullable(blueprints.get(code));
+        return Optional.ofNullable(blueprintsByCode.get(code));
     }
 }
