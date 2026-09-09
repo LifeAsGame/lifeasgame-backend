@@ -1,9 +1,13 @@
 package online.lifeasgame.economy.application;
 
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
 import online.lifeasgame.economy.domain.error.EconomyError;
+import online.lifeasgame.inventory.application.MailboxService;
+import online.lifeasgame.inventory.application.command.MailboxCommand;
+import online.lifeasgame.inventory.application.internal.InventoryRewardDeliveryApi;
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
 
 import java.util.ArrayList;
@@ -29,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
@@ -66,9 +72,17 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     @Autowired
     private MarketplaceService marketplaceService;
     @Autowired
+    private ListingOpenService listingOpenService;
+    @Autowired
+    private MailboxService mailboxService;
+    @Autowired
+    private InventoryRewardDeliveryApi inventoryRewardDeliveryApi;
+    @Autowired
     private JdbcTemplate jdbc;
     @Autowired
     private Flyway flyway;
+    @MockitoBean
+    private CurrentPlayerAccessor currentPlayerAccessor;
 
     private Long itemId;
     private Long sourceEntryId;
@@ -77,6 +91,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     @BeforeEach
     void setUp() {
         jdbc.update("DELETE FROM outbox_events");
+        jdbc.update("DELETE FROM inventory_reward_deliveries");
         jdbc.update("DELETE FROM marketplace_purchase_receipts");
         jdbc.update("DELETE FROM trades");
         jdbc.update("DELETE FROM listing_reservations");
@@ -86,7 +101,9 @@ class MarketplaceTradeFulfillmentIntegrationTest {
         jdbc.update("DELETE FROM listings");
         jdbc.update("DELETE FROM player_equipment");
         jdbc.update("DELETE FROM inventory_entries");
+        jdbc.update("DELETE FROM mailbox_entries");
         jdbc.update("DELETE FROM player_inventory");
+        jdbc.update("DELETE FROM player_mailbox");
         jdbc.update("DELETE FROM items WHERE code = ?", ITEM_CODE);
 
         itemId = insertItem();
@@ -102,6 +119,46 @@ class MarketplaceTradeFulfillmentIntegrationTest {
         insertEntry(BUYER_ID, itemId, 0, 4, "FREE");
         listingId = insertListing();
         insertWalletsAndReservation();
+        given(currentPlayerAccessor.currentPlayerIdOrThrow())
+                .willReturn(SELLER_ID);
+    }
+
+    @Nested
+    @DisplayName("bound Mailbox reward를 Marketplace에 등록하면")
+    class BoundListing {
+
+        @Test
+        @DisplayName("claim은 bound를 보존하고 Listing/event/availability 변경 없이 거절한다")
+        void rejectsClaimedBoundEntryAtomically() {
+            inventoryRewardDeliveryApi.deliverReward(
+                    337001L,
+                    SELLER_ID,
+                    "IT_FIRST_STEP_FRAGMENT",
+                    1
+            );
+            mailboxService.claim(
+                    SELLER_ID,
+                    new MailboxCommand.Claim(0, 1)
+            );
+            Long entryId = firstStepEntryId();
+            long listingCount = listingCount();
+            long listingOpenedEventCount = listingOpenedEventCount();
+
+            assertThat(firstStepEntryBound()).isTrue();
+            assertThat(firstStepEntryAvailability()).isEqualTo("FREE");
+            assertThatThrownBy(() -> listingOpenService.open(
+                    new EconomyCommand.OpenListing(entryId, 100L, "GOLD")
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(InventoryError.BOUND_ENTRY_MARKET_RESTRICTED)
+            );
+
+            assertThat(listingCount()).isEqualTo(listingCount);
+            assertThat(listingOpenedEventCount())
+                    .isEqualTo(listingOpenedEventCount);
+            assertThat(firstStepEntryAvailability()).isEqualTo("FREE");
+        }
     }
 
     @Nested
@@ -132,7 +189,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                     .allSatisfy(row -> {
                         assertThat(row.get("rarity")).isEqualTo("RARE");
                         assertThat(row.get("durability")).isEqualTo(6);
-                        assertThat(row.get("bound")).isIn(true, (byte) 1);
+                        assertThat(row.get("bound")).isIn(false, (byte) 0);
                         assertThat(row.get("availability")).isEqualTo("FREE");
                         assertThat(row.get("quality")).isEqualTo("kept");
                     });
@@ -319,14 +376,14 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     }
 
     @Nested
-    @DisplayName("V33 schema에서 V32 receipt와 V28 Trade snapshot을 검증하면")
+    @DisplayName("V34 schema에서 V32 receipt와 V28 Trade snapshot을 검증하면")
     class TradeSnapshotSchema {
 
         @Test
         @DisplayName("legacy null은 허용하고 canonical quantity 제약은 보존한다")
         void validatesMigrationAndJpaContract() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("33");
+                    .isEqualTo("34");
             jdbc.update("""
                     INSERT INTO trades (
                         fee_bps, buyer_player_id, created_at, fee, item_inst_id,
@@ -470,7 +527,7 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                     created_at, item_id, player_id, updated_at,
                     inst_attrs, rarity, availability
                 ) VALUES (
-                    TRUE, 6, ?, ?, CURRENT_TIMESTAMP(6), ?, ?,
+                    FALSE, 6, ?, ?, CURRENT_TIMESTAMP(6), ?, ?,
                     CURRENT_TIMESTAMP(6), JSON_OBJECT('quality', 'kept'),
                     'RARE', ?
                 )
@@ -636,6 +693,53 @@ class MarketplaceTradeFulfillmentIntegrationTest {
                 WHERE event_type = 'economy.event.v1'
                   AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.type')) =
                       'LISTING_PURCHASED'
+                """, Long.class);
+    }
+
+    private Long firstStepEntryId() {
+        return jdbc.queryForObject("""
+                SELECT entry.id
+                FROM inventory_entries entry
+                JOIN items item ON item.id = entry.item_id
+                WHERE entry.player_id = ?
+                  AND item.code = 'IT_FIRST_STEP_FRAGMENT'
+                """, Long.class, SELLER_ID);
+    }
+
+    private boolean firstStepEntryBound() {
+        return jdbc.queryForObject("""
+                SELECT entry.bound
+                FROM inventory_entries entry
+                JOIN items item ON item.id = entry.item_id
+                WHERE entry.player_id = ?
+                  AND item.code = 'IT_FIRST_STEP_FRAGMENT'
+                """, Boolean.class, SELLER_ID);
+    }
+
+    private String firstStepEntryAvailability() {
+        return jdbc.queryForObject("""
+                SELECT entry.availability
+                FROM inventory_entries entry
+                JOIN items item ON item.id = entry.item_id
+                WHERE entry.player_id = ?
+                  AND item.code = 'IT_FIRST_STEP_FRAGMENT'
+                """, String.class, SELLER_ID);
+    }
+
+    private long listingCount() {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM listings",
+                Long.class
+        );
+    }
+
+    private long listingOpenedEventCount() {
+        return jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM outbox_events
+                WHERE event_type = 'economy.event.v1'
+                  AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.type')) =
+                      'LISTING_OPENED'
                 """, Long.class);
     }
 }

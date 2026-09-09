@@ -19,6 +19,7 @@ public enum InventoryError implements ErrorCode {
     INVENTORY_ENTRY_NOT_FOUND("INV-ENTRY-NOT-FOUND","Inventory entry not found",404),
     INVENTORY_ENTRY_UNAVAILABLE("INV-ENTRY-UNAVAILABLE","Inventory entry is unavailable",409),
     INVALID_AVAILABILITY_TRANSITION("INV-AVAILABILITY-TRANSITION","Inventory availability transition is not allowed",409),
+    BOUND_ENTRY_MARKET_RESTRICTED("INV-BOUND-MARKET-RESTRICTED","Bound inventory entry cannot enter the Marketplace",409),
     MARKET_TRANSFER_CONFLICT("INV-MARKET-TRANSFER-CONFLICT","Marketplace transfer facts do not match",409),
     REWARD_LINE_ID_INVALID("INV-REWARD-LINE-ID-INVALID","Reward line ID must be positive",400),
     PLAYER_ID_INVALID("INV-PLAYER-ID-INVALID","Player ID must be positive",400),

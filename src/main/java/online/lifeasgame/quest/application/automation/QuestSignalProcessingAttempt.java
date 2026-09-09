@@ -51,7 +51,12 @@ public class QuestSignalProcessingAttempt {
                 )
         );
 
-        Quest quest = definitionProvisioner.ensure(signal.questCode());
+        Optional<Quest> questOpt =
+                definitionProvisioner.resolve(signal.questCode());
+        if (questOpt.isEmpty()) {
+            return QuestSignalProcessingResult.applied(receipt.getId());
+        }
+        Quest quest = questOpt.get();
         ZoneId playerZone = Objects.requireNonNull(
                 playerTimezoneResolver.resolve(signal.playerId()),
                 "playerTimezone"

@@ -53,32 +53,30 @@ class SeedLevel1RewardProfileTest {
                 .toList())
                 .doesNotHaveDuplicates();
 
-        assertThat(RewardDefinitionContentCode.RD_EXP_20.value())
-                .isEqualTo("RD_EXP_20");
-        assertThat(RewardDefinitionContentCode.RD_EXP_10.value())
-                .isEqualTo("RD_EXP_10");
-        assertThat(RewardDefinitionContentCode.RD_ITEM_FIRST_STEP_FRAGMENT_1.value())
-                .isEqualTo("RD_ITEM_FIRST_STEP_FRAGMENT_1");
+        assertThat(RewardDefinitionContentCode.EXP_PLAYER.value())
+                .isEqualTo("EXP_PLAYER");
+        assertThat(RewardDefinitionContentCode.ITEM_DEFINITION.value())
+                .isEqualTo("ITEM_DEFINITION");
         assertThat(RewardProfileContentCode.RP_EXP_TINY_10.value())
                 .isEqualTo("RP_EXP_TINY_10");
     }
 
     @Test
-    @DisplayName("TINY Profile은 기존 RD_EXP_10을 sortOrder 0과 null override로 참조한다")
+    @DisplayName("TINY Profile은 EXP_PLAYER의 첫 line에 amount 10을 둔다")
     void keepsTinyExpLineContract() {
         var lines = SeedLevel1RewardProfile.EXP_TINY_10.definition().lines();
 
         assertThat(lines).containsExactly(
                 new RewardProfileLineSeedDefinition(
-                        RewardDefinitionContentCode.RD_EXP_10,
-                        0,
-                        null
+                        RewardDefinitionContentCode.EXP_PLAYER,
+                        1,
+                        10L
                 )
         );
     }
 
     @Test
-    @DisplayName("line은 EXP 20과 Item x1 순서로 sortOrder 0, 1을 사용한다")
+    @DisplayName("line은 EXP 20과 Item x1 순서로 lineOrder 1, 2를 사용한다")
     void keepsOfficialLineOrder() {
         var lines = SeedLevel1RewardProfile.EXP_AND_ITEM_FIRST_STEP_20
                 .definition()
@@ -87,16 +85,16 @@ class SeedLevel1RewardProfileTest {
         assertThat(lines)
                 .extracting(RewardProfileLineSeedDefinition::definitionCode)
                 .containsExactly(
-                        RewardDefinitionContentCode.RD_EXP_20,
-                        RewardDefinitionContentCode.RD_ITEM_FIRST_STEP_FRAGMENT_1
+                        RewardDefinitionContentCode.EXP_PLAYER,
+                        RewardDefinitionContentCode.ITEM_DEFINITION
                 );
         assertThat(lines)
                 .extracting(RewardProfileLineSeedDefinition::sortOrder)
-                .containsExactly(0, 1)
+                .containsExactly(1, 2)
                 .doesNotHaveDuplicates();
         assertThat(lines)
                 .extracting(RewardProfileLineSeedDefinition::amountOverride)
-                .containsExactly(null, null);
+                .containsExactly(20L, 1L);
     }
 
     @Test
@@ -116,9 +114,9 @@ class SeedLevel1RewardProfileTest {
     void copiesLinesAndRejectsDuplicateSortOrder() {
         var mutableLines = new ArrayList<>(List.of(
                 new RewardProfileLineSeedDefinition(
-                        RewardDefinitionContentCode.RD_EXP_20,
-                        0,
-                        null
+                        RewardDefinitionContentCode.EXP_PLAYER,
+                        1,
+                        20L
                 )
         ));
         var definition = new RewardProfileSeedDefinition(
@@ -137,14 +135,14 @@ class SeedLevel1RewardProfileTest {
                 RewardProfileStatus.ACTIVE,
                 List.of(
                         new RewardProfileLineSeedDefinition(
-                                RewardDefinitionContentCode.RD_EXP_20,
-                                0,
-                                null
+                                RewardDefinitionContentCode.EXP_PLAYER,
+                                1,
+                                20L
                         ),
                         new RewardProfileLineSeedDefinition(
-                                RewardDefinitionContentCode.RD_ITEM_FIRST_STEP_FRAGMENT_1,
-                                0,
-                                null
+                                RewardDefinitionContentCode.ITEM_DEFINITION,
+                                1,
+                                1L
                         )
                 )
         )).isInstanceOf(IllegalArgumentException.class);

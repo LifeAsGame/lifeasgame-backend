@@ -29,6 +29,7 @@ import java.util.Objects;
 public class QuestService {
 
     private final QuestDefinitionProvisioner definitionProvisioner;
+    private final QuestBlueprintCatalog questBlueprintCatalog;
     private final QuestReader questReader;
     private final QuestWriter questWriter;
     private final RewardProfileLookupApi rewardProfileLookupApi;
@@ -139,6 +140,7 @@ public class QuestService {
     @Transactional
     public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
+        questBlueprintCatalog.require(questCode);
         Quest quest = questReader.getByCode(questCode);
         Instant acceptedAt = clock.instant();
         ZoneId playerZone = Objects.requireNonNull(
