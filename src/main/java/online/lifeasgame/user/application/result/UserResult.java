@@ -19,9 +19,21 @@ public final class UserResult {
         }
     }
 
-    public record UserInfo(String email, String nickname) {
-        public static UserInfo from(User user) {
-            return new UserInfo(user.getEmail().getValue(), user.getNickname().getValue());
+    public record UserInfo(
+            Long userId,
+            String email,
+            String nickname,
+            String status,
+            Long playerId
+    ) {
+        public static UserInfo from(User user, Long playerId) {
+            return new UserInfo(
+                    user.getId(),
+                    user.getEmail().getValue(),
+                    user.getNickname().getValue(),
+                    user.getStatus().name(),
+                    playerId
+            );
         }
     }
 

@@ -8,6 +8,7 @@ import online.lifeasgame.character.application.PlayerLookupService;
 import online.lifeasgame.character.application.PlayerService;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.user.application.UserAuthService;
+import online.lifeasgame.user.application.UserQueryService;
 import online.lifeasgame.user.application.UserService;
 import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,13 @@ class UserAuthPlayerArchitectureTest {
         assertThat(dependencies)
                 .contains(UserAuthApi.class, PlayerLookupApi.class, AuthService.class)
                 .doesNotContain(UserService.class, PlayerService.class);
+    }
+
+    @Test
+    void userQueryDependsOnCharacterOwnedLookupApi() {
+        assertThat(fieldTypes(UserQueryService.class))
+                .contains(PlayerLookupApi.class)
+                .doesNotContain(PlayerService.class);
     }
 
     @Test

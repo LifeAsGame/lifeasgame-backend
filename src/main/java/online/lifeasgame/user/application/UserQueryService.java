@@ -1,6 +1,7 @@
 package online.lifeasgame.user.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.core.security.CurrentUserAccessor;
 import online.lifeasgame.user.application.query.UserQuery;
 import online.lifeasgame.user.application.query.UserSearchQuery;
@@ -20,6 +21,7 @@ public class UserQueryService {
 
     private final UserReader userReader;
     private final CurrentUserAccessor currentUserAccessor;
+    private final PlayerLookupApi playerLookupApi;
 
     public UserResult.UserInfo getUserInfo() {
         return getUserInfo(currentUserAccessor.currentUserIdOrThrow());
@@ -27,7 +29,8 @@ public class UserQueryService {
 
     public UserResult.UserInfo getUserInfo(Long userId) {
         User user = userReader.findByIdOrElseThrow(userId);
-        return UserResult.UserInfo.from(user);
+        Long playerId = playerLookupApi.findPlayerIdByUserId(userId);
+        return UserResult.UserInfo.from(user, playerId);
     }
 
     public UserResult.Availability checkEmailAvailability(String email) {

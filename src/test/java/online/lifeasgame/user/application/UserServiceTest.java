@@ -1,5 +1,6 @@
 package online.lifeasgame.user.application;
 
+import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentUserAccessor;
@@ -29,6 +30,7 @@ class UserServiceTest {
     @Mock UserReader userReader;
     @Mock PasswordHasher passwordHasher;
     @Mock CurrentUserAccessor currentUserAccessor;
+    @Mock PlayerLookupApi playerLookupApi;
     @InjectMocks UserService userService;
     @InjectMocks UserAuthService userAuthService;
     @InjectMocks UserQueryService userQueryService;
@@ -235,22 +237,47 @@ class UserServiceTest {
     // ── getUserInfo() ─────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("getUserInfo()")
+    @DisplayName("현재 사용자 정보를 조회할 때")
     class GetUserInfo {
 
         @Test
-        @DisplayName("정상 → UserInfo(email, nickname) 반환")
-        void success() {
+        @DisplayName("연결된 Player가 없으면 실제 User 정보와 null playerId를 반환한다")
+        void withoutPlayer() {
             User u = mock(User.class);
+            when(u.getId()).thenReturn(1L);
             when(u.getEmail()).thenReturn(Email.of("e@e.com"));
             when(u.getNickname()).thenReturn(Nickname.of("Nick"));
+            when(u.getStatus()).thenReturn(UserStatus.ACTIVE);
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
             when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+            when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(null);
 
             UserResult.UserInfo info = userQueryService.getUserInfo();
 
+            assertThat(info.userId()).isEqualTo(1L);
             assertThat(info.email()).isEqualTo("e@e.com");
             assertThat(info.nickname()).isEqualTo("Nick");
+            assertThat(info.status()).isEqualTo("ACTIVE");
+            assertThat(info.playerId()).isNull();
+            verify(playerLookupApi).findPlayerIdByUserId(1L);
+        }
+
+        @Test
+        @DisplayName("연결된 Player가 있으면 Character 경계가 반환한 playerId를 사용한다")
+        void withPlayer() {
+            User u = mock(User.class);
+            when(u.getId()).thenReturn(1L);
+            when(u.getEmail()).thenReturn(Email.of("e@e.com"));
+            when(u.getNickname()).thenReturn(Nickname.of("Nick"));
+            when(u.getStatus()).thenReturn(UserStatus.ACTIVE);
+            when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
+            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+            when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(77L);
+
+            UserResult.UserInfo info = userQueryService.getUserInfo();
+
+            assertThat(info.playerId()).isEqualTo(77L);
+            verify(playerLookupApi).findPlayerIdByUserId(1L);
         }
 
         @Test
@@ -261,6 +288,7 @@ class UserServiceTest {
 
             assertThatThrownBy(() -> userQueryService.getUserInfo(999L))
                     .isInstanceOf(DomainException.class);
+            verifyNoInteractions(playerLookupApi);
         }
     }
 }
