@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Economy API V1 (Player)")
 public interface EconomyApiSpecV1 {
 
-    @Operation(summary = "거래소 오픈 리스팅 조회", description = "OPEN 상태의 리스팅을 조회합니다. (텍스트 UI를 위해 페이징/필터 권장)")
+    @Operation(summary = "거래소 오픈 리스팅 조회", description = "열린 매물을 조회합니다. ACTIVE 예약이 있으면 status는 RESERVED이며, 만료 시각이 지나도 예약 정리 전까지 유지됩니다.")
     ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings(
 //            @RequestParam(required = false) Long itemId,
 //            @RequestParam(required = false) Long sellerId,
@@ -22,7 +22,7 @@ public interface EconomyApiSpecV1 {
 //            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
-    @Operation(summary = "내 리스팅 목록", description = "내가 올린 리스팅 목록을 조회합니다.")
+    @Operation(summary = "내 리스팅 목록", description = "내가 올린 리스팅 목록을 조회합니다. OPEN 매물의 ACTIVE 예약은 effective status RESERVED로 표시됩니다.")
     ResponseEntity<ApiResponse<EconomyResponse.PlayerListings>> myListings(
 //            @RequestParam(defaultValue = "0") @Min(0) int page,
 //            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
