@@ -44,6 +44,9 @@ class ChatServiceCurrentPlayerTest {
     private FriendshipVerifier friendshipVerifier;
 
     @Mock
+    private DirectChatBlockGuard directChatBlockGuard;
+
+    @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
     @InjectMocks

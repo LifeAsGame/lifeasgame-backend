@@ -7,11 +7,13 @@ import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AggregateRoot
 @Entity(name = "Follow")
+@DynamicUpdate // A concurrent mute/unfollow must not overwrite a committed block flag.
 @Table(
         name = "follows", uniqueConstraints = @UniqueConstraint(
         name = "uk_follower_followee", columnNames = {"player_id", "target_player_id"}

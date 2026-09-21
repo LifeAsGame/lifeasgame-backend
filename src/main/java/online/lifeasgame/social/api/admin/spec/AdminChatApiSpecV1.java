@@ -31,7 +31,7 @@ public interface AdminChatApiSpecV1 {
             @PathVariable Long operatorId,
             @PathVariable Long channelId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "운영자 채팅 메시지 전송")

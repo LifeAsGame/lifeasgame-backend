@@ -16,6 +16,7 @@ public enum SocialError implements ErrorCode {
     CONNECTION_PEER_NOT_FOUND("SOC-404-CONNECTION-PEER-NOT-FOUND", "Connection peer not found", 404),
     NOT_FRIEND("SOC-404-NOT-FRIEND", "Friend Not Found", 404),
 
+    CHAT_DIRECT_BLOCKED("SOC-403-CHAT-DIRECT-BLOCKED", "Direct chat is blocked", 403),
     CHAT_CHANNEL_NOT_FOUND("SOC-404-CHANNEL-NOT-FOUND","Chat Channel Not Found",404),
     CHAT_CHANNEL_FORBIDDEN("SOC-403-CHANNEL-FORBIDDEN","Channel access denied",403),
     CHAT_CHANNEL_READ_ONLY("SOC-403-CHANNEL-READ-ONLY","Channel is read only",403),

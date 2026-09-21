@@ -37,6 +37,11 @@ public class FollowRepositoryAdapter implements FollowRepository {
     }
 
     @Override
+    public Optional<Boolean> findBlockedForUpdate(Long playerId, Long targetPlayerId) {
+        return followJpaRepository.findBlockedForUpdate(playerId, targetPlayerId);
+    }
+
+    @Override
     public boolean existsActiveFollow(Long playerId, Long targetPlayerId) {
         return followJpaRepository.existsByPlayerIdAndTargetPlayerIdAndState(
                 playerId,

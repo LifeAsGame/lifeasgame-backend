@@ -33,7 +33,7 @@ public interface PlayerChatApiSpecV1 {
             @PathVariable Long partyId
     );
 
-    @Operation(summary = "친구 채널 열기(1:1)")
+    @Operation(summary = "친구 채널 열기(1:1)", description = "Either-direction blocks reject with 403 SOC-403-CHAT-DIRECT-BLOCKED.")
     ResponseEntity<ApiResponse<PlayerChatResponse.Channel>> openFriend(
             @PathVariable Long targetPlayerId,
             @Valid @RequestBody PlayerChatRequest.OpenFriend request
@@ -54,10 +54,10 @@ public interface PlayerChatApiSpecV1 {
     ResponseEntity<ApiResponse<PlayerChatResponse.MessagePage>> messages(
             @PathVariable Long channelId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size
     );
 
-    @Operation(summary = "메시지 전송(HTTP)")
+    @Operation(summary = "메시지 전송(HTTP)", description = "Direct channels reject either-direction blocks with 403 SOC-403-CHAT-DIRECT-BLOCKED. History remains readable by members.")
     ResponseEntity<ApiResponse<PlayerChatResponse.Message>> sendMessage(
             @PathVariable Long channelId,
             @Valid @RequestBody PlayerChatRequest.SendMessage request
