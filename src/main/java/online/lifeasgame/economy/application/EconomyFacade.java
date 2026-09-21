@@ -13,6 +13,7 @@ public class EconomyFacade {
     private final MarketplaceService marketplaceService;
     private final ShopService shopService;
     private final TopUpService topUpService;
+    private final WalletQueryService walletQueryService;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     public EconomyResult.Reservation reserveListing(EconomyCommand.ReserveListing command) {
@@ -53,9 +54,9 @@ public class EconomyFacade {
         return shopService.listAvailableItems();
     }
 
-    public EconomyResult.WalletBalance walletBalance() {
+    public EconomyResult.WalletSummary walletBalance() {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        return topUpService.wallet(playerId);
+        return walletQueryService.wallet(playerId);
     }
 
     public EconomyResult.PlayerListings myListings() {

@@ -83,14 +83,6 @@ public class TopUpService {
         return new EconomyResult.WalletBalance(balance.available(), balance.getCurrency().name());
     }
 
-    @Transactional
-    public EconomyResult.WalletBalance wallet(Long playerId) {
-        Wallet wallet = walletReader.getByOwnerId(playerId)
-                .orElseGet(() -> walletWriter.save(Wallet.open(playerId)));
-        WalletBalance balance = wallet.getBalance();
-        return new EconomyResult.WalletBalance(balance.available(), balance.getCurrency().name());
-    }
-
     private Wallet lockOrCreateWallet(Long ownerId) {
         return walletReader.getByOwnerIdForUpdate(ownerId)
                 .orElseGet(() -> walletWriter.save(Wallet.open(ownerId)));

@@ -81,6 +81,8 @@ class MarketplaceReservationConcurrencyIntegrationTest {
     @Autowired
     private ListingReservationReader reservationReader;
     @Autowired
+    private WalletQueryService walletQueryService;
+    @Autowired
     private JpaListingReservationRepository reservationRepository;
     @Autowired
     private EconomyFacade facade;
@@ -126,6 +128,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
         void readsEffectiveReservedStatus() throws Exception {
             assertStatuses("OPEN");
             var reservation = reserve();
+            assertBuyerWallet(50, 50);
             var before = snapshot();
             clearInvocations(eventPublisher);
 
@@ -163,6 +166,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             assertStatuses("RESERVED");
             var command = new EconomyCommand.PurchaseListing(listingId, reservation.reservationToken(), "read-purchase-350");
             var trade = marketplaceService.purchase(BUYER_ID, command);
+            assertBuyerWallet(50, 0);
             var before = snapshot();
 
             assertThat(marketplaceService.listOpen().listings()).isEmpty();
@@ -221,6 +225,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             clearInvocations(eventPublisher);
 
             assertStatuses("RESERVED");
+            assertBuyerWallet(50, 50);
             assertThat(marketplaceService.listReservations(BUYER_ID).reservations()).hasSize(1);
             assertError(() -> reserve(), EconomyError.LISTING_RESERVED_OTHER);
             assertError(() -> marketplaceService.cancel(SELLER_ID, cancelCommand()), EconomyError.LISTING_ACTIVE_RESERVATION);
@@ -233,6 +238,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             marketplaceService.expireReservations();
             var cleaned = snapshot();
             assertStatuses("OPEN");
+            assertBuyerWallet(100, 0);
             assertThat(marketplaceService.listReservations(BUYER_ID).reservations()).isEmpty();
             assertThat(jdbc.queryForObject("SELECT status FROM wallet_holds WHERE hold_id = ?", String.class, reservation.holdId()))
                     .isEqualTo("EXPIRED");
@@ -283,6 +289,14 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             assertThat(marketplaceService.listOpen().listings()).isEmpty();
             assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
         }
+    }
+
+    private void assertBuyerWallet(long available, long held) {
+        var result = walletQueryService.wallet(BUYER_ID);
+        assertThat(result.amount()).isEqualTo(available);
+        assertThat(result.balances()).containsExactly(
+                new EconomyResult.CurrencyBalance(online.lifeasgame.economy.domain.Currency.GOLD, available, held),
+                new EconomyResult.CurrencyBalance(online.lifeasgame.economy.domain.Currency.GEM, 0, 0));
     }
 
     private EconomyResult.Reservation reserve() {

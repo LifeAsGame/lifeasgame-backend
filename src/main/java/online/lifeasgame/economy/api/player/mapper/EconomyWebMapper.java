@@ -178,8 +178,11 @@ public final class EconomyWebMapper {
         return new EconomyResponse.ShopReservation(result.reservationToken(), result.expiresAt());
     }
 
-    public static EconomyResponse.WalletBalance toWalletBalance(EconomyResult.WalletBalance result) {
-        return new EconomyResponse.WalletBalance(result.amount(), result.currency());
+    public static EconomyResponse.WalletBalance toWalletBalance(EconomyResult.WalletSummary result) {
+        return new EconomyResponse.WalletBalance(result.amount(), result.currency(), result.balances().stream()
+                .map(balance -> new EconomyResponse.CurrencyBalance(
+                        balance.currency().name(), balance.available(), balance.held()))
+                .toList());
     }
 
     public static EconomyCommand.TopUp toTopUpCommand(EconomyRequest.TopUp request) {

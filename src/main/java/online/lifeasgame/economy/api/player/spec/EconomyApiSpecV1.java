@@ -1,6 +1,8 @@
 package online.lifeasgame.economy.api.player.spec;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import online.lifeasgame.core.response.ApiResponse;
@@ -76,7 +78,14 @@ public interface EconomyApiSpecV1 {
             @Valid @RequestBody EconomyRequest.ConfirmShopReservation request
     );
 
-    @Operation(summary = "지갑 잔액 조회")
+    @Operation(summary = "지갑 잔액 조회", description = "인증된 본인 지갑을 생성·변경 없이 조회합니다. amount/currency는 GOLD 사용 가능액의 기존 계약입니다. balances는 GOLD → GEM 순서이며 미보유 통화는 0입니다. OPEN hold는 TTL 경과 후에도 정산 명령 전까지 held에 포함됩니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "본인 지갑의 통화별 사용 가능액과 보류액",
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                    {"isSuccess":true,"code":"COMMON-200","message":"성공입니다.","result":{
+                      "amount":80,"currency":"GOLD","balances":[
+                        {"currency":"GOLD","available":80,"held":20},
+                        {"currency":"GEM","available":0,"held":0}]}}
+                    """)))
     ResponseEntity<ApiResponse<EconomyResponse.WalletBalance>> wallet();
 
     @Operation(summary = "충전(Top-up)")
