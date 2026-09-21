@@ -7,7 +7,16 @@ import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
 import online.lifeasgame.quest.application.QuestService;
 import online.lifeasgame.quest.application.command.QuestCommand;
 import online.lifeasgame.quest.application.trigger.LifeLogRecordedQuestTrigger;
+import online.lifeasgame.quest.domain.Quest;
+import online.lifeasgame.quest.domain.QuestCategory;
 import online.lifeasgame.quest.domain.QuestCode;
+import online.lifeasgame.quest.domain.QuestRepeatRule;
+import online.lifeasgame.quest.domain.QuestReward;
+import online.lifeasgame.quest.domain.QuestTarget;
+import online.lifeasgame.quest.domain.QuestTargetType;
+import online.lifeasgame.quest.domain.QuestTitle;
+import online.lifeasgame.quest.domain.RewardStats;
+import online.lifeasgame.quest.domain.repository.QuestRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,6 +37,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,6 +67,7 @@ class QuestSignalReceiptContextRestartTest {
             QuestSignalProcessingResult applied;
 
             try (ConfigurableApplicationContext first = startContext()) {
+                persistLegacyDefinition(first);
                 applied = first.getBean(QuestSignalProcessingService.class)
                         .process(signal);
                 assertThat(applied.outcome())
@@ -94,6 +105,7 @@ class QuestSignalReceiptContextRestartTest {
             String legacyFingerprint;
 
             try (ConfigurableApplicationContext first = startContext()) {
+                persistLegacyDefinition(first);
                 QuestSignalFingerprint fingerprint = first.getBean(
                         QuestSignalFingerprint.class
                 );
@@ -190,6 +202,23 @@ class QuestSignalReceiptContextRestartTest {
             assertThat(receiptCount(CONTENT_PLAYER_ID)).isEqualTo(1);
             assertThat(acceptanceCount(CONTENT_PLAYER_ID)).isEqualTo(1);
             assertThat(progressValue(CONTENT_PLAYER_ID)).isEqualTo(1);
+        }
+    }
+
+    private void persistLegacyDefinition(ConfigurableApplicationContext context) {
+        // Prepare historical data only before first processing, never during restart/replay.
+        QuestRepository repository = context.getBean(QuestRepository.class);
+        if (repository.findByCode(QuestCode.COLLECTION_HUNTER_10.value()).isEmpty()) {
+            repository.save(Quest.create(
+                    QuestCode.COLLECTION_HUNTER_10.value(),
+                    QuestCategory.RECOMMENDED,
+                    QuestTitle.of("수집의 즐거움"),
+                    "새로운 수집품을 10개 이상 등록하세요.",
+                    QuestTarget.of(QuestTargetType.COUNT, 10),
+                    QuestReward.of(350, new RewardStats(Map.of("insight", 1, "luck", 1))),
+                    QuestRepeatRule.MONTHLY,
+                    null
+            ));
         }
     }
 

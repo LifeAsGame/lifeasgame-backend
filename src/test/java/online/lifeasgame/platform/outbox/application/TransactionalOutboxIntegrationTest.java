@@ -6,8 +6,18 @@ import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.platform.outbox.OutboxProperties;
 import online.lifeasgame.platform.outbox.application.codec.OutboxEventCodecRegistry;
 import online.lifeasgame.platform.outbox.domain.OutboxStatus;
+import online.lifeasgame.quest.domain.Quest;
+import online.lifeasgame.quest.domain.QuestCategory;
+import online.lifeasgame.quest.domain.QuestCode;
+import online.lifeasgame.quest.domain.QuestRepeatRule;
+import online.lifeasgame.quest.domain.QuestReward;
+import online.lifeasgame.quest.domain.QuestTarget;
+import online.lifeasgame.quest.domain.QuestTargetType;
+import online.lifeasgame.quest.domain.QuestTitle;
+import online.lifeasgame.quest.domain.RewardStats;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.quest.domain.repository.QuestRepository;
 import online.lifeasgame.social.domain.ChatChannelType;
 import online.lifeasgame.social.domain.event.ChatChannelDeactivated;
 import org.junit.jupiter.api.*;
@@ -95,6 +105,9 @@ class TransactionalOutboxIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private QuestRepository questRepository;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -419,6 +432,17 @@ class TransactionalOutboxIntegrationTest {
         @Test
         @DisplayName("QuestSignalReceipt가 중복 Progress를 차단한다")
         void preventsDuplicateQuestProgress() {
+            // Historical persisted definition; the active catalog intentionally excludes it.
+            questRepository.save(Quest.create(
+                    QuestCode.COLLECTION_HUNTER_10.value(),
+                    QuestCategory.RECOMMENDED,
+                    QuestTitle.of("수집의 즐거움"),
+                    "새로운 수집품을 10개 이상 등록하세요.",
+                    QuestTarget.of(QuestTargetType.COUNT, 10),
+                    QuestReward.of(350, new RewardStats(Map.of("insight", 1, "luck", 1))),
+                    QuestRepeatRule.MONTHLY,
+                    null
+            ));
             append(new CollectionLogged(
                     QUEST_PLAYER_ID,
                     197001L,
