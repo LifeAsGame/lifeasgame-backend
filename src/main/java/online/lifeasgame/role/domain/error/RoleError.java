@@ -12,6 +12,7 @@ public enum RoleError implements ErrorCode {
     ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409),
     ROLE_RELATION_ALREADY_EXISTS("ROL-409-RELATION-ALREADY-EXISTS", "Role relation already exists", 409),
     ROLE_RELATION_ARCHIVED("ROL-409-RELATION-ARCHIVED", "Archived Role relation cannot be updated", 409),
+    ROLE_EVENT_COMMAND_GATED("ROL-403-EVENT-COMMAND-GATED", "Role event commands are not available", 403),
     ROLE_EVENT_NOT_FOUND("ROL-404-EVENT-NOT-FOUND", "Role event not found", 404),
     ROLE_EVENT_PARTICIPANT_NOT_FOUND("ROL-404-EVENT-PARTICIPANT-NOT-FOUND", "Role event participant not found", 404),
     INVALID_ROLE_EVENT_TITLE("ROL-400-INVALID-EVENT-TITLE", "Invalid Role event title", 400),

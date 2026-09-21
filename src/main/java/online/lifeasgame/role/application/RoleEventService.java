@@ -37,6 +37,7 @@ public class RoleEventService {
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         Role role = roleReader.getOwnedForUpdate(roleId, playerId);
+        requireCommandsEnabled();
         requireActive(role);
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(
                 RoleEvent.create(
@@ -62,6 +63,7 @@ public class RoleEventService {
                 roleId,
                 playerId
         );
+        requireCommandsEnabled();
         event.update(
                 command.title(),
                 command.description(),
@@ -79,6 +81,7 @@ public class RoleEventService {
                 roleId,
                 playerId
         );
+        requireCommandsEnabled();
         event.complete(clock.instant());
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -91,6 +94,7 @@ public class RoleEventService {
                 roleId,
                 playerId
         );
+        requireCommandsEnabled();
         event.cancel();
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -107,6 +111,7 @@ public class RoleEventService {
                 roleId,
                 playerId
         );
+        requireCommandsEnabled();
         RoleEventParticipantType type = RoleEventParticipantType.parse(
                 command.participantType()
         );
@@ -131,8 +136,14 @@ public class RoleEventService {
                 roleId,
                 playerId
         );
+        requireCommandsEnabled();
         event.removeParticipant(participantLinkId);
         eventWriter.saveAndFlush(event);
+    }
+
+    private void requireCommandsEnabled() {
+        // CFC-EVT-001 remains GATED_FAIL_CLOSED; historical reads stay available.
+        throw new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED);
     }
 
     private void validateParticipant(

@@ -26,39 +26,45 @@ public interface RoleEventApiSpecV1 {
             @PathVariable Long eventId
     );
 
-    @Operation(summary = "Role Event 생성")
+    @Operation(summary = "Role Event 생성",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> create(
             @PathVariable Long roleId,
             @Valid @RequestBody RoleEventRequest.Create request
     );
 
-    @Operation(summary = "Role Event 수정")
+    @Operation(summary = "Role Event 수정",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> update(
             @PathVariable Long roleId,
             @PathVariable Long eventId,
             @Valid @RequestBody RoleEventRequest.Update request
     );
 
-    @Operation(summary = "Role Event 완료")
+    @Operation(summary = "Role Event 완료",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> complete(
             @PathVariable Long roleId,
             @PathVariable Long eventId
     );
 
-    @Operation(summary = "Role Event 취소")
+    @Operation(summary = "Role Event 취소",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> cancel(
             @PathVariable Long roleId,
             @PathVariable Long eventId
     );
 
-    @Operation(summary = "Role Event 참여자 추가")
+    @Operation(summary = "Role Event 참여자 추가",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Participant>> addParticipant(
             @PathVariable Long roleId,
             @PathVariable Long eventId,
             @Valid @RequestBody RoleEventRequest.AddParticipant request
     );
 
-    @Operation(summary = "Role Event 참여자 제거")
+    @Operation(summary = "Role Event 참여자 제거",
+            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
     ResponseEntity<ApiResponse<Void>> removeParticipant(
             @PathVariable Long roleId,
             @PathVariable Long eventId,
