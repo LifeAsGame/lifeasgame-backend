@@ -1,111 +1,63 @@
 package online.lifeasgame.notification.domain;
 
 import java.time.Instant;
-import java.util.stream.Stream;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.notification.domain.error.NotificationError;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DisplayName("Player Notification domain")
+@DisplayName("Player Notification approved copy domain")
 class PlayerNotificationTest {
+    private static final Instant AT = Instant.parse("2026-08-21T10:00:00Z");
 
-    private static final Instant OCCURRED_AT =
-            Instant.parse("2026-08-21T10:00:00Z");
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("invalidNotifications")
-    @DisplayName("필수 알림 값이 유효하지 않으면 생성하지 않는다")
-    void rejectsInvalidRequiredValues(
-            String scenario,
-            Long playerId,
-            String sourceEventId,
-            NotificationType type,
-            String title,
-            String body,
-            Instant occurredAt,
-            NotificationError expected
-    ) {
-        assertThatThrownBy(() -> PlayerNotification.create(
-                playerId,
-                sourceEventId,
-                type,
-                title,
-                body,
-                occurredAt
-        )).isInstanceOfSatisfying(DomainException.class, exception ->
-                assertThat(exception.getErrorCode()).isEqualTo(expected)
-        );
+    @ParameterizedTest
+    @EnumSource(value = NotificationType.class, names = {"QUEST_COMPLETED", "QUEST_REWARD_READY"}, mode = EnumSource.Mode.EXCLUDE)
+    @DisplayName("기존 이력 type이라도 활성 두 source 외 신규 생성은 거부한다")
+    void rejectsInactiveSources(NotificationType type) {
+        assertError(() -> PlayerNotification.create(1L, "event", type, "Quest", AT), NotificationError.SOURCE_NOT_ACTIVE);
     }
 
     @Test
-    @DisplayName("readAt null 여부만으로 unread와 read 상태를 표현한다")
-    void marksReadIdempotently() {
-        PlayerNotification notification = validNotification();
-        Instant firstReadAt = Instant.parse("2026-08-21T11:00:00Z");
+    @DisplayName("필수 identity·제목 snapshot·시각을 검증하고 미확인 제목을 만들어 넣지 않는다")
+    void validatesSource() {
+        assertError(() -> create(null, "event", "Quest", AT), NotificationError.PLAYER_ID_REQUIRED);
+        assertError(() -> create(1L, " ", "Quest", AT), NotificationError.SOURCE_EVENT_ID_REQUIRED);
+        assertError(() -> create(1L, "x".repeat(256), "Quest", AT), NotificationError.SOURCE_EVENT_ID_TOO_LONG);
+        assertError(() -> PlayerNotification.create(1L, "event", null, "Quest", AT), NotificationError.TYPE_REQUIRED);
+        assertError(() -> create(1L, "event", null, AT), NotificationError.QUEST_TITLE_REQUIRED);
+        assertError(() -> create(1L, "event", " ", AT), NotificationError.QUEST_TITLE_REQUIRED);
+        assertError(() -> create(1L, "event", "Quest", null), NotificationError.OCCURRED_AT_REQUIRED);
+    }
 
+    @Test
+    @DisplayName("승인 문구와 copy provenance는 읽음 재처리에도 유지된다")
+    void preservesCopyOnRead() {
+        PlayerNotification notification = create(1L, "event", "첫 기록", AT);
+        assertThat(notification.getTitle()).isEqualTo("Quest를 완료했어요");
+        assertThat(notification.getBody()).isEqualTo("첫 기록 완료 사실이 기록되었습니다.");
+        assertThat(notification.getTitleCopyId()).isEqualTo("notification.ntf_quest_completed.title");
+        assertThat(notification.getTitleCopyVersion()).isEqualTo(1);
+        assertThat(notification.getBodyCopyId()).isEqualTo("notification.ntf_quest_completed.body");
+        assertThat(notification.getBodyCopyVersion()).isEqualTo(1);
+        assertThat(notification.getCopyLocale()).isEqualTo("ko-KR");
         assertThat(notification.getReadAt()).isNull();
-        notification.markRead(firstReadAt);
-        notification.markRead(Instant.parse("2026-08-21T12:00:00Z"));
-
-        assertThat(notification.getReadAt()).isEqualTo(firstReadAt);
+        notification.markRead(AT.plusSeconds(1));
+        notification.markRead(AT.plusSeconds(2));
+        assertThat(notification.getReadAt()).isEqualTo(AT.plusSeconds(1));
+        assertThat(notification.getBody()).isEqualTo("첫 기록 완료 사실이 기록되었습니다.");
     }
 
-    private static Stream<Arguments> invalidNotifications() {
-        return Stream.of(
-                Arguments.of(
-                        "playerId null",
-                        null, "event-1", NotificationType.SYSTEM_NOTICE,
-                        "제목", "본문", OCCURRED_AT,
-                        NotificationError.PLAYER_ID_REQUIRED
-                ),
-                Arguments.of(
-                        "sourceEventId blank",
-                        1L, " ", NotificationType.SYSTEM_NOTICE,
-                        "제목", "본문", OCCURRED_AT,
-                        NotificationError.SOURCE_EVENT_ID_REQUIRED
-                ),
-                Arguments.of(
-                        "type null",
-                        1L, "event-1", null,
-                        "제목", "본문", OCCURRED_AT,
-                        NotificationError.TYPE_REQUIRED
-                ),
-                Arguments.of(
-                        "title blank",
-                        1L, "event-1", NotificationType.SYSTEM_NOTICE,
-                        " ", "본문", OCCURRED_AT,
-                        NotificationError.TITLE_REQUIRED
-                ),
-                Arguments.of(
-                        "body blank",
-                        1L, "event-1", NotificationType.SYSTEM_NOTICE,
-                        "제목", " ", OCCURRED_AT,
-                        NotificationError.BODY_REQUIRED
-                ),
-                Arguments.of(
-                        "occurredAt null",
-                        1L, "event-1", NotificationType.SYSTEM_NOTICE,
-                        "제목", "본문", null,
-                        NotificationError.OCCURRED_AT_REQUIRED
-                )
-        );
+    private PlayerNotification create(Long player, String event, String title, Instant at) {
+        return PlayerNotification.create(player, event, NotificationType.QUEST_COMPLETED, title, at);
     }
 
-    private static PlayerNotification validNotification() {
-        return PlayerNotification.create(
-                1L,
-                "event-1",
-                NotificationType.SYSTEM_NOTICE,
-                "제목",
-                "본문",
-                OCCURRED_AT
-        );
+    private void assertError(Runnable action, NotificationError error) {
+        assertThatThrownBy(action::run).isInstanceOfSatisfying(DomainException.class,
+                exception -> assertThat(exception.getErrorCode()).isEqualTo(error));
     }
 }

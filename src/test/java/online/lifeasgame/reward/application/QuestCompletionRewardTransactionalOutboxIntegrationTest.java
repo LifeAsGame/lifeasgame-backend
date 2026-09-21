@@ -619,7 +619,8 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
                 COMPLETED_AT.plusSeconds(1),
                 "quest:219:acceptance:%d:completed:reward".formatted(
                         acceptanceId
-                )
+                ),
+                "테스트 Quest"
         );
     }
 

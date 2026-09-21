@@ -83,6 +83,7 @@ class QuestCompletionEventFactoryTest {
                 "source:219:completed",
                 Map.ofEntries(
                         Map.entry("lifeLogId", 901L),
+                        Map.entry("questTitle", "untrusted free text"),
                         Map.entry("acceptanceId", -1L),
                         Map.entry("progress", 999),
                         Map.entry("target", 999),
@@ -105,6 +106,7 @@ class QuestCompletionEventFactoryTest {
         assertThat(event.correlationId()).isEqualTo("source:219:completed");
         assertThat(event.attributes())
                 .containsEntry("lifeLogId", 901L)
+                .containsEntry("questTitle", "Factory")
                 .containsEntry("acceptanceId", 21900L)
                 .containsEntry("progress", 3)
                 .containsEntry("target", 3)

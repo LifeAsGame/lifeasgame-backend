@@ -2,7 +2,6 @@ package online.lifeasgame.notification.application.result;
 
 import java.time.Instant;
 import java.util.List;
-import online.lifeasgame.notification.domain.NotificationType;
 
 public final class NotificationResult {
 
@@ -21,9 +20,14 @@ public final class NotificationResult {
 
     public record Info(
             Long id,
-            NotificationType type,
+            String type,
             String title,
             String body,
+            String titleCopyId,
+            Integer titleCopyVersion,
+            String bodyCopyId,
+            Integer bodyCopyVersion,
+            String copyLocale,
             Instant occurredAt,
             boolean read
     ) {

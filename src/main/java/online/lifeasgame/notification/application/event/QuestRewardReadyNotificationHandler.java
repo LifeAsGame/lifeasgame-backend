@@ -12,9 +12,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QuestRewardReadyNotificationHandler {
 
-    private static final String TITLE = "퀘스트 보상 준비";
-    private static final String BODY = "퀘스트 보상을 확인할 수 있습니다.";
-
     private final NotificationAppendApi notificationAppendApi;
 
     @EventListener
@@ -26,8 +23,7 @@ public class QuestRewardReadyNotificationHandler {
                 fact.playerId(),
                 delivery.eventId(),
                 NotificationType.QUEST_REWARD_READY,
-                TITLE,
-                BODY,
+                fact.questTitle(),
                 fact.occurredAt()
         ));
     }

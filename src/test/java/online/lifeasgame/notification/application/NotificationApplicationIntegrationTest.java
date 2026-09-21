@@ -101,7 +101,7 @@ class NotificationApplicationIntegrationTest {
         @DisplayName("durable row를 만들고 같은 player replay만 무시한다")
         void appendsDurablyAndScopesReplayByPlayer() {
             assertThat(flyway.info().current().getVersion().getVersion())
-                    .isEqualTo("34");
+                    .isEqualTo("35");
 
             append(PLAYER_ID, "shared-event");
             append(PLAYER_ID, "shared-event");
@@ -119,9 +119,9 @@ class NotificationApplicationIntegrationTest {
                     """, PLAYER_ID);
             assertThat(row)
                     .containsEntry("player_id", PLAYER_ID)
-                    .containsEntry("type", "SYSTEM_NOTICE")
-                    .containsEntry("title", "알림 shared-event")
-                    .containsEntry("body", "본문 shared-event")
+                    .containsEntry("type", "QUEST_COMPLETED")
+                    .containsEntry("title", "Quest를 완료했어요")
+                    .containsEntry("body", "테스트 Quest 완료 사실이 기록되었습니다.")
                     .containsEntry("source_event_id", "shared-event")
                     .containsEntry("read_at", null)
                     .containsKeys("occurred_at", "created_at", "updated_at");
@@ -227,6 +227,83 @@ class NotificationApplicationIntegrationTest {
         }
     }
 
+    @Test
+    @DisplayName("legacy replay는 제목 snapshot이 없어도 원문과 null provenance를 보존하고 읽음 처리가 가능하다")
+    void preservesLegacyReplay() {
+        jdbc.update("""
+                INSERT INTO player_notifications (player_id, type, title, body, source_event_id,
+                    occurred_at, created_at, updated_at)
+                VALUES (?, 'QUEST_COMPLETED', '기존 제목', '기존 본문', 'legacy-event', NOW(6), NOW(6), NOW(6))
+                """, PLAYER_ID);
+        var before = jdbc.queryForMap("SELECT * FROM player_notifications");
+        appendApi.append(new NotificationAppendApi.AppendCommand(PLAYER_ID, "legacy-event",
+                NotificationType.QUEST_COMPLETED, null, OCCURRED_AT));
+        assertThat(jdbc.queryForMap("SELECT * FROM player_notifications")).isEqualTo(before);
+        var notification = queryService.inbox(null, 20).notifications().getFirst();
+        assertThat(notification.title()).isEqualTo("기존 제목");
+        assertThat(notification.body()).isEqualTo("기존 본문");
+        assertThat(notification.titleCopyId()).isNull();
+        assertThat(notification.bodyCopyVersion()).isNull();
+        readMarker.markOne(notification.id());
+        assertThat(queryService.unreadCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("새 알림은 승인 copy metadata가 일치하며 replay의 제목 변경은 저장 내용을 변경하지 않는다")
+    void preservesRenderedCopyOnReplay() {
+        append(PLAYER_ID, "immutable-copy");
+        var before = jdbc.queryForMap("SELECT * FROM player_notifications");
+        appendApi.append(new NotificationAppendApi.AppendCommand(PLAYER_ID, "immutable-copy",
+                NotificationType.QUEST_COMPLETED, "나중에 변경한 Quest", OCCURRED_AT));
+        assertThat(jdbc.queryForMap("SELECT * FROM player_notifications")).isEqualTo(before);
+        var notification = queryService.inbox(null, 20).notifications().getFirst();
+        assertThat(notification.titleCopyId()).isEqualTo("notification.ntf_quest_completed.title");
+        assertThat(notification.titleCopyVersion()).isEqualTo(1);
+        assertThat(notification.bodyCopyId()).isEqualTo("notification.ntf_quest_completed.body");
+        assertThat(notification.bodyCopyVersion()).isEqualTo(1);
+        assertThat(notification.copyLocale()).isEqualTo("ko-KR");
+        assertThat(notification.body()).isEqualTo("테스트 Quest 완료 사실이 기록되었습니다.");
+    }
+
+    @Test
+    @DisplayName("비활성 source와 제목 없는 신규 source는 영속 부작용 없이 거부한다")
+    void rejectsUnapprovedEmission() {
+        assertThatThrownBy(() -> appendApi.append(new NotificationAppendApi.AppendCommand(PLAYER_ID,
+                "inactive", NotificationType.SYSTEM_NOTICE, "Quest", OCCURRED_AT)))
+                .isInstanceOfSatisfying(DomainException.class, error ->
+                        assertThat(error.getErrorCode()).isEqualTo(NotificationError.SOURCE_NOT_ACTIVE));
+        assertThatThrownBy(() -> appendApi.append(new NotificationAppendApi.AppendCommand(PLAYER_ID,
+                "missing-title", NotificationType.QUEST_COMPLETED, null, OCCURRED_AT)))
+                .isInstanceOfSatisfying(DomainException.class, error ->
+                        assertThat(error.getErrorCode()).isEqualTo(NotificationError.QUEST_TITLE_REQUIRED));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM player_notifications", Long.class)).isZero();
+    }
+
+    @Test
+    @DisplayName("이전에 저장된 미지원 type도 이력과 읽음을 유지하되 신규 생성 경계와 분리한다")
+    void readsUnknownStoredType() {
+        // Simulate imported/future history in this disposable DB; production constraint is unchanged.
+        jdbc.execute("ALTER TABLE player_notifications ALTER CHECK ck_player_notification_type NOT ENFORCED");
+        try {
+            jdbc.update("""
+                    INSERT INTO player_notifications (player_id, type, title, body, source_event_id,
+                      occurred_at, created_at, updated_at)
+                    VALUES (?, 'FUTURE_UNKNOWN', '이전 제목', '이전 본문', 'unknown-history', NOW(6), NOW(6), NOW(6))
+                    """, PLAYER_ID);
+            var info = queryService.inbox(null, 20).notifications().getFirst();
+            assertThat(info.type()).isEqualTo("FUTURE_UNKNOWN");
+            assertThat(info.copyLocale()).isNull();
+            readMarker.markOne(info.id());
+            assertThat(queryService.unreadCount()).isZero();
+            asCurrent(OTHER_PLAYER_ID);
+            assertThat(queryService.inbox(null, 20).notifications()).isEmpty();
+            assertNotFound(info.id());
+        } finally {
+            jdbc.update("DELETE FROM player_notifications WHERE type = 'FUTURE_UNKNOWN'");
+            jdbc.execute("ALTER TABLE player_notifications ALTER CHECK ck_player_notification_type ENFORCED");
+        }
+    }
+
     private void concurrentAppend(CountDownLatch ready, CountDownLatch start) {
         try {
             ready.countDown();
@@ -249,9 +326,8 @@ class NotificationApplicationIntegrationTest {
         appendApi.append(new NotificationAppendApi.AppendCommand(
                 playerId,
                 sourceEventId,
-                NotificationType.SYSTEM_NOTICE,
-                "알림 " + sourceEventId,
-                "본문 " + sourceEventId,
+                NotificationType.QUEST_COMPLETED,
+                "테스트 Quest",
                 OCCURRED_AT
         ));
     }

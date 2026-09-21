@@ -18,6 +18,12 @@ public enum NotificationError implements ErrorCode {
     TYPE_REQUIRED(
             "NTF-400-TYPE-REQUIRED", "Notification type is required", 400
     ),
+    SOURCE_NOT_ACTIVE(
+            "NTF-409-SOURCE-NOT-ACTIVE", "Notification source is not active", 409
+    ),
+    QUEST_TITLE_REQUIRED(
+            "NTF-422-QUEST-TITLE-REQUIRED", "Quest title snapshot is required", 422
+    ),
     TITLE_REQUIRED(
             "NTF-400-TITLE-REQUIRED", "Notification title is required", 400
     ),

@@ -33,9 +33,14 @@ public final class NotificationWebMapper {
     ) {
         return new NotificationResponse.Info(
                 result.id(),
-                result.type().name(),
+                result.type(),
                 result.title(),
                 result.body(),
+                result.titleCopyId(),
+                result.titleCopyVersion(),
+                result.bodyCopyId(),
+                result.bodyCopyVersion(),
+                result.copyLocale(),
                 result.occurredAt(),
                 result.read()
         );

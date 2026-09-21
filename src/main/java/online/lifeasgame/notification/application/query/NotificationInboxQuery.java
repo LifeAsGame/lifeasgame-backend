@@ -2,7 +2,6 @@ package online.lifeasgame.notification.application.query;
 
 import java.time.Instant;
 import java.util.List;
-import online.lifeasgame.notification.domain.NotificationType;
 
 public interface NotificationInboxQuery {
 
@@ -12,9 +11,14 @@ public interface NotificationInboxQuery {
 
     record Row(
             Long id,
-            NotificationType type,
+            String type,
             String title,
             String body,
+            String titleCopyId,
+            Integer titleCopyVersion,
+            String bodyCopyId,
+            Integer bodyCopyVersion,
+            String copyLocale,
             Instant occurredAt,
             Instant readAt
     ) {

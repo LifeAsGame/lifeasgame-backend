@@ -98,7 +98,8 @@ class QuestRewardReadyNotificationHandlerTest {
                         "Q_319",
                         1,
                         OCCURRED_AT,
-                        "quest:31:acceptance:3190:reward"
+                        "quest:31:acceptance:3190:reward",
+                        "테스트 Quest"
                 )
         );
     }
@@ -108,8 +109,7 @@ class QuestRewardReadyNotificationHandlerTest {
                 319L,
                 EVENT_ID,
                 NotificationType.QUEST_REWARD_READY,
-                "퀘스트 보상 준비",
-                "퀘스트 보상을 확인할 수 있습니다.",
+                "테스트 Quest",
                 OCCURRED_AT
         );
     }

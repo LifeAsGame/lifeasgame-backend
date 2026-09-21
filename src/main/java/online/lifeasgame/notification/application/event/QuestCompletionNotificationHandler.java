@@ -13,9 +13,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QuestCompletionNotificationHandler {
 
-    private static final String TITLE = "퀘스트 완료";
-    private static final String BODY = "퀘스트를 완료했습니다.";
-
     private final NotificationAppendApi notificationAppendApi;
 
     @EventListener
@@ -28,8 +25,7 @@ public class QuestCompletionNotificationHandler {
                 event.playerId(),
                 delivery.eventId(),
                 NotificationType.QUEST_COMPLETED,
-                TITLE,
-                BODY,
+                event.attributes().get("questTitle") instanceof String title ? title : null,
                 event.occurredAt()
         ));
     }

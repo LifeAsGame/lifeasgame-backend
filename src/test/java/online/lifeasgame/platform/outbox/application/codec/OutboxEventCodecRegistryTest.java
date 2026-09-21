@@ -370,7 +370,8 @@ class OutboxEventCodecRegistryTest {
                 "Q_OUTBOX",
                 4,
                 OCCURRED_AT,
-                "quest:91:acceptance:19701:completed:reward"
+                "quest:91:acceptance:19701:completed:reward",
+                "테스트 Quest"
         );
     }
 

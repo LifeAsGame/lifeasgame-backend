@@ -11,8 +11,7 @@ public interface NotificationAppendApi {
             Long playerId,
             String sourceEventId,
             NotificationType type,
-            String title,
-            String body,
+            String questTitle,
             Instant occurredAt
     ) {
     }

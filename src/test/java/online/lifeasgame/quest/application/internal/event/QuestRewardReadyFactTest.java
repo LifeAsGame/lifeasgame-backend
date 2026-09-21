@@ -28,7 +28,8 @@ class QuestRewardReadyFactTest {
                 event(Map.of(
                         "acceptanceId", 21900L,
                         "rewardProfileCode", "  RP_EXP_TINY_10  ",
-                        "questDefinitionVersion", 7
+                        "questDefinitionVersion", 7,
+                        "questTitle", "원래 Quest"
                 )),
                 READY_AT,
                 "quest:219:completed:reward"
@@ -41,6 +42,7 @@ class QuestRewardReadyFactTest {
         assertThat(fact.rewardProfileCode()).isEqualTo("RP_EXP_TINY_10");
         assertThat(fact.questDefinitionVersion()).isEqualTo(7);
         assertThat(fact.occurredAt()).isEqualTo(READY_AT);
+        assertThat(fact.questTitle()).isEqualTo("원래 Quest");
     }
 
     @Test
