@@ -1,5 +1,6 @@
 package online.lifeasgame.economy.application.result;
 
+import online.lifeasgame.economy.domain.Currency;
 import online.lifeasgame.economy.domain.Listing;
 import online.lifeasgame.economy.domain.ShopItem;
 import online.lifeasgame.economy.domain.ShopPurchase;
@@ -24,6 +25,24 @@ public final class EconomyResult {
     }
 
     public record ShopPurchaseId(Long id) {
+    }
+
+    public record WalletSummary(List<CurrencyBalance> balances) {
+        public WalletSummary {
+            balances = List.copyOf(balances);
+        }
+
+        public long amount() {
+            return balances.stream().filter(balance -> balance.currency() == Currency.GOLD)
+                    .mapToLong(CurrencyBalance::available).findFirst().orElse(0L);
+        }
+
+        public String currency() {
+            return Currency.GOLD.name();
+        }
+    }
+
+    public record CurrencyBalance(Currency currency, long available, long held) {
     }
 
     public record WalletBalance(long amount, String currency) {

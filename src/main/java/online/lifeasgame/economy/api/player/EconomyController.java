@@ -127,7 +127,7 @@ public class EconomyController implements EconomyApiSpecV1 {
     @Override
     @GetMapping("/wallet")
     public ResponseEntity<ApiResponse<EconomyResponse.WalletBalance>> wallet() {
-        EconomyResult.WalletBalance balance = economyFacade.walletBalance();
+        EconomyResult.WalletSummary balance = economyFacade.walletBalance();
         return ApiResponses.ok(EconomyWebMapper.toWalletBalance(balance));
     }
 

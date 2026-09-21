@@ -9,6 +9,9 @@ import online.lifeasgame.economy.application.MarketplaceService;
 import online.lifeasgame.economy.application.ShopService;
 import online.lifeasgame.economy.application.TopUpService;
 import online.lifeasgame.economy.application.WalletReader;
+import online.lifeasgame.economy.application.WalletQueryService;
+import online.lifeasgame.economy.application.result.EconomyResult;
+import online.lifeasgame.economy.domain.Currency;
 import online.lifeasgame.economy.application.WalletWriter;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.port.PaymentGateway;
@@ -42,6 +45,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
@@ -49,6 +53,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Import({SecurityConfig.class, WebMvcTestConfig.class, EconomyTopUpControllerTest.JwtTestConfig.class,
         EconomyFacade.class, TopUpService.class, TossPaymentGateway.class, WalletReader.class, WalletWriter.class})
-@DisplayName("현재 플레이어 충전 HTTP 계약")
+@DisplayName("현재 플레이어 지갑·충전 HTTP 계약")
 class EconomyTopUpControllerTest {
 
     private static final String PATH = "/api/v1/economy/top-up";
@@ -94,6 +99,8 @@ class EconomyTopUpControllerTest {
     private MarketplaceService marketplaceService;
     @MockitoBean
     private ShopService shopService;
+    @MockitoBean
+    private WalletQueryService walletQueryService;
     @MockitoBean
     private ListingOpenService listingOpenService;
     @MockitoBean
@@ -166,6 +173,50 @@ class EconomyTopUpControllerTest {
         verify(gateway).confirmCharge("synthetic-payment", "synthetic-order", 100L,
                 online.lifeasgame.economy.domain.Currency.GOLD);
         verifyNoInteractions(repository, publisher);
+    }
+
+    @Test
+    @DisplayName("GET 지갑은 기존 envelope와 GOLD 필드를 유지하고 JWT 본인의 통화별 잔액만 조회한다")
+    void walletUsesAuthenticatedPlayer() throws Exception {
+        when(userAuthApi.resolveAuthorization(USER_ID)).thenReturn(
+                Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
+        when(walletQueryService.wallet(PLAYER_ID)).thenReturn(new EconomyResult.WalletSummary(List.of(
+                new EconomyResult.CurrencyBalance(Currency.GOLD, 80, 20),
+                new EconomyResult.CurrencyBalance(Currency.GEM, 30, 7))));
+
+        mockMvc.perform(get("/api/v1/economy/wallet").param("playerId", "999")
+                        .header("Authorization", "Bearer " + jwtProvider.createAccessToken(USER_ID, PLAYER_ID)))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {"isSuccess":true,"code":"COMMON-200","message":"성공입니다.","result":{
+                          "amount":80,"currency":"GOLD","balances":[
+                            {"currency":"GOLD","available":80,"held":20},
+                            {"currency":"GEM","available":30,"held":7}]}}
+                        """, org.springframework.test.json.JsonCompareMode.STRICT));
+
+        verify(walletQueryService).wallet(PLAYER_ID);
+        verifyNoInteractions(topUpService, repository, publisher);
+    }
+
+    @Test
+    @DisplayName("GET 지갑은 인증 없이는 401이며 조회에 진입하지 않는다")
+    void walletRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/economy/wallet")).andExpect(status().isUnauthorized());
+        verifyNoInteractions(walletQueryService, topUpService, repository, publisher);
+    }
+
+    @Test
+    @DisplayName("OpenAPI는 관리자 잔액 응답과 구별되는 schema에 기존 필드와 balances 의미를 제공한다")
+    void documentsWalletSchema() {
+        var schemas = io.swagger.v3.core.converter.ModelConverters.getInstance().readAll(
+                online.lifeasgame.economy.api.player.response.EconomyResponse.WalletBalance.class);
+        io.swagger.v3.oas.models.media.Schema<?> wallet = schemas.get("PlayerWalletBalance");
+        assertThat(wallet.getProperties()).containsOnlyKeys("amount", "currency", "balances");
+        assertThat(wallet.getProperties().get("amount").getDescription()).contains("GOLD");
+        assertThat(wallet.getProperties().get("balances").getDescription()).contains("GOLD, GEM", "0");
+        io.swagger.v3.oas.models.media.Schema<?> balance = schemas.get("PlayerWalletCurrencyBalance");
+        assertThat(balance.getProperties()).containsOnlyKeys("currency", "available", "held");
+        assertThat(balance.getProperties().get("held").getDescription()).contains("OPEN", "TTL");
     }
 
     private MockHttpServletRequestBuilder authenticatedRequest(String currency) {
