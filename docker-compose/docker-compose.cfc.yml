@@ -1,0 +1,78 @@
+# Driven by scripts/cfc-runtime.py; no dependency on the developer's .env or DB.
+services:
+  mysql:
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CFC_DB_PASSWORD:?}
+      MYSQL_DATABASE: lifeasgame_cfc
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+
+  redis:
+    image: redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    command: [redis-server, --appendonly, 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+
+  app:
+    image: eclipse-temurin:21-jre@sha256:49e21e16e3c86eb7816a44a67549910ed090fbeb40c29c525d58bf5e02e91b0f
+    working_dir: /app
+    command: [java, -jar, /app/app.jar]
+    volumes:
+      - ${CFC_RUNTIME_DIR:?}/app.jar:/app/app.jar:ro
+    ports:
+      - '127.0.0.1:${CFC_API_PORT:?}:8080'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:mysql://mysql:3306/lifeasgame_cfc?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${CFC_DB_PASSWORD:?}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_FLYWAY_ENABLED: 'true'
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      LIFEASGAME_JWT_SECRET: ${CFC_JWT_SECRET:?}
+      LIFEASGAME_WEB_ALLOWED_ORIGINS: ${CFC_ORIGINS:?}
+      OUTBOX_ENABLED: 'true'
+      LIFEASGAME_ECONOMY_EVENTS_ENABLED: 'false'
+      LIFEASGAME_QUEST_EVENTS_ENABLED: 'false'
+      LIFEASGAME_ECONOMY_QUEST_EVENTS_ENABLED: 'false'
+      LIFEASGAME_ECONOMY_MAIL_ENABLED: 'false'
+      LOGGING_LEVEL_ONLINE_LIFEASGAME: INFO
+      LOGGING_LEVEL_COM_ZAXXER_HIKARI: INFO
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+      LOGGING_LEVEL_ORG_HIBERNATE_ORM_JDBC_BIND: 'OFF'
+      TZ: Asia/Seoul
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+
+volumes:
+  mysql_data:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+  redis_data:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+networks:
+  default:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}

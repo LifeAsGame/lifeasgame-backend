@@ -278,6 +278,60 @@ export DB_PASSWORD=root
 
 Local profile은 기본값이며 Flyway migration을 실행합니다.
 
+### 격리 CFC runtime (FE 실 API 연결)
+
+Java 21, Docker Compose v2 이상, Python 3 표준 라이브러리를 사용합니다.
+기존 local Compose 대신 다음 도구가 전용 MySQL 8 / Redis 7 / Spring 컨테이너를 만듭니다.
+이미지 digest를 고정하며, start 출력에 빌드 시 HEAD·dirty 여부·jar SHA256을 표시합니다.
+macOS에서 필요하면 먼저 `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`을 실행합니다.
+
+```bash
+python3 scripts/cfc-runtime.py start
+python3 scripts/cfc-runtime.py ready
+python3 scripts/cfc-runtime.py smoke
+python3 scripts/cfc-runtime.py stop     # 데이터 유지; start로 같은 jar/DB 재기동
+python3 scripts/cfc-runtime.py cleanup  # 이 도구 소유의 컨테이너/네트워크/볼륨/임시 비밀값 삭제
+```
+
+- FE: `NEXT_PUBLIC_USE_MOCK=false`, `NEXT_PUBLIC_API_URL=http://127.0.0.1:18080`.
+  OpenAPI: `http://127.0.0.1:18080/v3/api-docs`.
+- CORS 기본 origin은 `http://localhost:3000`입니다. 최초 start 시
+  `--port 18081 --origins http://localhost:3000,http://localhost:5173`처럼 변경할 수 있습니다.
+  path/trailing slash 없는 정확한 origin을 사용합니다. 설정이나 코드를 바꾸면 cleanup 후 start합니다.
+- checkout 경로의 해시로 `lag-cfc-<hash>` 프로젝트를 구분합니다. DB/Redis 호스트 포트는 열지 않으며
+  HTTP도 loopback에만 바인딩합니다. 기존 `.env`/DB 설정은 가져오지 않습니다.
+  같은 checkout에서는 한 runtime만 사용하고, 여러 checkout은 서로 다른 HTTP 포트를 선택합니다.
+- 최초 start는 `bootJar`를 빌드해 OS 임시 디렉터리의 전용 폴더에 복사합니다.
+  랜덤 DB/JWT 비밀값과 소유 기록도 해당 폴더에만 저장합니다. `stop`은 보존하고 `cleanup`은 제거합니다.
+  실행 중 임시 폴더를 수동 삭제하지 마세요. 소유 기록/라벨이 다르면 자동 채택·삭제하지 않습니다.
+  공용 Docker 이미지 캐시는 삭제하지 않습니다. 시작 실패 시에도 `cleanup`으로 정리할 수 있습니다.
+- 진단: `python3 scripts/cfc-runtime.py logs`. 로그/계정/토큰은 커밋하지 않습니다.
+  smoke는 매번 정상 가입·로그인·Player 등록으로 새 합성 actor를 생성합니다. 토큰/비밀번호를 출력하거나
+  저장하지 않습니다. DB/outbox 불변 비교 중에는 다른 클라이언트의 쓰기를 중지합니다.
+  FE actor도 `/api/v1/auth/register` → `/api/v1/players/register` →
+  `/api/v1/auth/login`을 사용하며, 반환된 accessToken을 `Authorization: Bearer ...`로 전달합니다.
+
+검증 범위:
+
+- health readiness, Flyway V35 성공, `ddl-auto=validate`로 JPA 초기화.
+- `SeedLevel1Quest` bootstrap 및 V20/V34의 Quest 5개와 Route 1개는 stableCode + definitionVersion=1,
+  Step 3개는 stableCode + Route 버전 + 순서/required Quest 연결을 대조합니다.
+  연결 Reward profile/definition과 Item은 stableCode와 실제 EXP/ITEM payload를 대조합니다.
+  **Step 독립 버전 및 Reward/Item 영속 content-version 필드는 현재 없습니다.**
+  이 검사는 기존 승인 콘텐츠의 현재 runtime 표현을 확인하며 없는 버전을 추정하지 않습니다.
+- 인증/비인증 HTTP, CORS, 본인 Player, GOLD/GEM 0 응답, Wallet 반복 조회의 DB/outbox 생성 불변,
+  Notification inbox/unread와 소유자 격리.
+- 두 Record Quest 수락 후 Quick Record 3건 → 기존 outbox relay → EXP 30 +
+  `IT_FIRST_STEP_FRAGMENT` 1개 → 두 source의 알림 4개와 승인 copy @1 / ko-KR.
+  직접 SQL 변경, JWT 생성, 수동 relay, 관리자 지급은 사용하지 않습니다.
+- Marketplace 일반 거래는 **BLOCKED**입니다. 승인 Item 보상은 bound이고 시장 등록이 금지됩니다.
+  정상 결제 검증은 `TossPaymentGateway`에서 거부하며 GOLD/GEM 보상 경로도 없습니다.
+  관리자 Wallet/Inventory 조정은 일반 사용자 취득 경로가 아닙니다.
+
+이는 대표 흐름 smoke이며 전체 인수 시나리오나 운영 배포 검증이 아닙니다.
+미검증·차단된 시나리오의 완료 여부와 기존 기능 정책은 변경하지 않습니다.
+RoleChat/realtime 및 새 source를 활성화하지 않습니다.
+
 ### 프로덕션 웹 연동
 
 프론트엔드 배포 환경:
