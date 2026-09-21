@@ -20,6 +20,16 @@ public interface FollowJpaRepository extends JpaRepository<Follow, Long> {
 
     Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId);
 
+    @Query(value = """
+            SELECT blocked FROM follows
+            WHERE player_id = :playerId AND target_player_id = :targetPlayerId
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<Boolean> findBlockedForUpdate(
+            @Param("playerId") Long playerId,
+            @Param("targetPlayerId") Long targetPlayerId
+    );
+
     @Query(
         """
             SELECT f.id

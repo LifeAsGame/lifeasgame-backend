@@ -20,6 +20,7 @@ public class ChatService {
     private final GuildReader guildReader;
     private final PartyReader partyReader;
     private final FriendshipVerifier friendshipVerifier;
+    private final DirectChatBlockGuard directChatBlockGuard;
     private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
@@ -74,6 +75,7 @@ public class ChatService {
     @Transactional
     public ChatResult.Channel openFriend(Long friendId, ChatCommand.OpenFriend command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        directChatBlockGuard.requireUnblocked(playerId, friendId);
         friendshipVerifier.verify(playerId, friendId);
 
         ChatSpec.OpenFriend spec = ChatSpec.OpenFriend.from(playerId, friendId, command);
@@ -124,6 +126,10 @@ public class ChatService {
         ChatSpec.SendMessage spec = ChatSpec.SendMessage.from(channelId, playerId, command);
         ChatChannel channel = chatReader.getMemberChannel(spec.channelId(), spec.senderId());
         channel.ensureWritable();
+        if (channel.getType() == ChatChannelType.FRIEND) {
+            Long peerId = chatReader.getFriendPeerId(channelId, playerId);
+            directChatBlockGuard.requireUnblocked(playerId, peerId);
+        }
         ChatMessage saved = chatWriter.publish(channel, playerId, spec.content());
         return ChatResult.Message.from(saved);
     }

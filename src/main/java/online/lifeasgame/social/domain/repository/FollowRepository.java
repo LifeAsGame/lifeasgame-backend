@@ -15,6 +15,9 @@ public interface FollowRepository {
 
     Optional<Follow> findByPlayerIdAndTargetPlayerId(Long playerId, Long targetPlayerId);
 
+    // Current locking read; includes STOPPED relationships and holds the row until commit.
+    Optional<Boolean> findBlockedForUpdate(Long playerId, Long targetPlayerId);
+
     boolean existsActiveFollow(Long playerId, Long targetPlayerId);
 
     List<Follow> findActiveFollowings(Long playerId, Set<Long> targetPlayerIds);

@@ -39,6 +39,18 @@ public class ChatReader {
         return channel;
     }
 
+    public Long getFriendPeerId(Long channelId, Long playerId) {
+        List<ChannelParticipant> participants = channelParticipantRepository.findAllByChannelIds(Set.of(channelId));
+        List<Long> peerIds = participants.stream()
+                .map(ChannelParticipant::getUserId)
+                .filter(id -> !id.equals(playerId))
+                .toList();
+        if (participants.size() != 2 || peerIds.size() != 1) {
+            throw new DomainException(SocialError.CHAT_FRIEND_PARTICIPANT_INVALID);
+        }
+        return peerIds.getFirst();
+    }
+
     public Optional<ChannelParticipant> findParticipant(Long channelId, Long playerId) {
         return channelParticipantRepository.findByChannelIdAndUserId(channelId, playerId);
     }
