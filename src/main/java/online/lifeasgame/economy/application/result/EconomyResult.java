@@ -40,23 +40,9 @@ public final class EconomyResult {
     }
 
     public record ListingSummaries(List<ListingSummary> listings) {
-        public static ListingSummaries fromList(List<Listing> listings) {
-            return new ListingSummaries (
-                    listings.stream()
-                    .map(ListingSummary::from)
-                    .toList()
-            );
-        }
     }
 
     public record PlayerListings(List<ListingSummary> listings) {
-        public static PlayerListings fromList(List<Listing> listings) {
-            return new PlayerListings (
-                    listings.stream()
-                            .map(ListingSummary::from)
-                            .toList()
-            );
-        }
     }
 
     public record PlayerReservations(List<ListingReservation> reservations) {
@@ -83,14 +69,14 @@ public final class EconomyResult {
     }
 
     public record ListingSummary(Long id, Long itemId, Long sellerId, long price, String currency, String status) {
-        public static ListingSummary from(Listing listing) {
+        public static ListingSummary from(Listing listing, boolean hasActiveReservation) {
             return new ListingSummary(
                     listing.getId(),
                     listing.getItemId(),
                     listing.getSellerPlayerId(),
                     listing.getPrice().amount(),
                     listing.getPrice().currency().name(),
-                    listing.getStatus().name()
+                    listing.effectiveStatus(hasActiveReservation).name()
             );
         }
     }

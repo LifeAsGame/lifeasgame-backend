@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -236,13 +237,24 @@ public class MarketplaceService {
     @Transactional(readOnly = true)
     public EconomyResult.ListingSummaries listOpen() {
         List<Listing> listings = listingReader.listOpen();
-        return EconomyResult.ListingSummaries.fromList(listings);
+        return new EconomyResult.ListingSummaries(summarizeListings(listings));
     }
 
     @Transactional(readOnly = true)
     public EconomyResult.PlayerListings listBySeller(Long sellerId) {
         List<Listing> listings = listingReader.listBySeller(sellerId);
-        return EconomyResult.PlayerListings.fromList(listings);
+        return new EconomyResult.PlayerListings(summarizeListings(listings));
+    }
+
+    private List<EconomyResult.ListingSummary> summarizeListings(List<Listing> listings) {
+        List<Long> openListingIds = listings.stream()
+                .filter(listing -> listing.getStatus() == ListingStatus.OPEN)
+                .map(Listing::getId)
+                .toList();
+        Set<Long> reservedListingIds = listingReservationReader.findActiveListingIds(openListingIds);
+        return listings.stream()
+                .map(listing -> EconomyResult.ListingSummary.from(listing, reservedListingIds.contains(listing.getId())))
+                .toList();
     }
 
     @Transactional(readOnly = true)

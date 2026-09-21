@@ -32,6 +32,17 @@ public interface JpaListingReservationRepository extends JpaRepository<ListingRe
     @Query("""
             SELECT reservation.listingId
             FROM ListingReservation reservation
+            WHERE reservation.listingId IN :listingIds
+              AND reservation.state = :state
+            """)
+    List<Long> findListingIdsByListingIdInAndState(
+            @Param("listingIds") List<Long> listingIds,
+            @Param("state") ListingReservationState state
+    );
+
+    @Query("""
+            SELECT reservation.listingId
+            FROM ListingReservation reservation
             WHERE reservation.state = :state
               AND reservation.expiresAt < :cutoff
             ORDER BY reservation.expiresAt, reservation.id

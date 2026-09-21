@@ -30,6 +30,11 @@ public class ListingReservationRepositoryAdapter implements ListingReservationRe
     }
 
     @Override
+    public List<Long> findActiveListingIds(List<Long> listingIds) {
+        return jpaRepository.findListingIdsByListingIdInAndState(listingIds, ListingReservationState.ACTIVE);
+    }
+
+    @Override
     public List<Long> findActiveListingIdsExpiringBefore(Instant cutoff) {
         return jpaRepository.findListingIdsByStateAndExpiresAtBefore(
                 ListingReservationState.ACTIVE,

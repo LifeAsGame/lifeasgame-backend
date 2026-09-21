@@ -12,6 +12,8 @@ public interface ListingReservationRepository {
 
     Optional<ListingReservation> findActiveByListingIdForUpdate(Long listingId);
 
+    List<Long> findActiveListingIds(List<Long> listingIds);
+
     List<Long> findActiveListingIdsExpiringBefore(Instant cutoff);
 
     List<ListingReservation> findActiveByBuyerPlayerId(Long buyerPlayerId);

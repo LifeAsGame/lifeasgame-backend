@@ -151,6 +151,11 @@ public class Listing extends AbstractTime {
         return status;
     }
 
+    public ListingStatus effectiveStatus(boolean hasActiveReservation) {
+        return status == ListingStatus.OPEN && hasActiveReservation
+                ? ListingStatus.RESERVED : status;
+    }
+
     public Long getReservedBy() {
         return reservedBy;
     }

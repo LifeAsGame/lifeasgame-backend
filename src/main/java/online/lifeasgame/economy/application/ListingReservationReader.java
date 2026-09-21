@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +21,11 @@ public class ListingReservationReader {
 
     public Optional<ListingReservation> findActiveForUpdate(Long listingId) {
         return repository.findActiveByListingIdForUpdate(listingId);
+    }
+
+    public Set<Long> findActiveListingIds(List<Long> listingIds) {
+        // ACTIVE remains authoritative until cleanup commits, even after expiresAt.
+        return listingIds.isEmpty() ? Set.of() : Set.copyOf(repository.findActiveListingIds(listingIds));
     }
 
     public List<Long> findActiveListingIdsExpiringBefore(Instant cutoff) {
