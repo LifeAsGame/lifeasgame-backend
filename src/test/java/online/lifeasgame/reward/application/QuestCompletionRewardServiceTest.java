@@ -382,7 +382,8 @@ class QuestCompletionRewardServiceTest {
                 "Q_FIRST_STEP",
                 7,
                 Instant.parse("2026-07-30T03:00:01Z"),
-                "quest:219:completed:reward"
+                "quest:219:completed:reward",
+                "테스트 Quest"
         );
     }
 }

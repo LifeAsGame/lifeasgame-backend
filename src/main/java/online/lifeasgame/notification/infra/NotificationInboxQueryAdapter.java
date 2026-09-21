@@ -25,6 +25,11 @@ public class NotificationInboxQueryAdapter implements NotificationInboxQuery {
                         playerNotification.type,
                         playerNotification.title,
                         playerNotification.body,
+                        playerNotification.titleCopyId,
+                        playerNotification.titleCopyVersion,
+                        playerNotification.bodyCopyId,
+                        playerNotification.bodyCopyVersion,
+                        playerNotification.copyLocale,
                         playerNotification.occurredAt,
                         playerNotification.readAt
                 ))

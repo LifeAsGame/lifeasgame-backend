@@ -18,7 +18,8 @@ public record QuestRewardReadyFact(
         String questCode,
         int questDefinitionVersion,
         Instant occurredAt,
-        String correlationId
+        String correlationId,
+        String questTitle
 ) implements DomainEvent {
 
     public static final int EVENT_VERSION = 1;
@@ -58,6 +59,14 @@ public record QuestRewardReadyFact(
         );
     }
 
+    // Older v1 payloads have no title snapshot. Keep them decodable for source/reward replay.
+    public QuestRewardReadyFact(int eventVersion, Long playerId, Long acceptanceId,
+            String rewardProfileCode, Long questId, String questCode, int questDefinitionVersion,
+            Instant occurredAt, String correlationId) {
+        this(eventVersion, playerId, acceptanceId, rewardProfileCode, questId, questCode,
+                questDefinitionVersion, occurredAt, correlationId, null);
+    }
+
     public static Optional<QuestRewardReadyFact> from(
             QuestEvent event,
             Instant occurredAt,
@@ -90,7 +99,8 @@ public record QuestRewardReadyFact(
                         "questDefinitionVersion"
                 ),
                 occurredAt,
-                correlationId
+                correlationId,
+                attributes.get("questTitle") instanceof String title ? title : null
         ));
     }
 

@@ -19,21 +19,17 @@ public class NotificationAppender implements NotificationAppendApi {
     @Transactional
     public void append(AppendCommand command) {
         Objects.requireNonNull(command, "command must not be null");
+        // A replay preserves even legacy text/provenance; do not re-render stored notifications.
+        if (finder.exists(command.playerId(), command.sourceEventId())) {
+            return;
+        }
         PlayerNotification notification = PlayerNotification.create(
                 command.playerId(),
                 command.sourceEventId(),
                 command.type(),
-                command.title(),
-                command.body(),
+                command.questTitle(),
                 command.occurredAt()
         );
-        if (finder.exists(
-                notification.getPlayerId(),
-                notification.getSourceEventId()
-        )) {
-            return;
-        }
-
         try {
             appendAttempt.append(notification);
         } catch (DataIntegrityViolationException exception) {

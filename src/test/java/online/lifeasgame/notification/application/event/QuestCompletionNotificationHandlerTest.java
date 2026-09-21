@@ -83,6 +83,7 @@ class QuestCompletionNotificationHandlerTest {
                         .playerId(317L)
                         .questId(31L)
                         .attribute("acceptanceId", 3170L)
+                        .attribute("questTitle", "테스트 Quest")
                         .occurredAt(COMPLETED_AT)
                         .correlationId(
                                 "quest:31:acceptance:3170:completed"
@@ -96,8 +97,7 @@ class QuestCompletionNotificationHandlerTest {
                 317L,
                 EVENT_ID,
                 NotificationType.QUEST_COMPLETED,
-                "퀘스트 완료",
-                "퀘스트를 완료했습니다.",
+                "테스트 Quest",
                 COMPLETED_AT
         );
     }

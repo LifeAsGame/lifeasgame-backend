@@ -123,7 +123,8 @@ public record QuestEvent(
 
         public Builder definitionSnapshot(Quest quest) {
             Guard.notNull(quest, "quest");
-            attribute("questDefinitionVersion", quest.getDefinitionVersion())
+            attribute("questTitle", quest.getTitle().value())
+                    .attribute("questDefinitionVersion", quest.getDefinitionVersion())
                     .attribute(
                             "questSemanticCategory",
                             quest.getSemanticCategory() == null

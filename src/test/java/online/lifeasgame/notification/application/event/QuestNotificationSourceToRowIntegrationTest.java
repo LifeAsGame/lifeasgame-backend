@@ -156,6 +156,9 @@ class QuestNotificationSourceToRowIntegrationTest {
         List<OutboxClaim> questClaims = claimService.claimBatch();
         OutboxClaim completedClaim = completedClaim(questClaims);
         QuestEvent completedEvent = decodeQuestEvent(completedClaim);
+        String originalTitle = (String) completedEvent.attributes().get("questTitle");
+        assertThat(originalTitle).isNotBlank();
+        jdbcTemplate.update("UPDATE quests SET title_id = '변경된 Quest 제목' WHERE id = ?", completedEvent.questId());
         questClaims.forEach(claim -> {
             dispatchAttempt.dispatch(claim);
             if (claim.equals(completedClaim)) {
@@ -168,10 +171,11 @@ class QuestNotificationSourceToRowIntegrationTest {
                 NotificationType.QUEST_COMPLETED,
                 completedClaim.eventId(),
                 completedEvent.occurredAt(),
-                "퀘스트 완료",
-                "퀘스트를 완료했습니다."
+                "Quest를 완료했어요",
+                completedEvent.attributes().get("questTitle") + " 완료 사실이 기록되었습니다."
         );
         assertThat(routeState()).isEqualTo(routeBeforeDispatch);
+        jdbcTemplate.update("UPDATE quests SET title_id = ? WHERE id = ?", originalTitle, completedEvent.questId());
     }
 
     @Test
@@ -198,9 +202,65 @@ class QuestNotificationSourceToRowIntegrationTest {
                 NotificationType.QUEST_REWARD_READY,
                 rewardClaim.eventId(),
                 rewardFact.occurredAt(),
-                "퀘스트 보상 준비",
-                "퀘스트 보상을 확인할 수 있습니다."
+                "Quest 보상이 준비됐어요",
+                rewardFact.questTitle() + "의 확인 가능한 보상이 준비되었습니다. Mailbox 또는 결과 화면에서 상태를 확인해 주세요."
         );
+    }
+
+    @Test
+    @DisplayName("알림 저장 실패에도 완료·보상 정산은 유지되고 outbox 재시도가 같은 event row로 수렴한다")
+    void retriesNotificationWithoutUndoingSource() {
+        var accepted = completeFirstTraceQuest();
+        relayQuestEventsOnce();
+        String eventId = jdbcTemplate.queryForObject(
+                "SELECT event_id FROM outbox_events WHERE event_type = 'quest.reward-ready.v1'", String.class);
+        jdbcTemplate.execute("ALTER TABLE player_notifications ADD CONSTRAINT force_notification_failure CHECK (type <> 'QUEST_REWARD_READY')");
+        try {
+            var failed = relayService.relayBatch();
+            assertThat(failed.failed()).isEqualTo(1);
+            assertThat(jdbcTemplate.queryForObject("SELECT status FROM reward_settlements WHERE source_id = ?", String.class, accepted.id()))
+                    .isEqualTo("COMPLETED");
+            assertThat(jdbcTemplate.queryForObject("SELECT completed_at FROM quest_acceptances WHERE id = ?", Object.class, accepted.id())).isNotNull();
+            assertThat(jdbcTemplate.queryForObject("SELECT exp FROM player WHERE id = ?", Long.class, PLAYER_ID)).isEqualTo(10);
+            var failure = jdbcTemplate.queryForMap("SELECT attempt_count, last_error FROM outbox_events WHERE event_id = ?", eventId);
+            assertThat(((Number) failure.get("attempt_count")).intValue()).isEqualTo(1);
+            assertThat(failure.get("last_error").toString()).contains("Dispatch failed");
+        } finally {
+            jdbcTemplate.execute("ALTER TABLE player_notifications DROP CHECK force_notification_failure");
+        }
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM player_notifications WHERE source_event_id = ?", Long.class, eventId)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT exp FROM player WHERE id = ?", Long.class, PLAYER_ID)).isEqualTo(10);
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM outbox_events WHERE event_id = ?", String.class, eventId)).isEqualTo("PUBLISHED");
+    }
+
+    @Test
+    @DisplayName("제목 없는 legacy fact는 보상을 되돌리지 않고 관찰 가능한 재시도·FAILED로 남으며 copy를 추측하지 않는다")
+    void observesMissingLegacySnapshotFailure() {
+        var accepted = completeFirstTraceQuest();
+        relayQuestEventsOnce();
+        jdbcTemplate.update("UPDATE outbox_events SET payload = JSON_REMOVE(payload, '$.questTitle') WHERE event_type = 'quest.reward-ready.v1'");
+        for (int i = 0; i < 3; i++) assertThat(relayService.relayBatch().failed()).isEqualTo(1);
+        var failed = jdbcTemplate.queryForMap("SELECT status, attempt_count, last_error FROM outbox_events WHERE event_type = 'quest.reward-ready.v1'");
+        assertThat(failed.get("status")).isEqualTo("FAILED");
+        assertThat(((Number) failed.get("attempt_count")).intValue()).isEqualTo(3);
+        assertThat(failed.get("last_error").toString()).contains("DomainException");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM player_notifications WHERE type = 'QUEST_REWARD_READY'", Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM reward_settlements WHERE source_id = ?", String.class, accepted.id()))
+                .isEqualTo("COMPLETED");
+        assertThat(jdbcTemplate.queryForObject("SELECT exp FROM player WHERE id = ?", Long.class, PLAYER_ID)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("현재 Quest 정의가 없는 과거 완료 이벤트도 저장된 제목 snapshot으로만 렌더링한다")
+    void rendersWithoutCurrentDefinition() {
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM quests WHERE id = 99999999", Long.class)).isZero();
+        append(QuestEvent.builder(QuestEventType.QUEST_COMPLETED).playerId(PLAYER_ID).questId(99999999L)
+                .questCode("DELETED_DEFINITION").attribute("questTitle", "삭제 전 Quest")
+                .occurredAt(COMPLETED_AT).correlationId("deleted-definition-snapshot").build());
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT body FROM player_notifications", String.class))
+                .isEqualTo("삭제 전 Quest 완료 사실이 기록되었습니다.");
     }
 
     private QuestResult.Acceptance completeFirstTraceQuest() {
@@ -282,7 +342,7 @@ class QuestNotificationSourceToRowIntegrationTest {
                         PlayerNotification.class
                 )
                 .setParameter("playerId", PLAYER_ID)
-                .setParameter("type", type)
+                .setParameter("type", type.name())
                 .getResultList();
 
         assertThat(notifications).hasSize(1);
@@ -292,6 +352,13 @@ class QuestNotificationSourceToRowIntegrationTest {
         assertThat(notification.getOccurredAt()).isEqualTo(occurredAt);
         assertThat(notification.getTitle()).isEqualTo(title);
         assertThat(notification.getBody()).isEqualTo(body);
+        String copyKey = type == NotificationType.QUEST_COMPLETED
+                ? "notification.ntf_quest_completed" : "notification.ntf_quest_reward_ready";
+        assertThat(notification.getTitleCopyId()).isEqualTo(copyKey + ".title");
+        assertThat(notification.getBodyCopyId()).isEqualTo(copyKey + ".body");
+        assertThat(notification.getTitleCopyVersion()).isEqualTo(1);
+        assertThat(notification.getBodyCopyVersion()).isEqualTo(1);
+        assertThat(notification.getCopyLocale()).isEqualTo("ko-KR");
     }
 
     private void insertPlayer() {

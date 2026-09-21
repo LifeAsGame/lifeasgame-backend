@@ -55,6 +55,11 @@ public class NotificationQueryService {
                 row.type(),
                 row.title(),
                 row.body(),
+                row.titleCopyId(),
+                row.titleCopyVersion(),
+                row.bodyCopyId(),
+                row.bodyCopyVersion(),
+                row.copyLocale(),
                 row.occurredAt(),
                 row.readAt() != null
         );

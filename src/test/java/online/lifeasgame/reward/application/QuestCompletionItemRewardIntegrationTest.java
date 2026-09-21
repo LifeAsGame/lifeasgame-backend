@@ -156,7 +156,8 @@ class QuestCompletionItemRewardIntegrationTest {
                 "Q_RECORD_THREE_TRACES",
                 1,
                 Instant.parse("2026-08-03T12:00:00Z"),
-                "quest:2262:acceptance:226301:completed:reward"
+                "quest:2262:acceptance:226301:completed:reward",
+                "테스트 Quest"
         );
     }
 

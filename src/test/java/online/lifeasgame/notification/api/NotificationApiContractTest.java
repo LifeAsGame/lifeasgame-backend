@@ -66,9 +66,11 @@ class NotificationApiContractTest {
                 new NotificationResult.Page(
                         List.of(new NotificationResult.Info(
                                 292L,
-                                NotificationType.QUEST_COMPLETED,
-                                "퀘스트 완료",
-                                "첫 퀘스트를 완료했습니다.",
+                                "QUEST_COMPLETED",
+                                "Quest를 완료했어요",
+                                "첫 기록 완료 사실이 기록되었습니다.",
+                                "notification.ntf_quest_completed.title", 1,
+                                "notification.ntf_quest_completed.body", 1, "ko-KR",
                                 OCCURRED_AT,
                                 false
                         )),
@@ -84,17 +86,22 @@ class NotificationApiContractTest {
                 .andExpect(jsonPath("$.code").value("COMMON-200"))
                 .andExpect(jsonPath("$.result.*", hasSize(3)))
                 .andExpect(jsonPath("$.result.notifications", hasSize(1)))
-                .andExpect(jsonPath("$.result.notifications[0].*", hasSize(6)))
+                .andExpect(jsonPath("$.result.notifications[0].*", hasSize(11)))
                 .andExpect(jsonPath("$.result.notifications[0].id").value(292))
                 .andExpect(jsonPath("$.result.notifications[0].type")
                         .value("QUEST_COMPLETED"))
                 .andExpect(jsonPath("$.result.notifications[0].title")
-                        .value("퀘스트 완료"))
+                        .value("Quest를 완료했어요"))
                 .andExpect(jsonPath("$.result.notifications[0].body")
-                        .value("첫 퀘스트를 완료했습니다."))
+                        .value("첫 기록 완료 사실이 기록되었습니다."))
                 .andExpect(jsonPath("$.result.notifications[0].occurredAt")
                         .value("2026-08-21T10:00:00Z"))
                 .andExpect(jsonPath("$.result.notifications[0].read").value(false))
+                .andExpect(jsonPath("$.result.notifications[0].titleCopyId").value("notification.ntf_quest_completed.title"))
+                .andExpect(jsonPath("$.result.notifications[0].titleCopyVersion").value(1))
+                .andExpect(jsonPath("$.result.notifications[0].bodyCopyId").value("notification.ntf_quest_completed.body"))
+                .andExpect(jsonPath("$.result.notifications[0].bodyCopyVersion").value(1))
+                .andExpect(jsonPath("$.result.notifications[0].copyLocale").value("ko-KR"))
                 .andExpect(jsonPath("$.result.notifications[0].playerId").doesNotExist())
                 .andExpect(jsonPath("$.result.notifications[0].userId").doesNotExist())
                 .andExpect(jsonPath("$.result.notifications[0].sourceEventId").doesNotExist())
@@ -151,6 +158,31 @@ class NotificationApiContractTest {
                         .param("size", Integer.toString(size))
                         .with(authentication(playerAuthentication())))
                 .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"SYSTEM_NOTICE", "FUTURE_UNKNOWN"})
+    @DisplayName("legacy·미지원 type의 조회는 원문과 null metadata를 유지하며 발행 허용을 뜻하지 않는다")
+    void returnsLegacyAndUnknownTypes(String type) throws Exception {
+        given(queryService.inbox(null, 20)).willReturn(new NotificationResult.Page(List.of(
+                new NotificationResult.Info(1L, type, "옛 제목", "옛 본문", null, null, null, null, null,
+                        OCCURRED_AT, true)), false, null));
+        mockMvc.perform(get("/api/v1/notifications").with(authentication(playerAuthentication())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.notifications[0].type").value(type))
+                .andExpect(jsonPath("$.result.notifications[0].body").value("옛 본문"))
+                .andExpect(jsonPath("$.result.notifications[0].titleCopyId").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.result.notifications[0].titleCopyVersion").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.result.notifications[0].bodyCopyId").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.result.notifications[0].bodyCopyVersion").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.result.notifications[0].copyLocale").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
+    @DisplayName("비인증 inbox 요청은 기존 401을 유지한다")
+    void requiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications")).andExpect(status().isUnauthorized());
+        org.mockito.Mockito.verifyNoInteractions(queryService);
     }
 
     private UsernamePasswordAuthenticationToken playerAuthentication() {
