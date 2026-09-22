@@ -1,8 +1,6 @@
 package online.lifeasgame.lifelog.api.player;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerCollectionWebMapper;
@@ -29,7 +27,7 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     @Override
     @GetMapping("/recent")
     public ResponseEntity<List<PlayerCollectionResponse.Info>> recent(
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
+            @RequestParam(defaultValue = "20") Integer limit
     ) {
         List<CollectionResult.Info> results = collectionLogQueryService.recent(limit);
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
@@ -40,8 +38,8 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
     public ResponseEntity<List<PlayerCollectionResponse.Info>> search(
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         List<CollectionResult.Info> results = collectionLogQueryService.search(
                 PlayerCollectionWebMapper.toSearchQuery(category, titleLike, page, size)

@@ -29,8 +29,8 @@ public interface AdminCollectionSpecV1 {
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "컬렉션 등록(관리자, 플레이어 스코프)")
