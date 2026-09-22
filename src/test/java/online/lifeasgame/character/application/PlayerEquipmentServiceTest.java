@@ -3,6 +3,7 @@ package online.lifeasgame.character.application;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand;
 import online.lifeasgame.character.domain.EquipmentSlot;
 import online.lifeasgame.character.domain.EquipmentSlotCategory;
+import online.lifeasgame.character.domain.EquipmentSlotLifecycleStatus;
 import online.lifeasgame.character.domain.PlayerEquipment;
 import online.lifeasgame.character.domain.error.EquipmentSlotError;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -332,9 +335,48 @@ class PlayerEquipmentServiceTest {
     @DisplayName("장착을 해제할 때")
     class UnequipItem {
 
+        @ParameterizedTest
+        @ValueSource(strings = {"enabled", "lifecycleStatus", "category", "role"})
+        @DisplayName("명령 미지원 슬롯은 equipment와 Inventory를 변경하기 전에 거부한다")
+        void rejectsUnsupportedSlotWithoutMutation(String unsupportedField) {
+            EquipmentSlot slot = slot(EquipmentSlotCategory.WEAPON);
+            Object unsupportedValue = switch (unsupportedField) {
+                case "enabled" -> false;
+                case "lifecycleStatus" -> EquipmentSlotLifecycleStatus.GATED;
+                case "category", "role" -> null;
+                default -> throw new AssertionError(unsupportedField);
+            };
+            ReflectionTestUtils.setField(slot, unsupportedField, unsupportedValue);
+            given(slotReader.getByIdOrThrow(SLOT_ID)).willReturn(slot);
+
+            assertThatThrownBy(() -> service.unEquip(SLOT_ID))
+                    .isInstanceOfSatisfying(DomainException.class, exception ->
+                            assertThat(exception.getErrorCode()).isEqualTo(
+                                    PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+                            ));
+            verifyNoInteractions(writer, inventoryEquipmentAvailabilityApi);
+        }
+
+        @Test
+        @DisplayName("미존재 슬롯은 기존 slot not-found 오류로 거부한다")
+        void rejectsMissingSlot() {
+            given(slotReader.getByIdOrThrow(SLOT_ID)).willThrow(
+                    new DomainException(EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND)
+            );
+
+            assertThatThrownBy(() -> service.unEquip(SLOT_ID))
+                    .isInstanceOfSatisfying(DomainException.class, exception ->
+                            assertThat(exception.getErrorCode()).isEqualTo(
+                                    EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND
+                            ));
+            verifyNoInteractions(writer, inventoryEquipmentAvailabilityApi);
+        }
+
         @Test
         @DisplayName("equipment row 해제 후 Inventory availability를 FREE로 돌린다")
         void releasesInventoryAvailability() {
+            given(slotReader.getByIdOrThrow(SLOT_ID))
+                    .willReturn(slot(EquipmentSlotCategory.WEAPON));
             given(writer.unEquip(PLAYER_ID, SLOT_ID))
                     .willReturn(ITEM_INSTANCE_ID);
 
@@ -345,7 +387,20 @@ class PlayerEquipmentServiceTest {
                     PLAYER_ID,
                     ITEM_INSTANCE_ID
             );
-            verifyNoInteractions(slotReader, inventoryEquipmentReadApi, reader);
+            verifyNoInteractions(inventoryEquipmentReadApi, reader);
+        }
+
+        @Test
+        @DisplayName("지원 슬롯이 이미 비어 있으면 Inventory를 변경하지 않고 성공한다")
+        void preservesEmptySlotSuccess() {
+            given(slotReader.getByIdOrThrow(SLOT_ID))
+                    .willReturn(slot(EquipmentSlotCategory.WEAPON));
+            given(writer.unEquip(PLAYER_ID, SLOT_ID)).willReturn(null);
+
+            service.unEquip(SLOT_ID);
+
+            verify(writer).unEquip(PLAYER_ID, SLOT_ID);
+            verifyNoInteractions(inventoryEquipmentAvailabilityApi);
         }
     }
 

@@ -75,6 +75,12 @@ public class PlayerEquipmentService {
     @Transactional
     public void unEquip(Long slotId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        EquipmentSlot slot = equipmentSlotReader.getByIdOrThrow(slotId);
+        if (!slot.supportsEquipmentCommand()) {
+            throw new DomainException(
+                    PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+            );
+        }
         Long itemInstanceId = playerEquipmentWriter.unEquip(playerId, slotId);
         if (itemInstanceId != null) {
             inventoryEquipmentAvailabilityApi.releaseEquippedItem(
