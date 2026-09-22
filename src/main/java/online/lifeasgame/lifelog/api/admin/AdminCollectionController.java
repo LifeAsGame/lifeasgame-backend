@@ -1,8 +1,6 @@
 package online.lifeasgame.lifelog.api.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminCollectionWebMapper;
@@ -30,7 +28,7 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
     @GetMapping("/{playerId}/collections/recent")
     public ResponseEntity<ApiResponse<List<AdminCollectionResponse.Info>>> recent(
             @PathVariable Long playerId,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer limit
+            @RequestParam(defaultValue = "20") Integer limit
     ) {
         List<CollectionResult.Info> results = collectionLogQueryService.recent(playerId, limit);
         return ApiResponses.ok(AdminCollectionWebMapper.toInfos(results));
@@ -42,8 +40,8 @@ public class AdminCollectionController implements AdminCollectionSpecV1 {
             @PathVariable Long playerId,
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         List<CollectionResult.Info> results = collectionLogQueryService.search(
                 playerId,
