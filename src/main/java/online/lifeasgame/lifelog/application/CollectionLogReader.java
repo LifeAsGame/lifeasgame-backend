@@ -1,8 +1,10 @@
 package online.lifeasgame.lifelog.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.lifelog.domain.CollectionCategory;
 import online.lifeasgame.lifelog.domain.CollectionLog;
+import online.lifeasgame.lifelog.domain.error.LifeLogError;
 import online.lifeasgame.lifelog.domain.repository.CollectionLogRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,7 +21,7 @@ class CollectionLogReader {
 
     public CollectionLog getByIdAndPlayerIdOrThrow(Long id, Long playerId) {
         return repository.findByIdAndPlayerId(id, playerId)
-                .orElseThrow(() -> new IllegalArgumentException("COLLECTION_NOT_FOUND"));
+                .orElseThrow(() -> new DomainException(LifeLogError.COLLECTION_NOT_FOUND));
     }
 
     public List<CollectionLog> recent(Long playerId, int limit) {
