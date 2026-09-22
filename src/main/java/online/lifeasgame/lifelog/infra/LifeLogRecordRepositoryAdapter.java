@@ -16,6 +16,11 @@ public class LifeLogRecordRepositoryAdapter
     private final LifeLogRecordJpaRepository jpaRepository;
 
     @Override
+    public void deleteBySourceAndPlayerId(LifeLogSourceType sourceType, Long sourceId, Long playerId) {
+        jpaRepository.deleteBySourceTypeAndSourceIdAndPlayerId(sourceType, sourceId, playerId);
+    }
+
+    @Override
     public LifeLogRecord saveAndFlush(LifeLogRecord record) {
         return jpaRepository.saveAndFlush(record);
     }

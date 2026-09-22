@@ -60,7 +60,7 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository {
     }
 
     @Override
-    public void deleteByIdAndPlayerId(Long collectionId, Long playerId) {
-        jpa.deleteByIdAndPlayerId(collectionId, playerId);
+    public long deleteByIdAndPlayerId(Long collectionId, Long playerId) {
+        return jpa.deleteByIdAndPlayerId(collectionId, playerId);
     }
 }
