@@ -60,7 +60,7 @@ public class MediaLogRepositoryAdapter implements MediaLogRepository {
     }
 
     @Override
-    public void deleteByIdAndPlayerId(Long mediaId, Long playerId) {
-        jpa.deleteByIdAndPlayerId(mediaId, playerId);
+    public long deleteByIdAndPlayerId(Long mediaId, Long playerId) {
+        return jpa.deleteByIdAndPlayerId(mediaId, playerId);
     }
 }

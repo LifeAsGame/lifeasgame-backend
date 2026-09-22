@@ -98,6 +98,9 @@ class QuickRecordServiceIntegrationTest {
     private QuickRecordService quickRecordService;
 
     @Autowired
+    private online.lifeasgame.lifelog.application.CollectionLogService collectionLogService;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -138,6 +141,24 @@ class QuickRecordServiceIntegrationTest {
         executor.shutdownNow();
         assertThat(executor.awaitTermination(5, TimeUnit.SECONDS))
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("삭제 후 같은 Quick Record 요청은 영수증만 재생하고 원본·Journal·Fact를 재생성하지 않는다")
+    void replaysDeletedRecordWithoutRecreation() {
+        var command = collectionCommand("Deleted record");
+        var first = quickRecordService.record(PLAYER_ID, "deleted-replay", command);
+        int events = outboxCount();
+
+        collectionLogService.delete(PLAYER_ID, first.sourceId());
+        var replay = quickRecordService.record(PLAYER_ID, "deleted-replay", command);
+
+        assertThat(replay.sourceId()).isEqualTo(first.sourceId());
+        assertThat(replay.replay()).isTrue();
+        assertThat(count("collection_logs")).isZero();
+        assertThat(count("life_log_records")).isZero();
+        assertThat(receiptCount()).isEqualTo(1);
+        assertThat(outboxCount()).isEqualTo(events);
     }
 
     @Test
@@ -974,6 +995,11 @@ class QuickRecordServiceIntegrationTest {
                 );
             }
             return delegate.saveAndFlush(record);
+        }
+
+        @Override
+        public void deleteBySourceAndPlayerId(LifeLogSourceType sourceType, Long sourceId, Long playerId) {
+            delegate.deleteBySourceAndPlayerId(sourceType, sourceId, playerId);
         }
 
         @Override

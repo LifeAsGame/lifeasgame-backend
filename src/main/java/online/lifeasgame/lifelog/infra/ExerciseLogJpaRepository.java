@@ -35,5 +35,5 @@ public interface ExerciseLogJpaRepository extends JpaRepository<ExerciseLog, Lon
             Pageable pageable
     );
 
-    void deleteByIdAndPlayerId(Long id, Long playerId);
+    long deleteByIdAndPlayerId(Long id, Long playerId);
 }

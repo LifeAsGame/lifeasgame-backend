@@ -35,5 +35,5 @@ public interface MediaLogJpaRepository extends JpaRepository<MediaLog, Long> {
 
     Optional<MediaLog> findByIdAndPlayerId(Long id, Long playerId);
 
-    void deleteByIdAndPlayerId(Long id, Long playerId);
+    long deleteByIdAndPlayerId(Long id, Long playerId);
 }

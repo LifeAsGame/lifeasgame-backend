@@ -9,6 +9,10 @@ import java.util.Optional;
 public interface LifeLogRecordJpaRepository
         extends JpaRepository<LifeLogRecord, Long> {
 
+    void deleteBySourceTypeAndSourceIdAndPlayerId(
+            LifeLogSourceType sourceType, Long sourceId, Long playerId
+    );
+
     Optional<LifeLogRecord> findBySourceTypeAndSourceId(
             LifeLogSourceType sourceType,
             Long sourceId

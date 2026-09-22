@@ -26,5 +26,5 @@ public interface MediaLogRepository {
             int size
     );
 
-    void deleteByIdAndPlayerId(Long mediaId, Long playerId);
+    long deleteByIdAndPlayerId(Long mediaId, Long playerId);
 }

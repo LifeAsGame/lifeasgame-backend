@@ -4,6 +4,7 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordRegistrar;
 import online.lifeasgame.lifelog.domain.repository.CollectionLogRepository;
+import online.lifeasgame.lifelog.domain.record.repository.LifeLogRecordRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -74,6 +75,11 @@ class CollectionLogTransactionContractTest {
         @Bean
         CollectionLogRepository collectionLogRepository() {
             return mock(CollectionLogRepository.class);
+        }
+
+        @Bean
+        LifeLogRecordRepository lifeLogRecordRepository() {
+            return mock(LifeLogRecordRepository.class);
         }
 
         @Bean

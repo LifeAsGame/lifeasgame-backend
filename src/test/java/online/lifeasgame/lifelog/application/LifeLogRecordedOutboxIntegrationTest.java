@@ -175,6 +175,23 @@ class LifeLogRecordedOutboxIntegrationTest {
     }
 
     @Test
+    @DisplayName("원본 삭제 후에도 이미 commit된 Fact를 전달하고 relay 재시도는 원본을 복원하지 않는다")
+    void relaysCommittedFactAfterDeletion() {
+        Long sourceId = mediaLogService.create(PLAYER_ID, mediaCommand()).id();
+        LifeLogRecorded fact = onlyRecordedEvent();
+        List<String> payloads = recordedPayloads();
+        mediaLogService.delete(PLAYER_ID, sourceId);
+
+        assertThat(recordedPayloads()).isEqualTo(payloads);
+        assertThat(relayService.relayBatch().published()).isEqualTo(1);
+        assertThat(probe.events()).extracting(LifeLogRecorded::lifeLogId)
+                .containsExactly(fact.lifeLogId());
+        assertThat(relayService.relayBatch().published()).isZero();
+        assertThat(count("media_logs")).isZero();
+        assertThat(count("life_log_records")).isZero();
+    }
+
+    @Test
     @DisplayName("Collection create commit은 Source와 대표 Fact를 한 건씩 저장한다")
     void commitsCollectionAndFact() {
         Long sourceId = collectionLogService.create(

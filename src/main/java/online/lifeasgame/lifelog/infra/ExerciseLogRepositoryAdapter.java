@@ -59,7 +59,7 @@ public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository {
     }
 
     @Override
-    public void deleteByIdAndPlayerId(Long exerciseId, Long playerId) {
-        jpa.deleteByIdAndPlayerId(exerciseId, playerId);
+    public long deleteByIdAndPlayerId(Long exerciseId, Long playerId) {
+        return jpa.deleteByIdAndPlayerId(exerciseId, playerId);
     }
 }
