@@ -5,6 +5,7 @@ import online.lifeasgame.character.application.PlayerEquipmentService;
 import online.lifeasgame.character.application.command.PlayerEquipmentCommand;
 import online.lifeasgame.character.application.result.PlayerEquipmentResult;
 import online.lifeasgame.character.domain.error.PlayerEquipmentError;
+import online.lifeasgame.character.domain.error.EquipmentSlotError;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.inventory.domain.error.InventoryError;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -136,6 +138,36 @@ class PlayerEquipmentApiContractTest {
     @Nested
     @DisplayName("authoritative invariant를 위반하면")
     class InvariantFailure {
+
+        @Test
+        @DisplayName("명령 미지원 슬롯 DELETE는 기존 422 code를 반환한다")
+        void returnsUnsupportedSlot() throws Exception {
+            doThrow(new DomainException(
+                    PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+            )).when(playerEquipmentService).unEquip(1L);
+
+            mockMvc.perform(delete("/api/v1/players/equipment/1")
+                            .with(authentication(playerAuthentication())))
+                    .andExpect(status().isUnprocessableEntity())
+                    .andExpect(jsonPath("$.code").value(
+                            PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT.code()
+                    ));
+        }
+
+        @Test
+        @DisplayName("미존재 슬롯 DELETE는 기존 slot 404 code를 반환한다")
+        void returnsMissingSlot() throws Exception {
+            doThrow(new DomainException(
+                    EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND
+            )).when(playerEquipmentService).unEquip(1L);
+
+            mockMvc.perform(delete("/api/v1/players/equipment/1")
+                            .with(authentication(playerAuthentication())))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value(
+                            EquipmentSlotError.EQUIPMENT_SLOT_NOT_FOUND.code()
+                    ));
+        }
 
         @Test
         @DisplayName("foreign과 nonexistent item은 같은 ownership-safe code다")

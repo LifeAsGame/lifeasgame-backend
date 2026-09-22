@@ -128,6 +128,45 @@ class PlayerEquipmentConcurrencyIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("장착된 슬롯이 명령 미지원 상태가 되면")
+    class UnsupportedUnequip {
+
+        @Test
+        @DisplayName("해제를 거부하고 equipment와 Inventory availability를 보존한다")
+        void preservesBothStates() {
+            equip(firstSlotId);
+            jdbc.update("""
+                    UPDATE equipment_slots
+                    SET enabled = b'0', lifecycle_status = 'GATED'
+                    WHERE id = ?
+                    """, firstSlotId);
+            List<?> equipmentBefore = jdbc.queryForList("""
+                    SELECT item_inst_id, equipped_at FROM player_equipment
+                    WHERE player_id = ? AND slot_id = ?
+                    """, PLAYER_ID, firstSlotId);
+            String availabilityBefore = jdbc.queryForObject("""
+                    SELECT availability FROM inventory_entries WHERE id = ?
+                    """, String.class, itemInstanceId);
+            assertThat(availabilityBefore).isEqualTo("EQUIPPED");
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(
+                    () -> playerEquipmentService.unEquip(firstSlotId)
+            ).isInstanceOfSatisfying(DomainException.class, exception ->
+                    assertThat(exception.getErrorCode()).isEqualTo(
+                            PlayerEquipmentError.UNSUPPORTED_EQUIPMENT_SLOT
+                    ));
+
+            assertThat(jdbc.queryForList("""
+                    SELECT item_inst_id, equipped_at FROM player_equipment
+                    WHERE player_id = ? AND slot_id = ?
+                    """, PLAYER_ID, firstSlotId)).isEqualTo(equipmentBefore);
+            assertThat(jdbc.queryForObject("""
+                    SELECT availability FROM inventory_entries WHERE id = ?
+                    """, String.class, itemInstanceId)).isEqualTo(availabilityBefore);
+        }
+    }
+
     private void equip(Long slotId) {
         playerEquipmentService.equip(new PlayerEquipmentCommand.Equip(
                 slotId,
