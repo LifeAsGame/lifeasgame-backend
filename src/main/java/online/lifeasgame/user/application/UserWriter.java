@@ -18,11 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 class UserWriter {
 
     private final UserRepository userRepository;
+    private final UserSettingWriter userSettingWriter;
     private final DomainEventPublisher domainEventPublisher;
 
     public Long register(Email email, HashedPassword hashedPassword, Nickname nickname) {
 
         User user = userRepository.save(User.register(email, hashedPassword, nickname));
+
+        // Settings must be visible when registration commits, before outbox delivery.
+        userSettingWriter.ensureDefaultIfMissing(user.getId());
 
         domainEventPublisher.publish(
                 UserRegistered.of(
@@ -39,6 +43,9 @@ class UserWriter {
         User user = userRepository.save(
                 User.registerByOAuth(email, nickname)
         );
+
+        // Settings must be visible when registration commits, before outbox delivery.
+        userSettingWriter.ensureDefaultIfMissing(user.getId());
 
         domainEventPublisher.publish(
                 UserRegistered.of(user.getId(), user.getEmail().getValue(), user.getNickname().getValue())

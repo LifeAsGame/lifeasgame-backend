@@ -15,7 +15,7 @@ class UserSettingWriter {
     private final UserSettingRepository userSettingRepository;
 
     public Long ensureDefaultIfMissing(Long userId) {
-        UserSetting userSetting = userSettingRepository.save(UserSetting.ensureDefault(userId));
-        return userSetting.getUserId();
+        userSettingRepository.insertIfAbsent(UserSetting.ensureDefault(userId));
+        return userId;
     }
 }
