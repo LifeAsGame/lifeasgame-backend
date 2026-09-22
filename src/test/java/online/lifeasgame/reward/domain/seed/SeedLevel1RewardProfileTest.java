@@ -15,10 +15,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeedLevel1RewardProfileTest {
 
     @Test
-    @DisplayName("공식 P0 Reward Profile 두 건의 code와 이름을 보존한다")
-    void containsExactlyTwoOfficialProfiles() {
+    @DisplayName("기존 두 Profile을 보존하고 모험의 준비 보상을 추가한다")
+    void preservesExistingProfilesAndAddsAdventure() {
         assertThat(SeedLevel1RewardProfile.values())
                 .containsExactly(
+                        SeedLevel1RewardProfile.ADVENTURE_PREPARATION,
                         SeedLevel1RewardProfile.EXP_TINY_10,
                         SeedLevel1RewardProfile.EXP_AND_ITEM_FIRST_STEP_20
                 );

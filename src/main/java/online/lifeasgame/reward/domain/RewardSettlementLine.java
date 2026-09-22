@@ -122,6 +122,16 @@ public class RewardSettlementLine extends AbstractTime {
         succeed();
     }
 
+    public boolean isGoldProcessingRequired() {
+        if (rewardType != RewardType.GOLD || amount <= 0 || itemId != null || itemCode != null) {
+            throw new DomainException(RewardError.REWARD_GOLD_PAYLOAD_INVALID);
+        }
+        if (status == RewardSettlementLineStatus.FAILED) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_LINE_ALREADY_FAILED);
+        }
+        return status == RewardSettlementLineStatus.PENDING;
+    }
+
     public boolean isExpProcessingRequired() {
         assertExp();
         if (status == RewardSettlementLineStatus.FAILED) {

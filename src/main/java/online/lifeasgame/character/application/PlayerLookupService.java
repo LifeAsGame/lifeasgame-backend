@@ -15,6 +15,11 @@ public class PlayerLookupService implements PlayerLookupApi {
     private final PlayerReader playerReader;
 
     @Override
+    public Long findUserIdByPlayerId(Long playerId) {
+        return playerReader.getByIdOrThrow(playerId).getUserId();
+    }
+
+    @Override
     public Long findPlayerIdByUserId(Long userId) {
         Player player = playerReader.getByUserId(userId);
         return player == null ? null : player.getId();

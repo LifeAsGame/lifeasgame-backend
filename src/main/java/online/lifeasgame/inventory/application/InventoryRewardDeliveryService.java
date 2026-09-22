@@ -72,7 +72,7 @@ public class InventoryRewardDeliveryService implements InventoryRewardDeliveryAp
                 ItemCarryPolicy.from(item),
                 mailboxQuantity,
                 InstanceAttrs.empty(),
-                true
+                item.isRewardBound()
         );
 
         InventoryRewardDelivery saved = deliveryRepository.save(

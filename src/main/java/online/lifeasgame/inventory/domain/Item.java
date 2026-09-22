@@ -30,6 +30,12 @@ public class Item extends AbstractTime {
     @Embedded
     private ItemName name;
 
+    @Column(length = 500)
+    private String description;
+
+    @Column(name = "reward_bound", nullable = false)
+    private boolean rewardBound = true;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "category", length = 20, nullable = false)
     private ItemCategory category;

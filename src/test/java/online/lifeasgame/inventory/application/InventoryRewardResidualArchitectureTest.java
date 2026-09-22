@@ -74,6 +74,7 @@ class InventoryRewardResidualArchitectureTest {
     void rewardAttemptAndFailureTransactionsRemainIsolated()
             throws Exception {
         assertRequiresNew(RewardSettlementCreateAttempt.class, "create");
+        assertRequiresNew(RewardSettlementGoldProcessAttempt.class, "process");
         assertRequiresNew(
                 RewardSettlementExpProcessAttempt.class,
                 "process"
@@ -99,6 +100,14 @@ class InventoryRewardResidualArchitectureTest {
                 QuestRewardReadyBridge.class.getDeclaredMethods()
         ).flatMap(method -> Arrays.stream(method.getParameterTypes())))
                 .contains(QuestRewardReadyFact.class);
+    }
+
+    @Test
+    @DisplayName("GOLD 정산은 Economy 지급 경계를 사용하고 Wallet 영속 모델에 의존하지 않는다")
+    void goldUsesProviderBoundary() {
+        assertThat(fieldTypes(RewardSettlementGoldProcessAttempt.class)).containsExactlyInAnyOrder(
+                RewardSettlementReader.class, RewardSettlementWriter.class,
+                online.lifeasgame.economy.application.internal.RewardGoldCreditApi.class);
     }
 
     private static Set<Class<?>> fieldTypes(Class<?> type) {

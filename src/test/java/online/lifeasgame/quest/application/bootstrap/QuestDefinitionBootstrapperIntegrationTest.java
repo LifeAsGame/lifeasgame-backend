@@ -50,11 +50,11 @@ class QuestDefinitionBootstrapperIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    @DisplayName("V1~V14와 Reward Seed 위에서 신규 5개를 만들고 재실행해도 중복하지 않는다")
+    @DisplayName("기존 5개와 모험의 준비를 만들고 재실행해도 중복하지 않는다")
     void materializesSeedDefinitionsIdempotently() {
         List<QuestRow> before = seedQuestRows();
 
-        assertThat(before).hasSize(5);
+        assertThat(before).hasSize(6);
         assertThat(before).containsExactly(
                 new QuestRow(
                         before.get(0).id(),
@@ -125,13 +125,16 @@ class QuestDefinitionBootstrapperIntegrationTest {
                         1,
                         "RP_NONE",
                         null
-                )
+                ),
+                new QuestRow(before.get(5).id(), "Q_ADVENTURE_PREPARATION", null, "RECORD",
+                        "RECORD_CREATED", "COUNT", 3, "AUTO", "ONCE", 1,
+                        "RP_ADVENTURE_PREPARATION", null)
         );
 
         bootstrapper.run(null);
 
         assertThat(seedQuestRows()).isEqualTo(before);
-        assertThat(seedQuestCount()).isEqualTo(5);
+        assertThat(seedQuestCount()).isEqualTo(6);
     }
 
     private List<QuestRow> seedQuestRows() {
@@ -155,7 +158,8 @@ class QuestDefinitionBootstrapperIntegrationTest {
                     'Q_RECORD_THREE_TRACES',
                     'Q_RECORD_WEEKLY_LOOKBACK',
                     'Q_GROWTH_ONE_FOCUS',
-                    'Q_RECOVERY_REST_TEN'
+                    'Q_RECOVERY_REST_TEN',
+                    'Q_ADVENTURE_PREPARATION'
                 )
                 ORDER BY FIELD(
                     code,
@@ -163,7 +167,8 @@ class QuestDefinitionBootstrapperIntegrationTest {
                     'Q_RECORD_THREE_TRACES',
                     'Q_RECORD_WEEKLY_LOOKBACK',
                     'Q_GROWTH_ONE_FOCUS',
-                    'Q_RECOVERY_REST_TEN'
+                    'Q_RECOVERY_REST_TEN',
+                    'Q_ADVENTURE_PREPARATION'
                 )
                 """, (resultSet, rowNumber) -> new QuestRow(
                 resultSet.getLong("id"),
@@ -190,7 +195,8 @@ class QuestDefinitionBootstrapperIntegrationTest {
                     'Q_RECORD_THREE_TRACES',
                     'Q_RECORD_WEEKLY_LOOKBACK',
                     'Q_GROWTH_ONE_FOCUS',
-                    'Q_RECOVERY_REST_TEN'
+                    'Q_RECOVERY_REST_TEN',
+                    'Q_ADVENTURE_PREPARATION'
                 )
                 """, Integer.class);
     }

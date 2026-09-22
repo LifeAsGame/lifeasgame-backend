@@ -26,7 +26,8 @@ public final class ItemResult {
             boolean stackable,
             int maxStack,
             Integer maxDurability,
-            Map<String, Integer> baseAttrs
+            Map<String, Integer> baseAttrs,
+            String description
     ) {
         public static Detail from(Item item) {
             return new ItemResult.Detail(
@@ -39,7 +40,8 @@ public final class ItemResult {
                     item.isStackable(),
                     item.maxStack(),
                     item.maxDurability(),
-                    item.getBaseAttrs().attrs()
+                    item.getBaseAttrs().attrs(),
+                    item.getDescription()
             );
         }
     }

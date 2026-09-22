@@ -34,7 +34,8 @@ public final class ItemResponse {
             boolean stackable,
             int maxStack,
             Integer maxDurability,
-            Map<String, Integer> baseAttrs
+            Map<String, Integer> baseAttrs,
+            String description
     ) {
     }
 

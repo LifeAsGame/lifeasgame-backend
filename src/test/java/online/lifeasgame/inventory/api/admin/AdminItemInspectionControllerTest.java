@@ -240,7 +240,8 @@ class AdminItemInspectionControllerTest {
                 true,
                 20,
                 100,
-                Map.of("attack", 7)
+                Map.of("attack", 7),
+                null
         );
     }
 

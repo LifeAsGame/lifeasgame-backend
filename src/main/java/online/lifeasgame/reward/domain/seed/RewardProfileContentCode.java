@@ -1,6 +1,7 @@
 package online.lifeasgame.reward.domain.seed;
 
 public enum RewardProfileContentCode {
+    RP_ADVENTURE_PREPARATION("RP_ADVENTURE_PREPARATION"),
     RP_NONE("RP_NONE"),
     RP_EXP_10("RP_EXP_10"),
     RP_EXP_30("RP_EXP_30"),

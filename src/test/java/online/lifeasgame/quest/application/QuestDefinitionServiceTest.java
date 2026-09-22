@@ -309,7 +309,7 @@ class QuestDefinitionServiceTest {
     }
 
     @Test
-    @DisplayName("Seed Level 1 신규 5개를 materialize하며 세 공식 Reward Profile을 active 조회한다")
+    @DisplayName("기존 5개와 모험의 준비를 materialize하며 Reward Profile을 active 조회한다")
     void materializesSeedLevel1BlueprintsWithActiveProfiles() {
         StaticQuestBlueprintCatalog staticCatalog =
                 new StaticQuestBlueprintCatalog();
@@ -330,7 +330,7 @@ class QuestDefinitionServiceTest {
                         seedProvisioner.ensure(definition.questCode()))
                 .toList();
 
-        assertThat(quests).hasSize(5)
+        assertThat(quests).hasSize(6)
                 .allSatisfy(quest -> {
                     assertThat(quest.getCategory()).isNull();
                     assertThat(quest.getSemanticCategory()).isNotNull();
@@ -342,7 +342,7 @@ class QuestDefinitionServiceTest {
                 .getActiveByCode("RP_EXP_AND_ITEM_FIRST_STEP_20");
         verify(rewardProfileLookupApi, times(3))
                 .getActiveByCode("RP_NONE");
-        verify(questWriter, times(5)).create(any());
+        verify(questWriter, times(6)).create(any());
     }
 
     @Test

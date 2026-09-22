@@ -19,7 +19,8 @@ public final class ItemWebMapper {
                 result.stackable(),
                 result.maxStack(),
                 result.maxDurability(),
-                result.baseAttrs()
+                result.baseAttrs(),
+                result.description()
         );
     }
 

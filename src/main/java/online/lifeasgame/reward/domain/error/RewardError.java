@@ -4,6 +4,10 @@ import online.lifeasgame.core.error.ErrorCode;
 
 public enum RewardError implements ErrorCode {
 
+    REWARD_ACCOUNT_ID_REQUIRED("RWD-400-ACCOUNT-ID-REQUIRED", "Reward account id must be positive and assigned once", 400),
+    REWARD_GOLD_PAYLOAD_INVALID("RWD-409-GOLD-PAYLOAD", "Invalid GOLD reward payload", 409),
+    REWARD_GOLD_RECEIPT_INCONSISTENT("RWD-409-GOLD-RECEIPT", "GOLD receipt is inconsistent", 409),
+
     REWARD_DEFINITION_NOT_FOUND(
             "RWD-404-DEFINITION-NOT-FOUND", "Reward definition not found", 404
     ),

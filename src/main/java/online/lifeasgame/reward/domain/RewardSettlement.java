@@ -44,6 +44,9 @@ public class RewardSettlement extends AbstractTime {
     @Column(name = "player_id", nullable = false)
     private Long playerId;
 
+    @Column(name = "account_id")
+    private Long accountId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", length = 40, nullable = false)
     private RewardSettlementSourceType sourceType;
@@ -91,6 +94,21 @@ public class RewardSettlement extends AbstractTime {
             RewardProfile rewardProfile
     ) {
         return new RewardSettlement(playerId, sourceType, sourceId, rewardProfile);
+    }
+
+    public void assignAccount(Long accountId) {
+        if (accountId == null || accountId <= 0 || this.accountId != null) {
+            throw new DomainException(RewardError.REWARD_ACCOUNT_ID_REQUIRED);
+        }
+        this.accountId = accountId;
+    }
+
+    public void denyAlreadyUsedEntitlement() {
+        if (lines.stream().anyMatch(line -> !line.isPending())) {
+            throw new DomainException(RewardError.REWARD_SETTLEMENT_SOURCE_PROFILE_CONFLICT);
+        }
+        lines.clear();
+        status = RewardSettlementStatus.NOT_ELIGIBLE;
     }
 
     public List<RewardSettlementLine> getLines() {

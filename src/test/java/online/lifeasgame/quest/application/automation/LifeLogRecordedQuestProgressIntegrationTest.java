@@ -146,7 +146,7 @@ class LifeLogRecordedQuestProgressIntegrationTest {
             appendAndRelay(firstDelivery);
 
             assertThat(acceptanceCount()).isZero();
-            assertThat(receiptCount()).isEqualTo(2);
+            assertThat(receiptCount()).isEqualTo(3);
 
             accept(QuestCode.Q_RECORD_THREE_TRACES);
             appendAndRelay(regular(
@@ -384,6 +384,26 @@ class LifeLogRecordedQuestProgressIntegrationTest {
                 .isEqualTo(QuestStatus.COMPLETED.name());
         assertThat(receiptCount(QuestCode.Q_RECORD_WEEKLY_LOOKBACK))
                 .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("모험의 준비는 수락 후 세 고유 기록만 인정하고 재전달은 완료를 반복하지 않는다")
+    void completesAdventureWithThreeDistinctRecords() {
+        QuestCode code = QuestCode.Q_ADVENTURE_PREPARATION;
+        accept(code);
+        java.util.function.Consumer<LifeLogRecorded> apply = event -> trigger.translate(event).stream()
+                .filter(signal -> signal.questCode() == code).forEach(processingService::process);
+        apply.accept(regular("adventure-old", 9900L, ACCEPTED_AT.minusSeconds(1)));
+        assertThat(progress(code)).isZero();
+        for (long id = 9901; id <= 9903; id++) {
+            var event = regular("adventure-" + id, id, ACCEPTED_AT.plusSeconds(id));
+            apply.accept(event);
+            apply.accept(regular("redelivery-" + id, id, event.occurredAt()));
+            assertThat(progress(code)).isEqualTo((int) (id - 9900));
+        }
+        assertThat(status(code)).isEqualTo(QuestStatus.COMPLETED.name());
+        apply.accept(regular("fourth", 9904L, ACCEPTED_AT.plusSeconds(9904)));
+        assertThat(progress(code)).isEqualTo(3);
     }
 
     private Future<QuestSignalProcessingResult> submit(

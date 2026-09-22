@@ -16,12 +16,12 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 class SeedLevel1QuestTest {
 
     @Test
-    @DisplayName("공식 5개 code와 공통 계약을 sortOrder 순서로 보존한다")
+    @DisplayName("기존 5개와 신규 모험의 준비 code와 공통 계약을 sortOrder 순서로 보존한다")
     void preservesOfficialLedgerAndCommonContract() {
         List<SeedLevel1QuestDefinition> definitions =
                 SeedLevel1Quest.definitions();
 
-        assertThat(definitions).hasSize(5);
+        assertThat(definitions).hasSize(6);
         assertThat(definitions)
                 .extracting(SeedLevel1QuestDefinition::questCode)
                 .containsExactly(
@@ -29,12 +29,13 @@ class SeedLevel1QuestTest {
                         QuestCode.Q_RECORD_THREE_TRACES,
                         QuestCode.Q_RECORD_WEEKLY_LOOKBACK,
                         QuestCode.Q_GROWTH_ONE_FOCUS,
-                        QuestCode.Q_RECOVERY_REST_TEN
+                        QuestCode.Q_RECOVERY_REST_TEN,
+                        QuestCode.Q_ADVENTURE_PREPARATION
                 )
                 .doesNotHaveDuplicates();
         assertThat(definitions)
                 .extracting(SeedLevel1QuestDefinition::sortOrder)
-                .containsExactly(10, 20, 30, 40, 50)
+                .containsExactly(10, 20, 30, 40, 50, 60)
                 .doesNotHaveDuplicates();
         assertThat(definitions)
                 .allSatisfy(definition -> {

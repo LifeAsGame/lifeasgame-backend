@@ -63,6 +63,56 @@ public enum SeedLevel1Quest {
             )
     ),
 
+    ADVENTURE_PREPARATION(
+            new SeedLevel1QuestDefinition(
+                    QuestCode.Q_ADVENTURE_PREPARATION,
+                    1,
+                    QuestContentPriority.P0,
+                    1,
+                    QuestDefinitionStatus.ACTIVE,
+                    "모험의 준비",
+                    "일상의 활동을 세 번 기록하고, 다음 여정을 위한 보상을 받으세요.",
+                    "일상의 활동을 세 번 기록하고, 다음 여정을 위한 보상을 받으세요.",
+                    QuestSemanticCategory.RECORD,
+                    QuestProgressMode.EVENT_COUNT,
+                    QuestProgressSourceType.DURABLE_OUTBOX_FACT,
+                    "LifeLogRecorded",
+                    "LIFE_LOG",
+                    "event.playerId == questAcceptance.playerId; "
+                            + "event.occurredAt >= acceptance.acceptedAt",
+                    3,
+                    QuestContentTargetUnit.DISTINCT_LIFELOG,
+                    "서로 다른 eventId이면서 서로 다른 lifeLogId인 LifeLogRecorded 세 건만 "
+                            + "누적한다. 세 번째 고유 기록에서 goal reached와 "
+                            + "QuestCompleted를 한 번만 확정한다.",
+                    true,
+                    QuestRepeatRule.ONCE,
+                    QuestContentPeriodBoundary
+                            .FROM_ACCEPTANCE_UNTIL_COMPLETION,
+                    QuestContentTimezonePolicy.NOT_APPLICABLE,
+                    null,
+                    null,
+                    null,
+                    QuestRoleContextPolicy.OPTIONAL_SOURCE_ROLE_CONTEXT,
+                    Set.of("ANY"),
+                    "RP_ADVENTURE_PREPARATION",
+                    false,
+                    false,
+                    "완료 전 취소 가능; 재수락 시 진행도 0으로 새 attempt 시작; 이전 "
+                            + "attempt의 기록 이벤트는 새 attempt에 이월하지 않음",
+                    "기간 만료와 연속 수행 압박 없음; 중단해도 실패 낙인 없음",
+                    "보상 확인 후 기록 결정을 보관하거나 선택적으로 거래하기",
+                    60,
+                    "icon.quest.record.adventure_preparation",
+                    "quest.record.secondary",
+                    "quest.q_adventure_preparation.completed",
+                    "quest.q_adventure_preparation.empty",
+                    "수행 기간 제한 없음. 동일 LifeLog 수정 이벤트는 진행도 증가 없음. "
+                            + "동일 이벤트 재전달은 eventId 멱등 처리. 기록 삭제 후에도 "
+                            + "이미 누적·완료된 사실은 유지한다."
+            )
+    ),
+
     RECORD_THREE_TRACES(
             new SeedLevel1QuestDefinition(
                     QuestCode.Q_RECORD_THREE_TRACES,

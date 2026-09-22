@@ -51,7 +51,7 @@ class RewardSettlementCreateServiceTest {
     @BeforeEach
     void setUp() {
         RewardSettlementCreateAttempt createAttempt =
-                new RewardSettlementCreateAttempt(profileReader, settlementWriter);
+                new RewardSettlementCreateAttempt(null, null, profileReader, settlementWriter);
         service = new RewardSettlementCreateService(settlementReader, createAttempt);
     }
 

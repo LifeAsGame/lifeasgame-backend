@@ -7,6 +7,12 @@ import java.util.List;
 
 public enum SeedLevel1RewardProfile {
 
+    ADVENTURE_PREPARATION(new RewardProfileSeedDefinition(
+            RewardProfileContentCode.RP_ADVENTURE_PREPARATION,
+            "모험의 준비 보상", RewardProfileStatus.ACTIVE,
+            List.of(new RewardProfileLineSeedDefinition(RewardDefinitionContentCode.RD_ADVENTURE_GOLD, 1, 100L),
+                    new RewardProfileLineSeedDefinition(RewardDefinitionContentCode.RD_RECORD_CRYSTAL, 2, 1L)))),
+
     EXP_TINY_10(
             new RewardProfileSeedDefinition(
                     RewardProfileContentCode.RP_EXP_TINY_10,

@@ -16,7 +16,9 @@ public record ItemSeedDefinition(
         BaseAttrs baseAttrs,
         boolean stackable,
         int maxStack,
-        Integer maxDurability
+        Integer maxDurability,
+        String description,
+        boolean rewardBound
 ) {
 
     public ItemSeedDefinition {

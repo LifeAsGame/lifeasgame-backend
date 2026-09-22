@@ -3,6 +3,9 @@ package online.lifeasgame.economy.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum EconomyError implements ErrorCode {
+    WALLET_BALANCE_OVERFLOW("ECON-WALLET-BALANCE-OVERFLOW", "Wallet balance limit exceeded", 409),
+    REWARD_CREDIT_INVALID("ECON-REWARD-CREDIT-INVALID", "Invalid reward credit", 400),
+    REWARD_CREDIT_CONFLICT("ECON-REWARD-CREDIT-CONFLICT", "Reward credit receipt conflict", 409),
     WALLET_NOT_FOUND("ECON-WALLET-NOT-FOUND", "Wallet not found", 404),
     LISTING_NOT_FOUND("ECON-LISTING-NOT-FOUND", "Listing not found", 404),
     LISTING_NOT_AVAILABLE("ECON-LISTING-NOT-AVAILABLE", "Listing not available", 400),

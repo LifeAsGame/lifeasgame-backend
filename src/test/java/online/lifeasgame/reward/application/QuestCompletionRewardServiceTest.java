@@ -39,7 +39,8 @@ class QuestCompletionRewardServiceTest {
                 createService,
                 settlementReader,
                 expProcessService,
-                itemProcessService
+                itemProcessService,
+                mock(RewardSettlementGoldProcessor.class)
         );
     }
 
