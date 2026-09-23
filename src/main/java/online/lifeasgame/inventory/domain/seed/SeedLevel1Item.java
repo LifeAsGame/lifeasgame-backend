@@ -10,6 +10,11 @@ import java.util.List;
 
 public enum SeedLevel1Item {
 
+    RECORD_CRYSTAL(new ItemSeedDefinition(
+            ItemContentCode.IT_RECORD_CRYSTAL, "기록 결정", ItemCategory.MISC,
+            ItemType.ETC, Rarity.COMMON, BaseAttrs.empty(), true, 99, null,
+            "활동 기록 퀘스트에서 얻는 수집품. 보관하거나 거래할 수 있습니다.", false)),
+
     FIRST_STEP_FRAGMENT(
             new ItemSeedDefinition(
                     ItemContentCode.IT_FIRST_STEP_FRAGMENT,
@@ -20,7 +25,9 @@ public enum SeedLevel1Item {
                     BaseAttrs.empty(),
                     true,
                     99,
-                    null
+                    null,
+                    null,
+                    true
             )
     );
 

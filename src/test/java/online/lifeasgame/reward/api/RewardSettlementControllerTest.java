@@ -116,6 +116,38 @@ class RewardSettlementControllerTest {
                 .header("Authorization", "Bearer test-token");
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = RewardSettlementStatus.class,
+            names = {"PENDING", "PARTIAL_FAILED", "NOT_ELIGIBLE"})
+    @DisplayName("GOLD 금액과 미완료 정산 상태를 성공 완료로 바꾸지 않는다")
+    void exposesUnfinishedGold(RewardSettlementStatus settlementStatus) throws Exception {
+        var now = Instant.now();
+        var lines = settlementStatus == RewardSettlementStatus.NOT_ELIGIBLE
+                ? List.<RewardSettlementResult.Line>of()
+                : List.of(new RewardSettlementResult.Line(1L, 1L, "RD_ADVENTURE_GOLD", RewardType.GOLD,
+                        100L, null, null, 1, RewardSettlementLineStatus.SUCCEEDED, null, now, now),
+                    new RewardSettlementResult.Line(2L, 2L, "RD_RECORD_CRYSTAL", RewardType.ITEM,
+                        1L, 2L, "IT_RECORD_CRYSTAL", 2,
+                        settlementStatus == RewardSettlementStatus.PENDING
+                                ? RewardSettlementLineStatus.PENDING : RewardSettlementLineStatus.FAILED,
+                        settlementStatus == RewardSettlementStatus.PENDING ? null : "INV-MAILBOX-FULL", now, now));
+        when(queryService.getQuestCompletionSettlement(73L)).thenReturn(new RewardSettlementResult.Detail(
+                91L, RewardSettlementSourceType.QUEST_COMPLETION, 73L, 1L, "RP_ADVENTURE_PREPARATION",
+                settlementStatus, now, now, lines));
+        var response = mockMvc.perform(authenticated(get(
+                "/api/v1/reward-settlements/quest-completions/73")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value(settlementStatus.name()));
+        if (!lines.isEmpty()) {
+            response.andExpect(jsonPath("$.result.lines[0].rewardType").value("GOLD"))
+                    .andExpect(jsonPath("$.result.lines[0].amount").value(100))
+                    .andExpect(jsonPath("$.result.lines[1].itemCode").value("IT_RECORD_CRYSTAL"))
+                    .andExpect(jsonPath("$.result.lines[1].status").value(lines.get(1).status().name()));
+        } else {
+            response.andExpect(jsonPath("$.result.lines").isEmpty());
+        }
+    }
+
     private RewardSettlementResult.Detail detail() {
         Instant createdAt = Instant.parse("2026-09-15T01:00:00Z");
         Instant updatedAt = Instant.parse("2026-09-15T01:01:00Z");

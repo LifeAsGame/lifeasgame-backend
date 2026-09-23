@@ -84,14 +84,14 @@ class JpaValidateAfterMigrationTest {
     private QuestDefinitionBootstrapper questDefinitionBootstrapper;
 
     @Nested
-    @DisplayName("V1부터 V35까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V36까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("35");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("36");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()
@@ -100,14 +100,15 @@ class JpaValidateAfterMigrationTest {
         }
 
         @Test
-        @DisplayName("신규 Seed Quest 5개를 nullable category로 Bootstrap하고 재실행은 no-op이다")
+        @DisplayName("기존 5개와 신규 Quest를 nullable category로 Bootstrap하고 재실행은 no-op이다")
         void bootstrapsSeedQuestsIdempotently() throws Exception {
             var codes = java.util.List.of(
                     QuestCode.Q_RECORD_FIRST_TRACE,
                     QuestCode.Q_RECORD_THREE_TRACES,
                     QuestCode.Q_RECORD_WEEKLY_LOOKBACK,
                     QuestCode.Q_GROWTH_ONE_FOCUS,
-                    QuestCode.Q_RECOVERY_REST_TEN
+                    QuestCode.Q_RECOVERY_REST_TEN,
+                    QuestCode.Q_ADVENTURE_PREPARATION
             );
             var before = codes.stream()
                     .map(code -> questQueryService.getDefinition(
@@ -128,7 +129,8 @@ class JpaValidateAfterMigrationTest {
                             "Q_RECORD_THREE_TRACES",
                             "Q_RECORD_WEEKLY_LOOKBACK",
                             "Q_GROWTH_ONE_FOCUS",
-                            "Q_RECOVERY_REST_TEN"
+                            "Q_RECOVERY_REST_TEN",
+                            "Q_ADVENTURE_PREPARATION"
                     );
 
             questDefinitionBootstrapper.run(null);

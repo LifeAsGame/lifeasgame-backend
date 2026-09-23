@@ -153,7 +153,10 @@ public class RewardDefinition extends AbstractTime {
             Long itemId,
             String itemCode
     ) {
-        if (rewardType == RewardType.EXP) {
+        if (rewardType == RewardType.EXP || rewardType == RewardType.GOLD) {
+            if (rewardType == RewardType.GOLD && (itemId != null || itemCode != null)) {
+                throw new DomainException(RewardError.REWARD_GOLD_PAYLOAD_INVALID);
+            }
             if (amount == null || amount <= 0) {
                 throw new DomainException(RewardError.REWARD_AMOUNT_MUST_BE_POSITIVE);
             }

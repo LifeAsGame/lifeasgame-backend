@@ -43,6 +43,9 @@ class SeedLevel1QuestBlueprintAdapterTest {
                         QuestBlueprint::rewardProfileCodeOrNull
                 )
                 .containsExactlyInAnyOrder(
+                        tuple(QuestCode.Q_ADVENTURE_PREPARATION, QuestTargetType.COUNT, 3,
+                                QuestProgressSource.RECORD_CREATED, QuestCompletionPolicy.AUTO,
+                                QuestRepeatRule.ONCE, "RP_ADVENTURE_PREPARATION"),
                         tuple(
                                 QuestCode.Q_RECORD_FIRST_TRACE,
                                 QuestTargetType.COUNT,
@@ -109,7 +112,7 @@ class SeedLevel1QuestBlueprintAdapterTest {
     }
 
     @Test
-    @DisplayName("Static Catalog는 승인된 5개만 sortOrder 순서로 제공한다")
+    @DisplayName("Static Catalog는 기존 5개와 신규 Quest를 sortOrder 순서로 제공한다")
     void exposesOnlyApprovedBlueprints() {
         StaticQuestBlueprintCatalog catalog =
                 new StaticQuestBlueprintCatalog();
@@ -121,7 +124,8 @@ class SeedLevel1QuestBlueprintAdapterTest {
                         QuestCode.Q_RECORD_THREE_TRACES,
                         QuestCode.Q_RECORD_WEEKLY_LOOKBACK,
                         QuestCode.Q_GROWTH_ONE_FOCUS,
-                        QuestCode.Q_RECOVERY_REST_TEN
+                        QuestCode.Q_RECOVERY_REST_TEN,
+                        QuestCode.Q_ADVENTURE_PREPARATION
                 );
         assertThat(catalog.find(QuestCode.PLAYER_WELCOME)).isEmpty();
     }
@@ -150,7 +154,8 @@ class SeedLevel1QuestBlueprintAdapterTest {
                         QuestSemanticCategory.RECORD,
                         QuestSemanticCategory.RECORD,
                         QuestSemanticCategory.GROWTH,
-                        QuestSemanticCategory.RECOVERY
+                        QuestSemanticCategory.RECOVERY,
+                        QuestSemanticCategory.RECORD
                 );
     }
 }

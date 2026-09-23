@@ -16,11 +16,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeedLevel1ItemTest {
 
     @Test
-    @DisplayName("P0 Seed는 정확히 FIRST_STEP_FRAGMENT 한 건이다")
-    void containsExactlyOneP0Seed() {
+    @DisplayName("기념품과 거래용 수집품을 별도 콘텐츠로 유지한다")
+    void containsSouvenirAndCollectible() {
         assertThat(SeedLevel1Item.values())
-                .containsExactly(SeedLevel1Item.FIRST_STEP_FRAGMENT);
-        assertThat(SeedLevel1Item.definitions()).hasSize(1);
+                .containsExactly(SeedLevel1Item.RECORD_CRYSTAL, SeedLevel1Item.FIRST_STEP_FRAGMENT);
+        assertThat(SeedLevel1Item.definitions()).hasSize(2);
+        var crystal = SeedLevel1Item.RECORD_CRYSTAL.definition();
+        assertThat(crystal.rewardBound()).isFalse();
+        assertThat(crystal.description()).isEqualTo("활동 기록 퀘스트에서 얻는 수집품. 보관하거나 거래할 수 있습니다.");
+        assertThat(crystal.category()).isEqualTo(ItemCategory.MISC);
+        assertThat(crystal.type()).isEqualTo(ItemType.ETC);
+        assertThat(crystal.stackable()).isTrue();
+        assertThat(crystal.maxStack()).isEqualTo(99);
+        assertThat(SeedLevel1Item.FIRST_STEP_FRAGMENT.definition().rewardBound()).isTrue();
     }
 
     @Test

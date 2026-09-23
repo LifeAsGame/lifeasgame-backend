@@ -19,6 +19,7 @@ public class QuestCompletionRewardService {
     private final RewardSettlementReader settlementReader;
     private final RewardSettlementExpProcessService expProcessService;
     private final RewardSettlementItemProcessService itemProcessService;
+    private final RewardSettlementGoldProcessor goldProcessor;
 
     public void process(QuestRewardReadyFact fact) {
         RewardSettlement settlement = settlementCreateService.create(
@@ -30,6 +31,13 @@ public class QuestCompletionRewardService {
 
         for (RewardSettlementLine line : settlement.getLines()) {
             switch (line.getRewardType()) {
+                case GOLD -> {
+                    if (line.getStatus() == RewardSettlementLineStatus.FAILED) {
+                        logFailed(settlement.getId(), line);
+                    } else {
+                        processGold(settlement.getId(), line.getId());
+                    }
+                }
                 case EXP -> {
                     if (line.getStatus() == RewardSettlementLineStatus.FAILED) {
                         logFailed(settlement.getId(), line);
@@ -45,6 +53,19 @@ public class QuestCompletionRewardService {
                     }
                 }
             }
+        }
+    }
+
+    private void processGold(Long settlementId, Long lineId) {
+        try {
+            goldProcessor.process(settlementId, lineId);
+        } catch (DomainException exception) {
+            RewardSettlement fresh = settlementReader.getByIdInNewTransactionOrThrow(settlementId);
+            RewardSettlementLine line = fresh.getLineByIdOrThrow(lineId);
+            if (line.getStatus() != RewardSettlementLineStatus.FAILED) {
+                throw exception;
+            }
+            logFailed(settlementId, line);
         }
     }
 

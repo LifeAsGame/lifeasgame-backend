@@ -44,6 +44,9 @@ public class RewardProfile extends AbstractTime {
     @Column(length = 20, nullable = false)
     private RewardProfileStatus status;
 
+    @Column(name = "entitlement_code", length = 80)
+    private String entitlementCode;
+
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private List<RewardProfileLine> lines = new ArrayList<>();

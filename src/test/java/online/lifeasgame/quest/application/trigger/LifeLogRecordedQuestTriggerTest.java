@@ -47,6 +47,7 @@ class LifeLogRecordedQuestTriggerTest {
                 assertThat(signals)
                         .extracting(QuestSignal::questCode)
                         .containsExactly(
+                                QuestCode.Q_ADVENTURE_PREPARATION,
                                 QuestCode.Q_RECORD_FIRST_TRACE,
                                 QuestCode.Q_RECORD_THREE_TRACES
                         );
@@ -101,6 +102,7 @@ class LifeLogRecordedQuestTriggerTest {
         assertThat(fullSignals)
                 .extracting(QuestSignal::questCode)
                 .containsExactly(
+                        QuestCode.Q_ADVENTURE_PREPARATION,
                         QuestCode.Q_RECORD_FIRST_TRACE,
                         QuestCode.Q_RECORD_THREE_TRACES,
                         QuestCode.Q_RECORD_WEEKLY_LOOKBACK
@@ -128,6 +130,7 @@ class LifeLogRecordedQuestTriggerTest {
         assertThat(quickSignals)
                 .extracting(QuestSignal::questCode)
                 .containsExactly(
+                        QuestCode.Q_ADVENTURE_PREPARATION,
                         QuestCode.Q_RECORD_FIRST_TRACE,
                         QuestCode.Q_RECORD_THREE_TRACES
                 );
@@ -201,6 +204,7 @@ class LifeLogRecordedQuestTriggerTest {
             assertThat(signals)
                     .extracting(QuestSignal::questCode)
                     .containsExactly(
+                            QuestCode.Q_ADVENTURE_PREPARATION,
                             QuestCode.Q_RECORD_FIRST_TRACE,
                             QuestCode.Q_RECORD_THREE_TRACES
                     );

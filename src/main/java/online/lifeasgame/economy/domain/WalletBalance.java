@@ -17,6 +17,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.economy.domain.error.EconomyError;
 
 @Entity
 @Table(
@@ -54,6 +56,9 @@ public class WalletBalance extends AbstractTime {
 
     void increase(long v) {
         Guard.minValue(v, 0, "increase amount");
+        if (this.amount > Long.MAX_VALUE - v) {
+            throw new DomainException(EconomyError.WALLET_BALANCE_OVERFLOW);
+        }
         this.amount += v;
     }
 

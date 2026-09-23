@@ -27,7 +27,8 @@ public class LifeLogRecordedQuestTrigger
             return List.of();
         }
 
-        List<QuestSignal> signals = new ArrayList<>(3);
+        List<QuestSignal> signals = new ArrayList<>(4);
+        signals.add(signal(QuestCode.Q_ADVENTURE_PREPARATION, event));
         signals.add(signal(QuestCode.Q_RECORD_FIRST_TRACE, event));
         signals.add(signal(QuestCode.Q_RECORD_THREE_TRACES, event));
         if (isWeeklyLookback(event)) {

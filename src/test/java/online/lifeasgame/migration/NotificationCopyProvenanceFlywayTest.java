@@ -30,7 +30,7 @@ class NotificationCopyProvenanceFlywayTest {
         var flyway = Flyway.configure().dataSource(dataSource).load();
         flyway.migrate();
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("35");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("36");
         assertThat(jdbc.queryForMap("SELECT title, body, source_event_id, occurred_at, read_at FROM player_notifications"))
                 .isEqualTo(before);
         assertThat(jdbc.queryForMap("SELECT title_copy_id, title_copy_version, body_copy_id, body_copy_version, copy_locale FROM player_notifications"))

@@ -1,6 +1,8 @@
 package online.lifeasgame.reward.application;
 
 import lombok.RequiredArgsConstructor;
+import online.lifeasgame.character.application.internal.PlayerLookupApi;
+import online.lifeasgame.reward.infra.AccountRewardEntitlementStore;
 import online.lifeasgame.reward.domain.RewardProfile;
 import online.lifeasgame.reward.domain.RewardSettlement;
 import online.lifeasgame.reward.domain.RewardSettlementSourceType;
@@ -12,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RewardSettlementCreateAttempt {
 
+    private final PlayerLookupApi playerLookupApi;
+    private final AccountRewardEntitlementStore entitlements;
     private final RewardProfileReader profileReader;
     private final RewardSettlementWriter settlementWriter;
 
@@ -24,6 +28,15 @@ public class RewardSettlementCreateAttempt {
     ) {
         RewardProfile profile = profileReader.getActiveByCodeOrThrow(rewardProfileCode);
         RewardSettlement settlement = RewardSettlement.create(playerId, sourceType, sourceId, profile);
-        return settlementWriter.saveAndFlush(settlement);
+        if (profile.getEntitlementCode() != null) {
+            settlement.assignAccount(playerLookupApi.findUserIdByPlayerId(playerId));
+        }
+        settlementWriter.saveAndFlush(settlement);
+        if (profile.getEntitlementCode() != null && !entitlements.claim(
+                settlement.getAccountId(), profile.getEntitlementCode(), settlement.getId())) {
+            settlement.denyAlreadyUsedEntitlement();
+            settlementWriter.saveAndFlush(settlement);
+        }
+        return settlement;
     }
 }

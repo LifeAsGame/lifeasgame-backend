@@ -108,24 +108,25 @@ def ready(state):
     while time.monotonic() < deadline:
         try:
             data, _ = http(state, '/actuator/health')
-            if data.get('status') == 'UP' and sql(state, 'SELECT COUNT(*) FROM quests') == [['5']]:
+            if data.get('status') == 'UP' and sql(state, 'SELECT COUNT(*) FROM quests') == [['6']]:
                 break
         except (RuntimeError, urllib.error.URLError, TimeoutError, ConnectionError, HTTPException, subprocess.CalledProcessError):
             pass
         time.sleep(2)
     else:
         raise RuntimeError('Readiness timeout; inspect with logs, then cleanup.')
-    check(sql(state, "SELECT version, success FROM flyway_schema_history WHERE version = '35'") == [['35', '1']],
-          'Flyway V35 was not applied successfully.')
+    check(sql(state, "SELECT version, success FROM flyway_schema_history WHERE version = '36'") == [['36', '1']],
+          'Flyway V36 was not applied successfully.')
     logs = compose(state, 'logs', '--no-color', 'app', capture_output=True).stdout
     check('Initialized JPA EntityManagerFactory' in logs, 'Hibernate initialization not observed.')
     # Compose explicitly fixes ddl-auto=validate; successful initialization proves validation ran.
-    print(f'PASS readiness: MySQL/Redis health, Flyway V35, Hibernate validate; API http://127.0.0.1:{state["env"]["CFC_API_PORT"]}')
+    print(f'PASS readiness: MySQL/Redis health, Flyway V36, Hibernate validate; API http://127.0.0.1:{state["env"]["CFC_API_PORT"]}')
 
 
 def content(state):
     # Expected runtime contract: SeedLevel1Quest bootstrap and V20/V34 migrations.
     expected = [
+        ['Q_ADVENTURE_PREPARATION', '1', '모험의 준비', '3', 'COUNT', 'ONCE', 'AUTO', 'RECORD_CREATED', 'RP_ADVENTURE_PREPARATION'],
         ['Q_GROWTH_ONE_FOCUS', '1', '한 가지에 25분 집중하기', '25', 'MINUTES', 'DAILY', 'USER_CONFIRM', 'MANUAL_CHECK', 'RP_NONE'],
         ['Q_RECORD_FIRST_TRACE', '1', '첫 흔적 남기기', '1', 'COUNT', 'ONCE', 'AUTO', 'RECORD_CREATED', 'RP_EXP_TINY_10'],
         ['Q_RECORD_THREE_TRACES', '1', '흔적 세 개 이어보기', '3', 'COUNT', 'ONCE', 'AUTO', 'RECORD_CREATED', 'RP_EXP_AND_ITEM_FIRST_STEP_20'],
@@ -161,7 +162,17 @@ def content(state):
     check(sql(state, "SELECT code,name,category,type,rarity,stackable+0,max_stack, "
               "COALESCE(equipment_compatibility_kind,'NONE') FROM items WHERE code='IT_FIRST_STEP_FRAGMENT'") ==
           [['IT_FIRST_STEP_FRAGMENT', '첫걸음의 조각', 'QUEST', 'ETC', 'COMMON', '1', '99', 'NONE']], 'Item contract mismatch')
-    print('PASS content: exact 5 Quest @1, Route @1 / 3 Step links, Reward/Item stable codes and payloads')
+    check(sql(state, "SELECT p.entitlement_code,d.reward_type,d.amount,COALESCE(d.item_code,'NONE') "
+              "FROM reward_profiles p JOIN reward_profile_lines l ON l.reward_profile_id=p.id "
+              "JOIN reward_definitions d ON d.id=l.reward_definition_id "
+              "WHERE p.code='RP_ADVENTURE_PREPARATION' ORDER BY l.sort_order") == [
+                  ['ADVENTURE_PREPARATION', 'GOLD', '100', 'NONE'],
+                  ['ADVENTURE_PREPARATION', 'ITEM', '1', 'IT_RECORD_CRYSTAL']], 'Adventure reward mismatch')
+    check(sql(state, "SELECT name,description,category,type,stackable+0,max_stack,reward_bound+0 "
+              "FROM items WHERE code='IT_RECORD_CRYSTAL'") == [[
+                  '기록 결정', '활동 기록 퀘스트에서 얻는 수집품. 보관하거나 거래할 수 있습니다.',
+                  'MISC', 'ETC', '1', '99', '0']], 'Record crystal contract mismatch')
+    print('PASS content: exact 6 Quest @1, Route @1 / 3 Step links, Reward/Item stable codes and payloads')
     print('LIMIT: Step is checked under its Route version; Reward/Item have no persisted content-version field.')
 
 
@@ -249,8 +260,8 @@ def smoke(state):
     _, other_token = actor(state)
     check(api(state, '/api/v1/notifications', token=other_token)['notifications'] == [], 'Inbox owner isolation failed')
     print('PASS HTTP + DB: 3 Quick Records -> 2 completed Quests -> EXP 30 + bound Mailbox Item/receipt -> 4 approved notifications with @1 ko-KR metadata; owner isolation')
-    print('BLOCKED Marketplace: approved Item reward is bound; verified payment/funding is unavailable. No admin grant or SQL fixture used.')
-    print('Scope: representative runtime smoke only; Marketplace end-to-end verification remains blocked.')
+    print('BLOCKED Marketplace: clearance remains pending review. This smoke covers the legacy bound souvenir, not the optional adventure reward trading flow.')
+    print('Scope: representative legacy runtime smoke only; no admin grant, payment or SQL fixture used.')
 
 
 def start(args):
