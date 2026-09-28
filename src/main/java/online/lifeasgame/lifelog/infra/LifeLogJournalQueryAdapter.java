@@ -1,6 +1,7 @@
 package online.lifeasgame.lifelog.infra;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -43,19 +44,7 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
             int size
     ) {
         List<CanonicalRecord> content = queryFactory
-                .select(Projections.constructor(
-                        CanonicalRecord.class,
-                        lifeLogRecord.id,
-                        lifeLogRecord.sourceType,
-                        lifeLogRecord.sourceId,
-                        lifeLogRecord.subtype,
-                        lifeLogRecord.entryMode,
-                        lifeLogRecord.reflectionScope,
-                        lifeLogRecord.periodKey,
-                        lifeLogRecord.primaryRoleId,
-                        lifeLogRecord.roleEventId,
-                        lifeLogRecord.occurredAt
-                ))
+                .select(canonicalRecordProjection())
                 .from(lifeLogRecord)
                 .where(
                         lifeLogRecord.playerId.eq(playerId),
@@ -86,19 +75,7 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
     @Override
     public List<CanonicalRecord> findRecent(Long playerId, int limit) {
         return queryFactory
-                .select(Projections.constructor(
-                        CanonicalRecord.class,
-                        lifeLogRecord.id,
-                        lifeLogRecord.sourceType,
-                        lifeLogRecord.sourceId,
-                        lifeLogRecord.subtype,
-                        lifeLogRecord.entryMode,
-                        lifeLogRecord.reflectionScope,
-                        lifeLogRecord.periodKey,
-                        lifeLogRecord.primaryRoleId,
-                        lifeLogRecord.roleEventId,
-                        lifeLogRecord.occurredAt
-                ))
+                .select(canonicalRecordProjection())
                 .from(lifeLogRecord)
                 .where(lifeLogRecord.playerId.eq(playerId))
                 .orderBy(
@@ -144,19 +121,7 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
             Long lifeLogId
     ) {
         return Optional.ofNullable(queryFactory
-                .select(Projections.constructor(
-                        CanonicalRecord.class,
-                        lifeLogRecord.id,
-                        lifeLogRecord.sourceType,
-                        lifeLogRecord.sourceId,
-                        lifeLogRecord.subtype,
-                        lifeLogRecord.entryMode,
-                        lifeLogRecord.reflectionScope,
-                        lifeLogRecord.periodKey,
-                        lifeLogRecord.primaryRoleId,
-                        lifeLogRecord.roleEventId,
-                        lifeLogRecord.occurredAt
-                ))
+                .select(canonicalRecordProjection())
                 .from(lifeLogRecord)
                 .where(
                         lifeLogRecord.id.eq(lifeLogId),
@@ -206,6 +171,22 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
             );
             case MEDIA -> loadMediaSource(playerId, record.sourceId());
         };
+    }
+
+    private ConstructorExpression<CanonicalRecord> canonicalRecordProjection() {
+        return Projections.constructor(
+                CanonicalRecord.class,
+                lifeLogRecord.id,
+                lifeLogRecord.sourceType,
+                lifeLogRecord.sourceId,
+                lifeLogRecord.subtype,
+                lifeLogRecord.entryMode,
+                lifeLogRecord.reflectionScope,
+                lifeLogRecord.periodKey,
+                lifeLogRecord.primaryRoleId,
+                lifeLogRecord.roleEventId,
+                lifeLogRecord.occurredAt
+        );
     }
 
     private void loadCollectionPreviews(
