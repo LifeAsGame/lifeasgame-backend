@@ -99,9 +99,9 @@ public class Party extends AbstractTime {
         this.joinPolicy = joinPolicy;
         this.status = status;
         this.maxMembers = maxMembers;
-        this.tags = tags;
-        this.members = members;
-        this.waitMembers = waitMembers;
+        this.tags = tags == null ? new HashSet<>() : tags;
+        this.members = members == null ? new ArrayList<>() : members;
+        this.waitMembers = waitMembers == null ? new ArrayList<>() : waitMembers;
     }
 
     public static Party create(

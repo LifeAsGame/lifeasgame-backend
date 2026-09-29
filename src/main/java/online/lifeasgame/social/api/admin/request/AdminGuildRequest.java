@@ -14,8 +14,8 @@ public final class AdminGuildRequest {
             String descriptionMd,
             String emblemImageUrl,
             String emblemBgColor,
-            @Pattern(regexp = "PUBLIC|PRIVATE") String visibility,
-            @Pattern(regexp = "OPEN|APPROVAL|INVITE_ONLY") String joinPolicy,
+            @NotNull @Pattern(regexp = "PUBLIC|PRIVATE") String visibility,
+            @NotNull @Pattern(regexp = "OPEN|APPROVAL|INVITE_ONLY") String joinPolicy,
             @Min(1) @Max(500) int maxMembers
     ) {
     }
