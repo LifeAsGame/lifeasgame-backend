@@ -111,6 +111,17 @@ class DemoSafetyTest(unittest.TestCase):
             social.assert_called_once()
             self.assertEqual(json.loads(path.read_text())['status'], 'passed')
 
+    def test_handoff_verify_command_uses_a_fresh_or_interrupted_namespace(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(demo.r, 'STATE', Path(directory)):
+            first = demo.next_verification('demo')
+            path = demo.namespace_path(first) / 'verification.json'
+            demo.atomic_json(path, {'status': 'failed'})
+            self.assertEqual(demo.next_verification('demo'), first)
+            demo.atomic_json(path, {'status': 'passed'})
+            second = demo.next_verification('demo')
+            self.assertNotEqual(second, first)
+            self.assertLessEqual(len(second), 32)
+
     def test_poll_is_bounded(self):
         with patch.object(demo.time, 'monotonic', side_effect=[0, 60]), \
              patch.object(demo.time, 'sleep') as sleep, self.assertRaises(RuntimeError):

@@ -71,8 +71,9 @@ Verification prepares that separate namespace with the same code, then runs:
 5. Prepare after consumption preserves the exact current business state.
 
 It refuses the published demonstration namespace and an already passed
-verification namespace. Interrupted verification resumes only unfinished
-phases; completed quest/trade/person phases are retained and skipped. Existing
+verification namespace. Completed quest/trade/person phases are retained and
+skipped on resume. Checkpoints are between phases: an interruption inside a
+reservation/purchase phase may require a fresh namespace. Existing
 accounts/data are retained. Use a **new** namespace for a new full demonstration. Do not repeat full application regression
 locally: the normal PR CI runs `clean test build` and the Python safety checks.
 
@@ -82,7 +83,9 @@ The fixed handoff is `$HOME/.local/share/lifeasgame-integration/backend.json`.
 It contains status/reason, pinned commit, worktree, optional PR, API URL, exact
 FE origin, environment and stop command, account IDs/emails, credentials file
 path, real scenario IDs/initial/current state and verification result/command.
-No passwords or bearer/reservation tokens are written there. Use
+The next verification command selects a fresh namespace or resumes an
+interrupted one; the previous executed command and result remain in
+`verification`. No passwords or bearer/reservation tokens are written there. Use
 `allowedFeOrigin` for the follow-up frontend server and `apiBaseUrl` for its
 API client. Read the private credentials file locally for normal login.
 

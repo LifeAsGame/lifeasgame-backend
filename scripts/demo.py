@@ -72,6 +72,17 @@ def command(action, namespace=None):
     return shlex.join(args)
 
 
+def next_verification(seed):
+    prefix = 'verify-' + hashlib.sha256(seed.encode()).hexdigest()[:16]
+    index = 1
+    while True:
+        namespace = prefix + '-' + str(index)
+        path = namespace_path(namespace) / 'verification.json'
+        if not path.exists() or json.loads(path.read_text()).get('status') != 'passed':
+            return namespace
+        index += 1
+
+
 def owned_handoff():
     if not HANDOFF.exists():
         return {}
@@ -170,7 +181,7 @@ def credentials(namespace):
         actors = {actor: {'email': f'demo-{namespace}-{actor}@example.invalid',
                           'password': secrets.token_urlsafe(24)} for actor in ACTORS}
         atomic_json(path, actors)
-    r.check(not path.is_symlink() and path.stat().st_mode & 0o777 == 0o600,
+    r.check(path.is_file() and not path.is_symlink() and path.stat().st_mode & 0o777 == 0o600,
             'Credentials must be a regular 0600 file outside the repository.')
     return json.loads(path.read_text()), path
 
@@ -376,7 +387,7 @@ def publish(state, namespace, saved, current, pr):
                 'scenarios': saved['scenarios'], 'initial': saved['initial'], 'current': current,
                 'personStatusAvailable': False, 'personStatusReason': '#381 is not included in the pinned develop source.',
                 'prepareCommand': command('prepare', namespace) + ' --publish' + (f' --pr {pr}' if pr else ''),
-                'verifyCommand': command('verify', namespace[:20] + '-smoke'),
+                'verifyCommand': command('verify', next_verification(namespace)),
                 'verification': old.get('verification', {'status': 'not-run'})}
     atomic_json(HANDOFF, manifest)
     print('READY handoff: ' + str(HANDOFF))
@@ -532,6 +543,7 @@ def verify(state, namespace):
     saved, tokens, _ = prepare(state, namespace)
     progress.update(status='running', namespace=namespace)
     atomic_json(verification_path, progress)
+    # ponytail: checkpoint between phases; an interruption inside a trade may need a fresh namespace.
     for name, phase in [('quest', verify_quest), ('trade', verify_trade), ('person', verify_person), ('social', verify_social)]:
         if name not in progress['phases']:
             progress['phases'][name] = phase(state, namespace, saved, tokens)
@@ -540,12 +552,13 @@ def verify(state, namespace):
     final = observe(state, tokens, saved['scenarios'])
     _, _, rerun = prepare(state, namespace)
     r.check(rerun == final, 'Prepare rerun reset progress or repeated rewards.')
-    result = {'status': 'passed', 'namespace': namespace, 'mode': 'real HTTP on dedicated MySQL/Redis',
+    result = {'status': 'passed', 'namespace': namespace, 'executedCommand': command('verify', namespace),
+              'mode': 'real HTTP on dedicated MySQL/Redis',
               'phases': progress['phases'], 'prepareAfterConsumption': 'passed',
               'personStatusAvailable': progress['phases']['person']['personStatusAvailable']}
     atomic_json(verification_path, result)
     if handoff:
-        handoff.update(status='ready', reason=None, verification=result, verifyCommand=command('verify', namespace),
+        handoff.update(status='ready', reason=None, verification=result, verifyCommand=command('verify', next_verification(handoff['seedNamespace'])),
                        personStatusAvailable=result['personStatusAvailable'])
         atomic_json(HANDOFF, handoff)
     print('PASS real HTTP scenarios; result: ' + str(verification_path))
