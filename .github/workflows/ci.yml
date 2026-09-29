@@ -26,6 +26,9 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Demo preparation safety checks
+        run: python3 -B -m unittest discover -s scripts -p 'test_demo.py'
+
       - name: Build & Test
         run: ./gradlew clean test build
 
