@@ -68,7 +68,12 @@ public final class PlayerWebMapper {
                         current.vit(),
                         current.luc(),
                         current.extraStats(),
-                        current.representativeTitleId()
+                        current.representativeTitleId(),
+                        current.expIntoLevel(),
+                        current.capForLevel(),
+                        current.expToNext(),
+                        current.progressRatio(),
+                        current.maxLevelReached()
                 ),
                 result.recentExpChanges().stream()
                         .map(change -> new PlayerResponse.Growth.RecentExpChange(

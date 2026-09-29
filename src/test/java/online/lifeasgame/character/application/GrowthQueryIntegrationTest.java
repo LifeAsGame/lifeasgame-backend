@@ -7,6 +7,7 @@ import online.lifeasgame.character.domain.GenderType;
 import online.lifeasgame.character.domain.Name;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.growth.PlayerGrowthChange;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
@@ -42,6 +43,9 @@ class GrowthQueryIntegrationTest {
     private GrowthQueryService service;
 
     @Autowired
+    private LevelingPolicy levelingPolicy;
+
+    @Autowired
     private EntityManager entityManager;
 
     @Autowired
@@ -56,6 +60,39 @@ class GrowthQueryIntegrationTest {
     @Nested
     @DisplayName("current Player의 history를 읽을 때")
     class CurrentPlayerHistory {
+
+        @Test
+        @DisplayName("운영 정책 빈으로 현재 진행값을 계산하며 조회·flush 후에도 저장 상태와 이벤트를 변경하지 않는다")
+        void readsProgressWithoutMutation() {
+            Player current = persistPlayer(26404L, "progress");
+            current.gainExp(130, levelingPolicy);
+            current.pullEvents();
+            entityManager.flush();
+            given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(current.getId());
+            Statistics statistics = statistics();
+            statistics.clear();
+
+            GrowthResult.Current result = service.getCurrentGrowth().current();
+            entityManager.flush();
+
+            assertThat(result.level()).isEqualTo(2);
+            assertThat(result.exp()).isEqualTo(130);
+            assertThat(result.expIntoLevel()).isEqualTo(30);
+            assertThat(result.capForLevel()).isEqualTo(135);
+            assertThat(result.expToNext()).isEqualTo(105);
+            assertThat(result.progressRatio()).isEqualTo(30.0 / 135);
+            assertThat(result.maxLevelReached()).isFalse();
+            assertThat(statistics.getEntityInsertCount()).isZero();
+            assertThat(statistics.getEntityUpdateCount()).isZero();
+            assertThat(statistics.getEntityDeleteCount()).isZero();
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT exp FROM player WHERE id = ?", Long.class, current.getId()
+            )).isEqualTo(130);
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT level FROM player WHERE id = ?", Integer.class, current.getId()
+            )).isEqualTo(2);
+            assertThat(current.pullEvents()).isEmpty();
+        }
 
         @Test
         @DisplayName("player를 격리하고 같은 timestamp에서는 id DESC로 최근 20개만 반환한다")

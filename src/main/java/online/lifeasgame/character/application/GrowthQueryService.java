@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.query.GrowthQuery;
 import online.lifeasgame.character.application.result.GrowthResult;
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.reward.application.internal.RewardGrowthSourceReadApi;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class GrowthQueryService {
     private final PlayerReader playerReader;
     private final GrowthQuery growthQuery;
     private final RewardGrowthSourceReadApi rewardGrowthSourceReadApi;
+    private final LevelingPolicy levelingPolicy;
 
     public GrowthResult.Overview getCurrentGrowth() {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
@@ -37,7 +39,7 @@ public class GrowthQueryService {
         Map<Long, RewardGrowthSourceReadApi.RewardGrowthSource> sources = sources(changes);
 
         return new GrowthResult.Overview(
-                GrowthResult.Current.from(player),
+                GrowthResult.Current.from(player, levelingPolicy),
                 changes.stream()
                         .map(change -> toResult(change, sources.get(change.rewardLineId())))
                         .toList()

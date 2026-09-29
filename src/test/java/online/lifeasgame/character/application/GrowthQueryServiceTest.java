@@ -4,17 +4,22 @@ import online.lifeasgame.character.application.query.GrowthQuery;
 import online.lifeasgame.character.application.result.GrowthResult;
 import online.lifeasgame.character.domain.CoreStatDelta;
 import online.lifeasgame.character.domain.GenderType;
+import online.lifeasgame.character.domain.LevelingPolicyParameters;
 import online.lifeasgame.character.domain.Name;
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
+import online.lifeasgame.character.domain.service.PrecomputedLevelingPolicy;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.reward.application.internal.RewardGrowthSourceReadApi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -50,8 +55,18 @@ class GrowthQueryServiceTest {
     @Captor
     private ArgumentCaptor<Set<Long>> rewardLineIdsCaptor;
 
-    @InjectMocks
+    private final LevelingPolicy levelingPolicy = new PrecomputedLevelingPolicy(
+            new LevelingPolicyParameters(3, 100L,
+                    List.of(new LevelingPolicyParameters.Bracket(1, 3, 1.0, 0L)))
+    );
+
     private GrowthQueryService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new GrowthQueryService(currentPlayerAccessor, playerReader, growthQuery,
+                rewardGrowthSourceReadApi, levelingPolicy);
+    }
 
     @Nested
     @DisplayName("현재 성장 상태를 조회할 때")
@@ -69,8 +84,39 @@ class GrowthQueryServiceTest {
             GrowthResult.Current current = service.getCurrentGrowth().current();
 
             assertThat(current).isEqualTo(new GrowthResult.Current(
-                    1, 0, 2, 3, 4, 5, 6, 7, Map.of(), 77L
+                    1, 0, 2, 3, 4, 5, 6, 7, Map.of(), 77L, 0, 100, 100, 0.0, false
             ));
+        }
+
+        @ParameterizedTest(name = "누적 EXP {0}: 레벨 {1}, 현재 {2} / 필요 {3}, 최고 레벨 {6}")
+        @CsvSource({
+                "0,   1,  0, 100, 100, 0.0, false",
+                "30,  1, 30, 100,  70, 0.3, false",
+                "100, 2,  0, 101, 101, 0.0, false",
+                "201, 3,  0,   0,   0, 1.0, true"
+        })
+        @DisplayName("실제 레벨 정책의 시작·중간·정확한 경계·최고 레벨 진행값을 반환하고 누적 EXP를 보존한다")
+        void returnsLevelProgress(long totalExp, int level, long intoLevel, long cap,
+                                  long toNext, double ratio, boolean maxLevelReached) {
+            Player player = player();
+            if (totalExp > 0) {
+                player.gainExp(totalExp, levelingPolicy);
+            }
+            givenCurrentPlayer(player);
+            given(growthQuery.findRecentExpChanges(PLAYER_ID, 20)).willReturn(List.of());
+
+            GrowthResult.Current current = service.getCurrentGrowth().current();
+
+            assertThat(current.level()).isEqualTo(level);
+            assertThat(current.exp()).isEqualTo(totalExp);
+            assertThat(current.expIntoLevel()).isEqualTo(intoLevel);
+            assertThat(current.capForLevel()).isEqualTo(cap);
+            assertThat(current.expToNext()).isEqualTo(toNext);
+            assertThat(current.progressRatio()).isEqualTo(ratio);
+            assertThat(current.maxLevelReached()).isEqualTo(maxLevelReached);
+            assertThat(player.getExp().value()).isEqualTo(totalExp);
+            assertThat(player.getLevel().value()).isEqualTo(level);
+            assertThat(player.pullEvents()).isEmpty();
         }
 
         @Test

@@ -1,6 +1,7 @@
 package online.lifeasgame.character.application.result;
 
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,9 +25,17 @@ public final class GrowthResult {
             int vit,
             int luc,
             Map<String, Integer> extraStats,
-            Long representativeTitleId
+            Long representativeTitleId,
+            long expIntoLevel,
+            long capForLevel,
+            long expToNext,
+            double progressRatio,
+            boolean maxLevelReached
     ) {
-        public static Current from(Player player) {
+        public static Current from(Player player, LevelingPolicy levelingPolicy) {
+            LevelingPolicy.Progress progress = levelingPolicy.progressOf(
+                    player.getExp().value(), player.getLevel().value()
+            );
             return new Current(
                     player.getLevel().value(),
                     player.getExp().value(),
@@ -37,7 +46,12 @@ public final class GrowthResult {
                     player.getStats().vit(),
                     player.getStats().luc(),
                     player.getExtraStats().asMap(),
-                    player.getTitleId()
+                    player.getTitleId(),
+                    progress.expIntoLevel(),
+                    progress.capForLevel(),
+                    progress.expToNext(),
+                    progress.progressRatio(),
+                    player.getLevel().value() >= levelingPolicy.maxLevel()
             );
         }
     }

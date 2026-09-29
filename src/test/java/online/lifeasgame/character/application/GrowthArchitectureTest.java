@@ -2,6 +2,7 @@ package online.lifeasgame.character.application;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import online.lifeasgame.character.application.query.GrowthQuery;
+import online.lifeasgame.character.domain.service.LevelingPolicy;
 import online.lifeasgame.character.infra.growth.GrowthQueryAdapter;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.reward.application.internal.RewardGrowthSourceReadApi;
@@ -33,7 +34,8 @@ class GrowthArchitectureTest {
                             CurrentPlayerAccessor.class,
                             PlayerReader.class,
                             GrowthQuery.class,
-                            RewardGrowthSourceReadApi.class
+                            RewardGrowthSourceReadApi.class,
+                            LevelingPolicy.class
                     );
             Set<Class<?>> rewardDependencies = Arrays.stream(
                             GrowthQueryService.class.getDeclaredFields()

@@ -1,5 +1,8 @@
 package online.lifeasgame.character.api.player;
 
+import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.oas.models.media.Schema;
+import online.lifeasgame.character.api.player.response.PlayerResponse;
 import online.lifeasgame.character.application.GrowthQueryService;
 import online.lifeasgame.character.application.PlayerFacade;
 import online.lifeasgame.character.application.PlayerQueryService;
@@ -129,6 +132,23 @@ class PlayerGrowthApiContractTest {
     class GetGrowth {
 
         @Test
+        @DisplayName("OpenAPI는 진행 경험치를 int64, 진행률을 double, 최고 레벨 여부를 boolean으로 문서화한다")
+        void documentsProgressSchema() {
+            Schema<?> current = ModelConverters.getInstance()
+                    .read(PlayerResponse.Growth.Current.class).get("Current");
+
+            for (String field : List.of("exp", "expIntoLevel", "capForLevel", "expToNext")) {
+                assertThat(current.getProperties().get(field).getType()).isEqualTo("integer");
+                assertThat(current.getProperties().get(field).getFormat()).isEqualTo("int64");
+                assertThat(current.getProperties().get(field).getDescription()).isNotBlank();
+            }
+            assertThat(current.getProperties().get("progressRatio").getFormat()).isEqualTo("double");
+            assertThat(current.getProperties().get("progressRatio").getMinimum()).isEqualByComparingTo("0");
+            assertThat(current.getProperties().get("progressRatio").getMaximum()).isEqualByComparingTo("1");
+            assertThat(current.getProperties().get("maxLevelReached").getType()).isEqualTo("boolean");
+        }
+
+        @Test
         @DisplayName("identity parameter 없이 current Player endpoint를 노출한다")
         void exposesParameterlessCurrentPlayerEndpoint() throws Exception {
             assertThat(PlayerController.class.getDeclaredMethod("growth").getParameterCount())
@@ -145,6 +165,11 @@ class PlayerGrowthApiContractTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.current.level").value(3))
                     .andExpect(jsonPath("$.result.current.exp").value(250))
+                    .andExpect(jsonPath("$.result.current.expIntoLevel").value(15))
+                    .andExpect(jsonPath("$.result.current.capForLevel").value(173))
+                    .andExpect(jsonPath("$.result.current.expToNext").value(158))
+                    .andExpect(jsonPath("$.result.current.progressRatio").value(15.0 / 173))
+                    .andExpect(jsonPath("$.result.current.maxLevelReached").value(false))
                     .andExpect(jsonPath("$.result.current.str").value(2))
                     .andExpect(jsonPath("$.result.current.agi").value(3))
                     .andExpect(jsonPath("$.result.current.dex").value(4))
@@ -174,7 +199,7 @@ class PlayerGrowthApiContractTest {
         @DisplayName("history가 없으면 recentExpChanges 빈 배열을 반환한다")
         void returnsEmptyHistoryArray() throws Exception {
             given(growthQueryService.getCurrentGrowth()).willReturn(new GrowthResult.Overview(
-                    new GrowthResult.Current(1, 0, 1, 1, 1, 1, 1, 1, Map.of(), null),
+                    new GrowthResult.Current(1, 0, 1, 1, 1, 1, 1, 1, Map.of(), null, 0, 100, 100, 0.0, false),
                     List.of()
             ));
 
@@ -184,6 +209,27 @@ class PlayerGrowthApiContractTest {
                     .andExpect(jsonPath("$.result.recentExpChanges").isArray())
                     .andExpect(jsonPath("$.result.recentExpChanges").isEmpty())
                     .andExpect(jsonPath("$.result.current.representativeTitleId").doesNotExist());
+        }
+
+        @Test
+        @DisplayName("최고 레벨은 명시적 boolean과 0인 경험치 구간 및 완료 진행률을 반환한다")
+        void returnsMaximumLevelProgress() throws Exception {
+            given(growthQueryService.getCurrentGrowth()).willReturn(new GrowthResult.Overview(
+                    new GrowthResult.Current(3, 201, 1, 1, 1, 1, 1, 1, Map.of(), null,
+                            0, 0, 0, 1.0, true),
+                    List.of()
+            ));
+
+            mockMvc.perform(get("/api/v1/players/growth")
+                            .with(authentication(playerAuthentication())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isSuccess").value(true))
+                    .andExpect(jsonPath("$.result.current.exp").value(201))
+                    .andExpect(jsonPath("$.result.current.expIntoLevel").value(0))
+                    .andExpect(jsonPath("$.result.current.capForLevel").value(0))
+                    .andExpect(jsonPath("$.result.current.expToNext").value(0))
+                    .andExpect(jsonPath("$.result.current.progressRatio").value(1.0))
+                    .andExpect(jsonPath("$.result.current.maxLevelReached").value(true));
         }
 
         @Test
@@ -244,7 +290,7 @@ class PlayerGrowthApiContractTest {
         return new GrowthResult.Overview(
                 new GrowthResult.Current(
                         3, 250, 2, 3, 4, 5, 6, 7,
-                        Map.of("sociability", 8), 9L
+                        Map.of("sociability", 8), 9L, 15, 173, 158, 15.0 / 173, false
                 ),
                 List.of(new GrowthResult.RecentExpChange(
                         10L, 100, 80, 20, 2, 3,
