@@ -1,5 +1,6 @@
 package online.lifeasgame.economy.api.player.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -67,7 +68,11 @@ public final class EconomyResponse {
             Long sellerId,
             long price,
             String currency,
-            String status
+            String status,
+            @JsonInclude(JsonInclude.Include.ALWAYS)
+            @Schema(description = "판매 등록 시 저장한 전체 entry 수량. 과거 snapshot이 없으면 null (미확인)",
+                    minimum = "1", nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, example = "7")
+            Integer saleQuantity
     ) {
     }
 
@@ -76,7 +81,11 @@ public final class EconomyResponse {
             Long itemId,
             long price,
             String currency,
-            Instant expiresAt
+            Instant expiresAt,
+            @JsonInclude(JsonInclude.Include.ALWAYS)
+            @Schema(description = "판매 등록 시 저장한 전체 entry 수량. 과거 snapshot이 없으면 null (미확인)",
+                    minimum = "1", nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, example = "7")
+            Integer saleQuantity
     ) {
     }
 

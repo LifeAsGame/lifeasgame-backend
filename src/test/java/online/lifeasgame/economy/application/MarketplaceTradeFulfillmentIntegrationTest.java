@@ -196,6 +196,13 @@ class MarketplaceTradeFulfillmentIntegrationTest {
             assertThat(sellerBalance()).isEqualTo(109L);
             assertThat(entryCount(SELLER_ID, itemId)).isZero();
             assertThat(totalQuantity(BUYER_ID, itemId)).isEqualTo(11L);
+            assertThat(marketplaceService.listBySeller(SELLER_ID).listings())
+                    .filteredOn(listing -> listing.id().equals(listingId))
+                    .singleElement().satisfies(listing -> {
+                        assertThat(listing.status()).isEqualTo("SOLD");
+                        assertThat(listing.itemId()).isEqualTo(itemId);
+                        assertThat(listing.saleQuantity()).isEqualTo(7);
+                    });
             assertThat(jdbc.queryForList("""
                     SELECT quantity, rarity, durability, bound, availability,
                            JSON_UNQUOTE(JSON_EXTRACT(inst_attrs, '$.quality')) AS quality

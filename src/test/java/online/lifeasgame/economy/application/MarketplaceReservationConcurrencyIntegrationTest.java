@@ -144,7 +144,8 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             var sellerJson = objectMapper.valueToTree(EconomyWebMapper.toPlayerListings(marketplaceService.listBySeller(SELLER_ID)));
             for (var json : List.of(publicJson, sellerJson)) {
                 assertThat(json.get("listings").get(0).properties()).extracting(Map.Entry::getKey)
-                        .containsExactlyInAnyOrder("id", "itemId", "sellerId", "price", "currency", "status");
+                        .containsExactlyInAnyOrder("id", "itemId", "sellerId", "price", "currency", "status", "saleQuantity");
+                assertThat(json.get("listings").get(0).get("saleQuantity").intValue()).isEqualTo(4);
                 assertThat(json.toString()).doesNotContain(reservation.holdId(), reservation.reservationToken());
             }
             assertThat(snapshot()).isEqualTo(before);
