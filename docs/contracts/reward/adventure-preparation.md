@@ -14,6 +14,12 @@ Each line commits independently. GOLD processing locks the settlement, calls Eco
 
 Existing outbox delivery semantics remain unchanged: system failures propagate for outbox retry, recorded domain failures remain FAILED until the existing internal retry preparation resets that line to PENDING. Redelivery never resets a successful line. Once the failed line is prepared, replay processes the remaining work without duplicating either reward. There is no new public retry or grant endpoint.
 
+## Completion delivery identity
+
+Quest completion and legacy `QUEST_REWARD_READY` conversion consume only `OutboxEventDelivery`, using its stable parent `eventId`. V37 adds `quest_reward_ready_publications`, keyed by that parent ID. A unique insert and locked claim-token lookup serialize competing deliveries without relying on JDBC affected-row counts. The claim and typed reward-ready outbox insertion share the publisher's `REQUIRES_NEW` transaction. Failed child insertion rolls back both; committed publication survives parent acknowledgement failure and is not repeated on redelivery. Lock failures propagate for the existing Outbox retry path. The publisher runs before envelope notification listeners, preserving reward publication when completion-notification persistence fails.
+
+This receipt identifies a source delivery, not an acceptance or settlement. Distinct parent IDs remain independently processable; settlement and account-entitlement identities are unchanged. Receipts must survive as long as the parent can be replayed, independently of Outbox row retention. The migration does not backfill pre-existing publications or deduplicate already queued child events: their parent IDs were not recorded by the previous publisher. It does not correct historical notifications or grant additional rewards.
+
 ## Read contract
 
 `GET /api/v1/reward-settlements/quest-completions/{questAcceptanceId}` remains current-player scoped. `rewardType=GOLD, amount=100` describes the currency credit; the Item line exposes item ID/code and quantity. Each line retains its status and failure code.

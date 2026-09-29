@@ -20,9 +20,12 @@ import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.QuestCode;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.quest.infra.QuestRewardReadyPublicationStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -31,6 +34,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -47,8 +52,16 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 
 @Testcontainers
 @SpringBootTest
@@ -101,8 +114,11 @@ class QuestNotificationSourceToRowIntegrationTest {
     @Autowired
     private OutboxDispatchAttempt dispatchAttempt;
 
-    @Autowired
+    @MockitoSpyBean
     private OutboxCompletionService completionService;
+
+    @MockitoSpyBean
+    private QuestRewardReadyPublicationStore publicationStore;
 
     @Autowired
     private OutboxEventCodecRegistry codecRegistry;
@@ -126,23 +142,24 @@ class QuestNotificationSourceToRowIntegrationTest {
         clock.set(ACCEPTED_AT);
         jdbcTemplate.update("DELETE FROM player_notifications");
         jdbcTemplate.update("DELETE FROM outbox_events");
+        jdbcTemplate.update("DELETE FROM quest_reward_ready_publications");
         jdbcTemplate.update("DELETE FROM player_growth_changes");
         jdbcTemplate.update("DELETE FROM reward_settlement_lines");
         jdbcTemplate.update("DELETE FROM reward_settlements");
         jdbcTemplate.update(
-                "DELETE FROM quest_signal_receipts WHERE player_id = ?",
-                PLAYER_ID
+                "DELETE FROM quest_signal_receipts WHERE player_id IN (?, ?)",
+                PLAYER_ID, PLAYER_ID + 1
         );
         jdbcTemplate.update(
-                "DELETE FROM player_quest_routes WHERE player_id = ?",
-                PLAYER_ID
+                "DELETE FROM player_quest_routes WHERE player_id IN (?, ?)",
+                PLAYER_ID, PLAYER_ID + 1
         );
         jdbcTemplate.update(
-                "DELETE FROM quest_acceptances WHERE player_id = ?",
-                PLAYER_ID
+                "DELETE FROM quest_acceptances WHERE player_id IN (?, ?)",
+                PLAYER_ID, PLAYER_ID + 1
         );
-        jdbcTemplate.update("DELETE FROM player WHERE id = ?", PLAYER_ID);
-        insertPlayer();
+        jdbcTemplate.update("DELETE FROM player WHERE id IN (?, ?)", PLAYER_ID, PLAYER_ID + 1);
+        insertPlayer(PLAYER_ID);
         selectRecordRoute();
         transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -176,6 +193,219 @@ class QuestNotificationSourceToRowIntegrationTest {
         );
         assertThat(routeState()).isEqualTo(routeBeforeDispatch);
         jdbcTemplate.update("UPDATE quests SET title_id = ? WHERE id = ?", originalTitle, completedEvent.questId());
+    }
+
+    @Test
+    @DisplayName("완료 부모를 ack 전에 재전달해도 자식과 보상 준비 알림 및 EXP는 한 번만 남는다")
+    void publishesRewardReadyOnceAfterParentReplay() {
+        var accepted = completeFirstTraceQuest();
+        List<OutboxClaim> parents = claimService.claimBatch();
+        OutboxClaim completed = completedClaim(parents);
+        dispatchAttempt.dispatch(completed);
+        // Child transaction has committed, but the parent has not been acknowledged.
+        dispatchAttempt.dispatch(completed);
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        parents.forEach(completionService::complete);
+
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM player_notifications WHERE type = 'QUEST_REWARD_READY'", Long.class))
+                .isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM reward_settlements WHERE source_id = ?", Long.class, accepted.id()))
+                .isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT exp FROM player WHERE id = ?", Long.class, PLAYER_ID)).isEqualTo(10);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM player_growth_changes WHERE player_id = ?", Long.class, PLAYER_ID))
+                .isEqualTo(1);
+    }
+
+    @ParameterizedTest(name = "lock timeout = {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("동시 부모 재전달과 잠금 timeout 후 재시도 모두 자식 한 건으로 수렴한다")
+    void retriesConcurrentParentDelivery(boolean forceTimeout) throws Exception {
+        completeFirstTraceQuest();
+        OutboxClaim parent = completedClaim(claimService.claimBatch());
+        CountDownLatch claimed = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch concurrentStarted = new CountDownLatch(1);
+        AtomicBoolean first = new AtomicBoolean(true);
+        QuestRewardReadyPublicationStore targetStore = AopTestUtils.getUltimateTargetObject(publicationStore);
+        doAnswer(invocation -> {
+            jdbcTemplate.execute("SET SESSION innodb_lock_wait_timeout = " + (forceTimeout ? 1 : 50));
+            if (claimed.getCount() == 0) concurrentStarted.countDown();
+            try {
+                boolean owner = (boolean) invocation.callRealMethod();
+                if (owner && first.compareAndSet(true, false)) {
+                    claimed.countDown();
+                    assertThat(release.await(10, TimeUnit.SECONDS)).isTrue();
+                }
+                return owner;
+            } finally {
+                jdbcTemplate.execute("SET SESSION innodb_lock_wait_timeout = 50");
+            }
+        }).when(targetStore).claim(anyString());
+
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var firstDelivery = executor.submit(() -> dispatchAttempt.dispatch(parent));
+            assertThat(claimed.await(10, TimeUnit.SECONDS)).isTrue();
+            var concurrentDelivery = executor.submit(() -> dispatchAttempt.dispatch(parent));
+            assertThat(concurrentStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            if (forceTimeout) {
+                assertThatThrownBy(() -> concurrentDelivery.get(10, TimeUnit.SECONDS))
+                        .hasStackTraceContaining("Lock wait timeout exceeded");
+            }
+            release.countDown();
+            firstDelivery.get(10, TimeUnit.SECONDS);
+            if (!forceTimeout) concurrentDelivery.get(10, TimeUnit.SECONDS);
+            dispatchAttempt.dispatch(parent);
+            assertThat(rewardReadyCount()).isEqualTo(1);
+            assertThat(publicationCount()).isEqualTo(1);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("자식 outbox insert 실패는 claim도 롤백하고 부모 재시도에서 발행한다")
+    void rollsBackClaimWhenChildInsertFails() {
+        completeFirstTraceQuest();
+        jdbcTemplate.execute("ALTER TABLE outbox_events ADD CONSTRAINT reject_reward_ready CHECK (event_type <> 'quest.reward-ready.v1')");
+        try {
+            assertThat(relayService.relayBatch().failed()).isEqualTo(1);
+            assertThat(rewardReadyCount()).isZero();
+            assertThat(publicationCount()).isZero();
+        } finally {
+            jdbcTemplate.execute("ALTER TABLE outbox_events DROP CHECK reject_reward_ready");
+        }
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        assertThat(publicationCount()).isEqualTo(1);
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertRewardEffects(PLAYER_ID, 1);
+    }
+
+    @Test
+    @DisplayName("자식 commit 이후 부모 ack가 실패해도 lease 회복과 재전달은 기존 자식을 유지한다")
+    void recoversAfterParentAcknowledgementFailure() {
+        completeFirstTraceQuest();
+        AtomicBoolean failOnce = new AtomicBoolean(true);
+        doAnswer(invocation -> {
+            OutboxClaim claim = invocation.getArgument(0);
+            if (decodeQuestEvent(claim).type() == QuestEventType.QUEST_COMPLETED
+                    && failOnce.compareAndSet(true, false)) {
+                throw new IllegalStateException("parent acknowledgement failed");
+            }
+            return invocation.callRealMethod();
+        }).when(completionService).complete(any(OutboxClaim.class));
+
+        assertThatThrownBy(() -> relayService.relayBatch())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("parent acknowledgement failed");
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        assertThat(publicationCount()).isEqualTo(1);
+        clock.set(COMPLETED_AT.plusSeconds(31));
+        // The child can be dispatched in the same recovery batch as the parent.
+        doAnswer(invocation -> invocation.callRealMethod())
+                .when(completionService).complete(any(OutboxClaim.class));
+        assertThat(relayService.relayBatch().recovered()).isPositive();
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        assertThat(publicationCount()).isEqualTo(1);
+        assertRewardEffects(PLAYER_ID, 1);
+    }
+
+    @Test
+    @DisplayName("완료 알림 저장이 실패해도 자식 발행과 정산은 유지하고 부모 재시도는 중복하지 않는다")
+    void retainsPublicationWhenCompletionNotificationFails() {
+        completeFirstTraceQuest();
+        jdbcTemplate.execute("ALTER TABLE player_notifications ADD CONSTRAINT reject_completion_notification CHECK (type <> 'QUEST_COMPLETED')");
+        try {
+            assertThat(relayService.relayBatch().failed()).isEqualTo(1);
+            assertThat(rewardReadyCount()).isEqualTo(1);
+            assertThat(publicationCount()).isEqualTo(1);
+            assertThat(relayService.relayBatch().failed()).isEqualTo(1);
+            assertRewardEffects(PLAYER_ID, 1);
+        } finally {
+            jdbcTemplate.execute("ALTER TABLE player_notifications DROP CHECK reject_completion_notification");
+        }
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM player_notifications WHERE type = 'QUEST_COMPLETED'", Long.class))
+                .isEqualTo(1);
+        assertRewardEffects(PLAYER_ID, 1);
+    }
+
+    @Test
+    @DisplayName("서로 다른 실제 완료 acceptance는 각각 자식과 보상을 받는다")
+    void publishesForIndependentCompletions() {
+        var first = completeFirstTraceQuest();
+        relayQuestEventsOnce();
+        assertThat(relayService.relayBatch().failed()).isZero();
+        insertPlayer(PLAYER_ID + 1);
+        clock.set(ACCEPTED_AT);
+        var second = completeFirstTraceQuest(PLAYER_ID + 1);
+        relayQuestEventsOnce();
+        assertThat(relayService.relayBatch().failed()).isZero();
+        assertThat(first.id()).isNotEqualTo(second.id());
+        assertThat(rewardReadyCount()).isEqualTo(2);
+        assertThat(publicationCount()).isEqualTo(2);
+        assertRewardEffects(PLAYER_ID, 1);
+        assertRewardEffects(PLAYER_ID + 1, 1);
+    }
+
+    @Test
+    @DisplayName("legacy reward-ready 부모도 한 번만 변환하며 원래 시간과 correlation을 유지한다")
+    void deduplicatesLegacyConversion() {
+        completeFirstTraceQuest();
+        List<OutboxClaim> parents = claimService.claimBatch();
+        QuestEvent completed = decodeQuestEvent(completedClaim(parents));
+        parents.forEach(completionService::complete);
+        QuestEvent legacy = new QuestEvent(QuestEventType.QUEST_REWARD_READY,
+                completed.playerId(), completed.questId(), completed.questCode(),
+                completed.attributes(), completed.occurredAt(), completed.correlationId());
+        append(legacy);
+        OutboxClaim parent = claimService.claimBatch().getFirst();
+        dispatchAttempt.dispatch(parent);
+        dispatchAttempt.dispatch(parent);
+        completionService.complete(parent);
+        assertThat(rewardReadyCount()).isEqualTo(1);
+        assertThat(publicationCount()).isEqualTo(1);
+        OutboxClaim child = claimService.claimBatch().getFirst();
+        QuestRewardReadyFact fact = (QuestRewardReadyFact) codecRegistry.decode(child.eventType(), child.payload());
+        assertThat(fact.occurredAt()).isEqualTo(legacy.occurredAt());
+        assertThat(fact.correlationId()).isEqualTo(legacy.correlationId());
+        dispatchAttempt.dispatch(child);
+        completionService.complete(child);
+        assertRewardEffects(PLAYER_ID, 1);
+    }
+
+    private long publicationCount() {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM quest_reward_ready_publications", Long.class);
+    }
+
+    private void assertRewardEffects(long playerId, long count) {
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM player_notifications WHERE player_id = ? AND type = 'QUEST_REWARD_READY'",
+                Long.class, playerId)).isEqualTo(count);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM reward_settlements WHERE player_id = ? AND status = 'COMPLETED'",
+                Long.class, playerId)).isEqualTo(count);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM player_growth_changes WHERE player_id = ?", Long.class, playerId))
+                .isEqualTo(count);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT exp FROM player WHERE id = ?", Long.class, playerId)).isEqualTo(count * 10);
+    }
+
+    private long rewardReadyCount() {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM outbox_events WHERE event_type = 'quest.reward-ready.v1'", Long.class);
     }
 
     @Test
@@ -264,8 +494,12 @@ class QuestNotificationSourceToRowIntegrationTest {
     }
 
     private QuestResult.Acceptance completeFirstTraceQuest() {
+        return completeFirstTraceQuest(PLAYER_ID);
+    }
+
+    private QuestResult.Acceptance completeFirstTraceQuest(long playerId) {
         QuestResult.Acceptance accepted = questService.accept(
-                PLAYER_ID,
+                playerId,
                 new QuestCommand.Accept(
                         QuestCode.Q_RECORD_FIRST_TRACE.value(),
                         null,
@@ -273,12 +507,12 @@ class QuestNotificationSourceToRowIntegrationTest {
                 )
         );
         append(new LifeLogRecorded(
-                "325-life-log-recorded",
+                "life-log-recorded-" + playerId,
                 LifeLogRecorded.EVENT_TYPE,
                 LifeLogRecorded.EVENT_VERSION,
                 ACCEPTED_AT.plusSeconds(1),
-                PLAYER_ID,
-                325101L,
+                playerId,
+                playerId + 100L,
                 1,
                 LifeLogSubtype.STUDY,
                 LifeLogEntryMode.FULL,
@@ -361,7 +595,7 @@ class QuestNotificationSourceToRowIntegrationTest {
         assertThat(notification.getCopyLocale()).isEqualTo("ko-KR");
     }
 
-    private void insertPlayer() {
+    private void insertPlayer(long playerId) {
         jdbcTemplate.update("""
                 INSERT INTO player (
                     id, user_id, name, gender, level, exp,
@@ -375,7 +609,7 @@ class QuestNotificationSourceToRowIntegrationTest {
                     JSON_OBJECT(), '[]', 0,
                     CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)
                 )
-                """, PLAYER_ID, PLAYER_ID + 100000L);
+                """, playerId, playerId + 100000L);
     }
 
     private void selectRecordRoute() {

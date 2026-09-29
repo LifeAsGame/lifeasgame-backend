@@ -1,6 +1,8 @@
 package online.lifeasgame.quest.application.event;
 
 import online.lifeasgame.core.event.DomainEventPublisher;
+import online.lifeasgame.platform.outbox.application.OutboxEventDelivery;
+import online.lifeasgame.quest.infra.QuestRewardReadyPublicationStore;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
@@ -28,14 +30,17 @@ class QuestRewardReadyPublisherTest {
     @DisplayName("QUEST_COMPLETED를 typed reward-ready fact로 변환한다")
     void publishesTypedFactWithPreservedIdentity() {
         DomainEventPublisher publisher = mock(DomainEventPublisher.class);
+        QuestRewardReadyPublicationStore store = mock(QuestRewardReadyPublicationStore.class);
+        when(store.claim("parent-event")).thenReturn(true);
         QuestRewardReadyPublisher readyPublisher =
                 new QuestRewardReadyPublisher(
                         publisher,
-                        Clock.fixed(READY_AT, ZoneOffset.UTC)
+                        Clock.fixed(READY_AT, ZoneOffset.UTC),
+                        store
                 );
         QuestEvent completed = event(QuestEventType.QUEST_COMPLETED);
 
-        readyPublisher.onQuestEvent(completed);
+        readyPublisher.onOutboxEvent(new OutboxEventDelivery("parent-event", completed));
 
         ArgumentCaptor<QuestRewardReadyFact> captor =
                 ArgumentCaptor.forClass(QuestRewardReadyFact.class);
@@ -58,13 +63,16 @@ class QuestRewardReadyPublisherTest {
     @DisplayName("legacy QUEST_REWARD_READY decode는 typed fact로 승격한다")
     void upgradesLegacyRewardReadyEvent() {
         DomainEventPublisher publisher = mock(DomainEventPublisher.class);
+        QuestRewardReadyPublicationStore store = mock(QuestRewardReadyPublicationStore.class);
+        when(store.claim("parent-event")).thenReturn(true);
         QuestRewardReadyPublisher readyPublisher =
                 new QuestRewardReadyPublisher(
                         publisher,
-                        Clock.fixed(READY_AT, ZoneOffset.UTC)
+                        Clock.fixed(READY_AT, ZoneOffset.UTC),
+                        store
                 );
 
-        readyPublisher.onQuestEvent(event(QuestEventType.QUEST_REWARD_READY));
+        readyPublisher.onOutboxEvent(new OutboxEventDelivery("parent-event", event(QuestEventType.QUEST_REWARD_READY)));
 
         ArgumentCaptor<QuestRewardReadyFact> captor =
                 ArgumentCaptor.forClass(QuestRewardReadyFact.class);
@@ -78,15 +86,18 @@ class QuestRewardReadyPublisherTest {
     @DisplayName("reward transition이 아닌 Quest Event는 무시한다")
     void ignoresOtherQuestEvents() {
         DomainEventPublisher publisher = mock(DomainEventPublisher.class);
+        QuestRewardReadyPublicationStore store = mock(QuestRewardReadyPublicationStore.class);
+        when(store.claim("parent-event")).thenReturn(true);
         QuestRewardReadyPublisher readyPublisher =
                 new QuestRewardReadyPublisher(
                         publisher,
-                        Clock.fixed(READY_AT, ZoneOffset.UTC)
+                        Clock.fixed(READY_AT, ZoneOffset.UTC),
+                        store
                 );
 
-        readyPublisher.onQuestEvent(event(QuestEventType.QUEST_PROGRESS));
+        readyPublisher.onOutboxEvent(new OutboxEventDelivery("parent-event", event(QuestEventType.QUEST_PROGRESS)));
 
-        verifyNoInteractions(publisher);
+        verifyNoInteractions(publisher, store);
     }
 
     private QuestEvent event(QuestEventType type) {

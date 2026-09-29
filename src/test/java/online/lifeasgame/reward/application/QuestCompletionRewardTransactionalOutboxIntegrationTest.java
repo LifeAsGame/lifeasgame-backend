@@ -509,7 +509,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
         });
 
         List<OutboxClaim> rewardClaims = claimService.claimBatch();
-        assertThat(rewardClaims).hasSize(2);
+        assertThat(rewardClaims).hasSize(1);
         rewardClaims.forEach(claim -> {
             assertThat(claim.eventType())
                     .isEqualTo("quest.reward-ready.v1");
@@ -527,7 +527,7 @@ class QuestCompletionRewardTransactionalOutboxIntegrationTest {
                 .isEqualTo("RP_EXP_TINY_10");
         assertThat(playerExp()).isEqualTo(10L);
         assertThat(growthChangeCount()).isEqualTo(1);
-        assertThat(publishedOutboxCount()).isEqualTo(6);
+        assertThat(publishedOutboxCount()).isEqualTo(5);
     }
 
     private Future<?> submit(
