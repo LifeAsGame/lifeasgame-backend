@@ -17,6 +17,9 @@ import online.lifeasgame.role.domain.RoleType;
 import online.lifeasgame.role.domain.error.RoleError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -201,6 +204,26 @@ class RoleRelationApplicationTest {
         return Role.create(PLAYER_ID, RoleType.of("SELF"), "Self", null);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("소유권 범위를 통과하지 못하거나 없는 Person은 목록·상세에서 기존 not-found로 거부한다")
+    void rejectsMissingOwnedPerson(boolean detail) {
+        var stored = RoleRelationResult.Stored.from(relation());
+        given(roleReader.getOwned(ROLE_ID, PLAYER_ID)).willReturn(role());
+        if (detail) {
+            given(query.findOwned(9L, ROLE_ID, PLAYER_ID)).willReturn(Optional.of(stored));
+        } else {
+            given(query.findActive(PLAYER_ID, ROLE_ID)).willReturn(List.of(stored));
+        }
+        given(personLookupApi.findOwnedByIds(java.util.Set.of(PERSON_ID), PLAYER_ID)).willReturn(Map.of());
+
+        assertError(() -> {
+            if (detail) queryService.detail(ROLE_ID, 9L);
+            else queryService.list(ROLE_ID);
+        }, PersonError.PERSON_NOT_FOUND);
+        verifyNoInteractions(relationWriter);
+    }
+
     private RoleRelation relation() {
         return RoleRelation.create(
                 PLAYER_ID,
@@ -212,7 +235,7 @@ class RoleRelationApplicationTest {
     }
 
     private PersonReference person() {
-        return new PersonReference(PERSON_ID, null, "Alice");
+        return new PersonReference(PERSON_ID, null, "Alice", "ACTIVE");
     }
 
     private RoleRelationCommand.Create create() {
