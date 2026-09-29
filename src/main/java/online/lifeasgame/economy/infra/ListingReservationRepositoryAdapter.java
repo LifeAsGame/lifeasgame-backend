@@ -23,10 +23,7 @@ public class ListingReservationRepositoryAdapter implements ListingReservationRe
 
     @Override
     public Optional<ListingReservation> findActiveByListingIdForUpdate(Long listingId) {
-        return jpaRepository.findByListingIdAndStateForUpdate(
-                listingId,
-                ListingReservationState.ACTIVE
-        );
+        return jpaRepository.findActiveByListingIdForUpdate(listingId);
     }
 
     @Override

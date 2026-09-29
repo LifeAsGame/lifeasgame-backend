@@ -16,18 +16,17 @@ import java.util.Optional;
 
 public interface JpaListingReservationRepository extends JpaRepository<ListingReservation, Long> {
 
+    // Match the full unique active-reservation key to avoid locking adjacent reservation gaps.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"))
     @Query("""
             SELECT reservation
             FROM ListingReservation reservation
             WHERE reservation.listingId = :listingId
-              AND reservation.state = :state
+              AND reservation.activeFlag = 1
+              AND reservation.state = online.lifeasgame.economy.domain.ListingReservationState.ACTIVE
             """)
-    Optional<ListingReservation> findByListingIdAndStateForUpdate(
-            @Param("listingId") Long listingId,
-            @Param("state") ListingReservationState state
-    );
+    Optional<ListingReservation> findActiveByListingIdForUpdate(@Param("listingId") Long listingId);
 
     @Query("""
             SELECT reservation.listingId
