@@ -33,7 +33,8 @@ public final class EconomyWebMapper {
                 result.sellerId(),
                 result.price(),
                 result.currency(),
-                result.status()
+                result.status(),
+                result.saleQuantity()
         );
     }
 
@@ -51,7 +52,8 @@ public final class EconomyWebMapper {
                 result.itemId(),
                 result.price(),
                 result.currency(),
-                result.expiresAt()
+                result.expiresAt(),
+                result.saleQuantity()
         );
     }
 
