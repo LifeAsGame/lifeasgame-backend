@@ -137,8 +137,16 @@ public class MarketplaceService {
                 now
         );
 
-        Wallet buyerWallet = lockWallet(buyerId);
-        Wallet sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
+        // Reciprocal purchases must acquire the same Wallet first, regardless of buyer/seller role.
+        Wallet buyerWallet;
+        Wallet sellerWallet;
+        if (buyerId < listing.getSellerPlayerId()) {
+            buyerWallet = lockWallet(buyerId);
+            sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
+        } else {
+            sellerWallet = lockOrCreateWallet(listing.getSellerPlayerId());
+            buyerWallet = lockWallet(buyerId);
+        }
 
         buyerWallet.commitHold(reservation.getWalletHoldId());
         inventoryMarketTransferApi.transferWholeEntry(

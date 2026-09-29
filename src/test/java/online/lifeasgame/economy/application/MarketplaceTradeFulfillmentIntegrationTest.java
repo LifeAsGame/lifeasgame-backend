@@ -22,8 +22,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.MySQLContainer;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -35,6 +44,10 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.reset;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles({"test", "migration-test"})
@@ -81,6 +94,10 @@ class MarketplaceTradeFulfillmentIntegrationTest {
     private JdbcTemplate jdbc;
     @Autowired
     private Flyway flyway;
+    @Autowired
+    private WalletQueryService walletQueryService;
+    @MockitoSpyBean
+    private WalletReader walletReader;
     @MockitoBean
     private CurrentPlayerAccessor currentPlayerAccessor;
 
@@ -373,6 +390,235 @@ class MarketplaceTradeFulfillmentIntegrationTest {
             assertThat(listingStatus()).isEqualTo("SOLD");
             assertThat(totalQuantity(BUYER_ID, itemId)).isEqualTo(7L);
         }
+    }
+
+    @Nested
+    @DisplayName("구매에 필요한 Wallet을 잠글 때")
+    class PurchaseWalletExistence {
+
+        @Test
+        @DisplayName("없는 판매자 Wallet은 생성하고 수수료를 제외한 금액을 입금한다")
+        void createsMissingSellerWallet() {
+            deleteWallet(SELLER_ID);
+
+            marketplaceService.purchase(BUYER_ID, purchaseCommand("missing-seller-wallet"));
+
+            assertThat(sellerBalance()).isEqualTo(99);
+            assertThat(tradeCount()).isOne();
+            assertThat(holdStatus()).isEqualTo("COMMITTED");
+        }
+
+        @Test
+        @DisplayName("구매자 Wallet이 없으면 실패하고 먼저 생성한 판매자 Wallet도 rollback한다")
+        void requiresBuyerWalletAndRollsBackSellerCreation() {
+            deleteWallet(SELLER_ID);
+            deleteWallet(BUYER_ID);
+            var before = purchaseSnapshot();
+
+            assertThatThrownBy(() -> marketplaceService.purchase(BUYER_ID, purchaseCommand("missing-buyer-wallet")))
+                    .isInstanceOfSatisfying(DomainException.class, failure ->
+                            assertThat(failure.getErrorCode()).isEqualTo(EconomyError.WALLET_NOT_FOUND));
+
+            assertThat(purchaseSnapshot()).isEqualTo(before);
+        }
+
+        private void deleteWallet(long ownerId) {
+            Long id = walletId(ownerId);
+            jdbc.update("DELETE FROM wallet_holds WHERE wallet_id = ?", id);
+            jdbc.update("DELETE FROM wallet_balances WHERE wallet_id = ?", id);
+            jdbc.update("DELETE FROM wallets WHERE id = ?", id);
+        }
+    }
+
+    @Nested
+    @DisplayName("서로 다른 Listing을 두 Player가 맞교환 구매하면")
+    class ReciprocalPurchases {
+
+        @Test
+        @DisplayName("실제 Wallet 대기 중에도 두 구매가 완료되고 재전달은 효과를 반복하지 않는다")
+        void completesReciprocalPurchases() throws Exception {
+            var requests = prepareReciprocalPurchases();
+            var firstWalletLocked = new CountDownLatch(1);
+            var releaseFirst = new CountDownLatch(1);
+            var firstThread = new AtomicReference<Thread>();
+            var paused = new AtomicBoolean();
+            doAnswer(invocation -> {
+                Object result = invocation.callRealMethod();
+                if (Thread.currentThread() == firstThread.get() && paused.compareAndSet(false, true)) {
+                    firstWalletLocked.countDown();
+                    assertThat(releaseFirst.await(15, TimeUnit.SECONDS)).isTrue();
+                }
+                return result;
+            }).when(walletReader).getByOwnerIdForUpdate(anyLong());
+
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            var failures = new ArrayList<Throwable>();
+            var completed = new boolean[2];
+            try {
+                Future<EconomyResult.TradeSummary> first = executor.submit(() -> {
+                    firstThread.set(Thread.currentThread());
+                    return marketplaceService.purchase(requests.get(0).buyerId(), requests.get(0).command());
+                });
+                assertThat(firstWalletLocked.await(10, TimeUnit.SECONDS)).isTrue();
+                Future<EconomyResult.TradeSummary> second = executor.submit(() ->
+                        marketplaceService.purchase(requests.get(1).buyerId(), requests.get(1).command()));
+
+                // Observe a real InnoDB wait, not a barrier requiring both first locks to succeed.
+                // Before the fix B owns B and waits for A; afterwards B waits for A immediately.
+                try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), "root", MYSQL.getPassword());
+                     var statement = connection.createStatement()) {
+                    await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(20)).until(() -> {
+                        try (var rows = statement.executeQuery("""
+                                SELECT COUNT(*) FROM performance_schema.data_lock_waits waiting
+                                JOIN performance_schema.data_locks requested
+                                  ON requested.ENGINE_LOCK_ID = waiting.REQUESTING_ENGINE_LOCK_ID
+                                WHERE requested.OBJECT_SCHEMA = DATABASE() AND requested.OBJECT_NAME = 'wallets'
+                                """)) {
+                            rows.next();
+                            return rows.getInt(1) > 0;
+                        }
+                    });
+                }
+                releaseFirst.countDown();
+                var futures = List.of(first, second);
+                for (int index = 0; index < futures.size(); index++) {
+                    try {
+                        futures.get(index).get(30, TimeUnit.SECONDS);
+                        completed[index] = true;
+                    } catch (ExecutionException failure) {
+                        failures.add(failure.getCause());
+                        Throwable root = failure.getCause();
+                        while (root.getCause() != null) {
+                            root = root.getCause();
+                        }
+                        assertThat(root).isInstanceOf(SQLException.class);
+                        assertThat(((SQLException) root).getErrorCode()).isIn(1213, 1205);
+                        System.out.printf("Reciprocal purchase rolled back: MySQL error=%d, SQLState=%s%n",
+                                ((SQLException) root).getErrorCode(), ((SQLException) root).getSQLState());
+                    }
+                }
+            } finally {
+                releaseFirst.countDown();
+                executor.shutdownNow();
+                assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+                reset(walletReader);
+            }
+
+            // On the unfixed code, inspect the victim before retrying in a fresh service transaction.
+            for (int index = 0; index < requests.size(); index++) {
+                assertPurchaseState(requests.get(index), completed[index]);
+            }
+            assertReciprocalWallets(completed[0], completed[1]);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM outbox_events", Long.class))
+                    .isEqualTo(4L + 2 * (completed[0] ? 1 : 0) + 2 * (completed[1] ? 1 : 0));
+            for (int index = 0; index < requests.size(); index++) {
+                if (!completed[index]) {
+                    var request = requests.get(index);
+                    marketplaceService.purchase(request.buyerId(), request.command());
+                    System.out.println("Rolled-back reciprocal purchase succeeded with the same request on retry");
+                }
+            }
+            requests.forEach(request -> assertPurchaseState(request, true));
+            assertReciprocalWallets(true, true);
+            assertThat(listingPurchasedEventCount()).isEqualTo(2);
+            var committed = purchaseSnapshot();
+            for (var request : requests) {
+                assertThat(marketplaceService.purchase(request.buyerId(), request.command()).id())
+                        .isEqualTo(receiptTradeId(request.buyerId(), request.command().idempotencyKey()));
+            }
+            assertThat(purchaseSnapshot()).isEqualTo(committed);
+            assertThat(failures).as("Both reciprocal purchases must complete without a lock failure").isEmpty();
+        }
+
+        private List<ReciprocalRequest> prepareReciprocalPurchases() {
+            jdbc.update("DELETE FROM listing_reservations");
+            jdbc.update("DELETE FROM wallet_holds");
+            jdbc.update("DELETE FROM listings");
+            jdbc.update("DELETE FROM inventory_entries");
+            jdbc.update("UPDATE wallet_balances SET amount = 1000");
+            Long otherItemId = differentItemId();
+            Long firstEntry = insertEntry(SELLER_ID, itemId, 0, 7, "FREE");
+            Long secondEntry = insertEntry(BUYER_ID, otherItemId, 0, 1, "FREE");
+            given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(SELLER_ID);
+            Long firstListing = listingOpenService.open(new EconomyCommand.OpenListing(firstEntry, 100L, "GOLD")).id();
+            given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(BUYER_ID);
+            Long secondListing = listingOpenService.open(new EconomyCommand.OpenListing(secondEntry, 200L, "GOLD")).id();
+            var firstReservation = marketplaceService.reserve(SELLER_ID,
+                    new EconomyCommand.ReserveListing(secondListing, 300));
+            var secondReservation = marketplaceService.reserve(BUYER_ID,
+                    new EconomyCommand.ReserveListing(firstListing, 300));
+            return List.of(
+                    new ReciprocalRequest(SELLER_ID, BUYER_ID, otherItemId, secondEntry, 1, 200,
+                            firstReservation.holdId(), new EconomyCommand.PurchaseListing(secondListing,
+                            firstReservation.reservationToken(), "reciprocal-a")),
+                    new ReciprocalRequest(BUYER_ID, SELLER_ID, itemId, firstEntry, 7, 100,
+                            secondReservation.holdId(), new EconomyCommand.PurchaseListing(firstListing,
+                            secondReservation.reservationToken(), "reciprocal-b")));
+        }
+
+        private void assertPurchaseState(ReciprocalRequest request, boolean completed) {
+            Long id = request.command().listingId();
+            assertThat(jdbc.queryForObject("SELECT status FROM listings WHERE id = ?", String.class, id))
+                    .isEqualTo(completed ? "SOLD" : "OPEN");
+            assertThat(jdbc.queryForObject("SELECT state FROM listing_reservations WHERE listing_id = ?", String.class, id))
+                    .isEqualTo(completed ? "CONSUMED" : "ACTIVE");
+            assertThat(jdbc.queryForObject("SELECT status FROM wallet_holds WHERE hold_id = ?", String.class, request.holdId()))
+                    .isEqualTo(completed ? "COMMITTED" : "OPEN");
+            assertThat(receiptCount(request.buyerId(), request.command().idempotencyKey())).isEqualTo(completed ? 1 : 0);
+            var trades = jdbc.queryForList("SELECT * FROM trades WHERE listing_id = ?", id);
+            assertThat(trades).hasSize(completed ? 1 : 0);
+            if (completed) {
+                assertThat(trades.getFirst())
+                        .containsEntry("id", receiptTradeId(request.buyerId(), request.command().idempotencyKey()))
+                        .containsEntry("buyer_player_id", request.buyerId())
+                        .containsEntry("seller_player_id", request.sellerId())
+                        .containsEntry("item_inst_id", request.entryId())
+                        .containsEntry("item_id", request.itemId())
+                        .containsEntry("sale_quantity", request.quantity())
+                        .containsEntry("price", request.price())
+                        .containsEntry("fee", request.price() / 100)
+                        .containsEntry("seller_proceeds", request.price() - request.price() / 100);
+            }
+            assertThat(jdbc.queryForMap("SELECT player_id, quantity, availability FROM inventory_entries WHERE item_id = ?",
+                    request.itemId()))
+                    .containsEntry("player_id", completed ? request.buyerId() : request.sellerId())
+                    .containsEntry("quantity", request.quantity())
+                    .containsEntry("availability", completed ? "FREE" : "RESERVED_FOR_TRADE");
+            assertThat(jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM outbox_events WHERE event_type = 'economy.event.v1'
+                    AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.type')) = 'LISTING_PURCHASED'
+                    AND JSON_EXTRACT(payload, '$.listingId') = ?
+                    """, Long.class, id)).isEqualTo(completed ? 1 : 0);
+        }
+
+        private void assertReciprocalWallets(boolean firstCompleted, boolean secondCompleted) {
+            assertThat(walletQueryService.wallet(SELLER_ID).balances())
+                    .filteredOn(row -> row.currency().name().equals("GOLD"))
+                    .singleElement().satisfies(row -> {
+                        assertThat(row.available()).isEqualTo(800 + (secondCompleted ? 99 : 0));
+                        assertThat(row.held()).isEqualTo(firstCompleted ? 0 : 200);
+                    });
+            assertThat(walletQueryService.wallet(BUYER_ID).balances())
+                    .filteredOn(row -> row.currency().name().equals("GOLD"))
+                    .singleElement().satisfies(row -> {
+                        assertThat(row.available()).isEqualTo(900 + (firstCompleted ? 198 : 0));
+                        assertThat(row.held()).isEqualTo(secondCompleted ? 0 : 100);
+                    });
+        }
+    }
+
+    private Map<String, List<Map<String, Object>>> purchaseSnapshot() {
+        var rows = new LinkedHashMap<String, List<Map<String, Object>>>();
+        for (String table : List.of("wallets", "wallet_balances", "wallet_holds", "listings",
+                "listing_reservations", "trades", "marketplace_purchase_receipts", "inventory_entries", "outbox_events")) {
+            String order = table.equals("marketplace_purchase_receipts") ? "buyer_player_id, idempotency_key" : "id";
+            rows.put(table, jdbc.queryForList("SELECT * FROM " + table + " ORDER BY " + order));
+        }
+        return rows;
+    }
+
+    private record ReciprocalRequest(long buyerId, long sellerId, Long itemId, Long entryId,
+                                     int quantity, long price, String holdId, EconomyCommand.PurchaseListing command) {
     }
 
     @Nested
