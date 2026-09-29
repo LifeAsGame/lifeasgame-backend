@@ -192,11 +192,15 @@ Marketplace keeps the Listing row OPEN during a reservation and overlays RESERVE
 
 ### 2. Optional Redis Economy publication is registered twice — source-confirmed, separate small PR when needed
 
-**Files/symbols:** [EconomyEventBridge.onEconomyEvent](../../src/main/java/online/lifeasgame/economy/application/event/EconomyEventBridge.java) calls [RedisEconomyEventPublisher.publish](../../src/main/java/online/lifeasgame/economy/infra/event/RedisEconomyEventPublisher.java), and both methods have `@TransactionalEventListener(AFTER_COMMIT)` under the same `lifeasgame.economy.events.enabled=true` condition.
+**Files/symbols:** [EconomyEventBridge.onEconomyEvent at the audit baseline](https://github.com/LifeAsGame/lifeasgame-backend/blob/32651b3903283f0b92e4c156379425ecc3f2f95e/src/main/java/online/lifeasgame/economy/application/event/EconomyEventBridge.java) calls [RedisEconomyEventPublisher.publish](../../src/main/java/online/lifeasgame/economy/infra/event/RedisEconomyEventPublisher.java), and both methods have `@TransactionalEventListener(AFTER_COMMIT)` under the same `lifeasgame.economy.events.enabled=true` condition.
 
 **Failure condition:** enable that optional bridge and commit one dispatched EconomyEvent; two listener registrations lead to two `convertAndSend` attempts. Current checked-in local/prod Economy flags are false; deployed overrides were not inspected. Redis exceptions are caught, so enabling this bridge would not create durable retry semantics.
 
 **Tests/minimum scope:** no focused double-registration regression was found in the inspected tests. Keep exactly one listener boundary (prefer the infra publisher already owning Redis), remove the redundant application-to-infra bridge, and add one transactional listener integration test with a mocked Redis boundary. Do not enable the flag as part of the fix.
+
+**Resolution ([#368](https://github.com/LifeAsGame/lifeasgame-backend/issues/368)):** the original finding above records the audit baseline. The redundant application bridge has now been removed; the unchanged infra publisher is the sole AFTER_COMMIT listener. This also removes the direct application-to-infra dependency. Channel, payload, serializer, activation condition and caught/logged Redis errors remain unchanged; no feature flag is enabled.
+
+[RedisEconomyEventPublisherIntegrationTest](../../src/test/java/online/lifeasgame/economy/infra/event/RedisEconomyEventPublisherIntegrationTest.java) scans both production listener packages, uses real H2 transaction completion and observes a mocked RedisTemplate. Before removal, the commit regression observed two publication attempts per event; afterwards it observes one. It also checks no publication before commit, on rollback, outside a transaction, or with the flag false/unset; distinct events each publish once, and Redis failure is logged without interrupting later delivery. No external MySQL or Redis server is needed for this regression. This fixes duplicate local subscription only: Outbox remains at least once, and Redis errors still have no durable retry. It does not establish end-to-end exactly-once delivery or live Redis/network behavior.
 
 ### 3. Definition/install/read authority can drift — source-confirmed gap; operational impact unverified
 
