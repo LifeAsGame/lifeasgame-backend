@@ -1,5 +1,6 @@
 """Focused checks for preparation safety; no app/DB or third-party test framework."""
 import importlib.util
+from unittest.mock import MagicMock
 import json
 from pathlib import Path
 import stat
@@ -64,6 +65,51 @@ class DemoSafetyTest(unittest.TestCase):
              patch.object(demo, 'prepare') as prepare, self.assertRaises(RuntimeError):
             demo.verify({}, 'demo')
         prepare.assert_not_called()
+
+    def test_http_accepts_record_creation_and_replay_but_rejects_server_error(self):
+        state = {'env': {'CFC_API_PORT': '19080'}}
+        for status in (200, 201, 500):
+            response = MagicMock()
+            response.__enter__.return_value = response
+            response.status = status
+            response.read.return_value = b'{"isSuccess":true,"result":{"replay":true}}'
+            response.headers = {'Content-Type': 'application/json'}
+            with self.subTest(status=status), patch.object(demo.r.urllib.request, 'build_opener') as opener:
+                opener.return_value.open.return_value = response
+                if status == 500:
+                    with self.assertRaises(RuntimeError):
+                        demo.r.http(state, '/api/v1/lifelogs/quick-record', expected=(200, 201))
+                else:
+                    self.assertTrue(demo.r.http(state, '/api/v1/lifelogs/quick-record', expected=(200, 201))[0]['isSuccess'])
+
+    def test_settlement_waits_for_completed_parent_and_succeeded_lines(self):
+        completed = {'status': 'COMPLETED', 'lines': [{'status': 'SUCCEEDED'}]}
+        pending = {'status': 'PENDING', 'lines': [{'status': 'PENDING'}]}
+        with patch.object(demo, 'quest', return_value={'acceptance': {'id': 9, 'status': 'COMPLETED'}}), \
+             patch.object(demo, 'api', return_value={'playerId': 1}), \
+             patch.object(demo.r, 'sql', return_value=[['1']]), \
+             patch.object(demo.r, 'http', side_effect=[({'result': pending}, {}), ({'result': completed}, {})]), \
+             patch.object(demo.time, 'sleep'):
+            self.assertEqual(demo.settlement({}, 'token', 'code'), completed)
+
+    def test_verify_resumes_only_unfinished_phases(self):
+        completed = {'quest': {'settlementIds': [1]}, 'trade': {'tradeId': 2},
+                     'person': {'personStatusAvailable': False}}
+        with tempfile.TemporaryDirectory() as directory, patch.object(demo.r, 'STATE', Path(directory)):
+            path = demo.namespace_path('smoke') / 'verification.json'
+            demo.atomic_json(path, {'status': 'failed', 'namespace': 'smoke', 'phases': completed})
+            with patch.object(demo, 'owned_handoff', return_value={}), \
+                 patch.object(demo, 'prepare', return_value=({'scenarios': {}}, {}, {'unchanged': True})), \
+                 patch.object(demo, 'observe', return_value={'unchanged': True}), \
+                 patch.object(demo, 'verify_quest') as quest, patch.object(demo, 'verify_trade') as trade, \
+                 patch.object(demo, 'verify_person') as person, \
+                 patch.object(demo, 'verify_social', return_value={'socialIds': {'guilds': 3, 'parties': 4}}) as social:
+                demo.verify({}, 'smoke')
+            quest.assert_not_called()
+            trade.assert_not_called()
+            person.assert_not_called()
+            social.assert_called_once()
+            self.assertEqual(json.loads(path.read_text())['status'], 'passed')
 
     def test_poll_is_bounded(self):
         with patch.object(demo.time, 'monotonic', side_effect=[0, 60]), \

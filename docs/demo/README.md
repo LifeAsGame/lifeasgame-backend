@@ -19,11 +19,13 @@ python3 -B scripts/demo.py prepare --namespace demo-20260929 --publish
 ```
 
 The tool refuses an occupied API port, insufficient VM memory, foreign
-resources, unexpected network/profile/DB bindings, changed JAR or a different
-pinned commit. The dedicated Compose services have memory limits. MySQL and
+resources, unexpected network/profile/DB bindings, changed JAR or incompatible
+application source. The dedicated Compose services have memory limits. MySQL and
 Redis publish no host ports; only loopback HTTP is exposed. CORS is changed
 only in this dedicated runtime. Existing servers, containers and volumes are
-not stopped or reset. Restart with the same port/origin and commit.
+not stopped or reset. Restart with the same port/origin. Tool-only fixes can
+reuse the original JAR when application inputs match; the handoff retains the
+actual packaging commit separately from the current tool commit.
 
 Preparation leaves three distinct ordinary accounts:
 
@@ -68,9 +70,10 @@ Verification prepares that separate namespace with the same code, then runs:
    creator LEADER membership.
 5. Prepare after consumption preserves the exact current business state.
 
-It refuses the published demonstration namespace and an already attempted
-verification namespace. If verification is interrupted, use a **new** namespace;
-existing accounts/data are retained. Do not repeat full application regression
+It refuses the published demonstration namespace and an already passed
+verification namespace. Interrupted verification resumes only unfinished
+phases; completed quest/trade/person phases are retained and skipped. Existing
+accounts/data are retained. Use a **new** namespace for a new full demonstration. Do not repeat full application regression
 locally: the normal PR CI runs `clean test build` and the Python safety checks.
 
 ## Frontend handoff and stop
@@ -83,8 +86,9 @@ No passwords or bearer/reservation tokens are written there. Use
 `allowedFeOrigin` for the follow-up frontend server and `apiBaseUrl` for its
 API client. Read the private credentials file locally for normal login.
 
-Publishing is atomic and refuses another task's handoff. A failed preparation
-publishes `blocked`, never a partial `ready` result. Add a PR reference without
+Publishing is atomic and refuses another task's handoff. Failed runtime,
+preparation or attempted verification publishes `blocked` with a reason, never
+a partial `ready` result. Add a PR reference without
 recreating data by repeating `prepare --publish --pr <number>`.
 
 PR #381 is deliberately excluded while review-blocked. This version verifies

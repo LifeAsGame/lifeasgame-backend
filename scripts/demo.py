@@ -147,7 +147,12 @@ def start(args):
         shutil.copyfile(jars[0], r.STATE / 'app.jar')
         state.update(sha=sha, dirty=False, jar_sha256=hashlib.sha256(jars[0].read_bytes()).hexdigest())
         atomic_json(r.STATE / 'runtime.json', state)
-    r.check(state['sha'] == sha, 'Runtime is pinned to another commit; preserve it and use a new worktree for a new version.')
+    # Tool-only fixes can reuse the exact application JAR; retain its actual packaging commit.
+    result = subprocess.run(['git', 'diff', '--quiet', state['sha'], sha, '--',
+                             'src/main', 'build.gradle', 'settings.gradle', 'gradle', 'gradlew'], cwd=r.ROOT)
+    r.check(result.returncode == 0, 'Application source changed; preserve the pinned runtime and use a new worktree.')
+    if not r.compose(state, 'ps', '-q', 'app', capture_output=True).stdout.strip():
+        preflight(args.port)
     r.compose(state, 'up', '-d', '--wait', '--wait-timeout', '180')
     r.ready(state)
     isolated()
@@ -225,7 +230,7 @@ def accept(state, token, code):
 
 def trace(state, token, namespace, actor, index):
     key = hashlib.sha256(f'BE-DEMO-01:{namespace}:{actor}:trace:{index}'.encode()).hexdigest()
-    return api(state, token, 'lifelogs/quick-record', method='POST', expected=201,
+    return api(state, token, 'lifelogs/quick-record', method='POST', expected=(200, 201),
                headers={'Idempotency-Key': key}, body={
                    'type': 'COLLECTION', 'lifeLogSubtype': 'QUICK_NOTE',
                    'collection': {'category': 'OTHER', 'title': f'데모 {namespace} {actor} 기록 {index}', 'quantity': 1}})
@@ -243,7 +248,7 @@ def settlement(state, token, code):
                       f"{int(api(state, token, 'players')['playerId'])} AND source_id={int(acceptance['id'])}"),
          bool, 'Reward settlement was not created: ' + code)
     return poll(read, lambda s: s['status'] == 'COMPLETED'
-                and all(line['status'] == 'COMPLETED' for line in s['lines']), 'Reward did not settle: ' + code)
+                and all(line['status'] == 'SUCCEEDED' for line in s['lines']), 'Reward did not settle: ' + code)
 
 
 def expected_rewards(state):
@@ -361,7 +366,8 @@ def prepare(state, namespace):
 def publish(state, namespace, saved, current, pr):
     old = owned_handoff()
     manifest = {'producer': 'BE-DEMO-01', 'status': 'ready', 'reason': None,
-                'repo': str(r.ROOT), 'worktree': str(r.ROOT), 'commit': state['sha'], 'pr': pr or old.get('pr'),
+                'repo': str(r.ROOT), 'worktree': str(r.ROOT), 'commit': state['sha'],
+                'toolCommit': r.run(['git', 'rev-parse', 'HEAD'], capture_output=True).stdout.strip(), 'pr': pr or old.get('pr'),
                 'apiBaseUrl': 'http://127.0.0.1:' + state['env']['CFC_API_PORT'],
                 'allowedFeOrigin': state['env']['CFC_ORIGINS'],
                 'environment': {'project': r.PROJECT, 'volumes': [r.PROJECT + '_' + v for v in ('mysql_data', 'redis_data')],
@@ -370,20 +376,15 @@ def publish(state, namespace, saved, current, pr):
                 'scenarios': saved['scenarios'], 'initial': saved['initial'], 'current': current,
                 'personStatusAvailable': False, 'personStatusReason': '#381 is not included in the pinned develop source.',
                 'prepareCommand': command('prepare', namespace) + ' --publish' + (f' --pr {pr}' if pr else ''),
-                'verifyCommand': command('verify', namespace + '-smoke') if len(namespace) <= 26 else None,
+                'verifyCommand': command('verify', namespace[:20] + '-smoke'),
                 'verification': old.get('verification', {'status': 'not-run'})}
     atomic_json(HANDOFF, manifest)
     print('READY handoff: ' + str(HANDOFF))
     print('Credentials file: ' + saved['credentialsFile'])
 
 
-def verify(state, namespace):
-    handoff = owned_handoff()
-    r.check(namespace != handoff.get('seedNamespace'), 'Never consume the published demo namespace.')
-    verification_path = namespace_path(namespace) / 'verification.json'
-    r.check(not verification_path.exists(), 'Verify is consumptive and already attempted; use a fresh namespace.')
-    saved, tokens, before = prepare(state, namespace)
-    atomic_json(verification_path, {'status': 'running', 'namespace': namespace})
+def verify_quest(state, namespace, saved, tokens):
+    before = saved['initial']
     explorer = tokens['explorer']
     trace_result = trace(state, explorer, namespace, 'explorer', 3)
     settlements = [settlement(state, explorer, code) for code in QUESTS]
@@ -407,6 +408,10 @@ def verify(state, namespace):
     r.check(sorted((e['itemId'], e['quantity'], e['bound']) for e in api(state, explorer, 'inventory')['entries']) ==
             sorted((m['itemId'], m['quantity'], m['bound']) for m in mails), 'Mailbox claim delivery mismatch.')
 
+    return {'trace': trace_result, 'settlementIds': [s['settlementId'] for s in settlements]}
+
+
+def verify_trade(state, namespace, saved, tokens):
     trade = saved['scenarios']['trade']
     lid, item_id = trade['listingId'], trade['itemId']
     buyer, seller = tokens['buyer'], tokens['seller']
@@ -430,61 +435,118 @@ def verify(state, namespace):
             and all(v['trades'] == [purchased] for v in after_purchase['trades'].values()), 'Trade effects mismatch.')
     r.check(r.sql(state, f'SELECT sale_quantity FROM trades WHERE id={int(purchased["id"])}') == [['1']], 'Trade quantity snapshot mismatch.')
 
+    return {'tradeId': purchased['id']}
+
+
+def verify_person(state, namespace, saved, tokens):
+    explorer, buyer = tokens['explorer'], tokens['buyer']
     pid = saved['scenarios']['person']['personId']
     person_path = 'persons/' + str(pid)
-    api(state, explorer, person_path, method='PUT', body={'displayName': '수정한 데모 인물 ' + namespace,
-        'notes': '허구의 관계 시연', 'birthday': '2000-01-02', 'contact': 'updated@example.invalid'})
+    expected_name = '수정한 데모 인물 ' + namespace
+    person = api(state, explorer, person_path)
+    if person['status'] == 'ACTIVE':
+        person = api(state, explorer, person_path, method='PUT', body={'displayName': expected_name,
+            'notes': '허구의 관계 시연', 'birthday': '2000-01-02', 'contact': 'updated@example.invalid'})
+    r.check(person['displayName'] == expected_name and person['notes'] == '허구의 관계 시연'
+            and person['birthday'] == '2000-01-02' and person['contact'] == 'updated@example.invalid',
+            'Person update fields mismatch.')
     relations = []
     for index in (1, 2):
-        role = api(state, explorer, 'roles', method='POST', expected=201,
-                   body={'roleType': 'DEMO', 'name': f'데모 역할 {index}', 'description': '허구의 역할'})
+        name = f'데모 역할 {index}'
+        roles = [role for role in api(state, explorer, 'roles') if role['name'] == name]
+        if not roles:
+            roles = [api(state, explorer, 'roles', method='POST', expected=201,
+                         body={'roleType': 'DEMO', 'name': name, 'description': '허구의 역할'})]
+        r.check(len(roles) == 1, 'Ambiguous demo Role; refusing to recreate it.')
+        role = roles[0]
         base = f'roles/{role["id"]}/relations'
-        relation = api(state, explorer, base, method='POST', expected=201,
-                       body={'personId': pid, 'relationType': 'FRIEND', 'roleNotes': f'관계 메모 {index}'})
+        rows = r.sql(state, f'SELECT id FROM role_relations WHERE role_id={int(role["id"])} AND person_id={int(pid)}')
+        if not rows:
+            created = api(state, explorer, base, method='POST', expected=201,
+                          body={'personId': pid, 'relationType': 'FRIEND', 'roleNotes': f'관계 메모 {index}'})
+            relation_id = created['id']
+        else:
+            r.check(len(rows) == 1, 'Ambiguous demo relation.')
+            relation_id = int(rows[0][0])
+        # Compare persisted API business state; creation timestamps lose precision in MySQL.
+        relation = api(state, explorer, base + '/' + str(relation_id))
+        r.check(relation['personId'] == pid and relation['personDisplayName'] == expected_name
+                and relation['relationType'] == 'FRIEND' and relation['roleNotes'] == f'관계 메모 {index}'
+                and relation['linkedUserId'] is None, 'Relation reference/notes mismatch.')
         relations.append((base, relation))
-    api(state, explorer, person_path, method='DELETE', expected=204)
+    if person['status'] == 'ACTIVE':
+        api(state, explorer, person_path, method='DELETE', expected=204)
     r.check(api(state, explorer, person_path)['status'] == 'ARCHIVED', 'Person archive failed.')
     available = []
     for base, relation in relations:
         current = api(state, explorer, base + '/' + str(relation['id']))
-        preserved = {k: v for k, v in current.items() if k != 'personStatus'}
-        r.check(preserved == {k: v for k, v in relation.items() if k != 'personStatus'}
-                and api(state, explorer, base) == [current], 'Person archive changed relations.')
+        fields = ('id', 'personId', 'personDisplayName', 'linkedUserId', 'relationType', 'roleNotes', 'status')
+        r.check(all(current[k] == relation[k] for k in fields), 'Person archive changed relation business state.')
+        r.check(api(state, explorer, base) == ([current] if current['status'] == 'ACTIVE' else []),
+                'Relation list/detail mismatch.')
         available.append('personStatus' in current)
         if available[-1]:
             r.check(current['personStatus'] == 'ARCHIVED', 'Archived Person status mismatch.')
     base, relation = relations[0]
-    api(state, explorer, base + '/' + str(relation['id']), method='DELETE', expected=204)
+    if relation['status'] == 'ACTIVE':
+        api(state, explorer, base + '/' + str(relation['id']), method='DELETE', expected=204)
     r.check(api(state, explorer, base + '/' + str(relation['id']))['status'] == 'ARCHIVED'
             and not api(state, explorer, base), 'Relation archive failed.')
     base, relation = relations[1]
     r.check(api(state, explorer, base) == [api(state, explorer, base + '/' + str(relation['id']))]
             and api(state, explorer, base)[0]['status'] == 'ACTIVE', 'Other relation did not survive.')
     r.http(state, '/api/v1/persons/' + str(pid), token=buyer, expected=404)
+    return {'personStatusAvailable': all(available)}
 
+
+def verify_social(state, namespace, saved, tokens):
+    explorer = tokens['explorer']
+    player_id = saved['accounts']['explorer']['playerId']
     social_ids = {}
     for kind in ('guilds', 'parties'):
-        created = api(state, explorer, kind, method='POST', body={
-            'name': '데모 ' + kind, 'code': 'd' + hashlib.sha256((namespace + kind).encode()).hexdigest()[:16],
-            'visibility': 'PUBLIC', 'joinPolicy': 'OPEN', 'maxMembers': 5})
-        r.check(api(state, explorer, f'{kind}/{created["id"]}')['leaderPlayerId'] == saved['accounts']['explorer']['playerId'],
+        code = 'd' + hashlib.sha256((namespace + kind).encode()).hexdigest()[:16]
+        id_column = 'guild_id' if kind == 'guilds' else 'party_id'
+        rows = r.sql(state, f"SELECT {id_column} FROM {kind} WHERE code_value='{code}' AND player_id={int(player_id)}")
+        if rows:
+            r.check(len(rows) == 1, 'Ambiguous demo social group.')
+            created = api(state, explorer, f'{kind}/{int(rows[0][0])}')
+        else:
+            created = api(state, explorer, kind, method='POST', body={
+                'name': '데모 ' + kind, 'code': code,
+                'visibility': 'PUBLIC', 'joinPolicy': 'OPEN', 'maxMembers': 5})
+        r.check(api(state, explorer, f'{kind}/{created["id"]}')['leaderPlayerId'] == player_id,
                 'Creator leader identity mismatch.')
         table, key = ('guild_members', 'guild_id') if kind == 'guilds' else ('party_members', 'party_id')
         r.check(r.sql(state, f'SELECT player_id,role FROM {table} WHERE {key}={int(created["id"])}') ==
-                [[str(saved['accounts']['explorer']['playerId']), 'LEADER']], 'Creator LEADER membership mismatch.')
+                [[str(player_id), 'LEADER']], 'Creator LEADER membership mismatch.')
         social_ids[kind] = created['id']
-    # Reuse preparation after consumption: it must retain every current result.
+    return {'socialIds': social_ids}
+
+
+def verify(state, namespace):
+    handoff = owned_handoff()
+    r.check(namespace != handoff.get('seedNamespace'), 'Never consume the published demo namespace.')
+    verification_path = namespace_path(namespace) / 'verification.json'
+    progress = json.loads(verification_path.read_text()) if verification_path.exists() else {'phases': {}}
+    r.check(progress.get('status') != 'passed', 'Already verified; use a fresh namespace for a new demonstration.')
+    saved, tokens, _ = prepare(state, namespace)
+    progress.update(status='running', namespace=namespace)
+    atomic_json(verification_path, progress)
+    for name, phase in [('quest', verify_quest), ('trade', verify_trade), ('person', verify_person), ('social', verify_social)]:
+        if name not in progress['phases']:
+            progress['phases'][name] = phase(state, namespace, saved, tokens)
+            atomic_json(verification_path, progress)
+            print('PASS real HTTP phase: ' + name, flush=True)
     final = observe(state, tokens, saved['scenarios'])
     _, _, rerun = prepare(state, namespace)
     r.check(rerun == final, 'Prepare rerun reset progress or repeated rewards.')
     result = {'status': 'passed', 'namespace': namespace, 'mode': 'real HTTP on dedicated MySQL/Redis',
-              'flows': ['quest/reward/growth/item claim', 'reservation/purchase/identical replay',
-                        'Person/two Roles/archive isolation', 'Guild/Party creator LEADER', 'prepare after consumption'],
-              'personStatusAvailable': all(available), 'trace': trace_result,
-              'settlementIds': [s['settlementId'] for s in settlements], 'tradeId': purchased['id'], 'socialIds': social_ids}
+              'phases': progress['phases'], 'prepareAfterConsumption': 'passed',
+              'personStatusAvailable': progress['phases']['person']['personStatusAvailable']}
     atomic_json(verification_path, result)
     if handoff:
-        handoff.update(verification=result, verifyCommand=command('verify', namespace), personStatusAvailable=all(available))
+        handoff.update(status='ready', reason=None, verification=result, verifyCommand=command('verify', namespace),
+                       personStatusAvailable=result['personStatusAvailable'])
         atomic_json(HANDOFF, handoff)
     print('PASS real HTTP scenarios; result: ' + str(verification_path))
 
@@ -523,7 +585,15 @@ def main():
                         publish(state, args.namespace, saved, current, args.pr)
                     print('PASS prepare (progress preserved): ' + args.namespace)
         except Exception as error:
-            if args.publish or args.action == 'start':
+            verification_path = namespace_path(args.namespace) / 'verification.json' if args.action == 'verify' else None
+            attempted = verification_path and verification_path.exists()
+            if attempted:
+                progress = json.loads(verification_path.read_text())
+                attempted = progress.get('status') != 'passed'
+                if attempted:
+                    progress.update(status='failed', reason=str(error) if isinstance(error, RuntimeError) else type(error).__name__)
+                    atomic_json(verification_path, progress)
+            if args.publish or args.action == 'start' or attempted:
                 old = owned_handoff()
                 reason = str(error) if isinstance(error, (RuntimeError, OSError)) else type(error).__name__
                 old.update(producer='BE-DEMO-01', status='blocked', reason=f'{args.action}: {reason}',
