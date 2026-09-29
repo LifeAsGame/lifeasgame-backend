@@ -20,8 +20,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,14 +41,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Testcontainers
 @SpringBootTest(properties = {"spring.test.mockmvc.print=NONE", "spring.jpa.properties.hibernate.generate_statistics=true"})
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles({"test", "migration-test"})
 @Import(RoleRelationPersonStatusIntegrationTest.IdentityConfig.class)
-@DisplayName("관계 Person 상태 HTTP·H2 조회 계약")
+@DisplayName("관계 Person 상태 HTTP·MySQL 조회 계약")
 class RoleRelationPersonStatusIntegrationTest {
     private static final long OWNER = 38101L;
     private static final long OTHER = 38102L;
+
+    @Container
+    private static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.39")
+            .withDatabaseName("lifeasgame_role_relation_person_status")
+            .withUsername("lifeasgame")
+            .withPassword("lifeasgame");
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
+        registry.add("spring.datasource.username", MYSQL::getUsername);
+        registry.add("spring.datasource.password", MYSQL::getPassword);
+        registry.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
+    }
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
