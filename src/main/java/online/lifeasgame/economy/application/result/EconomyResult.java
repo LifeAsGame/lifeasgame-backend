@@ -87,7 +87,7 @@ public final class EconomyResult {
         }
     }
 
-    public record ListingSummary(Long id, Long itemId, Long sellerId, long price, String currency, String status) {
+    public record ListingSummary(Long id, Long itemId, Long sellerId, long price, String currency, String status, Integer saleQuantity) {
         public static ListingSummary from(Listing listing, boolean hasActiveReservation) {
             return new ListingSummary(
                     listing.getId(),
@@ -95,7 +95,8 @@ public final class EconomyResult {
                     listing.getSellerPlayerId(),
                     listing.getPrice().amount(),
                     listing.getPrice().currency().name(),
-                    listing.effectiveStatus(hasActiveReservation).name()
+                    listing.effectiveStatus(hasActiveReservation).name(),
+                    listing.getSaleQuantity()
             );
         }
     }
@@ -119,14 +120,15 @@ public final class EconomyResult {
         }
     }
 
-    public record ListingReservation(Long listingId, Long itemId, long price, String currency, Instant expiresAt) {
+    public record ListingReservation(Long listingId, Long itemId, long price, String currency, Instant expiresAt, Integer saleQuantity) {
         public static ListingReservation from(Listing listing, Instant expiresAt) {
             return new ListingReservation(
                     listing.getId(),
                     listing.getItemId(),
                     listing.getPrice().amount(),
                     listing.getPrice().currency().name(),
-                    expiresAt
+                    expiresAt,
+                    listing.getSaleQuantity()
             );
         }
     }
