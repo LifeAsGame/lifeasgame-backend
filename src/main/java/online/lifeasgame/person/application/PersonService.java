@@ -19,13 +19,15 @@ public class PersonService {
     @Transactional
     public PersonResult.Detail create(PersonCommand.Create command) {
         Long ownerPlayerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        Person saved = writer.save(Person.create(
+        Person person = Person.create(
                 ownerPlayerId,
                 command.displayName(),
                 command.notes(),
                 command.birthday(),
                 command.contact()
-        ));
+        );
+        person.replaceProfile(command.profile());
+        Person saved = writer.save(person);
         return PersonResult.Detail.from(saved);
     }
 
@@ -42,6 +44,9 @@ public class PersonService {
                 command.birthday(),
                 command.contact()
         );
+        if (command.profileProvided()) {
+            person.replaceProfile(command.profile());
+        }
         return PersonResult.Detail.from(writer.save(person));
     }
 
