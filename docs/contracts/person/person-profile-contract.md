@@ -31,13 +31,13 @@ Create: `POST /api/v1/persons` (201). Existing bodies still work. Missing or nul
 }
 ```
 
-`GET /api/v1/persons/{id}` and `GET /api/v1/persons` return the existing detail fields plus `profile`. The list remains a list of Detail objects. An old row or a profile with omitted values returns an object with nullable scalar values and empty arrays. Example detail result (inside the existing `{ "isSuccess": true, "code": "COMMON-200", "message": "...", "result": ... }` envelope):
+`GET /api/v1/persons/{id}` and `GET /api/v1/persons` return the existing detail fields plus `profile`. The list remains a list of Detail objects. An old row returns an empty profile. Example GET response for such a row:
 
 ```json
-{"id":1,"linkedUserId":null,"displayName":"Alex","birthday":"2000-01-02","contact":"alex@example.invalid","notes":"Met at a class","status":"ACTIVE","createdAt":"2026-09-30T00:00:00Z","updatedAt":"2026-09-30T00:00:00Z","version":0,"profile":{"nickname":"Al","gender":"self-described","ageAtReference":26,"ageReferenceDate":"2026-09-30","hobbies":["walking"],"contactChannels":[{"kind":"MESSENGER","label":"chat","value":"alex-id"}],"importantDates":[{"label":"Exhibition","date":"2026-10-12","repeatYearly":false}],"customNotes":[{"label":"Favorite color","value":"Blue"}]}}
+{"isSuccess":true,"code":"COMMON-200","message":"성공입니다.","result":{"id":1,"linkedUserId":null,"displayName":"Alex","notes":null,"birthday":null,"contact":null,"status":"ACTIVE","createdAt":"2026-09-30T00:00:00Z","updatedAt":"2026-09-30T00:00:00Z","version":0,"profile":{"contactChannels":[],"hobbies":[],"interests":[],"favoriteFoods":[],"avoidedFoods":[],"favoriteAnimals":[],"avoidedAnimals":[],"favoriteMusic":[],"favoriteMedia":[],"favoriteActivities":[],"conversationTopics":[],"avoidTopics":[],"giftIdeas":[],"importantDates":[],"customNotes":[]}}}
 ```
 
-The example profile above is abbreviated. Real responses include every profile array as `[]` when empty; unused scalar fields may be absent from JSON when null.
+Unused profile scalar fields are omitted from JSON when null. Every profile array is present as `[]` when empty.
 
 Update: `PUT /api/v1/persons/{id}` (200). Top-level fields keep their existing full-update behavior. For `profile`:
 
