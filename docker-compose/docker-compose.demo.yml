@@ -1,0 +1,34 @@
+# Only scripts/demo.py owns this project. Reuse the isolated CFC topology.
+services:
+  mysql:
+    extends:
+      file: docker-compose.cfc.yml
+      service: mysql
+    mem_limit: 320m
+    command: [mysqld, --innodb-buffer-pool-size=64M, --performance-schema=OFF, --max-connections=20]
+  redis:
+    extends:
+      file: docker-compose.cfc.yml
+      service: redis
+    mem_limit: 32m
+    command: [redis-server, --appendonly, 'yes', --maxmemory, 16mb, --maxmemory-policy, noeviction]
+  app:
+    extends:
+      file: docker-compose.cfc.yml
+      service: app
+    mem_limit: 768m
+    environment:
+      SPRING_PROFILES_ACTIVE: local,demo
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx320m -XX:MaxMetaspaceSize=192m -XX:ReservedCodeCacheSize=64m -XX:ActiveProcessorCount=2
+      LIFEASGAME_JWT_SECRET: ${CFC_JWT_SECRET:?}
+volumes:
+  mysql_data:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+  redis_data:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
+networks:
+  default:
+    labels:
+      online.lifeasgame.cfc-owner: ${CFC_OWNER:?}
