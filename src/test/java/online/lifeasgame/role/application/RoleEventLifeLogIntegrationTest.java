@@ -45,6 +45,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -54,7 +57,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "migration-test"})
 @Import(RoleEventLifeLogIntegrationTest.PlayerIdentityConfig.class)
 @RecordApplicationEvents
-@DisplayName("GATED RoleEvent HTTP·MySQL와 과거 LifeLog 연결 계약")
+@DisplayName("활성 RoleEvent HTTP·MySQL와 과거 LifeLog 연결 계약")
 class RoleEventLifeLogIntegrationTest {
 
     private static final long PLAYER_ID = 25201L;
@@ -111,7 +113,7 @@ class RoleEventLifeLogIntegrationTest {
                 VALUES (?, 'WORK', 'Developer', 'ACTIVE', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6), 0)
                 """, PLAYER_ID);
         roleId = jdbc.queryForObject("SELECT id FROM roles WHERE player_id = ?", Long.class, PLAYER_ID);
-        // Historical data is seeded independently of the now-gated public command API.
+        // Existing event remains linked to an explicitly authored LifeLog.
         jdbc.update("""
                 INSERT INTO role_events (player_id, role_id, title, description, status, version, created_at, updated_at)
                 VALUES (?, ?, '팀 회고', '과거 기록', 'PLANNED', 0, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))
@@ -127,23 +129,112 @@ class RoleEventLifeLogIntegrationTest {
         events.clear();
     }
 
-    @ParameterizedTest
-    @EnumSource(value = Endpoint.class, names = {"LIST", "DETAIL"}, mode = EnumSource.Mode.EXCLUDE)
-    @DisplayName("소유자의 모든 command는 403이며 영속 상태와 이벤트 발행이 불변이다")
-    void rejectsOwnedCommandWithoutSideEffects(Endpoint endpoint) throws Exception {
-        var before = snapshot();
+    @Test
+    @DisplayName("생성·수정·참가자 변경·완료와 별도 취소를 저장하고 LifeLog는 자동 생성하지 않는다")
+    void persistsLifecycleWithoutLifeLogSideEffects() throws Exception {
+        long lifeLogCount = jdbc.queryForObject("SELECT COUNT(*) FROM life_log_records WHERE player_id = ?", Long.class, PLAYER_ID);
+        long outboxCount = jdbc.queryForObject("SELECT COUNT(*) FROM outbox_events", Long.class);
+        jdbc.update("""
+                INSERT INTO persons (owner_player_id, display_name, status, version, created_at, updated_at)
+                VALUES (?, '동료', 'ACTIVE', 0, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))
+                """, PLAYER_ID);
+        long personId = jdbc.queryForObject("SELECT MAX(id) FROM persons WHERE owner_player_id = ?", Long.class, PLAYER_ID);
+        jdbc.update("""
+                INSERT INTO persons (owner_player_id, display_name, status, version, created_at, updated_at)
+                VALUES (?, '타인 Person', 'ACTIVE', 0, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))
+                """, PLAYER_ID + 1);
+        long foreignPersonId = jdbc.queryForObject("SELECT MAX(id) FROM persons WHERE owner_player_id = ?", Long.class, PLAYER_ID + 1);
+        jdbc.update("""
+                INSERT INTO users (id, email, password_hash, nickname, status, created_at, updated_at)
+                VALUES (?, 'role-event-fixture@example.test', 'hash', 'fixture', 'ACTIVE', NOW(6), NOW(6))
+                """, USER_ID + 1);
+        given(userAuthApi.resolveAuthorization(USER_ID)).willReturn(
+                Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
+        String base = "/api/v1/roles/" + roleId + "/events";
+        String token = "Bearer " + jwtProvider.createAccessToken(USER_ID, PLAYER_ID);
 
-        mockMvc.perform(authenticated(endpoint, PLAYER_ID))
-                .andExpect(status().isForbidden())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.code").value("ROL-403-EVENT-COMMAND-GATED"))
-                .andExpect(jsonPath("$.title").value("Role event commands are not available"))
-                .andExpect(jsonPath("$.path").isNotEmpty())
-                .andExpect(jsonPath("$.instance").isNotEmpty())
-                .andExpect(jsonPath("$.result").doesNotExist());
+        String created = mockMvc.perform(post(base).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"새 일정\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result.status").value("PLANNED"))
+                .andReturn().getResponse().getContentAsString();
+        long newId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(created).path("result").path("id").asLong();
+        String detail = base + "/" + newId;
+        mockMvc.perform(patch(detail).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"수정 일정\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.title").value("수정 일정"));
+        String added = mockMvc.perform(post(detail + "/participants").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"participantType\":\"PERSON\",\"participantId\":" + personId + "}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        long linkId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(added).path("result").path("participantLinkId").asLong();
+        mockMvc.perform(post(detail + "/participants").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"participantType\":\"PERSON\",\"participantId\":" + personId + "}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post(detail + "/participants").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"participantType\":\"PERSON\",\"participantId\":" + foreignPersonId + "}"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("PER-404-NOT-FOUND"));
+        mockMvc.perform(post(detail + "/participants").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"participantType\":\"SERVICE_USER\",\"participantId\":" + (USER_ID + 1) + "}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.participantType").value("SERVICE_USER"));
+        mockMvc.perform(delete(detail + "/participants/" + linkId).header("Authorization", token))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post(detail + "/complete").header("Authorization", token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.result.completedAt").isNotEmpty());
+        mockMvc.perform(post(detail + "/complete").header("Authorization", token))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("ROL-409-EVENT-NOT-PLANNED"));
+        mockMvc.perform(patch(detail).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"늦은 수정\"}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(get(detail).header("Authorization", token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("COMPLETED"));
+        mockMvc.perform(post(base).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"취소 일정\"}"))
+                .andExpect(status().isCreated());
+        long cancelId = jdbc.queryForObject("SELECT MAX(id) FROM role_events WHERE player_id = ?", Long.class, PLAYER_ID);
+        mockMvc.perform(post(base + "/" + cancelId + "/cancel").header("Authorization", token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("CANCELED"));
+        mockMvc.perform(post(base + "/" + cancelId + "/complete").header("Authorization", token))
+                .andExpect(status().isConflict());
 
-        assertUnchanged(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM life_log_records WHERE player_id = ?", Long.class, PLAYER_ID))
+                .isEqualTo(lifeLogCount);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM outbox_events", Long.class)).isEqualTo(outboxCount);
+        verifyNoInteractions(publisher);
+        assertThat(events.stream(DomainEvent.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("동시 완료·취소에서 한 상태 전이만 성공한다")
+    void serializesTerminalTransition() throws Exception {
+        given(userAuthApi.resolveAuthorization(USER_ID)).willReturn(
+                Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
+        String path = "/api/v1/roles/" + roleId + "/events/" + eventId;
+        String token = "Bearer " + jwtProvider.createAccessToken(USER_ID, PLAYER_ID);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var complete = pool.submit(() -> {
+                start.await();
+                return mockMvc.perform(post(path + "/complete").header("Authorization", token))
+                        .andReturn().getResponse().getStatus();
+            });
+            var cancel = pool.submit(() -> {
+                start.await();
+                return mockMvc.perform(post(path + "/cancel").header("Authorization", token))
+                        .andReturn().getResponse().getStatus();
+            });
+            start.countDown();
+            assertThat(List.of(complete.get(15, TimeUnit.SECONDS), cancel.get(15, TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(200, 409);
+        }
+        assertThat(jdbc.queryForObject("SELECT status FROM role_events WHERE id = ?", String.class, eventId))
+                .isIn("COMPLETED", "CANCELED");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM life_log_records WHERE player_id = ?", Long.class, PLAYER_ID))
+                .isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -160,8 +251,8 @@ class RoleEventLifeLogIntegrationTest {
     @DisplayName("타인 소유 대상은 모든 read·command에서 404이며 상태가 불변이다")
     void rejectsForeignOwner(Endpoint endpoint) throws Exception {
         var before = snapshot();
-        String code = endpoint == Endpoint.CREATE || endpoint == Endpoint.LIST
-                ? "ROL-404-NOT-FOUND" : "ROL-404-EVENT-NOT-FOUND";
+        String code = endpoint == Endpoint.DETAIL
+                ? "ROL-404-EVENT-NOT-FOUND" : "ROL-404-NOT-FOUND";
         mockMvc.perform(authenticated(endpoint, PLAYER_ID + 1))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(code));
@@ -170,7 +261,7 @@ class RoleEventLifeLogIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"PLANNED", "COMPLETED", "CANCELED"})
-    @DisplayName("과거 Event의 모든 상태에서 목록·상세·참가자 조회는 허용하고 command는 차단한다")
+    @DisplayName("보관 Role의 과거 Event는 조회하고 모든 command는 409로 차단한다")
     void preservesHistoricalReads(String eventStatus) throws Exception {
         jdbc.update("UPDATE role_events SET status = ?, completed_at = ? WHERE id = ?", eventStatus,
                 eventStatus.equals("COMPLETED") ? java.sql.Timestamp.valueOf("2026-08-11 03:00:00") : null, eventId);
@@ -191,8 +282,8 @@ class RoleEventLifeLogIntegrationTest {
         for (Endpoint endpoint : List.of(Endpoint.CREATE, Endpoint.UPDATE, Endpoint.COMPLETE,
                 Endpoint.CANCEL, Endpoint.ADD_PARTICIPANT, Endpoint.REMOVE_PARTICIPANT)) {
             mockMvc.perform(authenticated(endpoint, PLAYER_ID))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.code").value("ROL-403-EVENT-COMMAND-GATED"));
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("ROL-409-ARCHIVED"));
         }
         assertUnchanged(before);
     }
