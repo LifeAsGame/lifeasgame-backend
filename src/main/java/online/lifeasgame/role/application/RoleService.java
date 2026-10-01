@@ -47,7 +47,7 @@ public class RoleService {
     @Transactional
     public void archive(Long roleId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        Role role = reader.getOwned(roleId, playerId);
+        Role role = reader.getOwnedForUpdate(roleId, playerId);
         role.archive();
         writer.save(role);
     }
