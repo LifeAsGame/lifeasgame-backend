@@ -1,6 +1,6 @@
 # RoleEvent personal schedule contract
 
-Status: **draft, implementation and runtime verification pending** (2026-10-02). Target base: `origin/develop` `7520f3a99c3e234116f242d2f299a6d884811f9c`. Implementation SHA: pending. This contract supersedes the old CFC-EVT-001 command gate only for private RoleEvent commands.
+Status: **implemented and focused tests passed; CI and 19081 verification pending** (2026-10-02). Target base: `origin/develop` `7520f3a99c3e234116f242d2f299a6d884811f9c`. Implementation SHA: `2ae39dcc2ae9b24d884c4c0c499123624b17945d`. This contract supersedes the old CFC-EVT-001 command gate only for private RoleEvent commands.
 
 All routes require authentication and use the current **Player**. `roleId` and `eventId` identify the player's own Role and event; the client never sends `playerId`. A participant is either `PERSON` (an active Person owned by that Player, `participantId` is Person ID) or `SERVICE_USER` (an active service User ID). A service User reference is a private record: it grants no invitation, access, notification, or membership.
 
