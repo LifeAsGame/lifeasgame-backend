@@ -3,6 +3,7 @@ package online.lifeasgame.social.application.result;
 import online.lifeasgame.social.domain.Guild;
 import online.lifeasgame.social.domain.GuildMember;
 import online.lifeasgame.social.domain.GuildWaitMember;
+import online.lifeasgame.social.domain.repository.GuildRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -70,10 +71,9 @@ public final class GuildResult {
     }
     
     public record MyGuild(Long id, String name, String code, String status, String myRole, int memberCount, int maxMembers) {
-        public static MyGuild from(Guild group, Long playerId) {
-            return new MyGuild(group.getId(), group.getName().getOriginal(), group.getCode().getValue(),
-                    group.getStatus().name(), group.findMember(playerId).orElseThrow().getRole().name(),
-                    group.memberCount(), group.getMaxMembers());
+        public static MyGuild from(GuildRepository.MyGuild row) {
+            return new MyGuild(row.id(), row.name(), row.code(), row.status().name(),
+                    row.role().name(), Math.toIntExact(row.memberCount()), row.maxMembers());
         }
     }
 

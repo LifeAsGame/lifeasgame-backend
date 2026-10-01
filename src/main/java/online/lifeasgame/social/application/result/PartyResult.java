@@ -3,6 +3,7 @@ package online.lifeasgame.social.application.result;
 import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyMember;
 import online.lifeasgame.social.domain.PartyWaitMember;
+import online.lifeasgame.social.domain.repository.PartyRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -70,10 +71,9 @@ public final class PartyResult {
     }
     
     public record MyParty(Long id, String name, String code, String status, String myRole, int memberCount, int maxMembers) {
-        public static MyParty from(Party group, Long playerId) {
-            return new MyParty(group.getId(), group.getName().getOriginal(), group.getCode().getValue(),
-                    group.getStatus().name(), group.findMember(playerId).orElseThrow().getRole().name(),
-                    group.memberCount(), group.getMaxMembers());
+        public static MyParty from(PartyRepository.MyParty row) {
+            return new MyParty(row.id(), row.name(), row.code(), row.status().name(),
+                    row.role().name(), Math.toIntExact(row.memberCount()), row.maxMembers());
         }
     }
 

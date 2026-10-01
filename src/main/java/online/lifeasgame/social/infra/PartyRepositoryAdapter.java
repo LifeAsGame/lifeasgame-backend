@@ -68,8 +68,10 @@ public class PartyRepositoryAdapter implements PartyRepository {
         return rows;
     }
     @Override
-    public Page<Party> findMine(Long playerId, Pageable pageable) {
-        return jpaRepository.findMine(playerId, pageable);
+    public Page<PartyRepository.MyParty> findMine(Long playerId, Pageable pageable) {
+        return jpaRepository.findMine(playerId, pageable).map(row -> new PartyRepository.MyParty(
+                row.getId(), row.getName(), row.getCode(), row.getStatus(), row.getRole(),
+                row.getMemberCount(), row.getMaxMembers()));
     }
 
     @Override

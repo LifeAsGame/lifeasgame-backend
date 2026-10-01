@@ -216,8 +216,8 @@ public class PartyService {
     }
 
     public PartyResult.Page<PartyResult.MyParty> mine(Long playerId, int page, int size) {
-        Page<Party> rows = repository.findMine(playerId, pageOf(page, size));
-        return PartyResult.Page.of(rows.stream().map(group -> PartyResult.MyParty.from(group, playerId)).toList(),
+        var rows = repository.findMine(playerId, pageOf(page, size));
+        return PartyResult.Page.of(rows.stream().map(PartyResult.MyParty::from).toList(),
                 page, size, rows.getTotalElements());
     }
 

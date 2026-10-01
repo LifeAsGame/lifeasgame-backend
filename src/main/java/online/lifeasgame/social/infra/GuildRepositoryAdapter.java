@@ -66,8 +66,10 @@ public class GuildRepositoryAdapter implements GuildRepository {
         return rows;
     }
     @Override
-    public Page<Guild> findMine(Long playerId, Pageable pageable) {
-        return jpaRepository.findMine(playerId, pageable);
+    public Page<GuildRepository.MyGuild> findMine(Long playerId, Pageable pageable) {
+        return jpaRepository.findMine(playerId, pageable).map(row -> new GuildRepository.MyGuild(
+                row.getId(), row.getName(), row.getCode(), row.getStatus(), row.getRole(),
+                row.getMemberCount(), row.getMaxMembers()));
     }
 
     @Override

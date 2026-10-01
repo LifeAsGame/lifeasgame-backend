@@ -219,8 +219,8 @@ public class GuildService {
     }
 
     public GuildResult.Page<GuildResult.MyGuild> mine(Long playerId, int page, int size) {
-        Page<Guild> rows = repository.findMine(playerId, pageOf(page, size));
-        return GuildResult.Page.of(rows.stream().map(group -> GuildResult.MyGuild.from(group, playerId)).toList(),
+        var rows = repository.findMine(playerId, pageOf(page, size));
+        return GuildResult.Page.of(rows.stream().map(GuildResult.MyGuild::from).toList(),
                 page, size, rows.getTotalElements());
     }
 

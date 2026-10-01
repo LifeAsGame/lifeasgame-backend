@@ -17,8 +17,25 @@ public interface PartyJpaRepository extends JpaRepository<Party, Long> {
 
     Optional<Party> findByIdAndPlayerId(Long id, Long playerId);
 
-    @Query("SELECT p FROM Party p JOIN p.members m WHERE m.playerId = :playerId AND p.status = online.lifeasgame.social.domain.PartyStatus.ACTIVE ORDER BY p.id DESC")
-    Page<Party> findMine(@Param("playerId") Long playerId, Pageable pageable);
+    @Query(value = """
+            SELECT p.id AS id, p.name.value AS name, p.code.value AS code,
+                   p.status AS status, m.role AS role, p.maxMembers AS maxMembers,
+                   (SELECT COUNT(allMembers) FROM PartyMember allMembers WHERE allMembers.party = p) AS memberCount
+            FROM Party p JOIN p.members m
+            WHERE m.playerId = :playerId AND p.status = online.lifeasgame.social.domain.PartyStatus.ACTIVE
+            ORDER BY p.id DESC
+            """, countQuery = "SELECT COUNT(p) FROM Party p JOIN p.members m WHERE m.playerId = :playerId AND p.status = online.lifeasgame.social.domain.PartyStatus.ACTIVE")
+    Page<MyPartyRow> findMine(@Param("playerId") Long playerId, Pageable pageable);
+
+    interface MyPartyRow {
+        Long getId();
+        String getName();
+        String getCode();
+        online.lifeasgame.social.domain.PartyStatus getStatus();
+        online.lifeasgame.social.domain.PartyMemberRole getRole();
+        Long getMemberCount();
+        int getMaxMembers();
+    }
 
     @Query("SELECT m FROM PartyMember m WHERE m.party.id = :partyId ORDER BY m.joinedAt, m.id")
     Page<online.lifeasgame.social.domain.PartyMember> findMembers(@Param("partyId") Long partyId, Pageable pageable);

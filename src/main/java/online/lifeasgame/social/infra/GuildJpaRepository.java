@@ -17,8 +17,25 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
 
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 
-    @Query("SELECT g FROM Guild g JOIN g.members m WHERE m.playerId = :playerId AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE ORDER BY g.id DESC")
-    Page<Guild> findMine(@Param("playerId") Long playerId, Pageable pageable);
+    @Query(value = """
+            SELECT g.id AS id, g.name.value AS name, g.code.value AS code,
+                   g.status AS status, m.role AS role, g.maxMembers AS maxMembers,
+                   (SELECT COUNT(allMembers) FROM GuildMember allMembers WHERE allMembers.guild = g) AS memberCount
+            FROM Guild g JOIN g.members m
+            WHERE m.playerId = :playerId AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE
+            ORDER BY g.id DESC
+            """, countQuery = "SELECT COUNT(g) FROM Guild g JOIN g.members m WHERE m.playerId = :playerId AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE")
+    Page<MyGuildRow> findMine(@Param("playerId") Long playerId, Pageable pageable);
+
+    interface MyGuildRow {
+        Long getId();
+        String getName();
+        String getCode();
+        online.lifeasgame.social.domain.GuildStatus getStatus();
+        online.lifeasgame.social.domain.GuildMemberRole getRole();
+        Long getMemberCount();
+        int getMaxMembers();
+    }
 
     @Query("SELECT m FROM GuildMember m WHERE m.guild.id = :guildId ORDER BY m.joinedAt, m.id")
     Page<online.lifeasgame.social.domain.GuildMember> findMembers(@Param("guildId") Long guildId, Pageable pageable);
