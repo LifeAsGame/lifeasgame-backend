@@ -6,7 +6,6 @@ import online.lifeasgame.core.error.api.AuthError;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.person.application.internal.PersonLookupApi;
 import online.lifeasgame.role.application.command.RoleEventCommand;
-import online.lifeasgame.role.application.result.RoleEventResult;
 import online.lifeasgame.role.domain.Role;
 import online.lifeasgame.role.domain.RoleEvent;
 import online.lifeasgame.role.domain.RoleEventParticipantType;
@@ -23,14 +22,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RoleEvent command가 GATED이면")
+@DisplayName("RoleEvent 명령의 소유권과 활성 Role 계약")
 class RoleEventApplicationTest {
 
     private static final Long PLAYER_ID = 252L;
@@ -50,49 +51,32 @@ class RoleEventApplicationTest {
 
     @ParameterizedTest
     @EnumSource(Command.class)
-    @DisplayName("인증된 소유자의 직접 호출도 aggregate 변경과 외부 조회 전에 거부한다")
-    void rejectsOwnedCommand(Command command) {
+    @DisplayName("보관한 Role의 모든 명령은 저장 전에 409로 거부한다")
+    void rejectsArchivedRole(Command command) {
         given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
         Role role = Role.create(PLAYER_ID, RoleType.of("WORK"), "Developer", null);
-        RoleEvent event = RoleEvent.create(PLAYER_ID, ROLE_ID, "팀 회고", null, null, null);
-        var participant = event.addParticipant(RoleEventParticipantType.PERSON, 3L);
-        ReflectionTestUtils.setField(participant, "id", 9L);
-        var before = RoleEventResult.Detail.from(event);
-        if (command == Command.CREATE) {
-            given(roleReader.getOwnedForUpdate(ROLE_ID, PLAYER_ID)).willReturn(role);
-        } else {
-            given(eventReader.getOwnedForUpdate(EVENT_ID, ROLE_ID, PLAYER_ID)).willReturn(event);
-        }
+        role.archive();
+        given(roleReader.getOwnedForUpdate(ROLE_ID, PLAYER_ID)).willReturn(role);
 
-        assertRoleError(command, RoleError.ROLE_EVENT_COMMAND_GATED);
-
-        assertThat(RoleEventResult.Detail.from(event)).isEqualTo(before);
-        verifyNoInteractions(eventWriter, personLookupApi, userLookupApi, clock);
+        assertRoleError(command, RoleError.ROLE_ARCHIVED);
+        verifyNoInteractions(eventReader, eventWriter, personLookupApi, userLookupApi, clock);
     }
 
     @ParameterizedTest
     @EnumSource(Command.class)
-    @DisplayName("타인 소유 대상의 not found 보호를 gate보다 먼저 적용한다")
+    @DisplayName("자기 Role가 아니면 모든 명령은 대상 조회 전에 404로 거부한다")
     void preservesOwnership(Command command) {
         given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
-        RoleError error = command == Command.CREATE
-                ? RoleError.ROLE_NOT_FOUND : RoleError.ROLE_EVENT_NOT_FOUND;
-        if (command == Command.CREATE) {
-            given(roleReader.getOwnedForUpdate(ROLE_ID, PLAYER_ID))
-                    .willThrow(new DomainException(error));
-        } else {
-            given(eventReader.getOwnedForUpdate(EVENT_ID, ROLE_ID, PLAYER_ID))
-                    .willThrow(new DomainException(error));
-        }
+        given(roleReader.getOwnedForUpdate(ROLE_ID, PLAYER_ID))
+                .willThrow(new DomainException(RoleError.ROLE_NOT_FOUND));
 
-        assertRoleError(command, error);
-
-        verifyNoInteractions(eventWriter, personLookupApi, userLookupApi, clock);
+        assertRoleError(command, RoleError.ROLE_NOT_FOUND);
+        verifyNoInteractions(eventReader, eventWriter, personLookupApi, userLookupApi, clock);
     }
 
     @ParameterizedTest
     @EnumSource(Command.class)
-    @DisplayName("인증 없는 직접 호출은 저장소 조회 전에 거부한다")
+    @DisplayName("인증이 없으면 저장소 조회 전에 거부한다")
     void preservesAuthentication(Command command) {
         given(currentPlayerAccessor.currentPlayerIdOrThrow())
                 .willThrow(new AuthException(AuthError.UNAUTHORIZED));
@@ -100,8 +84,31 @@ class RoleEventApplicationTest {
         assertThatThrownBy(() -> execute(command)).isInstanceOfSatisfying(
                 AuthException.class,
                 error -> assertThat(error.getErrorCode()).isEqualTo(AuthError.UNAUTHORIZED));
-
         verifyNoInteractions(roleReader, eventReader, eventWriter, personLookupApi, userLookupApi, clock);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Command.class)
+    @DisplayName("활성 Role의 명령은 저장되며 완료 시간만 서버 Clock을 사용한다")
+    void acceptsOwnedActiveCommand(Command command) {
+        given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
+        given(roleReader.getOwnedForUpdate(ROLE_ID, PLAYER_ID))
+                .willReturn(Role.create(PLAYER_ID, RoleType.of("WORK"), "Developer", null));
+        if (command != Command.CREATE) {
+            RoleEvent event = RoleEvent.create(PLAYER_ID, ROLE_ID, "팀 회고", null, null, null);
+            var participant = event.addParticipant(RoleEventParticipantType.PERSON, 3L);
+            ReflectionTestUtils.setField(participant, "id", 9L);
+            given(eventReader.getOwnedForUpdate(EVENT_ID, ROLE_ID, PLAYER_ID)).willReturn(event);
+        }
+        if (command == Command.COMPLETE) {
+            given(clock.instant()).willReturn(Instant.parse("2026-10-02T00:00:00Z"));
+        }
+        if (command == Command.CREATE || command == Command.UPDATE || command == Command.COMPLETE
+                || command == Command.CANCEL || command == Command.ADD_PARTICIPANT) {
+            given(eventWriter.saveAndFlush(any())).willAnswer(invocation -> invocation.getArgument(0));
+        }
+
+        execute(command);
     }
 
     private void assertRoleError(Command command, RoleError expected) {
