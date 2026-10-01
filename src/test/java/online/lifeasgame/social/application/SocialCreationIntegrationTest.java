@@ -142,6 +142,78 @@ class SocialCreationIntegrationTest {
         assertThat(count(singular + "_members")).isEqualTo(membersBefore);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"guilds", "parties"})
+    @DisplayName("PRIVATE은 전역 목록에서 숨고 초대 대상과 현재 멤버에게만 필요한 조회를 허용한다")
+    void protectsPrivateReads(String groups) throws Exception {
+        String base = path(groups);
+        String code = code();
+        String body = """
+                {"name":"Hidden group","code":"%s","visibility":"PRIVATE","joinPolicy":"APPROVAL","maxMembers":3}
+                """.formatted(code);
+        var created = mvc.perform(auth(post(base).contentType(MediaType.APPLICATION_JSON).content(body), OWNER))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        long id = json.readTree(created.getContentAsString()).path("result").path("id").longValue();
+
+        mvc.perform(auth(get(base + "/search").param("keyword", code), OWNER + 2))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
+        mvc.perform(auth(get(base + "/search").param("visibility", "PRIVATE"), OWNER + 2))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
+        mvc.perform(auth(get(base + "/recent"), OWNER + 2)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[?(@.id == " + id + ")]").isEmpty());
+        mvc.perform(auth(get(base + "/" + id), OWNER + 2)).andExpect(status().isNotFound());
+        mvc.perform(auth(get(base + "/" + id + "/preview"), OWNER + 2)).andExpect(status().isNotFound());
+        mvc.perform(auth(get(base + "/" + id + "/members"), OWNER + 2)).andExpect(status().isNotFound());
+
+        mvc.perform(auth(post(base + "/" + id + "/invite").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"inviteePlayerId\":" + (OWNER + 1) + "}"), OWNER)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/invitations"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].name").value("Hidden group"));
+        mvc.perform(auth(get(base + "/invitations"), OWNER + 2)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(0));
+        mvc.perform(auth(get(base + "/" + id + "/me"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.pendingInvitation").value(true));
+        mvc.perform(auth(post(base + "/" + id + "/accept-invitation"), OWNER + 1)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id), OWNER + 1)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id + "/members"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(2));
+        mvc.perform(auth(get(base + "/mine"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[?(@.id == " + id + ")]").isNotEmpty());
+        mvc.perform(auth(post(base + "/" + id + "/leave"), OWNER + 1)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id), OWNER + 1)).andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"guilds", "parties"})
+    @DisplayName("공개 모임의 가입 승인 후 현재 멤버가 상세를 보고 리더 위임은 이전 리더의 수정 권한을 제거한다")
+    void membershipFollowsLeaderTransfer(String groups) throws Exception {
+        String base = path(groups);
+        String body = BODY.formatted(code()).replace("\"maxMembers\":1", "\"maxMembers\":3");
+        var created = mvc.perform(auth(post(base).contentType(MediaType.APPLICATION_JSON).content(body), OWNER))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        long id = json.readTree(created.getContentAsString()).path("result").path("id").longValue();
+        mvc.perform(auth(get(base + "/" + id + "/preview"), OWNER + 2)).andExpect(status().isOk());
+        mvc.perform(auth(post(base + "/" + id + "/request-join")
+                .contentType(MediaType.APPLICATION_JSON).content("{}"), OWNER + 1)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/requests"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+        mvc.perform(auth(get(base + "/" + id + "/pending-requests"), OWNER + 1)).andExpect(status().isForbidden());
+        mvc.perform(auth(get(base + "/" + id + "/pending-requests"), OWNER)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+        mvc.perform(auth(post(base + "/" + id + "/approve").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"applicantPlayerId\":" + (OWNER + 1) + "}"), OWNER)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id), OWNER + 1)).andExpect(status().isOk());
+        String transfer = groups.equals("guilds")
+                ? "{\"toPlayerId\":" + (OWNER + 1) + "}"
+                : "{\"fromLeaderPlayerId\":" + OWNER + ",\"toPlayerId\":" + (OWNER + 1) + "}";
+        mvc.perform(auth(post(base + "/" + id + "/transfer-leader").contentType(MediaType.APPLICATION_JSON)
+                .content(transfer), OWNER)).andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id + "/me"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.myRole").value("LEADER"));
+        mvc.perform(auth(post(base + "/" + id + "/rename").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Denied\"}"), OWNER)).andExpect(status().isNotFound());
+    }
+
     private long create(String groups) throws Exception {
         var response = mvc.perform(auth(post(path(groups)).param("playerId", "999999")
                         .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted(code())), OWNER))

@@ -63,6 +63,11 @@ public final class PlayerGuildResponse {
             String expiresAt
     ) {}
 
+    public record Pending(Long id, Long guildId, String name, String code, Long playerId, String type, String status,
+                          String message, String requestedAt, String expiresAt) {}
+
+    public record Me(String myRole, boolean pendingJoin, boolean pendingInvitation, List<String> actions) {}
+
     public record Page<T>(
             List<T> contents,
             int page,

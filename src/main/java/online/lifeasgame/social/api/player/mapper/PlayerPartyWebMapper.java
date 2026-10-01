@@ -62,6 +62,29 @@ public final class PlayerPartyWebMapper {
         );
     }
 
+    public static PlayerPartyResponse.MyParty toMy(PartyResult.MyParty result) {
+        return new PlayerPartyResponse.MyParty(result.id(), result.name(), result.code(), result.status(),
+                result.myRole(), result.memberCount(), result.maxMembers());
+    }
+
+    public static PlayerPartyResponse.Member toMember(PartyResult.Member result) {
+        return new PlayerPartyResponse.Member(result.playerId(), result.role(), result.joinedAt());
+    }
+
+    public static PlayerPartyResponse.Pending toPending(PartyResult.Pending result) {
+        return new PlayerPartyResponse.Pending(result.id(), result.partyId(), result.name(), result.code(),
+                result.playerId(), result.type(), result.status(), result.message(), result.requestedAt(), result.expiresAt());
+    }
+
+    public static PlayerPartyResponse.Me toMe(PartyResult.Me result) {
+        return new PlayerPartyResponse.Me(result.myRole(), result.pendingJoin(), result.pendingInvitation(), result.actions());
+    }
+
+    public static <T, U> PlayerPartyResponse.Page<U> toPage(PartyResult.Page<T> page, java.util.function.Function<T, U> mapper) {
+        return new PlayerPartyResponse.Page<>(page.contents().stream().map(mapper).toList(),
+                page.page(), page.size(), page.totalElements(), page.totalPages());
+    }
+
     public static PartyCommand.Create toCreateCommand(PlayerPartyRequest.Create request) {
         return new PartyCommand.Create(
                 request.name(),

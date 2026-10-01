@@ -2,10 +2,14 @@ package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.domain.Party;
+import online.lifeasgame.social.domain.PartyMember;
+import online.lifeasgame.social.domain.PartyWaitMember;
+import online.lifeasgame.social.domain.PartyWaitType;
 import online.lifeasgame.social.domain.PartyVisibility;
 import online.lifeasgame.social.domain.repository.PartyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -57,7 +61,29 @@ public class PartyRepositoryAdapter implements PartyRepository {
 
     @Override
     public List<Party> recent(int limit) {
-        List<Long> ids = jpaRepository.findRecent(limit);
-        return jpaRepository.findRecentWithTags(ids);
+        List<Long> ids = jpaRepository.findRecent(PageRequest.of(0, limit));
+        if (ids.isEmpty()) return List.of();
+        List<Party> rows = jpaRepository.findRecentWithTags(ids);
+        rows.sort(Comparator.comparingInt(party -> ids.indexOf(party.getId())));
+        return rows;
+    }
+    @Override
+    public Page<Party> findMine(Long playerId, Pageable pageable) {
+        return jpaRepository.findMine(playerId, pageable);
+    }
+
+    @Override
+    public Page<PartyMember> findMembers(Long partyId, Pageable pageable) {
+        return jpaRepository.findMembers(partyId, pageable);
+    }
+
+    @Override
+    public Page<PartyWaitMember> findPendingRequests(Long partyId, Pageable pageable) {
+        return jpaRepository.findPendingRequests(partyId, pageable);
+    }
+
+    @Override
+    public Page<PartyWaitMember> findMyPending(Long playerId, PartyWaitType type, Pageable pageable) {
+        return jpaRepository.findMyPending(playerId, type, pageable);
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.social.application.command.GuildCommand;
 import online.lifeasgame.social.application.result.GuildResult;
+import online.lifeasgame.social.domain.GuildWaitType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -116,4 +117,10 @@ public class GuildFacade {
     public List<GuildResult.Summary> recent(int limit) {
         return guildService.recent(limit);
     }
+    public GuildResult.Summary preview(Long id) { return guildService.preview(id); }
+    public GuildResult.Page<GuildResult.MyGuild> mine(int page, int size) { return guildService.mine(player(), page, size); }
+    public GuildResult.Page<GuildResult.Member> members(Long id, int page, int size) { return guildService.members(player(), id, page, size); }
+    public GuildResult.Page<GuildResult.Pending> pendingRequests(Long id, int page, int size) { return guildService.pendingRequests(player(), id, page, size); }
+    public GuildResult.Page<GuildResult.Pending> myPending(GuildWaitType type, int page, int size) { return guildService.myPending(player(), type, page, size); }
+    public GuildResult.Me me(Long id) { return guildService.me(player(), id); }
 }

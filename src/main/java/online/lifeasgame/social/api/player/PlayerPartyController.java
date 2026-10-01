@@ -12,6 +12,7 @@ import online.lifeasgame.social.api.player.response.PlayerPartyResponse;
 import online.lifeasgame.social.api.player.spec.PlayerPartyApiSpecV1;
 import online.lifeasgame.social.application.PartyFacade;
 import online.lifeasgame.social.application.result.PartyResult;
+import online.lifeasgame.social.domain.PartyWaitType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +54,46 @@ public class PlayerPartyController implements PlayerPartyApiSpecV1 {
     ) {
         PartyResult.Page<PartyResult.Summary> pages = partyFacade.search(keyword, visibility, page, size);
         return ApiResponses.ok(PlayerPartyWebMapper.toSummaryPage(pages));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.MyParty>>> mine(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.mine(page, size), PlayerPartyWebMapper::toMy));
+    }
+
+    @GetMapping("/requests")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> requests(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.myPending(PartyWaitType.JOIN_REQUEST, page, size), PlayerPartyWebMapper::toPending));
+    }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> invitations(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.myPending(PartyWaitType.INVITATION, page, size), PlayerPartyWebMapper::toPending));
+    }
+
+    @GetMapping("/{partyId}/preview")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Summary>> preview(@PathVariable Long partyId) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toSummary(partyFacade.preview(partyId)));
+    }
+
+    @GetMapping("/{partyId}/members")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Member>>> members(
+            @PathVariable Long partyId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.members(partyId, page, size), PlayerPartyWebMapper::toMember));
+    }
+
+    @GetMapping("/{partyId}/pending-requests")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> pendingRequests(
+            @PathVariable Long partyId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.pendingRequests(partyId, page, size), PlayerPartyWebMapper::toPending));
+    }
+
+    @GetMapping("/{partyId}/me")
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Me>> me(@PathVariable Long partyId) {
+        return ApiResponses.ok(PlayerPartyWebMapper.toMe(partyFacade.me(partyId)));
     }
 
     @Override
