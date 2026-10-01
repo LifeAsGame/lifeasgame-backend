@@ -131,10 +131,12 @@ def preflight(port):
 
 
 def start(args):
-    origin = urlsplit(args.origin)
-    r.check(origin.scheme == 'http' and origin.hostname in ('localhost', '127.0.0.1')
-            and origin.port and not origin.path and not origin.query and not origin.fragment
-            and not origin.username and not origin.password, 'Provide one exact loopback FE origin with a port.')
+    origins = args.origin.split(',')
+    for value in origins:
+        origin = urlsplit(value)
+        r.check(origin.scheme == 'http' and origin.hostname in ('localhost', '127.0.0.1')
+                and origin.port and not origin.path and not origin.query and not origin.fragment
+                and not origin.username and not origin.password, 'Provide exact loopback FE origins with ports.')
     r.check(1024 <= args.port <= 65535, 'Invalid API port.')
     if not (r.STATE / 'runtime.json').exists():
         r.check(not r.resources(), 'Unowned demo resources exist; refusing adoption.')
@@ -167,10 +169,11 @@ def start(args):
     r.compose(state, 'up', '-d', '--wait', '--wait-timeout', '180')
     r.ready(state)
     isolated()
-    _, headers = r.http(state, '/api/v1/economy/wallet', method='OPTIONS', headers={
-        'Origin': state['env']['CFC_ORIGINS'], 'Access-Control-Request-Method': 'GET',
-        'Access-Control-Request-Headers': 'authorization,content-type,idempotency-key'})
-    r.check(headers.get('Access-Control-Allow-Origin') == state['env']['CFC_ORIGINS'], 'Dedicated CORS origin mismatch.')
+    for origin in origins:
+        _, headers = r.http(state, '/api/v1/economy/wallet', method='OPTIONS', headers={
+            'Origin': origin, 'Access-Control-Request-Method': 'GET',
+            'Access-Control-Request-Headers': 'authorization,content-type,idempotency-key'})
+        r.check(headers.get('Access-Control-Allow-Origin') == origin, 'Dedicated CORS origin mismatch.')
     r.http(state, '/api/v1/economy/wallet', expected=401)
     print('PASS dedicated runtime: ' + r.PROJECT)
 
