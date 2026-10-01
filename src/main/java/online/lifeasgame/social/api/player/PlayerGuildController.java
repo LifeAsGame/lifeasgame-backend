@@ -61,13 +61,13 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     }
 
     @GetMapping("/requests")
-    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Pending>>> requests(
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> requests(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.myPending(GuildWaitType.JOIN_REQUEST, page, size), PlayerGuildWebMapper::toPending));
     }
 
     @GetMapping("/invitations")
-    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Pending>>> invitations(
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> invitations(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.myPending(GuildWaitType.INVITATION, page, size), PlayerGuildWebMapper::toPending));
     }
@@ -84,7 +84,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     }
 
     @GetMapping("/{guildId}/pending-requests")
-    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Pending>>> pendingRequests(
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> pendingRequests(
             @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.pendingRequests(guildId, page, size), PlayerGuildWebMapper::toPending));
     }

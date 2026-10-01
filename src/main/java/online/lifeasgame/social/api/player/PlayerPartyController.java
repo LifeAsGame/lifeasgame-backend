@@ -63,13 +63,13 @@ public class PlayerPartyController implements PlayerPartyApiSpecV1 {
     }
 
     @GetMapping("/requests")
-    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> requests(
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.WaitMember>>> requests(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.myPending(PartyWaitType.JOIN_REQUEST, page, size), PlayerPartyWebMapper::toPending));
     }
 
     @GetMapping("/invitations")
-    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> invitations(
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.WaitMember>>> invitations(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.myPending(PartyWaitType.INVITATION, page, size), PlayerPartyWebMapper::toPending));
     }
@@ -86,7 +86,7 @@ public class PlayerPartyController implements PlayerPartyApiSpecV1 {
     }
 
     @GetMapping("/{partyId}/pending-requests")
-    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.Pending>>> pendingRequests(
+    public ResponseEntity<ApiResponse<PlayerPartyResponse.Page<PlayerPartyResponse.WaitMember>>> pendingRequests(
             @PathVariable Long partyId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(PlayerPartyWebMapper.toPage(partyFacade.pendingRequests(partyId, page, size), PlayerPartyWebMapper::toPending));
     }

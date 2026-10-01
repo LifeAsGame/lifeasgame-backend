@@ -71,8 +71,8 @@ public final class PlayerPartyWebMapper {
         return new PlayerPartyResponse.Member(result.playerId(), result.role(), result.joinedAt());
     }
 
-    public static PlayerPartyResponse.Pending toPending(PartyResult.Pending result) {
-        return new PlayerPartyResponse.Pending(result.id(), result.partyId(), result.name(), result.code(),
+    public static PlayerPartyResponse.WaitMember toPending(PartyResult.Pending result) {
+        return new PlayerPartyResponse.WaitMember(result.id(), result.partyId(), result.name(), result.code(),
                 result.playerId(), result.type(), result.status(), result.message(), result.requestedAt(), result.expiresAt());
     }
 

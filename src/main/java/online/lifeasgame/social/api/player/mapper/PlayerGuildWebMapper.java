@@ -67,8 +67,8 @@ public final class PlayerGuildWebMapper {
         return new PlayerGuildResponse.Member(result.playerId(), result.role(), result.joinedAt());
     }
 
-    public static PlayerGuildResponse.Pending toPending(GuildResult.Pending result) {
-        return new PlayerGuildResponse.Pending(result.id(), result.guildId(), result.name(), result.code(),
+    public static PlayerGuildResponse.WaitMember toPending(GuildResult.Pending result) {
+        return new PlayerGuildResponse.WaitMember(result.id(), result.guildId(), result.name(), result.code(),
                 result.playerId(), result.type(), result.status(), result.message(), result.requestedAt(), result.expiresAt());
     }
 
