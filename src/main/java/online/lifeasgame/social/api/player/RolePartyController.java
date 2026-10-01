@@ -68,6 +68,12 @@ public class RolePartyController {
         return ApiResponses.ok(service.invite(id, request.inviteePlayerId()));
     }
 
+    @GetMapping("/role-parties/{id}/invitations")
+    public ResponseEntity<ApiResponse<RolePartyResult.PageResult<RolePartyResult.Invitation>>> invitations(
+            @PathVariable Long id, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(queryService.invitations(id, page, size));
+    }
+
     @PostMapping("/role-parties/{id}/invitations/{invitationId}/accept")
     public ResponseEntity<ApiResponse<RolePartyResult.Detail>> accept(@PathVariable Long id, @PathVariable Long invitationId) {
         return ApiResponses.ok(service.accept(id, invitationId));

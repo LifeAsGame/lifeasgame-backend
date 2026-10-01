@@ -15,4 +15,5 @@ public interface RolePartyRepository {
     Page<RoleParty> findByCreatorPlayerIdAndRoleIdOrderByIdDesc(Long creatorPlayerId, Long roleId, Pageable pageable);
     Page<RoleParty> findMine(Long playerId, Pageable pageable);
     Page<RolePartyInvitation> findPendingInvitations(Long playerId, Instant now, RolePartyInvitation.Status status, Pageable pageable);
+    Page<RolePartyInvitation> findPendingInvitationsForParty(Long partyId, Instant now, RolePartyInvitation.Status status, Pageable pageable);
 }

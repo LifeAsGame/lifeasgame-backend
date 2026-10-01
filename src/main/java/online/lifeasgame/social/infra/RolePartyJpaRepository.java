@@ -27,4 +27,8 @@ public interface RolePartyJpaRepository extends JpaRepository<RoleParty, Long>, 
     @Query("SELECT i FROM RolePartyInvitation i JOIN FETCH i.party p WHERE i.inviteePlayerId = :playerId AND i.status = :status AND i.expiresAt > :now ORDER BY i.id DESC")
     Page<RolePartyInvitation> findPendingInvitations(@Param("playerId") Long playerId, @Param("now") Instant now,
                                                      @Param("status") RolePartyInvitation.Status status, Pageable pageable);
+
+    @Query("SELECT i FROM RolePartyInvitation i JOIN FETCH i.party p WHERE p.id = :partyId AND i.status = :status AND i.expiresAt > :now ORDER BY i.id DESC")
+    Page<RolePartyInvitation> findPendingInvitationsForParty(@Param("partyId") Long partyId, @Param("now") Instant now,
+                                                             @Param("status") RolePartyInvitation.Status status, Pageable pageable);
 }

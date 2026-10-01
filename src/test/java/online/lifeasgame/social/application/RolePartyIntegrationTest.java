@@ -216,6 +216,58 @@ class RolePartyIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM role_party_members WHERE role_party_id = ?", Long.class, partyId)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("현재 리더만 모임별 유효한 대기 초대를 다시 조회하고 이전 후 취소할 수 있다")
+    void listsCancelableInvitationsForCurrentLeader() throws Exception {
+        String created = mvc.perform(auth(post("/api/v1/roles/" + roleId + "/role-parties"), LEADER)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"모임\",\"maxMembers\":3}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long partyId = result(created).path("id").asLong();
+        String base = "/api/v1/role-parties/" + partyId;
+        long inviteA = invite(base, A);
+        long inviteB = invite(base, B);
+
+        mvc.perform(auth(get(base + "/invitations?page=0&size=1"), LEADER))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(2))
+                .andExpect(jsonPath("$.result.contents[0].invitationId").value(inviteB))
+                .andExpect(jsonPath("$.result.contents[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.result.contents[0].expiresAt").exists());
+        mvc.perform(auth(get(base + "/invitations?page=1&size=1"), LEADER))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.contents[0].invitationId").value(inviteA));
+        for (long denied : List.of(A, B, OUTSIDER)) {
+            mvc.perform(auth(get(base + "/invitations"), denied))
+                    .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("SOC-404-ROLE-PARTY-NOT-FOUND"));
+        }
+
+        String other = mvc.perform(auth(post("/api/v1/roles/" + roleId + "/role-parties"), LEADER)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"다른 모임\",\"maxMembers\":3}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String otherBase = "/api/v1/role-parties/" + result(other).path("id").asLong();
+        long otherInvite = invite(otherBase, B);
+        mvc.perform(auth(get(base + "/invitations"), LEADER))
+                .andExpect(jsonPath("$.result.totalElements").value(2));
+        mvc.perform(auth(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                base + "/invitations/" + otherInvite), LEADER)).andExpect(status().isNotFound());
+
+        mvc.perform(auth(post(base + "/invitations/" + inviteA + "/accept"), A)).andExpect(status().isOk());
+        mvc.perform(auth(post(base + "/transfer-leader"), LEADER)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"toPlayerId\":" + A + "}"))
+                .andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/invitations"), LEADER)).andExpect(status().isNotFound());
+        mvc.perform(auth(get(base + "/invitations"), A))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.contents[0].invitationId").value(inviteB));
+        mvc.perform(auth(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                base + "/invitations/" + inviteB), A)).andExpect(status().isNoContent());
+        mvc.perform(auth(get(base + "/invitations"), A))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
+        mvc.perform(auth(get("/api/v1/role-parties/invitations/mine"), B))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(1));
+        jdbc.update("UPDATE role_party_invitations SET expires_at = NOW(6) - INTERVAL 1 SECOND WHERE id = ?", otherInvite);
+        mvc.perform(auth(get(otherBase + "/invitations"), LEADER))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
+    }
+
     private long invite(String base, long target) throws Exception {
         String body = mvc.perform(auth(post(base + "/invitations"), LEADER)
                         .contentType(MediaType.APPLICATION_JSON)

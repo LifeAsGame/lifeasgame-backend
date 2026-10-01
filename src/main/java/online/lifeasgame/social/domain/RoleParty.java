@@ -139,7 +139,7 @@ public class RoleParty extends AbstractTime {
                 .orElseThrow(() -> error(SocialError.ROLE_PARTY_INVITATION_NOT_FOUND));
     }
 
-    private void requireLeader(Long actor) {
+    public void requireLeader(Long actor) {
         requireActive();
         if (!leaderPlayerId.equals(actor) || !hasMember(actor)) throw error(SocialError.ROLE_PARTY_NOT_FOUND);
     }

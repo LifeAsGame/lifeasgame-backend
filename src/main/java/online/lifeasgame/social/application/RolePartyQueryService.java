@@ -46,6 +46,13 @@ public class RolePartyQueryService {
         return RolePartyResult.PageResult.of(rows, rows.stream().map(RolePartyResult.Invitation::from).toList());
     }
 
+    public RolePartyResult.PageResult<RolePartyResult.Invitation> invitations(Long id, int page, int size) {
+        get(id).requireLeader(actor());
+        Page<RolePartyInvitation> rows = repository.findPendingInvitationsForParty(id, clock.instant(),
+                RolePartyInvitation.Status.PENDING, page(page, size));
+        return RolePartyResult.PageResult.of(rows, rows.stream().map(RolePartyResult.Invitation::from).toList());
+    }
+
     public RolePartyResult.Detail detail(Long id) {
         RoleParty party = get(id);
         party.requireMember(actor());
