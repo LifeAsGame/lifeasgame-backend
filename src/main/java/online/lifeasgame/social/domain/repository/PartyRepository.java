@@ -3,6 +3,14 @@ package online.lifeasgame.social.domain.repository;
 import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyVisibility;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import online.lifeasgame.social.domain.PartyMember;
+import online.lifeasgame.social.domain.PartyWaitMember;
+import online.lifeasgame.social.domain.PartyWaitType;
+import online.lifeasgame.social.domain.PartyStatus;
+import online.lifeasgame.social.domain.PartyMemberRole;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +26,11 @@ public interface PartyRepository {
     long countSearch(String keyword, PartyVisibility visibility);
 
     List<Party> recent(int limit);
+
+    Page<MyParty> findMine(Long playerId, Pageable pageable);
+    Page<PartyMember> findMembers(Long partyId, Pageable pageable);
+    Page<PartyWaitMember> findPendingRequests(Long partyId, Pageable pageable);
+    Page<PartyWaitMember> findMyPending(Long playerId, PartyWaitType type, Pageable pageable);
+    record MyParty(Long id, String name, String code, PartyStatus status,
+                    PartyMemberRole role, long memberCount, int maxMembers) {}
 }

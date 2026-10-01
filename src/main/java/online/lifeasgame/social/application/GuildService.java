@@ -8,6 +8,12 @@ import online.lifeasgame.social.domain.Guild;
 import online.lifeasgame.social.domain.GuildJoinPolicy;
 import online.lifeasgame.social.domain.GuildMemberRole;
 import online.lifeasgame.social.domain.GuildVisibility;
+import online.lifeasgame.social.domain.GuildWaitType;
+import online.lifeasgame.social.domain.GuildStatus;
+import online.lifeasgame.social.domain.repository.GuildRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import java.util.ArrayList;
 import online.lifeasgame.social.domain.error.SocialError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,11 +25,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+@Transactional(readOnly = true)
 public class GuildService {
 
     private final GuildReader guildReader;
     private final GuildWriter guildWriter;
+    private final GuildRepository repository;
 
     @Transactional
     public GuildResult.Info create(Long playerId, GuildCommand.Create command) {
@@ -198,8 +205,83 @@ public class GuildService {
     }
 
     public GuildResult.Info getGuild(Long playerId, Long id) {
-        Guild guild = guildReader.getByPlayerIdAndIdOrThrow(playerId, id);
-        return GuildResult.Info.from(guild);
+        Guild group = guildReader.getByIdOrThrow(id);
+        requireMember(group, playerId);
+        return GuildResult.Info.from(group);
+    }
+
+    public GuildResult.Summary preview(Long id) {
+        Guild group = guildReader.getByIdOrThrow(id);
+        if (group.getVisibility() != GuildVisibility.PUBLIC || group.getStatus() != GuildStatus.ACTIVE) {
+            throw new DomainException(SocialError.GUILD_NOT_FOUND);
+        }
+        return GuildResult.Summary.from(group);
+    }
+
+    public GuildResult.Page<GuildResult.MyGuild> mine(Long playerId, int page, int size) {
+        var rows = repository.findMine(playerId, pageOf(page, size));
+        return GuildResult.Page.of(rows.stream().map(GuildResult.MyGuild::from).toList(),
+                page, size, rows.getTotalElements());
+    }
+
+    public GuildResult.Page<GuildResult.Member> members(Long playerId, Long id, int page, int size) {
+        requireMember(guildReader.getByIdOrThrow(id), playerId);
+        var rows = repository.findMembers(id, pageOf(page, size));
+        return GuildResult.Page.of(rows.stream().map(GuildResult.Member::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public GuildResult.Page<GuildResult.Pending> pendingRequests(Long playerId, Long id, int page, int size) {
+        Guild group = guildReader.getByIdOrThrow(id);
+        ensureLeader(group, playerId);
+        var rows = repository.findPendingRequests(id, pageOf(page, size));
+        return GuildResult.Page.of(rows.stream().map(GuildResult.Pending::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public GuildResult.Page<GuildResult.Pending> myPending(Long playerId, GuildWaitType type, int page, int size) {
+        var rows = repository.findMyPending(playerId, type, pageOf(page, size));
+        return GuildResult.Page.of(rows.stream().map(GuildResult.Pending::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public GuildResult.Me me(Long playerId, Long id) {
+        Guild group = guildReader.getByIdOrThrow(id);
+        var membership = group.findMember(playerId);
+        var invitation = group.findPendingInvite(playerId);
+        boolean invited = invitation.isPresent();
+        if (membership.isEmpty() && !invited && (group.getVisibility() != GuildVisibility.PUBLIC || group.getStatus() != GuildStatus.ACTIVE)) {
+            throw new DomainException(SocialError.GUILD_NOT_FOUND);
+        }
+        boolean requested = group.findPendingJoin(playerId).isPresent();
+        List<String> actions = new ArrayList<>();
+        if (group.getStatus() == GuildStatus.ACTIVE) {
+            if (membership.isPresent()) {
+                String role = membership.get().getRole().name();
+                if (role.equals("LEADER")) {
+                    actions.addAll(List.of("rename", "policy", "description", "emblem", "tags/add", "tags/remove",
+                            "approve", "reject", "transfer-leader", "promote", "demote", "disband"));
+                } else {
+                    actions.add("leave");
+                }
+                if (role.equals("LEADER") || role.equals("OFFICER")) actions.addAll(List.of("invite", "kick"));
+            } else if (invited) {
+                if (!invitation.orElseThrow().isExpired()) actions.add("accept-invitation");
+                actions.add("decline-invitation");
+            } else if (requested) {
+                actions.add("cancel-join");
+            } else if (group.getVisibility() == GuildVisibility.PUBLIC && group.getJoinPolicy() != online.lifeasgame.social.domain.GuildJoinPolicy.INVITE_ONLY
+                    && group.memberCount() < group.getMaxMembers()) {
+                actions.add("request-join");
+            }
+        }
+        return new GuildResult.Me(membership.map(m -> m.getRole().name()).orElse(null), requested, invited, actions);
+    }
+
+    private static PageRequest pageOf(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) throw new DomainException(SocialError.INVALID_STATE);
+        return PageRequest.of(page, size);
+    }
+
+    private static void requireMember(Guild group, Long playerId) {
+        if (group.findMember(playerId).isEmpty()) throw new DomainException(SocialError.GUILD_NOT_FOUND);
     }
 
     private static void ensureLeader(Guild guild, Long actorId) {

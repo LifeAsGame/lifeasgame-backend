@@ -2,10 +2,14 @@ package online.lifeasgame.social.infra;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.domain.Guild;
+import online.lifeasgame.social.domain.GuildMember;
+import online.lifeasgame.social.domain.GuildWaitMember;
+import online.lifeasgame.social.domain.GuildWaitType;
 import online.lifeasgame.social.domain.GuildVisibility;
 import online.lifeasgame.social.domain.repository.GuildRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -55,7 +59,31 @@ public class GuildRepositoryAdapter implements GuildRepository {
 
     @Override
     public List<Guild> recent(int limit) {
-        List<Long> ids = jpaRepository.findRecent(limit);
-        return jpaRepository.findRecentWithTags(ids);
+        List<Long> ids = jpaRepository.findRecent(PageRequest.of(0, limit));
+        if (ids.isEmpty()) return List.of();
+        List<Guild> rows = jpaRepository.findRecentWithTags(ids);
+        rows.sort(Comparator.comparingInt(g -> ids.indexOf(g.getId())));
+        return rows;
+    }
+    @Override
+    public Page<GuildRepository.MyGuild> findMine(Long playerId, Pageable pageable) {
+        return jpaRepository.findMine(playerId, pageable).map(row -> new GuildRepository.MyGuild(
+                row.getId(), row.getName(), row.getCode(), row.getStatus(), row.getRole(),
+                row.getMemberCount(), row.getMaxMembers()));
+    }
+
+    @Override
+    public Page<GuildMember> findMembers(Long guildId, Pageable pageable) {
+        return jpaRepository.findMembers(guildId, pageable);
+    }
+
+    @Override
+    public Page<GuildWaitMember> findPendingRequests(Long guildId, Pageable pageable) {
+        return jpaRepository.findPendingRequests(guildId, pageable);
+    }
+
+    @Override
+    public Page<GuildWaitMember> findMyPending(Long playerId, GuildWaitType type, Pageable pageable) {
+        return jpaRepository.findMyPending(playerId, type, pageable);
     }
 }

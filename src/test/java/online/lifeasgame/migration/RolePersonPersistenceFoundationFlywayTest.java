@@ -46,9 +46,9 @@ class RolePersonPersistenceFoundationFlywayTest {
     }
 
     @Test
-    @DisplayName("V37까지 적용된 schema에서 V19 Role/Person 계약을 고정한다")
+    @DisplayName("V39까지 적용된 schema에서 V19 Role/Person 계약을 고정한다")
     void createsSchemaContract() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("37");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("39");
         assertThat(tableContracts()).containsExactly(
                 new TableContract("roles", "InnoDB", "utf8mb4_0900_ai_ci"),
                 new TableContract("persons", "InnoDB", "utf8mb4_0900_ai_ci"),
@@ -75,6 +75,7 @@ class RolePersonPersistenceFoundationFlywayTest {
                 column("persons", "created_at", "datetime(6)", "NO", null, ""),
                 column("persons", "updated_at", "datetime(6)", "NO", null, ""),
                 column("persons", "version", "bigint", "NO", "0", ""),
+                column("persons", "profile_json", "json", "YES", null, ""),
                 column("role_relations", "id", "bigint", "NO", null, "auto_increment"),
                 column("role_relations", "player_id", "bigint", "NO", null, ""),
                 column("role_relations", "role_id", "bigint", "NO", null, ""),

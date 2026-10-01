@@ -17,12 +17,42 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
 
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 
+    @Query(value = """
+            SELECT g.id AS id, g.name.value AS name, g.code.value AS code,
+                   g.status AS status, m.role AS role, g.maxMembers AS maxMembers,
+                   (SELECT COUNT(allMembers) FROM GuildMember allMembers WHERE allMembers.guild = g) AS memberCount
+            FROM Guild g JOIN g.members m
+            WHERE m.playerId = :playerId AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE
+            ORDER BY g.id DESC
+            """, countQuery = "SELECT COUNT(g) FROM Guild g JOIN g.members m WHERE m.playerId = :playerId AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE")
+    Page<MyGuildRow> findMine(@Param("playerId") Long playerId, Pageable pageable);
+
+    interface MyGuildRow {
+        Long getId();
+        String getName();
+        String getCode();
+        online.lifeasgame.social.domain.GuildStatus getStatus();
+        online.lifeasgame.social.domain.GuildMemberRole getRole();
+        Long getMemberCount();
+        int getMaxMembers();
+    }
+
+    @Query("SELECT m FROM GuildMember m WHERE m.guild.id = :guildId ORDER BY m.joinedAt, m.id")
+    Page<online.lifeasgame.social.domain.GuildMember> findMembers(@Param("guildId") Long guildId, Pageable pageable);
+
+    @Query("SELECT w FROM GuildWaitMember w WHERE w.guild.id = :guildId AND w.type = online.lifeasgame.social.domain.GuildWaitType.JOIN_REQUEST AND w.status = online.lifeasgame.social.domain.GuildWaitStatus.PENDING ORDER BY w.id")
+    Page<online.lifeasgame.social.domain.GuildWaitMember> findPendingRequests(@Param("guildId") Long guildId, Pageable pageable);
+
+    @Query("SELECT w FROM GuildWaitMember w JOIN FETCH w.guild g WHERE w.playerId = :playerId AND w.type = :type AND w.status = online.lifeasgame.social.domain.GuildWaitStatus.PENDING ORDER BY w.id DESC")
+    Page<online.lifeasgame.social.domain.GuildWaitMember> findMyPending(@Param("playerId") Long playerId, @Param("type") online.lifeasgame.social.domain.GuildWaitType type, Pageable pageable);
+
     @Query(
         """
             SELECT g.id
             FROM Guild g
             WHERE (:keyword IS NULL OR :keyword='' OR LOWER(g.name.value) LIKE LOWER(CONCAT('%',:keyword,'%') )
                 OR LOWER(g.code.value) LIKE LOWER(CONCAT('%',:keyword,'%') ) )
+                AND g.visibility = online.lifeasgame.social.domain.GuildVisibility.PUBLIC AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE
                 AND (:visibility IS NULL OR g.visibility = :visibility)
             ORDER BY g.id DESC
         """
@@ -53,15 +83,6 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
     )
     List<Guild> findRecentWithTags(List<Long> ids);
 
-    @Query(
-            value =
-                """
-                    SELECT g.id
-                    FROM Guild g
-                    ORDER BY g.createdAt
-                    LIMIT :limits
-                """
-            , nativeQuery = true
-    )
-    List<Long> findRecent(@Param("limits") Integer limits);
+    @Query("SELECT g.id FROM Guild g WHERE g.visibility = online.lifeasgame.social.domain.GuildVisibility.PUBLIC AND g.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE ORDER BY g.createdAt DESC, g.id DESC")
+    List<Long> findRecent(Pageable pageable);
 }

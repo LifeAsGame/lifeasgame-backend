@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.social.application.command.PartyCommand;
 import online.lifeasgame.social.application.result.PartyResult;
+import online.lifeasgame.social.domain.PartyWaitType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -111,4 +112,10 @@ public class PartyFacade {
     public List<PartyResult.Summary> recent(int limit) {
         return partyService.recent(limit);
     }
+    public PartyResult.Summary preview(Long id) { return partyService.preview(id); }
+    public PartyResult.Page<PartyResult.MyParty> mine(int page, int size) { return partyService.mine(player(), page, size); }
+    public PartyResult.Page<PartyResult.Member> members(Long id, int page, int size) { return partyService.members(player(), id, page, size); }
+    public PartyResult.Page<PartyResult.Pending> pendingRequests(Long id, int page, int size) { return partyService.pendingRequests(player(), id, page, size); }
+    public PartyResult.Page<PartyResult.Pending> myPending(PartyWaitType type, int page, int size) { return partyService.myPending(player(), type, page, size); }
+    public PartyResult.Me me(Long id) { return partyService.me(player(), id); }
 }
