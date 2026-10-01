@@ -40,7 +40,6 @@ public class RolePartyInvitation extends AbstractTime {
 
     void resend(Long inviter, Instant now) {
         if (status == Status.PENDING && expiresAt.isAfter(now)) return;
-        if (status == Status.ACCEPTED) throw new DomainException(SocialError.ROLE_PARTY_ALREADY_MEMBER);
         inviterPlayerId = inviter;
         expiresAt = now.plusSeconds(7 * 24 * 3600);
         status = Status.PENDING;

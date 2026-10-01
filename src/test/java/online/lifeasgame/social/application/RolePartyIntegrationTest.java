@@ -141,7 +141,15 @@ class RolePartyIntegrationTest {
             var a = pool.submit(() -> { start.await(); return mvc.perform(auth(post(base + "/invitations/" + firstInvite + "/accept"), A)).andReturn().getResponse().getStatus(); });
             var b = pool.submit(() -> { start.await(); return mvc.perform(auth(post(base + "/invitations/" + secondInvite + "/accept"), B)).andReturn().getResponse().getStatus(); });
             start.countDown();
-            assertThat(List.of(a.get(15, TimeUnit.SECONDS), b.get(15, TimeUnit.SECONDS))).containsExactlyInAnyOrder(200, 409);
+            int aStatus = a.get(15, TimeUnit.SECONDS);
+            int bStatus = b.get(15, TimeUnit.SECONDS);
+            assertThat(List.of(aStatus, bStatus)).containsExactlyInAnyOrder(200, 409);
+            long joined = aStatus == 200 ? A : B;
+            long acceptedInvitation = aStatus == 200 ? firstInvite : secondInvite;
+            mvc.perform(auth(post(base + "/leave"), joined)).andExpect(status().isNoContent());
+            assertThat(invite(base, joined)).isEqualTo(acceptedInvitation);
+            mvc.perform(auth(post(base + "/invitations/" + acceptedInvitation + "/accept"), joined))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.result.memberCount").value(2));
         }
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM role_party_members WHERE role_party_id = ? AND left_at IS NULL", Long.class, partyId)).isEqualTo(2);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM role_party_invitations WHERE role_party_id = ? AND status = 'ACCEPTED'", Long.class, partyId)).isEqualTo(1);
