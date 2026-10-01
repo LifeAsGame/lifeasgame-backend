@@ -1,6 +1,7 @@
 package online.lifeasgame.person.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -66,6 +67,10 @@ public class Person extends AbstractTime {
     @Column(length = 120)
     private String contact;
 
+    @Convert(converter = PersonProfileConverter.class)
+    @Column(name = "profile_json", columnDefinition = "json")
+    private PersonProfile profile;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PersonStatus status;
@@ -87,6 +92,7 @@ public class Person extends AbstractTime {
         this.notes = optional(notes, null, "notes");
         this.birthday = birthday;
         this.contact = optionalContact(contact);
+        this.profile = PersonProfile.empty();
         this.status = PersonStatus.ACTIVE;
     }
 
@@ -113,6 +119,17 @@ public class Person extends AbstractTime {
         this.notes = optional(notes, null, "notes");
         this.birthday = birthday;
         this.contact = optionalContact(contact);
+    }
+
+    public void replaceProfile(PersonProfile profile) {
+        if (status == PersonStatus.ARCHIVED) {
+            throw new DomainException(PersonError.PERSON_ARCHIVED);
+        }
+        this.profile = PersonProfile.normalized(profile);
+    }
+
+    public PersonProfile getProfile() {
+        return profile == null ? PersonProfile.empty() : profile;
     }
 
     public void archive() {
