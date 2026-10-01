@@ -18,6 +18,12 @@ public enum SocialError implements ErrorCode {
     ROLE_PARTY_FULL("SOC-409-ROLE-PARTY-FULL", "RoleParty is full", 409),
     ROLE_PARTY_INVITATION_EXPIRED("SOC-409-ROLE-PARTY-INVITATION-EXPIRED", "RoleParty invitation expired", 409),
     ROLE_PARTY_LEADER_MUST_TRANSFER("SOC-409-ROLE-PARTY-LEADER-MUST-TRANSFER", "Transfer leadership or disband first", 409),
+    GUILD_GROUP_NOT_FOUND("SOC-404-GUILD-GROUP-NOT-FOUND", "Guild group link not found", 404),
+    GUILD_GROUP_INVALID_INPUT("SOC-400-GUILD-GROUP-INVALID-INPUT", "Invalid guild group link input", 400),
+    GUILD_GROUP_CONFLICT("SOC-409-GUILD-GROUP-CONFLICT", "Guild group link state conflict", 409),
+    GUILD_EVENT_NOT_FOUND("SOC-404-GUILD-EVENT-NOT-FOUND", "Guild event not found", 404),
+    GUILD_EVENT_INVALID_INPUT("SOC-400-GUILD-EVENT-INVALID-INPUT", "Invalid guild event input", 400),
+    GUILD_EVENT_CONFLICT("SOC-409-GUILD-EVENT-CONFLICT", "Guild event state conflict", 409),
 
     FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404),
     FOLLOW_TARGET_NOT_FOUND("SOC-404-FOLLOW-TARGET-NOT-FOUND", "Follow target not found", 404),

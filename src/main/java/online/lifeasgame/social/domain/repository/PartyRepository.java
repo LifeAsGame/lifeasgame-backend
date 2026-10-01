@@ -18,6 +18,7 @@ public interface PartyRepository {
     Party save(Party party);
 
     Optional<Party> findById(Long id);
+    Optional<Party> findForUpdate(Long id);
 
     Optional<Party> findByIdAndPlayerId(Long id, Long playerId);
 

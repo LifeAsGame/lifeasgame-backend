@@ -29,6 +29,8 @@ public class PartyRepositoryAdapter implements PartyRepository {
     public Optional<Party> findById(Long id) {
         return jpaRepository.findById(id);
     }
+    @Override
+    public Optional<Party> findForUpdate(Long id) { return jpaRepository.findForUpdate(id); }
 
     @Override
     public Optional<Party> findByIdAndPlayerId(Long id, Long playerId) {
