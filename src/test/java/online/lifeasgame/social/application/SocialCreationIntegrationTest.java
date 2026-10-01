@@ -214,6 +214,24 @@ class SocialCreationIntegrationTest {
                 .content("{\"name\":\"Denied\"}"), OWNER)).andExpect(status().isNotFound());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"guilds", "parties"})
+    @DisplayName("만료된 초대는 본인 목록에 남아도 수락 가능 작업으로 표시하지 않는다")
+    void expiredInvitationAction(String groups) throws Exception {
+        String base = path(groups);
+        String body = BODY.formatted(code()).replace("PUBLIC", "PRIVATE");
+        var created = mvc.perform(auth(post(base).contentType(MediaType.APPLICATION_JSON).content(body), OWNER))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        long id = json.readTree(created.getContentAsString()).path("result").path("id").longValue();
+        mvc.perform(auth(post(base + "/" + id + "/invite").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"inviteePlayerId\":" + (OWNER + 1) + ",\"expiresAt\":\"2000-01-01T00:00:00\"}"), OWNER))
+                .andExpect(status().isOk());
+        mvc.perform(auth(get(base + "/" + id + "/me"), OWNER + 1)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.pendingInvitation").value(true))
+                .andExpect(jsonPath("$.result.actions[0]").value("decline-invitation"))
+                .andExpect(jsonPath("$.result.actions.length()").value(1));
+    }
+
     private long create(String groups) throws Exception {
         var response = mvc.perform(auth(post(path(groups)).param("playerId", "999999")
                         .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted(code())), OWNER))

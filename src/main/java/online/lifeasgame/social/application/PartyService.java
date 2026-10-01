@@ -242,7 +242,8 @@ public class PartyService {
     public PartyResult.Me me(Long playerId, Long id) {
         Party group = partyReader.getById(id);
         var membership = group.findMember(playerId);
-        boolean invited = group.findPendingInvite(playerId).filter(wait -> !wait.isExpired()).isPresent();
+        var invitation = group.findPendingInvite(playerId);
+        boolean invited = invitation.isPresent();
         if (membership.isEmpty() && !invited && (group.getVisibility() != PartyVisibility.PUBLIC || group.getStatus() != PartyStatus.ACTIVE)) {
             throw new DomainException(SocialError.PARTY_NOT_FOUND);
         }
@@ -259,7 +260,8 @@ public class PartyService {
                 }
                 if (role.equals("LEADER") || role.equals("OFFICER")) actions.addAll(List.of("invite", "kick"));
             } else if (invited) {
-                actions.addAll(List.of("accept-invitation", "decline-invitation"));
+                if (!invitation.orElseThrow().isExpired()) actions.add("accept-invitation");
+                actions.add("decline-invitation");
             } else if (requested) {
                 actions.add("cancel-join");
             } else if (group.getVisibility() == PartyVisibility.PUBLIC && group.getJoinPolicy() != online.lifeasgame.social.domain.PartyJoinPolicy.INVITE_ONLY

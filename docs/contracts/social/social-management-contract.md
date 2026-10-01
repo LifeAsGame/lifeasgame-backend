@@ -24,6 +24,8 @@ Both `/api/v1/guilds` and `/api/v1/parties` share these read paths and request s
 
 `visibility` is `PUBLIC` or `PRIVATE`. `joinPolicy` is `OPEN`, `APPROVAL`, or `INVITE_ONLY`. `OPEN` joins immediately through `request-join`; `APPROVAL` leaves a pending request; `INVITE_ONLY` requires invitation. `maxMembers` is an explicit integer from 1 to 500, not a hidden default. `code` is required and nonblank. PUBLIC describes discovery, not unrestricted detail or membership. A PRIVATE group is omitted from global search, recent, counts and pages regardless of keyword. A current member can see it in `/mine`; an invitee gets only the invitation summary. A pending applicant sees only their own request. Private direct preview remains hidden to outsiders.
 
+An expired invitation can remain in `/invitations` while its stored status is `PENDING`. Its `expiresAt` remains visible; `/me` reports `pendingInvitation=true` but omits `accept-invitation` from `actions` and still permits `decline-invitation`.
+
 ## Existing commands and permissions
 
 Existing command routes remain `POST /{id}/{operation}`. `request-join`, `cancel-join`, `accept-invitation`, `decline-invitation`, `leave` are current-player actions. `approve`, `reject`, `transfer-leader`, `promote`, `demote`, `disband` require LEADER. `invite` and `kick` require LEADER or OFFICER. `rename`, `policy`, `description`, emblem/banner and tag edits retain the existing owner/leader restriction; leadership transfer changes the authoritative leader and owner player ID. Target player IDs in command bodies identify the target, never the actor. `Me.actions` reflects these existing rights; it is UI guidance, and commands enforce their own rights.

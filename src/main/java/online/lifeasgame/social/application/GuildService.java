@@ -245,7 +245,8 @@ public class GuildService {
     public GuildResult.Me me(Long playerId, Long id) {
         Guild group = guildReader.getByIdOrThrow(id);
         var membership = group.findMember(playerId);
-        boolean invited = group.findPendingInvite(playerId).filter(wait -> !wait.isExpired()).isPresent();
+        var invitation = group.findPendingInvite(playerId);
+        boolean invited = invitation.isPresent();
         if (membership.isEmpty() && !invited && (group.getVisibility() != GuildVisibility.PUBLIC || group.getStatus() != GuildStatus.ACTIVE)) {
             throw new DomainException(SocialError.GUILD_NOT_FOUND);
         }
@@ -262,7 +263,8 @@ public class GuildService {
                 }
                 if (role.equals("LEADER") || role.equals("OFFICER")) actions.addAll(List.of("invite", "kick"));
             } else if (invited) {
-                actions.addAll(List.of("accept-invitation", "decline-invitation"));
+                if (!invitation.orElseThrow().isExpired()) actions.add("accept-invitation");
+                actions.add("decline-invitation");
             } else if (requested) {
                 actions.add("cancel-join");
             } else if (group.getVisibility() == GuildVisibility.PUBLIC && group.getJoinPolicy() != online.lifeasgame.social.domain.GuildJoinPolicy.INVITE_ONLY
