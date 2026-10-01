@@ -7,6 +7,7 @@ import online.lifeasgame.platform.web.response.ApiResponses;
 import online.lifeasgame.social.api.player.request.RolePartyRequest;
 import online.lifeasgame.social.application.RolePartyResult;
 import online.lifeasgame.social.application.RolePartyService;
+import online.lifeasgame.social.application.RolePartyQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +18,12 @@ import java.net.URI;
 @RequestMapping("/api/v1")
 public class RolePartyController {
     private final RolePartyService service;
+    private final RolePartyQueryService queryService;
 
     @GetMapping("/roles/{roleId}/role-parties")
     public ResponseEntity<ApiResponse<RolePartyResult.PageResult<RolePartyResult.Summary>>> forRole(
             @PathVariable Long roleId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ApiResponses.ok(service.forRole(roleId, page, size));
+        return ApiResponses.ok(queryService.forRole(roleId, page, size));
     }
 
     @PostMapping("/roles/{roleId}/role-parties")
@@ -34,24 +36,24 @@ public class RolePartyController {
     @GetMapping("/role-parties/mine")
     public ResponseEntity<ApiResponse<RolePartyResult.PageResult<RolePartyResult.MyGroup>>> mine(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ApiResponses.ok(service.mine(page, size));
+        return ApiResponses.ok(queryService.mine(page, size));
     }
 
     @GetMapping("/role-parties/invitations/mine")
     public ResponseEntity<ApiResponse<RolePartyResult.PageResult<RolePartyResult.Invitation>>> myInvitations(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ApiResponses.ok(service.myInvitations(page, size));
+        return ApiResponses.ok(queryService.myInvitations(page, size));
     }
 
     @GetMapping("/role-parties/{id}")
     public ResponseEntity<ApiResponse<RolePartyResult.Detail>> detail(@PathVariable Long id) {
-        return ApiResponses.ok(service.detail(id));
+        return ApiResponses.ok(queryService.detail(id));
     }
 
     @GetMapping("/role-parties/{id}/members")
     public ResponseEntity<ApiResponse<RolePartyResult.PageResult<RolePartyResult.Member>>> members(
             @PathVariable Long id, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ApiResponses.ok(service.members(id, page, size));
+        return ApiResponses.ok(queryService.members(id, page, size));
     }
 
     @PatchMapping("/role-parties/{id}")
