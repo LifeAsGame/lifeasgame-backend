@@ -1,6 +1,6 @@
 # RoleParty invitation-only group contract
 
-Status: **draft, implementation and runtime verification pending** (2026-10-02). Target base: `origin/develop` `7520f3a99c3e234116f242d2f299a6d884811f9c`. Implementation SHA: pending. `RoleParty` is separate from ordinary Party and Guild. Creation needs an active owned Role, and needs no RoleEvent. A RoleParty member gains no access to that personal Role, Person, or private events.
+Status: **implemented and focused tests passed; CI and 19081 verification pending** (2026-10-02). Target base: `origin/develop` `7520f3a99c3e234116f242d2f299a6d884811f9c`. Implementation SHA: `4f86c80f4fa9e5b2a532ab99d9d4ca9eef830916`. `RoleParty` is separate from ordinary Party and Guild. Creation needs an active owned Role, and needs no RoleEvent. A RoleParty member gains no access to that personal Role, Person, or private events.
 
 Every route requires the current authenticated **Player**; the server derives the actor Player ID. `roleId` is the creator's private Role ID. `inviteePlayerId` and `toPlayerId` are **Player IDs**, not User or Person IDs; invite targets must be existing friends available through `/api/v1/connections/followings` or `/followers`. The form should say **invitation-only**. No public search or open join exists.
 

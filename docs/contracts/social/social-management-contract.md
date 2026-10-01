@@ -2,7 +2,7 @@
 
 Status: SOCIAL-01 implementation contract, 2026-10-01. All routes below require the signed-in service user's current Player. The server derives `playerId`; FE never supplies it except target IDs on existing management commands. `Guild`, ordinary `Party`, and `RoleParty` are distinct.
 
-2026-10-02 follow-up: the independent, invitation-only RoleParty core described in [role-party-contract.md](role-party-contract.md) is being implemented under SOCIAL-02. The proposal below remains the record for later Guild/Party links and shared events; those links are outside this follow-up.
+2026-10-02 follow-up: the independent, invitation-only RoleParty core described in [role-party-contract.md](role-party-contract.md) is implemented in this follow-up under SOCIAL-02. The proposal below remains the record for later Guild/Party links and shared events; those links are outside this follow-up.
 
 ## Creation and discovery
 
