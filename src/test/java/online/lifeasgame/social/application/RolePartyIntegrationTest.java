@@ -165,6 +165,10 @@ class RolePartyIntegrationTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         long partyId = result(created).path("id").asLong();
         String base = "/api/v1/role-parties/" + partyId;
+        mvc.perform(auth(post(base + "/invitations"), LEADER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"inviteePlayerId\":" + OUTSIDER + "}"))
+                .andExpect(status().isNotFound());
         long inviteA = invite(base, A);
         mvc.perform(auth(post(base + "/invitations/" + inviteA + "/decline"), A))
                 .andExpect(status().isNoContent());
@@ -174,6 +178,10 @@ class RolePartyIntegrationTest {
         mvc.perform(auth(post(base + "/invitations/" + inviteA + "/accept"), A))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.result.memberCount").value(2));
         long inviteB = invite(base, B);
+        jdbc.update("UPDATE role_party_invitations SET expires_at = NOW(6) - INTERVAL 1 SECOND WHERE id = ?", inviteB);
+        mvc.perform(auth(post(base + "/invitations/" + inviteB + "/accept"), B))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SOC-409-ROLE-PARTY-INVITATION-EXPIRED"));
         mvc.perform(auth(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
                         base + "/invitations/" + inviteB), LEADER)).andExpect(status().isNoContent());
         mvc.perform(auth(post(base + "/invitations/" + inviteB + "/accept"), B))
