@@ -19,7 +19,8 @@ public final class PlayerCertificationResult {
             String category,
             LocalDate acquiredDate,
             LocalDate expiresDate,
-            Instant grantedAt
+            Instant grantedAt,
+            Long personalCategoryId
     ) {
         public static Info from(PlayerCertificationView v) {
             return new Info(
@@ -29,7 +30,8 @@ public final class PlayerCertificationResult {
                     v.getCategory() != null ? v.getCategory().name() : null,
                     v.getAcquiredDate(),
                     v.getExpiresDate(),
-                    v.getGrantedAt()
+                    v.getGrantedAt(),
+                    v.getPersonalCategoryId()
             );
         }
     }

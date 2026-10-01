@@ -24,4 +24,6 @@ public interface PlayerHobbyView {
     LocalDate getStartedOn();
 
     long getXp();
+
+    Long getPersonalCategoryId();
 }

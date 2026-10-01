@@ -19,7 +19,8 @@ public final class PlayerCertificationResponse {
             String category,
             LocalDate acquiredDate,
             LocalDate expiresDate,
-            Instant grantedAt
+            Instant grantedAt,
+            Long personalCategoryId
     ) {
     }
 

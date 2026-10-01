@@ -38,6 +38,9 @@ public class PlayerHobby {
     @Column(name = "hobby_id", nullable = false)
     private Long hobbyId;
 
+    @Column(name = "personal_category_id")
+    private Long personalCategoryId;
+
     @Column(name = "custom_name", length = 60, nullable = false)
     private String customName;
 
@@ -110,6 +113,10 @@ public class PlayerHobby {
         this.proficiency = validatedProficiency;
         this.status = status;
         this.startedOn = startedOn;
+    }
+
+    public void assignPersonalCategory(Long personalCategoryId) {
+        this.personalCategoryId = personalCategoryId;
     }
 
     private static int validateProficiency(int proficiency) {
