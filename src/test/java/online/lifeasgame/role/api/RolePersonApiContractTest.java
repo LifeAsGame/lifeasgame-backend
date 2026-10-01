@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Set;
@@ -39,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -228,6 +230,29 @@ class RolePersonApiContractTest {
     }
 
     @Test
+    void distinguishesOmittedNullAndObjectProfileInUpdateJson() throws Exception {
+        given(personService.update(eq(20L), any())).willReturn(personDetail(20L));
+
+        for (String body : new String[] {
+                "{\"displayName\":\"Alice\"}",
+                "{\"displayName\":\"Alice\",\"profile\":null}",
+                "{\"displayName\":\"Alice\",\"profile\":{\"nickname\":\"A\"}}"
+        }) {
+            mockMvc.perform(put("/api/v1/persons/20")
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.profile.hobbies").isArray());
+        }
+
+        ArgumentCaptor<PersonCommand.Update> commands = ArgumentCaptor.forClass(PersonCommand.Update.class);
+        verify(personService, org.mockito.Mockito.times(3)).update(eq(20L), commands.capture());
+        assertThat(commands.getAllValues()).extracting(PersonCommand.Update::profileProvided)
+                .containsExactly(false, true, true);
+        assertThat(commands.getAllValues().get(1).profile()).isNull();
+        assertThat(commands.getAllValues().get(2).profile().nickname()).isEqualTo("A");
+    }
+
+    @Test
     void keepsLinkedUserReadMappingWithoutWriteInput() {
         var response = PersonWebMapper.toDetail(new PersonResult.Detail(
                 1L,
@@ -254,6 +279,11 @@ class RolePersonApiContractTest {
     }
 
     private Set<String> componentNames(Class<?> type) {
+        if (!type.isRecord()) {
+            return Arrays.stream(type.getDeclaredFields())
+                    .map(Field::getName)
+                    .collect(Collectors.toSet());
+        }
         return Arrays.stream(type.getRecordComponents())
                 .map(RecordComponent::getName)
                 .collect(Collectors.toSet());

@@ -72,13 +72,13 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(37);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(38);
             assertThat(history).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
                             "14", "15", "16", "17", "18", "19", "20",
-                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "39"
+                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39"
                     );
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
@@ -126,6 +126,7 @@ class FlywayExplicitBaselineTest {
                             "V35__notification_copy_provenance.sql",
                             "V36__adventure_preparation_rewards.sql",
                             "V37__quest_reward_ready_publication.sql",
+                            "V38__person_profile_json.sql",
                             "V39__personal_categories.sql"
                     );
             assertThat(history.subList(1, history.size()))

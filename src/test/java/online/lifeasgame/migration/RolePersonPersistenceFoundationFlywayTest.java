@@ -75,6 +75,7 @@ class RolePersonPersistenceFoundationFlywayTest {
                 column("persons", "created_at", "datetime(6)", "NO", null, ""),
                 column("persons", "updated_at", "datetime(6)", "NO", null, ""),
                 column("persons", "version", "bigint", "NO", "0", ""),
+                column("persons", "profile_json", "json", "YES", null, ""),
                 column("role_relations", "id", "bigint", "NO", null, "auto_increment"),
                 column("role_relations", "player_id", "bigint", "NO", null, ""),
                 column("role_relations", "role_id", "bigint", "NO", null, ""),

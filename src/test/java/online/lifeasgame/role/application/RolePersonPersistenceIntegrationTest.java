@@ -6,6 +6,7 @@ import online.lifeasgame.person.application.PersonQueryService;
 import online.lifeasgame.person.application.PersonService;
 import online.lifeasgame.person.application.command.PersonCommand;
 import online.lifeasgame.person.domain.Person;
+import online.lifeasgame.person.domain.PersonProfile;
 import online.lifeasgame.person.domain.PersonStatus;
 import online.lifeasgame.person.domain.error.PersonError;
 import online.lifeasgame.person.infra.JpaPersonRepository;
@@ -168,6 +169,40 @@ class RolePersonPersistenceIntegrationTest {
     }
 
     @Test
+    void preservesProfileAcrossLegacyUpdatesAndReplacesOrClearsExplicitly() {
+        var legacy = personService.create(new PersonCommand.Create("Legacy", null, null, null));
+        assertThat(personQueryService.detail(legacy.id()).profile()).isEqualTo(PersonProfile.empty());
+
+        PersonProfile profile = PersonProfile.fromJson("""
+                {"nickname":"Friend","gender":"nonbinary","ageAtReference":23,
+                 "ageReferenceDate":"2026-09-30","occupation":"Writer",
+                 "hobbies":["hiking"],"favoriteFoods":["noodles"],
+                 "contactChannels":[{"kind":"EMAIL","label":"work","value":"friend@example.invalid"}],
+                 "importantDates":[{"label":"concert","date":"2026-10-12","repeatYearly":false}],
+                 "customNotes":[{"label":"book","value":"fiction"}]}
+                """);
+        var created = personService.create(new PersonCommand.Create("Alice", "old note", null, "main", profile));
+        assertThat(personQueryService.detail(created.id()).profile()).isEqualTo(profile);
+        assertThat(personQueryService.list()).filteredOn(p -> p.id().equals(created.id()))
+                .singleElement().extracting(p -> p.profile()).isEqualTo(profile);
+
+        personService.update(created.id(), new PersonCommand.Update("Alice B", "old note", null, "main"));
+        assertThat(personQueryService.detail(created.id()).profile()).isEqualTo(profile);
+
+        PersonProfile replacement = PersonProfile.fromJson("""
+                {"nickname":"New","hobbies":[]}
+                """);
+        personService.update(created.id(), new PersonCommand.Update(
+                "Alice B", "old note", null, "main", replacement, true));
+        assertThat(personQueryService.detail(created.id()).profile()).isEqualTo(replacement);
+
+        personService.update(created.id(), new PersonCommand.Update(
+                "Alice B", "old note", null, "main", null, true));
+        assertThat(personQueryService.detail(created.id()).profile()).isEqualTo(PersonProfile.empty());
+        assertThat(personQueryService.detail(created.id()).notes()).isEqualTo("old note");
+    }
+
+    @Test
     void rejectsCrossOwnerRoleUpdateAndArchive() {
         Long id = roleService.create(
                 new RoleCommand.Create("WORK", "Developer", null)
@@ -190,7 +225,8 @@ class RolePersonPersistenceIntegrationTest {
 
         assertPersonNotFound(() -> personService.update(
                 id,
-                new PersonCommand.Update("Bob", null, null, null)
+                new PersonCommand.Update("Bob", null, null, null,
+                        PersonProfile.fromJson("{\"nickname\":\"secret\"}"), true)
         ));
         assertPersonNotFound(() -> personService.archive(id));
     }

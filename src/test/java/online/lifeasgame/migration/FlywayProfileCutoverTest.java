@@ -162,7 +162,7 @@ class FlywayProfileCutoverTest {
                     "spring.flyway.baseline-on-migrate", Boolean.class
             )).isFalse();
             assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("39");
-            assertThat(appliedMigrationCount()).isEqualTo(38);
+            assertThat(appliedMigrationCount()).isEqualTo(39);
         }
     }
 
