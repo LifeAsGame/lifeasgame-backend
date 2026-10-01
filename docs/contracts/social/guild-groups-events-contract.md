@@ -1,6 +1,6 @@
 # Guild groups and shared events — FE contract
 
-Status: **DRAFT — API design shared before implementation**. Runtime 19081 is **not ready for these endpoints**. Source base: `develop` `6adec4daae47633a7e58fb3a7801a292892b9c15` (tree `ee7e9c1ef278b7759a6cc1e9c8a4d5363e38821e`).
+Status: **READY — implemented and verified on 19081**. Source commit `f9940755a483cbcf7788ae14a0faa7a142c8abb0`, tree `3dfd75465d12d32be5bf5dfcb18fd57d44c4c0bc`, JAR SHA-256 `c3796de5e02ef4774a338247fcaeb6ab47da28b0ad522f7ff7a011536b4f4359`. Base: `develop` `6adec4daae47633a7e58fb3a7801a292892b9c15`.
 
 All routes require an authenticated Current Player. The server derives the Player ID from authentication. Success uses `{ "isSuccess": true, "code": "COMMON-200" | "COMMON-201", "message": "...", "result": ... }`; 204 has no body. Errors use `application/problem+json` with `status`, `code`, `title`, `detail`, `path`. Collections use `page=0&size=20` (size 1–100) and `{ "contents", "page", "size", "totalElements", "totalPages" }`. Times are ISO-8601 instants with offsets in requests and UTC instants in responses. `location` is nullable; omitted and null both clear it on full PATCH.
 
@@ -43,3 +43,5 @@ Summary/detail: `{ "id", "guildId", "title", "sharedDescription", "startsAt", "e
 Capabilities: only active Guild members see the event panel. Current leader sees create/edit/complete/cancel controls; other members see only their own RSVP control. The server rechecks authority on every command after leader transfer. FE must not infer Guild event access from Party/RoleParty membership or use a link as a detail access token.
 
 Event errors: missing/foreign event is 404 `SOC-404-GUILD-EVENT-NOT-FOUND`; nonmember or disbanded Guild is 404 `SOC-404-GUILD-NOT-FOUND`; a member without leader authority receives 403 `SOC-403-LEADER-ONLY`. Invalid title/time/location/page is 400 `SOC-400-GUILD-EVENT-INVALID-INPUT`; any change after `COMPLETED` or `CANCELED` is 409 `SOC-409-GUILD-EVENT-CONFLICT`.
+
+19081 verification (2026-10-02): V41 applied with Hibernate validation; V38–V40 checksums and existing data preserved. Disposable accounts completed Party proposal → other leader approval → Guild member list → unlink, GuildEvent create → other member RSVP → complete, a separate cancellation, departure access revocation, private Party detail denial, RoleEvent/RoleParty reads, and exact 13005 CORS. This is BE endpoint readiness; FE rendering is tracked separately.
