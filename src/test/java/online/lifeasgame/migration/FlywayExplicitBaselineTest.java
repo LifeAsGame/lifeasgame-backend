@@ -63,7 +63,7 @@ class FlywayExplicitBaselineTest {
     class ApplyExplicitBaseline {
 
         @Test
-        @DisplayName("V1을 재실행하지 않고 V2부터 V37까지 적용한 뒤 JPA validate를 통과한다")
+        @DisplayName("V1을 재실행하지 않고 V2부터 V39까지 적용한 뒤 JPA validate를 통과한다")
         void migratesFromVersionTwoAndValidatesJpa() throws Exception {
             String jdbcUrl = createV1EquivalentDatabase();
             Flyway flyway = migrationFlyway(jdbcUrl);
@@ -72,13 +72,13 @@ class FlywayExplicitBaselineTest {
             MigrateResult migrateResult = flyway.migrate();
             List<HistoryRow> history = successfulHistory(jdbcUrl);
 
-            assertThat(migrateResult.migrationsExecuted).isEqualTo(36);
+            assertThat(migrateResult.migrationsExecuted).isEqualTo(37);
             assertThat(history).extracting(HistoryRow::version)
                     .containsExactly(
                             "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", "10", "11", "12", "13",
                             "14", "15", "16", "17", "18", "19", "20",
-                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37"
+                            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "39"
                     );
             assertThat(history.getFirst().type()).isEqualTo("BASELINE");
             assertThat(history.getFirst().script())
@@ -125,7 +125,8 @@ class FlywayExplicitBaselineTest {
                             "V34__consumer_content_runtime_reconciliation.sql",
                             "V35__notification_copy_provenance.sql",
                             "V36__adventure_preparation_rewards.sql",
-                            "V37__quest_reward_ready_publication.sql"
+                            "V37__quest_reward_ready_publication.sql",
+                            "V39__personal_categories.sql"
                     );
             assertThat(history.subList(1, history.size()))
                     .allSatisfy(row -> assertThat(row.checksum()).isNotNull());
@@ -145,7 +146,7 @@ class FlywayExplicitBaselineTest {
                         "spring.jpa.hibernate.ddl-auto"
                 )).isEqualTo("validate");
                 assertThat(context.getBean(Flyway.class).info().current().getVersion().getVersion())
-                        .isEqualTo("37");
+                        .isEqualTo("39");
             }
         }
     }

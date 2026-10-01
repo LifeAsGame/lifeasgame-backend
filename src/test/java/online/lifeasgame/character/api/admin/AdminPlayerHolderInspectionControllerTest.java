@@ -142,7 +142,8 @@ class AdminPlayerHolderInspectionControllerTest {
                         "PROFESSIONAL",
                         LocalDate.parse("2026-01-02"),
                         LocalDate.parse("2028-01-02"),
-                        ACQUIRED_AT
+                        ACQUIRED_AT,
+                        null
                 ))
         );
 
@@ -173,7 +174,8 @@ class AdminPlayerHolderInspectionControllerTest {
                         73,
                         "ACTIVE",
                         LocalDate.parse("2025-04-03"),
-                        1200L
+                        1200L,
+                        null
                 ))
         );
 

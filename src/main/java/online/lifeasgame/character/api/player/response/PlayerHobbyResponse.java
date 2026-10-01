@@ -20,7 +20,8 @@ public final class PlayerHobbyResponse {
             int proficiency,
             String status,
             LocalDate startedOn,
-            long xp
+            long xp,
+            Long personalCategoryId
     ) {
     }
 

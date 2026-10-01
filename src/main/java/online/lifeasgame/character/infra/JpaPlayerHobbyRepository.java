@@ -20,7 +20,8 @@ public interface JpaPlayerHobbyRepository extends JpaRepository<PlayerHobby, Lon
                    ph.proficiency AS proficiency,
                    ph.status AS status,
                    ph.startedOn AS startedOn,
-                   ph.xp AS xp
+                   ph.xp AS xp,
+                   ph.personalCategoryId AS personalCategoryId
             FROM PlayerHobby ph
             JOIN Hobby h ON h.id = ph.hobbyId
             WHERE ph.playerId = :playerId
