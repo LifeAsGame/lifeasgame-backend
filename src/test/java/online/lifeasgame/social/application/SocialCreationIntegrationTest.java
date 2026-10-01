@@ -7,6 +7,7 @@ import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.social.application.command.GuildCommand;
 import online.lifeasgame.social.application.command.PartyCommand;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,27 @@ class SocialCreationIntegrationTest {
     @Autowired GuildService guildService;
     @Autowired PartyService partyService;
     @Autowired PlatformTransactionManager transactionManager;
+
+    @Test
+    @DisplayName("길드 검색은 빈 목록과 생성된 길드를 페이지로 반환하고 잘못된 필터를 거부한다")
+    void searchesGuilds() throws Exception {
+        mvc.perform(auth(get("/api/v1/guilds/search").param("keyword", "NO_SUCH_GUILD"), OWNER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents").isEmpty())
+                .andExpect(jsonPath("$.result.page").value(0));
+
+        long id = create("guilds");
+        mvc.perform(auth(get("/api/v1/guilds/search")
+                        .param("keyword", "New group").param("visibility", "PUBLIC"), OWNER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[?(@.id == " + id + ")]").isNotEmpty());
+        mvc.perform(auth(get("/api/v1/guilds/" + id), OWNER))
+                .andExpect(status().isOk());
+        mvc.perform(auth(get("/api/v1/guilds/search").param("visibility", "INVALID"), OWNER))
+                .andExpect(status().isBadRequest());
+        mvc.perform(auth(get("/api/v1/guilds/search").param("size", "0"), OWNER))
+                .andExpect(status().isBadRequest());
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"guilds", "parties"})

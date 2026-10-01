@@ -1,8 +1,6 @@
 package online.lifeasgame.social.api.player;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
@@ -48,8 +46,8 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String visibility,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         GuildResult.Page<GuildResult.Summary> result = guildFacade.search(keyword, visibility, page, size);
         return ApiResponses.ok(PlayerGuildWebMapper.toSummaryPage(result));
