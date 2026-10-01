@@ -8,6 +8,12 @@ import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyJoinPolicy;
 import online.lifeasgame.social.domain.PartyMemberRole;
 import online.lifeasgame.social.domain.PartyVisibility;
+import online.lifeasgame.social.domain.PartyWaitType;
+import online.lifeasgame.social.domain.PartyStatus;
+import online.lifeasgame.social.domain.repository.PartyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import java.util.ArrayList;
 import online.lifeasgame.social.domain.error.SocialError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,11 +25,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+@Transactional(readOnly = true)
 public class PartyService {
 
     private final PartyReader partyReader;
     private final PartyWriter partyWriter;
+    private final PartyRepository repository;
 
     @Transactional
     public PartyResult.Info create(Long playerId, PartyCommand.Create command) {
@@ -195,8 +202,83 @@ public class PartyService {
     }
 
     public PartyResult.Info getParty(Long playerId, Long id) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
-        return PartyResult.Info.from(party);
+        Party group = partyReader.getById(id);
+        requireMember(group, playerId);
+        return PartyResult.Info.from(group);
+    }
+
+    public PartyResult.Summary preview(Long id) {
+        Party group = partyReader.getById(id);
+        if (group.getVisibility() != PartyVisibility.PUBLIC || group.getStatus() != PartyStatus.ACTIVE) {
+            throw new DomainException(SocialError.PARTY_NOT_FOUND);
+        }
+        return PartyResult.Summary.from(group);
+    }
+
+    public PartyResult.Page<PartyResult.MyParty> mine(Long playerId, int page, int size) {
+        var rows = repository.findMine(playerId, pageOf(page, size));
+        return PartyResult.Page.of(rows.stream().map(PartyResult.MyParty::from).toList(),
+                page, size, rows.getTotalElements());
+    }
+
+    public PartyResult.Page<PartyResult.Member> members(Long playerId, Long id, int page, int size) {
+        requireMember(partyReader.getById(id), playerId);
+        var rows = repository.findMembers(id, pageOf(page, size));
+        return PartyResult.Page.of(rows.stream().map(PartyResult.Member::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public PartyResult.Page<PartyResult.Pending> pendingRequests(Long playerId, Long id, int page, int size) {
+        Party group = partyReader.getById(id);
+        ensureLeader(group, playerId);
+        var rows = repository.findPendingRequests(id, pageOf(page, size));
+        return PartyResult.Page.of(rows.stream().map(PartyResult.Pending::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public PartyResult.Page<PartyResult.Pending> myPending(Long playerId, PartyWaitType type, int page, int size) {
+        var rows = repository.findMyPending(playerId, type, pageOf(page, size));
+        return PartyResult.Page.of(rows.stream().map(PartyResult.Pending::from).toList(), page, size, rows.getTotalElements());
+    }
+
+    public PartyResult.Me me(Long playerId, Long id) {
+        Party group = partyReader.getById(id);
+        var membership = group.findMember(playerId);
+        var invitation = group.findPendingInvite(playerId);
+        boolean invited = invitation.isPresent();
+        if (membership.isEmpty() && !invited && (group.getVisibility() != PartyVisibility.PUBLIC || group.getStatus() != PartyStatus.ACTIVE)) {
+            throw new DomainException(SocialError.PARTY_NOT_FOUND);
+        }
+        boolean requested = group.findPendingJoin(playerId).isPresent();
+        List<String> actions = new ArrayList<>();
+        if (group.getStatus() == PartyStatus.ACTIVE) {
+            if (membership.isPresent()) {
+                String role = membership.get().getRole().name();
+                if (role.equals("LEADER")) {
+                    actions.addAll(List.of("rename", "policy", "description", "banner", "tags/add", "tags/remove",
+                            "approve", "reject", "transfer-leader", "promote", "demote", "disband"));
+                } else {
+                    actions.add("leave");
+                }
+                if (role.equals("LEADER") || role.equals("OFFICER")) actions.addAll(List.of("invite", "kick"));
+            } else if (invited) {
+                if (!invitation.orElseThrow().isExpired()) actions.add("accept-invitation");
+                actions.add("decline-invitation");
+            } else if (requested) {
+                actions.add("cancel-join");
+            } else if (group.getVisibility() == PartyVisibility.PUBLIC && group.getJoinPolicy() != online.lifeasgame.social.domain.PartyJoinPolicy.INVITE_ONLY
+                    && group.memberCount() < group.getMaxMembers()) {
+                actions.add("request-join");
+            }
+        }
+        return new PartyResult.Me(membership.map(m -> m.getRole().name()).orElse(null), requested, invited, actions);
+    }
+
+    private static PageRequest pageOf(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) throw new DomainException(SocialError.INVALID_STATE);
+        return PageRequest.of(page, size);
+    }
+
+    private static void requireMember(Party group, Long playerId) {
+        if (group.findMember(playerId).isEmpty()) throw new DomainException(SocialError.PARTY_NOT_FOUND);
     }
 
     private static void ensureLeader(Party party, Long actorId) {

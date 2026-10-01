@@ -10,6 +10,7 @@ import online.lifeasgame.social.api.player.response.PlayerGuildResponse;
 import online.lifeasgame.social.api.player.spec.PlayerGuildApiSpecV1;
 import online.lifeasgame.social.application.GuildFacade;
 import online.lifeasgame.social.application.result.GuildResult;
+import online.lifeasgame.social.domain.GuildWaitType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +52,46 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     ) {
         GuildResult.Page<GuildResult.Summary> result = guildFacade.search(keyword, visibility, page, size);
         return ApiResponses.ok(PlayerGuildWebMapper.toSummaryPage(result));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.MyGuild>>> mine(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.mine(page, size), PlayerGuildWebMapper::toMy));
+    }
+
+    @GetMapping("/requests")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> requests(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.myPending(GuildWaitType.JOIN_REQUEST, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> invitations(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.myPending(GuildWaitType.INVITATION, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/{guildId}/preview")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Summary>> preview(@PathVariable Long guildId) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toSummary(guildFacade.preview(guildId)));
+    }
+
+    @GetMapping("/{guildId}/members")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Member>>> members(
+            @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.members(guildId, page, size), PlayerGuildWebMapper::toMember));
+    }
+
+    @GetMapping("/{guildId}/pending-requests")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> pendingRequests(
+            @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildFacade.pendingRequests(guildId, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/{guildId}/me")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Me>> me(@PathVariable Long guildId) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toMe(guildFacade.me(guildId)));
     }
 
     @Override

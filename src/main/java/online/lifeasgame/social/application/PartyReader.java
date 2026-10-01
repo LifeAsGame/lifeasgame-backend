@@ -40,7 +40,7 @@ public class PartyReader {
     }
 
     private PartyVisibility parseVisibility(String visibility) {
-        return (visibility == null || visibility.isBlank()) ? null : PartyVisibility.valueOf(visibility);
+        return (visibility == null || visibility.isBlank()) ? null : PartyVisibility.parse(visibility);
     }
 
     public List<Party> recent(int limit) {

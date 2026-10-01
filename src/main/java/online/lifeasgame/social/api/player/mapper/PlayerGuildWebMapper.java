@@ -58,6 +58,29 @@ public final class PlayerGuildWebMapper {
         );
     }
 
+    public static PlayerGuildResponse.MyGuild toMy(GuildResult.MyGuild result) {
+        return new PlayerGuildResponse.MyGuild(result.id(), result.name(), result.code(), result.status(),
+                result.myRole(), result.memberCount(), result.maxMembers());
+    }
+
+    public static PlayerGuildResponse.Member toMember(GuildResult.Member result) {
+        return new PlayerGuildResponse.Member(result.playerId(), result.role(), result.joinedAt());
+    }
+
+    public static PlayerGuildResponse.WaitMember toPending(GuildResult.Pending result) {
+        return new PlayerGuildResponse.WaitMember(result.id(), result.guildId(), result.name(), result.code(),
+                result.playerId(), result.type(), result.status(), result.message(), result.requestedAt(), result.expiresAt());
+    }
+
+    public static PlayerGuildResponse.Me toMe(GuildResult.Me result) {
+        return new PlayerGuildResponse.Me(result.myRole(), result.pendingJoin(), result.pendingInvitation(), result.actions());
+    }
+
+    public static <T, U> PlayerGuildResponse.Page<U> toPage(GuildResult.Page<T> page, java.util.function.Function<T, U> mapper) {
+        return new PlayerGuildResponse.Page<>(page.contents().stream().map(mapper).toList(),
+                page.page(), page.size(), page.totalElements(), page.totalPages());
+    }
+
     public static GuildCommand.Create toCreateCommand(PlayerGuildRequest.Create request) {
         return new GuildCommand.Create(
                 request.name(),
