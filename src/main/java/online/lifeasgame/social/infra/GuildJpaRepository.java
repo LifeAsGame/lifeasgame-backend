@@ -1,10 +1,12 @@
 package online.lifeasgame.social.infra;
 
+import jakarta.persistence.LockModeType;
 import online.lifeasgame.social.domain.Guild;
 import online.lifeasgame.social.domain.GuildVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,6 +16,13 @@ import java.util.Optional;
 
 @Repository
 public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT g FROM Guild g WHERE g.id = :id")
+    Optional<Guild> findForUpdate(@Param("id") Long id);
+
+    @Query("SELECT COUNT(m) > 0 FROM GuildMember m WHERE m.guild.id = :guildId AND m.playerId = :playerId AND m.guild.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE")
+    boolean isActiveMember(@Param("guildId") Long guildId, @Param("playerId") Long playerId);
 
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 

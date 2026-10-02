@@ -1,10 +1,12 @@
 package online.lifeasgame.social.infra;
 
+import jakarta.persistence.LockModeType;
 import online.lifeasgame.social.domain.Party;
 import online.lifeasgame.social.domain.PartyVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,6 +16,10 @@ import java.util.Optional;
 
 @Repository
 public interface PartyJpaRepository extends JpaRepository<Party, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Party p WHERE p.id = :id")
+    Optional<Party> findForUpdate(@Param("id") Long id);
 
     Optional<Party> findByIdAndPlayerId(Long id, Long playerId);
 

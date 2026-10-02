@@ -40,7 +40,7 @@ class RolePartyUpgradeFlywayTest {
                 """);
         var before = jdbc.queryForList("SELECT version, checksum FROM flyway_schema_history WHERE version IN ('38','39') ORDER BY installed_rank");
         Flyway latest = Flyway.configure().dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
-                .locations("classpath:db/migration").load();
+                .locations("classpath:db/migration").target(MigrationVersion.fromVersion("40")).load();
         assertThat(latest.migrate().migrationsExecuted).isEqualTo(1);
         latest.validate();
         assertThat(jdbc.queryForList("SELECT version, checksum FROM flyway_schema_history WHERE version IN ('38','39') ORDER BY installed_rank"))

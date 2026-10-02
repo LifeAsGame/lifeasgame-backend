@@ -29,6 +29,10 @@ public class GuildRepositoryAdapter implements GuildRepository {
     public Optional<Guild> findById(Long id) {
         return jpaRepository.findById(id);
     }
+    @Override
+    public Optional<Guild> findForUpdate(Long id) { return jpaRepository.findForUpdate(id); }
+    @Override
+    public boolean isActiveMember(Long guildId, Long playerId) { return jpaRepository.isActiveMember(guildId, playerId); }
 
     @Override
     public Optional<Guild> findByIdAndPlayerId(Long id, Long playerId) {

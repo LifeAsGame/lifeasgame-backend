@@ -18,6 +18,8 @@ public interface GuildRepository {
     Guild save(Guild g);
 
     Optional<Guild> findById(Long id);
+    Optional<Guild> findForUpdate(Long id);
+    boolean isActiveMember(Long guildId, Long playerId);
 
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 
