@@ -1,6 +1,6 @@
 # Guild groups and shared events — FE contract
 
-Status: **READY — implemented and verified on 19081**. Source commit `f9940755a483cbcf7788ae14a0faa7a142c8abb0`, tree `3dfd75465d12d32be5bf5dfcb18fd57d44c4c0bc`, JAR SHA-256 `c3796de5e02ef4774a338247fcaeb6ab47da28b0ad522f7ff7a011536b4f4359`. Base: `develop` `6adec4daae47633a7e58fb3a7801a292892b9c15`.
+Status: **SOCIAL-02B contract**. For the version currently serving 19081, read `backend-next.json`. Earlier verification used source commit `f9940755a483cbcf7788ae14a0faa7a142c8abb0`, tree `3dfd75465d12d32be5bf5dfcb18fd57d44c4c0bc`, JAR SHA-256 `c3796de5e02ef4774a338247fcaeb6ab47da28b0ad522f7ff7a011536b4f4359` on base `develop` `6adec4daae47633a7e58fb3a7801a292892b9c15`.
 
 All routes require an authenticated Current Player. The server derives the Player ID from authentication. Success uses `{ "isSuccess": true, "code": "COMMON-200" | "COMMON-201", "message": "...", "result": ... }`; 204 has no body. Errors use `application/problem+json` with `status`, `code`, `title`, `detail`, `path`. Collections use `page=0&size=20` (size 1–100) and `{ "contents", "page", "size", "totalElements", "totalPages" }`. Times are ISO-8601 instants with offsets in requests and UTC instants in responses. `location` is nullable; omitted and null both clear it on full PATCH.
 
@@ -13,10 +13,12 @@ All routes require an authenticated Current Player. The server derives the Playe
 | GET | `/api/v1/guilds/{guildId}/group-links` | — | 200 page of **ACTIVE** links; active Guild members only |
 | GET | `/api/v1/guilds/{guildId}/group-links/pending` | — | 200 page of pending links relevant to the current Guild leader, current group leader, or proposer only |
 | POST | `/api/v1/guilds/{guildId}/group-links` | `{ "groupType", "groupId", "displayName" }` | 201 link; one current leader proposes; both leaders in one Player activates immediately |
-| POST | `/api/v1/guilds/{guildId}/group-links/{linkId}/approve` | `{ "displayName" }` | 200 link; other current leader explicitly confirms final label; current authority rechecked |
+| POST | `/api/v1/guilds/{guildId}/group-links/{linkId}/approve` | `{ "displayName" }` | 200 link; current leader confirms the exact proposed label after trimming; current authority rechecked |
 | POST | `/api/v1/guilds/{guildId}/group-links/{linkId}/reject` | — | 200 terminal link; either current leader |
 | POST | `/api/v1/guilds/{guildId}/group-links/{linkId}/cancel` | — | 200 terminal link; proposer |
 | DELETE | `/api/v1/guilds/{guildId}/group-links/{linkId}` | — | 204; either current leader; source group and memberships remain |
+
+The proposed `displayName` is fixed for that proposal. Approval keeps the existing required `{ "displayName" }` request for compatibility, but its trimmed value must equal the proposed label. A different valid label returns 409 `SOC-409-GUILD-GROUP-CONFLICT` without changing the proposal or either approval. To choose another label, cancel the pending proposal and submit a new one. FE should show the proposed name as a confirmation, not an editable approval value. FE should check `backend-next.json` before exercising this correction on 19081.
 
 Active list item: `{ "id", "groupType", "groupId", "displayName", "status": "ACTIVE", "entryAction" }`. `entryAction` is `OPEN_DETAIL` for a current source-group member, `OPEN_PUBLIC_PREVIEW` for an eligible public Party, otherwise `INVITE_REQUIRED`. Pending/command result additionally contains `{ "proposedByPlayerId", "guildLeaderApproved", "groupLeaderApproved", "createdAt", "updatedAt" }`; statuses are `PENDING`, `ACTIVE`, `REJECTED`, `CANCELED`, `UNLINKED`. Approval flags describe **current** leaders, so a leader change may make an old approval insufficient. Private group name, description, members, personal Role/Person IDs, and schedules are never projected in these link responses. Source group detail still requires its own membership; public Party preview follows its existing policy.
 

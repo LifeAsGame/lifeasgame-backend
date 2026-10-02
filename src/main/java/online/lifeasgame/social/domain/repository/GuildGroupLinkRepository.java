@@ -12,5 +12,14 @@ public interface GuildGroupLinkRepository {
     Optional<GuildGroupLink> findForUpdate(Long id);
     Optional<GuildGroupLink> findOpen(Long guildId, GuildGroupLink.GroupType type, Long groupId);
     Page<GuildGroupLink> findByGuildIdAndStatusOrderByIdDesc(Long guildId, GuildGroupLink.Status status, Pageable page);
-    List<GuildGroupLink> findByGuildIdAndStatusOrderByIdDesc(Long guildId, GuildGroupLink.Status status);
+    Page<GuildGroupLink> findVisiblePending(Long guildId, Long actor, boolean guildLeader, Pageable page);
+    List<LinkTarget> findTargets(List<Long> ids, Long actor);
+
+    interface LinkTarget {
+        Long getLinkId();
+        Long getLeaderId();
+        Long getActive();
+        Long getPublicPreview();
+        Long getMember();
+    }
 }

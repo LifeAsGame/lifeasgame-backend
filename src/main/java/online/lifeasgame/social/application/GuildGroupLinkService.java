@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,28 +35,29 @@ public class GuildGroupLinkService {
 
     @Transactional(readOnly = true)
     public GuildResult.Page<ActiveLink> active(Long guildId, int page, int size) {
+        PageRequest paging = page(page, size);
         Guild guild = guild(guildId, false);
-        member(guild, actor());
-        Page<GuildGroupLink> rows = links.findByGuildIdAndStatusOrderByIdDesc(guildId, GuildGroupLink.Status.ACTIVE, page(page, size));
+        Long actor = actor();
+        if (!guilds.isActiveMember(guildId, actor)) throw error(SocialError.GUILD_NOT_FOUND);
+        Page<GuildGroupLink> rows = links.findByGuildIdAndStatusOrderByIdDesc(guildId, GuildGroupLink.Status.ACTIVE, paging);
+        Map<Long, GuildGroupLinkRepository.LinkTarget> targets = targets(rows.getContent(), actor);
         return GuildResult.Page.of(rows.stream().map(row -> {
-            Link link = result(row, target(row, false), actor());
+            Link link = result(row, targets.get(row.getId()), guild.getLeaderPlayerId());
             return new ActiveLink(link.id(), link.groupType(), link.groupId(), link.displayName(), link.status(), link.entryAction());
         }).toList(), page, size, rows.getTotalElements());
     }
 
     @Transactional(readOnly = true)
     public GuildResult.Page<Link> pending(Long guildId, int page, int size) {
+        PageRequest paging = page(page, size);
         Guild guild = guild(guildId, false);
         Long actor = actor();
-        boolean guildLeader = leader(guild, actor);
-        List<GuildGroupLink> visible = links.findByGuildIdAndStatusOrderByIdDesc(guildId, GuildGroupLink.Status.PENDING)
-                .stream().filter(link -> guildLeader || link.getProposedByPlayerId().equals(actor)
-                        || target(link, false).leaderId().equals(actor)).toList();
-        page(page, size);
-        int start = (int) Math.min((long) page * size, visible.size());
-        List<Link> content = visible.subList(start, Math.min(start + size, visible.size())).stream()
-                .map(link -> result(link, target(link, false), actor)).toList();
-        return GuildResult.Page.of(content, page, size, visible.size());
+        boolean guildLeader = guild.getLeaderPlayerId().equals(actor) && guilds.isActiveMember(guildId, actor);
+        Page<GuildGroupLink> rows = links.findVisiblePending(guildId, actor, guildLeader, paging);
+        Map<Long, GuildGroupLinkRepository.LinkTarget> targets = targets(rows.getContent(), actor);
+        return GuildResult.Page.of(rows.stream()
+                .map(link -> result(link, targets.get(link.getId()), guild.getLeaderPlayerId())).toList(),
+                page, size, rows.getTotalElements());
     }
 
     @Transactional
@@ -148,12 +152,23 @@ public class GuildGroupLinkService {
                 link.getCreatedAt(), link.getUpdatedAt());
     }
 
-    private void requireActive(Guild guild, Target target) {
-        if (guild.getStatus() != GuildStatus.ACTIVE || !target.active()) throw error(SocialError.GUILD_GROUP_CONFLICT);
+    private Map<Long, GuildGroupLinkRepository.LinkTarget> targets(List<GuildGroupLink> rows, Long actor) {
+        if (rows.isEmpty()) return Map.of();
+        return links.findTargets(rows.stream().map(GuildGroupLink::getId).toList(), actor).stream()
+                .collect(Collectors.toMap(GuildGroupLinkRepository.LinkTarget::getLinkId, Function.identity()));
     }
 
-    private static void member(Guild guild, Long actor) {
-        if (guild.getStatus() != GuildStatus.ACTIVE || guild.findMember(actor).isEmpty()) throw error(SocialError.GUILD_NOT_FOUND);
+    private Link result(GuildGroupLink link, GuildGroupLinkRepository.LinkTarget target, Long guildLeader) {
+        String action = target.getMember() != 0 ? "OPEN_DETAIL" : target.getPublicPreview() != 0 && target.getActive() != 0
+                ? "OPEN_PUBLIC_PREVIEW" : "INVITE_REQUIRED";
+        return new Link(link.getId(), link.getGroupType().name(), link.getGroupId(), link.getDisplayName(),
+                link.getStatus().name(), action, link.getProposedByPlayerId(),
+                guildLeader.equals(link.getGuildApprovedByPlayerId()), target.getLeaderId() != null
+                && target.getLeaderId().equals(link.getGroupApprovedByPlayerId()), link.getCreatedAt(), link.getUpdatedAt());
+    }
+
+    private void requireActive(Guild guild, Target target) {
+        if (guild.getStatus() != GuildStatus.ACTIVE || !target.active()) throw error(SocialError.GUILD_GROUP_CONFLICT);
     }
 
     private static boolean leader(Guild guild, Long actor) {

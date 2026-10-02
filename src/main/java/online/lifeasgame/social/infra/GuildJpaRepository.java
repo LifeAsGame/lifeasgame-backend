@@ -21,6 +21,9 @@ public interface GuildJpaRepository extends JpaRepository<Guild, Long> {
     @Query("SELECT g FROM Guild g WHERE g.id = :id")
     Optional<Guild> findForUpdate(@Param("id") Long id);
 
+    @Query("SELECT COUNT(m) > 0 FROM GuildMember m WHERE m.guild.id = :guildId AND m.playerId = :playerId AND m.guild.status = online.lifeasgame.social.domain.GuildStatus.ACTIVE")
+    boolean isActiveMember(@Param("guildId") Long guildId, @Param("playerId") Long playerId);
+
     Optional<Guild> findByIdAndPlayerId(Long id, Long playerId);
 
     @Query(value = """

@@ -55,7 +55,7 @@ public class GuildGroupLink extends AbstractTime {
 
     public void approve(Long actor, boolean guildLeader, boolean groupLeader, String displayName) {
         if (status != Status.PENDING || (!guildLeader && !groupLeader)) throw new DomainException(SocialError.GUILD_GROUP_CONFLICT);
-        this.displayName = label(displayName);
+        if (!this.displayName.equals(label(displayName))) throw new DomainException(SocialError.GUILD_GROUP_CONFLICT);
         if (guildLeader) guildApprovedByPlayerId = actor;
         if (groupLeader) groupApprovedByPlayerId = actor;
         if (guildApprovedByPlayerId != null && groupApprovedByPlayerId != null) status = Status.ACTIVE;

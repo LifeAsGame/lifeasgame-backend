@@ -77,8 +77,11 @@ class GuildGroupsEventsIntegrationTest {
         jdbc.update("DELETE FROM role_party_members");
         jdbc.update("DELETE FROM role_parties");
         jdbc.update("DELETE FROM guild_members WHERE guild_id = ?", GUILD);
+        jdbc.update("DELETE FROM guild_members WHERE guild_id = 63001");
         jdbc.update("DELETE FROM party_members WHERE party_id = ?", PARTY);
         jdbc.update("DELETE FROM guilds WHERE guild_id = ?", GUILD);
+        jdbc.update("DELETE FROM guilds WHERE guild_id = 63001");
+        jdbc.update("DELETE FROM parties WHERE party_id BETWEEN 63001 AND 63010");
         jdbc.update("DELETE FROM parties WHERE party_id = ?", PARTY);
         jdbc.update("DELETE FROM roles WHERE player_id = ?", A);
         jdbc.update("DELETE FROM player WHERE id BETWEEN ? AND ?", A, D);
@@ -129,11 +132,18 @@ class GuildGroupsEventsIntegrationTest {
                 .andExpect(jsonPath("$.result.totalElements").value(0));
         mvc.perform(auth(post(base + "/" + link + "/approve"), B).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"displayName\":\"공개 별칭\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SOC-409-GUILD-GROUP-CONFLICT"));
+        mvc.perform(auth(get(base + "/pending"), B)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].displayName").value("공유 모임"))
+                .andExpect(jsonPath("$.result.contents[0].groupLeaderApproved").value(false));
+        mvc.perform(auth(post(base + "/" + link + "/approve"), B).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"displayName\":\" 공유 모임 \"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("ACTIVE"));
         String list = mvc.perform(auth(get(base), C)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.contents[0].entryAction").value("INVITE_REQUIRED"))
                 .andReturn().getResponse().getContentAsString();
-        assertThat(list).contains("공개 별칭").doesNotContain("secret source name", "private role", "proposedByPlayerId");
+        assertThat(list).contains("공유 모임").doesNotContain("secret source name", "private role", "proposedByPlayerId");
         mvc.perform(auth(get("/api/v1/parties/" + PARTY), C)).andExpect(status().isNotFound());
         mvc.perform(auth(delete(base + "/" + link), B)).andExpect(status().isNoContent());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM parties WHERE party_id = ?", Long.class, PARTY)).isEqualTo(1);
@@ -156,7 +166,7 @@ class GuildGroupsEventsIntegrationTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("PENDING"))
                 .andExpect(jsonPath("$.result.guildLeaderApproved").value(false));
         mvc.perform(auth(post(base + "/" + pending + "/approve"), C).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"displayName\":\"새 리더 별칭\"}"))
+                .content("{\"displayName\":\"새 리더 확인\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("ACTIVE"));
     }
 
@@ -224,6 +234,128 @@ class GuildGroupsEventsIntegrationTest {
         assertThat(list).contains("탐색 이름", "INVITE_REQUIRED")
                 .doesNotContain("private role party", "private role", "secret", "roleId");
         mvc.perform(auth(get("/api/v1/role-parties/" + rolePartyId), C)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("대기 목록은 Party·RoleParty의 현재 리더와 제안자에게 보이는 행만 DB에서 페이지로 센다")
+    void pendingPagesOnlyVisibleRows() throws Exception {
+        String base = "/api/v1/guilds/" + GUILD + "/group-links/pending";
+        for (long id = 63001; id <= 63003; id++) jdbc.update("""
+                INSERT INTO parties (party_id, player_id, leader_player_id, name_original, name_value,
+                    code_value, visibility, join_policy, status, max_members, created_at, updated_at)
+                VALUES (?, ?, ?, 'source', 'source', ?, 'PRIVATE', 'INVITE_ONLY', ?, 10, NOW(6), NOW(6))
+                """, id, id == 63001 ? C : B, id == 63001 ? C : B, "GGE-" + id,
+                id == 63003 ? "DISBANDED" : "ACTIVE");
+        long roleId = jdbc.queryForObject("SELECT id FROM roles WHERE player_id = ?", Long.class, A);
+        jdbc.update("""
+                INSERT INTO role_parties (id, role_id, creator_player_id, leader_player_id, name,
+                    status, max_members, version, created_at, updated_at)
+                VALUES (63001, ?, ?, ?, 'private source', 'ACTIVE', 3, 0, NOW(6), NOW(6))
+                """, roleId, A, C);
+        for (long id = 63101; id <= 63105; id++) {
+            String type = id == 63104 ? "ROLE_PARTY" : "PARTY";
+            long group = switch ((int) id) {
+                case 63101 -> PARTY;       // hidden: B leads, A proposed
+                case 63102 -> 63001;       // visible: C leads
+                case 63103 -> 63002;       // visible: C proposed
+                case 63104 -> 63001;       // visible: C leads RoleParty
+                default -> 63003;         // hidden: disbanded Party leader
+            };
+            jdbc.update("""
+                    INSERT INTO guild_group_links (id, guild_id, group_type, group_id, display_name,
+                        status, proposed_by_player_id, open_slot, version, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, 'safe label', 'PENDING', ?, 1, 0, NOW(6), NOW(6))
+                    """, id, GUILD, type, group, id == 63103 ? C : A);
+        }
+        jdbc.update("""
+                INSERT INTO guilds (guild_id, player_id, leader_player_id, name_original, name_value,
+                    code_value, visibility, join_policy, status, max_members, created_at, updated_at)
+                VALUES (63001, ?, ?, 'other guild', 'other guild', 'GGE-OTHER',
+                    'PRIVATE', 'APPROVAL', 'ACTIVE', 10, NOW(6), NOW(6))
+                """, D, D);
+        jdbc.update("""
+                INSERT INTO guild_group_links (guild_id, group_type, group_id, display_name,
+                    status, proposed_by_player_id, open_slot, version, created_at, updated_at)
+                VALUES (63001, 'PARTY', ?, 'other label', 'PENDING', ?, 1, 0, NOW(6), NOW(6))
+                """, PARTY, D);
+        mvc.perform(auth(get(base + "?page=0&size=2"), C)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(3))
+                .andExpect(jsonPath("$.result.contents[0].id").value(63104))
+                .andExpect(jsonPath("$.result.contents[1].id").value(63103));
+        mvc.perform(auth(get(base + "?page=1&size=2"), C)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].id").value(63102))
+                .andExpect(jsonPath("$.result.contents.length()").value(1));
+        mvc.perform(auth(get(base + "?page=2&size=2"), C)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(3))
+                .andExpect(jsonPath("$.result.contents.length()").value(0));
+        mvc.perform(auth(get(base + "?page=-1&size=2"), C)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("행사 목록과 참가 페이지는 현재 길드원만 집계하며 동시각 RSVP도 ID 순서를 유지한다")
+    void eventPagesExcludeFormerMembers() throws Exception {
+        String base = "/api/v1/guilds/" + GUILD + "/events";
+        for (long id = 63101; id <= 63103; id++) jdbc.update("""
+                INSERT INTO guild_events (id, guild_id, title, starts_at, ends_at, status,
+                    created_by_player_id, version, created_at, updated_at)
+                VALUES (?, ?, 'page event', '2026-11-01 10:00:00', '2026-11-01 11:00:00',
+                    'PLANNED', ?, 0, NOW(6), NOW(6))
+                """, id, GUILD, A);
+        for (long player : List.of(A, C, D)) jdbc.update("""
+                INSERT INTO guild_event_rsvps (guild_event_id, player_id, joined_at, active, created_at, updated_at)
+                VALUES (63103, ?, '2026-11-01 09:00:00', 1, NOW(6), NOW(6))
+                """, player);
+        mvc.perform(auth(get(base + "?page=0&size=2"), C)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(3))
+                .andExpect(jsonPath("$.result.contents[0].id").value(63103))
+                .andExpect(jsonPath("$.result.contents[0].participantCount").value(2))
+                .andExpect(jsonPath("$.result.contents[0].myRsvp").value(true));
+        mvc.perform(auth(get(base + "?page=1&size=2"), A)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].id").value(63101));
+        String participants = base + "/63103/participants";
+        mvc.perform(auth(get(participants + "?page=0&size=1"), A)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(2))
+                .andExpect(jsonPath("$.result.contents[0].playerId").value(A));
+        mvc.perform(auth(get(participants + "?page=1&size=1"), A)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].playerId").value(C));
+        jdbc.update("DELETE FROM guild_members WHERE guild_id = ? AND player_id = ?", GUILD, C);
+        mvc.perform(auth(get(participants), A)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+        mvc.perform(auth(get(base), A)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.contents[0].participantCount").value(1));
+        mvc.perform(auth(get(participants + "?page=0&size=0"), A)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("승인과 리더 이전 경쟁은 직렬화되고 이전 리더의 후속 승인은 거부한다")
+    void approvalAndLeadershipTransferSerialize() throws Exception {
+        String base = "/api/v1/guilds/" + GUILD + "/group-links";
+        long link = result(mvc.perform(auth(post(base), A).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"groupType\":\"PARTY\",\"groupId\":" + PARTY + ",\"displayName\":\"동일 이름\"}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("id").asLong();
+        CountDownLatch start = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var approve = pool.submit(() -> { start.await(); return mvc.perform(auth(post(base + "/" + link + "/approve"), B)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"displayName\":\"동일 이름\"}"))
+                    .andReturn().getResponse().getStatus(); });
+            var transfer = pool.submit(() -> { start.await(); return mvc.perform(auth(post("/api/v1/guilds/" + GUILD + "/transfer-leader"), A)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"toPlayerId\":" + C + "}"))
+                    .andReturn().getResponse().getStatus(); });
+            start.countDown();
+            assertThat(approve.get(15, TimeUnit.SECONDS)).isEqualTo(200);
+            assertThat(transfer.get(15, TimeUnit.SECONDS)).isEqualTo(200);
+        }
+        String state = jdbc.queryForObject("SELECT status FROM guild_group_links WHERE id = ?", String.class, link);
+        assertThat(state).isIn("PENDING", "ACTIVE");
+        mvc.perform(auth(post(base + "/" + link + "/approve"), A).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"displayName\":\"동일 이름\"}"))
+                .andExpect(status().isNotFound());
+        if (state.equals("PENDING")) {
+            assertThat(jdbc.queryForObject("SELECT guild_approved_by_player_id FROM guild_group_links WHERE id = ?", Long.class, link)).isNull();
+            mvc.perform(auth(post(base + "/" + link + "/approve"), C).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"displayName\":\"동일 이름\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("ACTIVE"));
+        }
     }
 
     @Test

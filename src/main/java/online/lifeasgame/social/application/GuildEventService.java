@@ -19,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,32 +39,30 @@ public class GuildEventService {
 
     @Transactional(readOnly = true)
     public GuildResult.Page<Event> list(Long guildId, int page, int size) {
-        Guild guild = guild(guildId, false);
-        member(guild, actor());
-        Page<GuildEvent> rows = events.findByGuildIdOrderByIdDesc(guildId, page(page, size));
-        return GuildResult.Page.of(rows.stream().map(e -> result(e, guild, actor())).toList(), page, size, rows.getTotalElements());
+        PageRequest paging = page(page, size);
+        Long actor = actor();
+        requireMember(guildId, actor);
+        Page<GuildEvent> rows = events.findByGuildIdOrderByIdDesc(guildId, paging);
+        Map<Long, GuildEventRepository.EventTotals> totals = totals(rows.getContent(), actor);
+        return GuildResult.Page.of(rows.stream().map(e -> result(e, totals.get(e.getId()))).toList(),
+                page, size, rows.getTotalElements());
     }
 
     @Transactional(readOnly = true)
     public Event detail(Long guildId, Long eventId) {
-        Guild guild = guild(guildId, false);
-        member(guild, actor());
-        return result(event(guildId, eventId, false), guild, actor());
+        Long actor = actor();
+        requireMember(guildId, actor);
+        return result(event(guildId, eventId, false), actor);
     }
 
     @Transactional(readOnly = true)
     public GuildResult.Page<Participant> participants(Long guildId, Long eventId, int page, int size) {
-        Guild guild = guild(guildId, false);
-        member(guild, actor());
-        GuildEvent event = event(guildId, eventId, false);
-        List<Participant> all = event.getRsvps().stream()
-                .filter(GuildEventRsvp::isActive)
-                .filter(r -> guild.findMember(r.getPlayerId()).isPresent())
-                .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
-                .map(r -> new Participant(r.getPlayerId(), r.getJoinedAt())).toList();
-        page(page, size);
-        int start = (int) Math.min((long) page * size, all.size());
-        return GuildResult.Page.of(all.subList(start, Math.min(start + size, all.size())), page, size, all.size());
+        PageRequest paging = page(page, size);
+        requireMember(guildId, actor());
+        event(guildId, eventId, false);
+        Page<GuildEventRsvp> rows = events.findCurrentParticipants(guildId, eventId, paging);
+        return GuildResult.Page.of(rows.stream().map(r -> new Participant(r.getPlayerId(), r.getJoinedAt())).toList(),
+                page, size, rows.getTotalElements());
     }
 
     @Transactional
@@ -72,7 +71,7 @@ public class GuildEventService {
         leader(guild, actor());
         GuildEvent saved = events.saveAndFlush(GuildEvent.create(guildId, actor(), details.title(),
                 details.sharedDescription(), details.startsAt(), details.endsAt(), details.location()));
-        return result(saved, guild, actor());
+        return result(saved, actor());
     }
 
     @Transactional
@@ -81,7 +80,7 @@ public class GuildEventService {
         leader(guild, actor());
         GuildEvent event = event(guildId, eventId, true);
         event.update(details.title(), details.sharedDescription(), details.startsAt(), details.endsAt(), details.location());
-        return result(events.saveAndFlush(event), guild, actor());
+        return result(events.saveAndFlush(event), actor());
     }
 
     @Transactional
@@ -95,7 +94,7 @@ public class GuildEventService {
         leader(guild, actor());
         GuildEvent event = event(guildId, eventId, true);
         if (complete) event.complete(); else event.cancel();
-        return result(events.saveAndFlush(event), guild, actor());
+        return result(events.saveAndFlush(event), actor());
     }
 
     @Transactional
@@ -104,7 +103,7 @@ public class GuildEventService {
         member(guild, actor());
         GuildEvent event = event(guildId, eventId, true);
         event.join(actor(), clock.instant());
-        return result(events.saveAndFlush(event), guild, actor());
+        return result(events.saveAndFlush(event), actor());
     }
 
     @Transactional
@@ -116,13 +115,26 @@ public class GuildEventService {
         events.saveAndFlush(event);
     }
 
-    private Event result(GuildEvent event, Guild guild, Long actor) {
-        Set<Long> current = guild.getMembers().stream().map(m -> m.getPlayerId()).collect(Collectors.toSet());
-        int count = (int) event.getRsvps().stream().filter(GuildEventRsvp::isActive)
-                .filter(r -> current.contains(r.getPlayerId())).count();
+    private Event result(GuildEvent event, Long actor) {
+        return result(event, totals(List.of(event), actor).get(event.getId()));
+    }
+
+    private Event result(GuildEvent event, GuildEventRepository.EventTotals totals) {
+        int count = totals == null ? 0 : Math.toIntExact(totals.getParticipantCount());
         return new Event(event.getId(), event.getGuildId(), event.getTitle(), event.getSharedDescription(),
                 event.getStartsAt(), event.getEndsAt(), event.getLocation(), event.getStatus().name(),
-                event.getCreatedByPlayerId(), count, event.hasRsvp(actor), event.getCreatedAt(), event.getUpdatedAt());
+                event.getCreatedByPlayerId(), count, totals != null && totals.getMyRsvp() > 0,
+                event.getCreatedAt(), event.getUpdatedAt());
+    }
+
+    private Map<Long, GuildEventRepository.EventTotals> totals(List<GuildEvent> rows, Long actor) {
+        if (rows.isEmpty()) return Map.of();
+        return events.totals(rows.stream().map(GuildEvent::getId).toList(), actor).stream()
+                .collect(Collectors.toMap(GuildEventRepository.EventTotals::getEventId, Function.identity()));
+    }
+
+    private void requireMember(Long guildId, Long actor) {
+        if (!guilds.isActiveMember(guildId, actor)) throw error(SocialError.GUILD_NOT_FOUND);
     }
 
     private Guild guild(Long id, boolean lock) {
