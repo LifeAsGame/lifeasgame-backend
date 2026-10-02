@@ -73,6 +73,7 @@ public class GuildGroupLinkService {
         if (!guildLeader && !groupLeader) throw error(SocialError.GUILD_GROUP_NOT_FOUND);
         GuildGroupLink link = links.findOpen(guildId, type, groupId).orElse(null);
         if (link == null) link = links.saveAndFlush(GuildGroupLink.propose(guildId, type, groupId, displayName, actor, guildLeader, groupLeader));
+        else link.requireProposedName(displayName);
         return result(link, target, actor);
     }
 

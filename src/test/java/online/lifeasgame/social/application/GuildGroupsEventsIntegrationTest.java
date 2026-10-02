@@ -124,6 +124,9 @@ class GuildGroupsEventsIntegrationTest {
         long link = result(mvc.perform(auth(post(base), A).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"groupType\":\"PARTY\",\"groupId\":" + PARTY + ",\"displayName\":\"공유 모임\"}"))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("id").asLong();
+        mvc.perform(auth(post(base), A).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"groupType\":\"PARTY\",\"groupId\":" + PARTY + ",\"displayName\":\"새 이름\"}"))
+                .andExpect(status().isConflict());
         mvc.perform(auth(get(base), C)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.totalElements").value(0));
         mvc.perform(auth(get(base + "/pending"), B)).andExpect(status().isOk())
