@@ -1,6 +1,6 @@
 # Backend developer journey contract — READY
 
-This document records the **2026-10-04 activation decision**. The historical source revision `CONTENT_2B_FINAL_CORRECTED_2026-07-23` was GATED; this is not a retroactive approval. Source file SHA-256: `aadbccf655586dc328592b5eecca15f79dbb8448a74b5041ec21a7d7a669fa26`. Canonical row fingerprints below use UTF-8 JSON with sorted keys and compact separators; the source file is retained outside product Git.
+This document records the **2026-10-04 activation decision**. The historical source revision `CONTENT_2B_FINAL_CORRECTED_2026-07-23` carried `defaultActive=false` and gate `BACKEND_JOURNEY_CONTENT`. Its seven Quest rows say `GATED`, its seven Step rows say `GATED_WITH_ROUTE`, and its Route row says `DEFINITION_ACTIVE_CANDIDATES_NOT_GRANTED`; that Route row status did not authorize runtime activation. This READY contract records a new decision, not a retroactive approval. Source file SHA-256: `aadbccf655586dc328592b5eecca15f79dbb8448a74b5041ec21a7d7a669fa26`. Canonical row fingerprints below use UTF-8 JSON with sorted keys and compact separators; the source file is retained outside product Git.
 
 ## Product scope
 
