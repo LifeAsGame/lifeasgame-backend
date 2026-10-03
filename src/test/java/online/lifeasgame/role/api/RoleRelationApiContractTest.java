@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.role.api.request.RoleRelationRequest;
+import online.lifeasgame.role.api.response.RoleRelationResponse;
 import online.lifeasgame.role.application.RoleRelationQueryService;
 import online.lifeasgame.role.application.RoleRelationService;
 import online.lifeasgame.role.application.command.RoleRelationCommand;
@@ -14,6 +15,7 @@ import online.lifeasgame.role.domain.error.RoleError;
 import online.lifeasgame.support.ControllerSliceTest;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -105,28 +107,71 @@ class RoleRelationApiContractTest {
                 .andExpect(jsonPath("$.result.personDisplayName").value("Alice"))
                 .andExpect(jsonPath("$.result.linkedUserId").value(4L))
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.personStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$.result.playerId").doesNotExist())
                 .andExpect(jsonPath("$.result.ownerPlayerId").doesNotExist())
                 .andExpect(jsonPath("$.result.roleId").doesNotExist());
 
         mockMvc.perform(get("/api/v1/roles/2/relations"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result[0].id").value(9L));
+                .andExpect(jsonPath("$.result[0].id").value(9L))
+                .andExpect(jsonPath("$.result[0].personStatus").value("ACTIVE"));
 
         mockMvc.perform(get("/api/v1/roles/2/relations/9"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.personId").value(3L));
+                .andExpect(jsonPath("$.result.personId").value(3L))
+                .andExpect(jsonPath("$.result.personStatus").value("ACTIVE"));
 
         mockMvc.perform(put("/api/v1/roles/2/relations/9")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new RoleRelationRequest.Update("FRIEND", null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.id").value(9L))
-                .andExpect(jsonPath("$.result.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.personStatus").value("ACTIVE"));
 
         mockMvc.perform(delete("/api/v1/roles/2/relations/9"))
                 .andExpect(status().isNoContent());
         verify(relationService).archive(2L, 9L);
+    }
+
+    @Test
+    @DisplayName("Person이 보관되어도 목록·상세·수정 응답의 관계 상태와 이름은 유지한다")
+    void exposesArchivedPersonIndependently() throws Exception {
+        var detail = new RoleRelationResult.Detail(9L, 1L, 2L, 3L, "Alice", 4L,
+                "FAMILY", "note", "ACTIVE", "ARCHIVED", null, null, 0L);
+        given(relationQueryService.list(2L)).willReturn(List.of(detail));
+        given(relationQueryService.detail(2L, 9L)).willReturn(detail);
+        given(relationService.update(eq(2L), eq(9L), any())).willReturn(detail);
+
+        mockMvc.perform(get("/api/v1/roles/2/relations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result[0].personStatus").value("ARCHIVED"))
+                .andExpect(jsonPath("$.result[0].personDisplayName").value("Alice"))
+                .andExpect(jsonPath("$.result[0].roleNotes").value("note"));
+        mockMvc.perform(get("/api/v1/roles/2/relations/9"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.personStatus").value("ARCHIVED"));
+        mockMvc.perform(put("/api/v1/roles/2/relations/9")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(new RoleRelationRequest.Update("FAMILY", "note"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.personStatus").value("ARCHIVED"));
+    }
+
+    @Test
+    @DisplayName("OpenAPI의 personStatus는 필수 상태 필드이며 관계 status와 독립임을 명시한다")
+    void documentsPersonStatus() {
+        io.swagger.v3.oas.models.media.Schema<?> schema = io.swagger.v3.core.converter.ModelConverters.getInstance()
+                .readAll(RoleRelationResponse.Detail.class).get("RoleRelationDetail");
+        var personStatus = schema.getProperties().get("personStatus");
+        assertThat(personStatus.getType()).isEqualTo("string");
+        assertThat(personStatus.getEnum()).containsExactly("ACTIVE", "ARCHIVED");
+        assertThat(personStatus.getDescription()).contains("관계 status와 독립");
+        assertThat(schema.getRequired()).contains("personStatus");
     }
 
     @Test
@@ -173,6 +218,7 @@ class RoleRelationApiContractTest {
                 4L,
                 "FAMILY",
                 "note",
+                "ACTIVE",
                 "ACTIVE",
                 null,
                 null,
