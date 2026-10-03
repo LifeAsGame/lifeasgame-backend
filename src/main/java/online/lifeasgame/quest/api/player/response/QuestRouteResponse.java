@@ -26,6 +26,7 @@ public final class QuestRouteResponse {
     public record PlayerProgress(
             Long id,
             Long currentStepId,
+            Long roleId,
             String status,
             Instant selectedAt,
             Instant completedAt

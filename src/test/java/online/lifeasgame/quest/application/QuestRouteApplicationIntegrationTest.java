@@ -208,6 +208,7 @@ class QuestRouteApplicationIntegrationTest {
                             PLAYER_ID,
                             Long.MAX_VALUE,
                             firstStepId,
+                            null,
                             COMPLETED_AT
                     )
             )).isInstanceOf(DataIntegrityViolationException.class);
@@ -216,6 +217,7 @@ class QuestRouteApplicationIntegrationTest {
                             PLAYER_ID,
                             routeId,
                             Long.MAX_VALUE,
+                            null,
                             COMPLETED_AT
                     )
             )).isInstanceOf(DataIntegrityViolationException.class);

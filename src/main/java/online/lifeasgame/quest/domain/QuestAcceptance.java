@@ -175,6 +175,15 @@ public class QuestAcceptance extends AbstractTime {
         return true;
     }
 
+    public void clearJourneyEvidence() {
+        if (status != QuestStatus.GOAL_REACHED) {
+            throw new DomainException(QuestError.JOURNEY_EVIDENCE_CONFLICT);
+        }
+        status = QuestStatus.IN_PROGRESS;
+        progressValue = 0;
+        goalReachedAt = null;
+    }
+
     public boolean complete(Instant completedAt) {
         if (status == QuestStatus.COMPLETED) {
             return false;

@@ -134,6 +134,7 @@ class QuestRouteReadModelFactory {
         return new QuestRouteResult.PlayerProgress(
                 playerRoute.getId(),
                 playerRoute.getCurrentStepId(),
+                playerRoute.getRoleId(),
                 playerRoute.getStatus().name(),
                 playerRoute.getSelectedAt(),
                 playerRoute.getCompletedAt()

@@ -6,6 +6,9 @@ public interface RoleLookupApi {
 
     RoleReference getOwnedActiveForUpdate(Long roleId, Long playerId);
 
-    record RoleReference(Long id, String name, String status) {
+    record RoleReference(Long id, String name, String status, String roleType) {
+        public RoleReference(Long id, String name, String status) {
+            this(id, name, status, null);
+        }
     }
 }
