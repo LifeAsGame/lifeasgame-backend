@@ -1,7 +1,7 @@
 # Friend chat realtime and read contract
 
 Status: READY · Version: 1 · 2026-10-03
-Running BE SHA: `ba0feee92357365ad1b6b72b0e7613b2989427aa` · tree: `44f73e43a6aa6559573ded0f840672da4ccfe76b`
+Running BE SHA: `e20c88dc907b6a25c0cf0056d16f870947581d67` · tree: `f619aa224b55b598a43589c7e7e233bf5d1d6277`
 Preview: `http://127.0.0.1:19081` · FE origin: `http://127.0.0.1:13005`
 
 ## Browser transport and authority
