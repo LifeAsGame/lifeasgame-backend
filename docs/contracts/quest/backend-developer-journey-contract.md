@@ -1,4 +1,4 @@
-# Backend developer journey contract — DRAFT
+# Backend developer journey contract — READY
 
 This document records the **2026-10-04 activation decision**. The historical source revision `CONTENT_2B_FINAL_CORRECTED_2026-07-23` was GATED; this is not a retroactive approval. Source file SHA-256: `aadbccf655586dc328592b5eecca15f79dbb8448a74b5041ec21a7d7a669fa26`. Canonical row fingerprints below use UTF-8 JSON with sorted keys and compact separators; the source file is retained outside product Git.
 
@@ -6,13 +6,13 @@ This document records the **2026-10-04 activation decision**. The historical sou
 
 `ROUTE_BACKEND_DEVELOPER_START` adds seven ordered required Quest steps. Route selection is optional and does not accept or complete Quests. The route completion reward is `RP_NONE`. Quest reward profiles in step order: `RP_NONE`, `RP_EXP_TINY_10`, `RP_EXP_TINY_10`, `RP_EXP_TINY_10`, `RP_EXP_TINY_10`, `RP_EXP_AND_ITEM_FIRST_STEP_20`, `RP_EXP_TINY_10`. Existing reward lines, Mailbox and Claim apply. Achievement, title, and item candidate codes are not automatically granted. This is a self-recorded learning and implementation journey, not professional certification.
 
-The source's `CollectionEntryRecorded` maps to an explicit link to the existing Collection-backed LifeLog record. Current `CollectionCategory` lacks `PROJECT`; this activation adds `PROJECT` without moving any existing record. `LifeLogRecorded` already exists as a durable event, but this journey only progresses on an explicit link, including an older owned contentful record. `ExternalEvidenceLinked` has no current fact source; the explicit URL/description command stores the evidence and progresses this one Quest. No global event replay or duplicate event is needed.
+The source's `CollectionEntryRecorded` maps to an explicit link to the existing Collection-backed LifeLog record. The pre-activation `CollectionCategory` lacked `PROJECT`; this activation adds `PROJECT` without moving any existing record. `LifeLogRecorded` already exists as a durable event, but this journey only progresses on an explicit link, including an older owned contentful record. `ExternalEvidenceLinked` has no current fact source; the explicit URL/description command stores the evidence and progresses this one Quest. No global event replay or duplicate event is needed.
 
-Role selection uses the existing user-owned active Role's stable `roleType`, equal to `ROLE_BACKEND_DEVELOPER` or `ROLE_JOB_SEEKER`. Display name never determines eligibility. The selected Role is bound to the journey and cannot be switched afterward. A linked LifeLog with another `primaryRoleId` is rejected; an unassigned owned record is allowed.
+Role selection uses the existing user-owned active Role's stable `roleType`, equal to `ROLE_BACKEND_DEVELOPER` or `ROLE_JOB_SEEKER`. Display name never determines eligibility. The selected Role is bound to the journey and cannot be switched afterward. A completed Quest remains readable and completion replay remains safe if the Role is later archived. A linked LifeLog with another `primaryRoleId` is rejected; an unassigned owned record is allowed.
 
 ## FE HTTP contract
 
-Authentication supplies the Player on every operation. Existing `ApiResponse` wrappers and Quest/Route response shapes apply. IDs below are numeric and server-owned. Obtain `routeId`/`stepId` from route catalog and `roleId` from `GET /api/v1/roles`. Create a compatible Role with `POST /api/v1/roles` (`{ "roleType": "ROLE_BACKEND_DEVELOPER", "name": "My backend role", "description": null }`) if needed. For a PROJECT record, `POST /api/v1/players/collections` with `{ "category": "PROJECT", "title": "Service project", "quantity": 1, "lifeLogSubtype": "PROJECT", "primaryRoleId": 123 }`; its additive `lifeLogId` response field is the evidence ID. Existing records can be selected from `GET /api/v1/lifelogs`.
+Authentication supplies the Player on every operation. Existing `ApiResponse` wrappers and Quest/Route response shapes apply. Quest catalog uses `blueprints[]`; Route catalog uses `result.routes[]`. Selection and advance return `result.playerProgress` with `currentStepId`, `roleId`, and `status`. Evidence mutation and completion return `result.status` plus `result.id` (acceptance ID). `POST /api/v1/players/collections` returns a direct `{ "id": 1, "lifeLogId": 2 }` body. IDs below are numeric and server-owned. Obtain `routeId`/`stepId` from route catalog and `roleId` from `GET /api/v1/roles`. Create a compatible Role with `POST /api/v1/roles` (`{ "roleType": "ROLE_BACKEND_DEVELOPER", "name": "My backend role", "description": null }`) if needed. For a PROJECT record, `POST /api/v1/players/collections` with `{ "category": "PROJECT", "title": "Service project", "quantity": 1, "lifeLogSubtype": "PROJECT", "primaryRoleId": 123 }`; its additive `lifeLogId` response field is the evidence ID. Existing records can be selected from `GET /api/v1/lifelogs`.
 
 | Action | HTTP | Request | Result |
 | --- | --- | --- | --- |
@@ -23,7 +23,7 @@ Authentication supplies the Player on every operation. Existing `ApiResponse` wr
 | Link LifeLog | `PUT /api/v1/players/quests/{questCode}/evidence/life-log` | `{ "lifeLogId": 123 }` | Acceptance becomes `GOAL_REACHED` for Java or PROJECT Collection stages |
 | Link deployment | `PUT /api/v1/players/quests/{questCode}/evidence/deployment` | `{ "url": "https://example.org/demo", "description": "Service deployed" }` | Acceptance becomes `GOAL_REACHED` for step 6; no remote request |
 | Unlink before completion | `DELETE /api/v1/players/quests/{questCode}/evidence` | none | Acceptance returns to `IN_PROGRESS` |
-| Evidence status | `GET /api/v1/players/quests/{questCode}/evidence` | none | Evidence metadata or `null`, never full source content |
+| Evidence status | `GET /api/v1/players/quests/{questCode}/evidence` | none | Evidence metadata, or no `result` property when unlinked; never full source content |
 | User completion | `POST /api/v1/players/quests/{questCode}/complete` | none | `COMPLETED`; duplicate command returns same result without a second reward |
 | Refresh | `GET /api/v1/players/quests/{questCode}`, `GET /api/v1/quest-routes/my/{routeId}` | none | Current acceptance and current step readiness |
 | Advance | `POST /api/v1/quest-routes/my/{routeId}/advance` | `{ "expectedStepId": 123 }` | Next step or completed Route; stale ID conflicts |
@@ -31,6 +31,10 @@ Authentication supplies the Player on every operation. Existing `ApiResponse` wr
 Linking is limited to the selected Quest acceptance. A PROJECT Collection LifeLog may be linked to multiple Quests only through separate commands. Memo and deployment description are 1–1000 non-whitespace characters. Deployment URL is at most 2048 characters, absolute `http`/`https`, with no user-info. A repeated identical link is idempotent; a different link requires explicit unlink first. Unlink after completion conflicts. Completion retains only source kind/ID and short evidence metadata as a snapshot; later source edits/deletion neither revoke nor repay rewards.
 
 Expected errors follow existing `QUE-*` conventions: 400 for invalid evidence/URL, 404 for missing or foreign Player records, 409 for wrong Role, missing selection, conflicting evidence, invalid state, and stale step. A failed ownership check never returns source details.
+
+## Runtime verification
+
+On 2026-10-04, dedicated 19081 applied V43 and JPA validation passed. A separate verification Player completed all seven ordered stages through real HTTP, with explicit evidence links, step 1 unlink/relink, duplicate completion replay, and stale-step 409 checks. The Route remained unadvanced after Quest completion until the expected-step command. Existing definitions remain: six earlier Quests, `ROUTE_RECORD_START` with three Steps, and two fixed-code Items; the new totals are 13 Quests, two Routes, and ten Steps. The existing reward profiles produced EXP 70 and one `IT_FIRST_STEP_FRAGMENT` item line, with no GOLD line. The verification Player received one Mailbox entry, claimed it, and saw one Inventory entry. The example deployment URL was stored as a user statement; no remote request or actual deployment assertion was made. The separate showcase Player has one compatible Role, no selected backend Route, and no accepted first Quest.
 
 ## Source row provenance
 
