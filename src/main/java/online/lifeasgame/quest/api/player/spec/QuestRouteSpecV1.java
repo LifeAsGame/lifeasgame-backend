@@ -23,7 +23,8 @@ public interface QuestRouteSpecV1 {
 
     @Operation(summary = "Quest Route 선택")
     ResponseEntity<ApiResponse<QuestRouteResponse.Route>> select(
-            @PathVariable Long routeId
+            @PathVariable Long routeId,
+            @Valid @RequestBody(required = false) QuestRouteRequest.Select request
     );
 
     @Operation(summary = "내가 선택한 Quest Route 목록")

@@ -11,6 +11,7 @@ public interface PlayerQuestRouteRepository {
             Long playerId,
             Long routeId,
             Long firstStepId,
+            Long roleId,
             Instant selectedAt
     );
 

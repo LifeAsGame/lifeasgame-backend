@@ -23,7 +23,8 @@ public class RoleLookupService implements RoleLookupApi {
         return new RoleReference(
                 role.getId(),
                 role.getName(),
-                role.getStatus().name()
+                role.getStatus().name(),
+                role.getRoleType().value()
         );
     }
 
@@ -32,6 +33,6 @@ public class RoleLookupService implements RoleLookupApi {
     public RoleReference getOwnedActiveForUpdate(Long roleId, Long playerId) {
         Role role = reader.getOwnedForUpdate(roleId, playerId);
         if (role.getStatus() != RoleStatus.ACTIVE) throw new DomainException(RoleError.ROLE_ARCHIVED);
-        return new RoleReference(role.getId(), role.getName(), role.getStatus().name());
+        return new RoleReference(role.getId(), role.getName(), role.getStatus().name(), role.getRoleType().value());
     }
 }
