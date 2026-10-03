@@ -11,6 +11,7 @@ import online.lifeasgame.social.api.player.request.PlayerChatRequest;
 import online.lifeasgame.social.api.player.response.PlayerChatResponse;
 import online.lifeasgame.social.api.player.spec.PlayerChatApiSpecV1;
 import online.lifeasgame.social.application.ChatService;
+import online.lifeasgame.social.application.ChatReadMarker;
 import online.lifeasgame.social.application.FriendChatQueryService;
 import online.lifeasgame.social.application.result.ChatResult;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
 
     private final ChatService chatService;
     private final FriendChatQueryService friendChatQueryService;
+    private final ChatReadMarker chatReadMarker;
 
     @Override
     @GetMapping("/channels")
@@ -116,5 +118,16 @@ public class PlayerChatController implements PlayerChatApiSpecV1 {
         );
 
         return ApiResponses.ok(PlayerChatWebMapper.toMessage(result));
+    }
+
+    @Override
+    @PostMapping("/channels/{channelId}/read")
+    public ResponseEntity<ApiResponse<PlayerChatResponse.Read>> markRead(
+            @PathVariable Long channelId,
+            @Valid @RequestBody PlayerChatRequest.Read request
+    ) {
+        var state = chatReadMarker.mark(channelId, request.lastReadMessageId());
+        return ApiResponses.ok(new PlayerChatResponse.Read(state.channelId(), state.playerId(),
+                state.lastReadMessageId(), state.unreadCount()));
     }
 }

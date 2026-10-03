@@ -10,6 +10,7 @@ import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 @Getter
 @Entity
 @Table(name = "chat_messages",
+        uniqueConstraints = @UniqueConstraint(name = "uq_chat_message_client_key", columnNames = {"channel_id", "sender_id", "client_message_id"}),
         indexes = {
                 @Index(name = "idx_message_channel_seq", columnList = "channel_id, id"),
                 @Index(name = "idx_message_channel_time", columnList = "channel_id, created_at, id"),
@@ -30,6 +31,9 @@ public class ChatMessage extends AbstractTime {
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
 
+    @Column(name = "client_message_id", length = 80)
+    private String clientMessageId;
+
     @Lob
     @Column(name = "content", columnDefinition = "LONGTEXT", nullable = false)
     private String content;
@@ -40,17 +44,18 @@ public class ChatMessage extends AbstractTime {
     @Version
     private Long version;
 
-    private ChatMessage(ChatChannel channel, Long senderId, String content) {
+    private ChatMessage(ChatChannel channel, Long senderId, String content, String clientMessageId) {
         Guard.notNull(channel, "channel");
         Guard.notNull(senderId, "senderId");
         Guard.notBlank(content, "content");
         this.channel = channel;
         this.senderId = senderId;
         this.content = content;
+        this.clientMessageId = clientMessageId;
     }
 
-    public static ChatMessage create(ChatChannel channel, Long senderId, String content) {
-        return new ChatMessage(channel, senderId, content);
+    public static ChatMessage create(ChatChannel channel, Long senderId, String content, String clientMessageId) {
+        return new ChatMessage(channel, senderId, content, clientMessageId);
     }
 
     public void edit(String newContent) {

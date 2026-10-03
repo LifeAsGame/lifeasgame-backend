@@ -90,15 +90,15 @@ class FriendChatQueryIntegrationTest {
                     new ChatResult.FriendChannel(
                             first.getId(),
                             new ChatResult.Peer(FIRST_PEER_ID, "First Peer", "MAGE", 7),
-                            false
+                            false, null, null, 0
                     ),
                     new ChatResult.FriendChannel(
                             second.getId(),
                             new ChatResult.Peer(SECOND_PEER_ID, "Second Peer", "WARRIOR", 8),
-                            true
+                            true, null, null, 0
                     )
             );
-            assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
             verify(playerConnectionReadApi).findAllByPlayerIds(Set.of(FIRST_PEER_ID, SECOND_PEER_ID));
         }
 

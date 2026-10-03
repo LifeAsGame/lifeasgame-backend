@@ -35,6 +35,9 @@ class ChatServiceCurrentPlayerTest {
     private ChatWriter chatWriter;
 
     @Mock
+    private ChatMessageRegistrar chatMessageRegistrar;
+
+    @Mock
     private GuildReader guildReader;
 
     @Mock
@@ -73,19 +76,12 @@ class ChatServiceCurrentPlayerTest {
         @Test
         @DisplayName("sendMessage는 Current Player를 sender로 사용한다")
         void sendsMessageAsCurrentPlayer() {
-            ChatChannel channel = mock(ChatChannel.class);
-            ChatMessage message = mock(ChatMessage.class);
             given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
-            given(chatReader.getMemberChannel(291L, PLAYER_ID)).willReturn(channel);
-            given(chatWriter.publish(channel, PLAYER_ID, "hello")).willReturn(message);
-            given(message.getChannel()).willReturn(channel);
-            given(channel.getId()).willReturn(291L);
 
             chatService.sendMessage(291L, new ChatCommand.SendMessage("hello"));
 
             verify(currentPlayerAccessor, times(1)).currentPlayerIdOrThrow();
-            verify(chatReader).getMemberChannel(291L, PLAYER_ID);
-            verify(chatWriter).publish(channel, PLAYER_ID, "hello");
+            verify(chatMessageRegistrar).register(PLAYER_ID, 291L, new ChatCommand.SendMessage("hello"));
         }
 
         @Test

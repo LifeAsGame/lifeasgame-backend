@@ -4,6 +4,7 @@ import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.social.application.ChatService;
+import online.lifeasgame.social.application.ChatReadMarker;
 import online.lifeasgame.social.application.FriendChatQueryService;
 import online.lifeasgame.social.application.result.ChatResult;
 import online.lifeasgame.support.WebMvcTestConfig;
@@ -40,6 +41,9 @@ class PlayerChatApiContractTest {
     private ChatService chatService;
 
     @MockitoBean
+    private ChatReadMarker chatReadMarker;
+
+    @MockitoBean
     private FriendChatQueryService friendChatQueryService;
 
     @MockitoBean
@@ -58,7 +62,7 @@ class PlayerChatApiContractTest {
                 new ChatResult.FriendChannel(
                         288L,
                         new ChatResult.Peer(289L, "Peer", "MAGE", 7),
-                        true
+                        true, null, null, 0
                 )
         ));
 
@@ -66,7 +70,7 @@ class PlayerChatApiContractTest {
                         .with(authentication(playerAuthentication())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result", hasSize(1)))
-                .andExpect(jsonPath("$.result[0].*", hasSize(3)))
+                .andExpect(jsonPath("$.result[0].*", hasSize(6)))
                 .andExpect(jsonPath("$.result[0].channelId").value(288))
                 .andExpect(jsonPath("$.result[0].peer.*", hasSize(4)))
                 .andExpect(jsonPath("$.result[0].peer.playerId").value(289))
