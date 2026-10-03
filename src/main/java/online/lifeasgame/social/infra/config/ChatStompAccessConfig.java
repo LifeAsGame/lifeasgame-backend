@@ -2,6 +2,7 @@ package online.lifeasgame.social.infra.config;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
@@ -30,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Configuration
+@Slf4j
 @RequiredArgsConstructor
 public class ChatStompAccessConfig implements WebSocketMessageBrokerConfigurer {
     private static final Pattern TOPIC = Pattern.compile("/topic/social/chat/([1-9][0-9]*)");
@@ -73,6 +75,7 @@ public class ChatStompAccessConfig implements WebSocketMessageBrokerConfigurer {
                             .matcher(headers.getDestination() == null ? "" : headers.getDestination());
                     if (!matcher.matches()) throw denied();
                     chatReader.getMemberChannel(Long.valueOf(matcher.group(1)), ((JwtPrincipal) auth.getPrincipal()).playerId());
+                    log.debug("Chat STOMP accepted command={} channelId={}", headers.getCommand(), matcher.group(1));
                 }
                 return message;
             }
@@ -104,12 +107,19 @@ public class ChatStompAccessConfig implements WebSocketMessageBrokerConfigurer {
                 if (headers.getMessageType() != SimpMessageType.MESSAGE) return message;
                 try {
                     UsernamePasswordAuthenticationToken auth = authenticate(sessionToken(headers));
-                    if (!auth.getPrincipal().equals(sessions.get(headers.getSessionId()).principal())) return null;
+                    if (!auth.getPrincipal().equals(sessions.get(headers.getSessionId()).principal())) {
+                        log.warn("Chat STOMP delivery dropped reason=PRINCIPAL destination={}", headers.getDestination());
+                        return null;
+                    }
                     Matcher matcher = TOPIC.matcher(headers.getDestination() == null ? "" : headers.getDestination());
-                    if (!matcher.matches()) return null;
+                    if (!matcher.matches()) {
+                        log.warn("Chat STOMP delivery dropped reason=DESTINATION destination={}", headers.getDestination());
+                        return null;
+                    }
                     chatReader.getMemberChannel(Long.valueOf(matcher.group(1)), ((JwtPrincipal) auth.getPrincipal()).playerId());
                     return message;
                 } catch (RuntimeException ex) {
+                    log.warn("Chat STOMP delivery dropped reason={} destination={}", ex.getClass().getSimpleName(), headers.getDestination());
                     return null;
                 }
             }
