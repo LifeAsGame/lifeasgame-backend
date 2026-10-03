@@ -9,7 +9,7 @@ public final class PlayerCollectionResponse {
     private PlayerCollectionResponse() {
     }
 
-    public record Created(Long id) {
+    public record Created(Long id, Long lifeLogId) {
     }
 
     public record Deleted(Long id) {}

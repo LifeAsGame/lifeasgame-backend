@@ -46,7 +46,7 @@ public final class PlayerCollectionWebMapper {
     }
 
     public static PlayerCollectionResponse.Created toCreated(CollectionResult.Created result) {
-        return new PlayerCollectionResponse.Created(result.id());
+        return new PlayerCollectionResponse.Created(result.id(), result.lifeLogId());
     }
 
     public static CollectionCommand.Update toUpdateCommand(PlayerCollectionRequest.Update request) {

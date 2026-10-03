@@ -5,7 +5,7 @@ import online.lifeasgame.core.lang.EnumParsers;
 import online.lifeasgame.lifelog.domain.error.LifeLogError;
 
 public enum CollectionCategory {
-    FIGURE, CARD, BOOK, GAME, STAMP, COIN, OTHER;
+    FIGURE, CARD, BOOK, GAME, STAMP, COIN, OTHER, PROJECT;
 
     public static CollectionCategory parse(String raw) {
         return EnumParsers.parseStrict(
