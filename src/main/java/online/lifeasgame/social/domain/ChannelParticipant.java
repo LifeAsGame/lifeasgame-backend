@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
+import online.lifeasgame.core.guard.Guard;
 
 @Getter
 @Entity
@@ -31,6 +32,9 @@ public class ChannelParticipant extends AbstractTime {
     @Column(length = 20, nullable = false)
     private ChannelRole role = ChannelRole.MEMBER;
 
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
     @Version
     private Long version;
 
@@ -42,5 +46,12 @@ public class ChannelParticipant extends AbstractTime {
 
     public void changeRole(ChannelRole role) {
         this.role = role;
+    }
+
+    public boolean advanceRead(Long messageId) {
+        Guard.notNull(messageId, "messageId");
+        if (lastReadMessageId != null && lastReadMessageId >= messageId) return false;
+        lastReadMessageId = messageId;
+        return true;
     }
 }

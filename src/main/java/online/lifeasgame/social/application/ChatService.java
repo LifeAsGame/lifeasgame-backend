@@ -8,6 +8,8 @@ import online.lifeasgame.social.application.model.ChatSpec;
 import online.lifeasgame.social.application.result.ChatResult;
 import online.lifeasgame.social.domain.*;
 import online.lifeasgame.social.domain.error.SocialError;
+import online.lifeasgame.social.domain.repository.ChatMessageRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,8 @@ public class ChatService {
     private final FriendshipVerifier friendshipVerifier;
     private final DirectChatBlockGuard directChatBlockGuard;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final ChatMessageRegistrar chatMessageRegistrar;
+    private final ChatMessageRepository chatMessageRepository;
 
     @Transactional
     public ChatResult.Channel openGlobal(ChatCommand.OpenGlobal command) {
@@ -107,13 +111,11 @@ public class ChatService {
         return chatReader.messages(channelId, playerId, cursor, size);
     }
 
-    @Transactional
     public ChatResult.Message sendMessage(Long channelId, ChatCommand.SendMessage command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
         return sendMessageFor(playerId, channelId, command);
     }
 
-    @Transactional
     public ChatResult.Message sendMessage(Long playerId, Long channelId, ChatCommand.SendMessage command) {
         return sendMessageFor(playerId, channelId, command);
     }
@@ -123,14 +125,16 @@ public class ChatService {
             Long channelId,
             ChatCommand.SendMessage command
     ) {
-        ChatSpec.SendMessage spec = ChatSpec.SendMessage.from(channelId, playerId, command);
-        ChatChannel channel = chatReader.getMemberChannel(spec.channelId(), spec.senderId());
-        channel.ensureWritable();
-        if (channel.getType() == ChatChannelType.FRIEND) {
-            Long peerId = chatReader.getFriendPeerId(channelId, playerId);
-            directChatBlockGuard.requireUnblocked(playerId, peerId);
+        try {
+            return chatMessageRegistrar.register(playerId, channelId, command);
+        } catch (DataIntegrityViolationException ex) {
+            if (command.clientMessageId() == null) throw ex;
+            ChatMessage existing = chatMessageRepository.findByClientMessageId(channelId, playerId, command.clientMessageId())
+                    .orElseThrow(() -> ex);
+            if (!existing.getContent().equals(command.content())) {
+                throw new DomainException(SocialError.CHAT_MESSAGE_KEY_CONFLICT);
+            }
+            return ChatResult.Message.from(existing);
         }
-        ChatMessage saved = chatWriter.publish(channel, playerId, spec.content());
-        return ChatResult.Message.from(saved);
     }
 }

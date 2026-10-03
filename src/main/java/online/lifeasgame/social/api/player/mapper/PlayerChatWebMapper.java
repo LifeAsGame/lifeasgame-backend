@@ -60,7 +60,10 @@ public final class PlayerChatWebMapper {
                                 result.peer().job(),
                                 result.peer().level()
                         ),
-                        result.readOnly()
+                        result.readOnly(),
+                        result.lastReadMessageId(),
+                        result.peerLastReadMessageId(),
+                        result.unreadCount()
                 ))
                 .toList();
     }
@@ -76,7 +79,7 @@ public final class PlayerChatWebMapper {
     }
 
     public static ChatCommand.SendMessage toSendMessageCommand(PlayerChatRequest.SendMessage request) {
-        return new ChatCommand.SendMessage(request.content());
+        return new ChatCommand.SendMessage(request.content(), request.clientMessageId());
     }
 
     public static PlayerChatResponse.Message toMessage(ChatResult.Message result) {
@@ -86,11 +89,12 @@ public final class PlayerChatWebMapper {
                 result.senderId(),
                 result.content(),
                 result.edited(),
-                result.createdAt()
+                result.createdAt(),
+                result.clientMessageId()
         );
     }
 
     public static ChatCommand.SendMessage toSendMessageCommand(PlayerChatSocketRequest.SendMessage request) {
-        return new ChatCommand.SendMessage(request.content());
+        return new ChatCommand.SendMessage(request.content(), request.clientMessageId());
     }
 }

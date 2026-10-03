@@ -14,6 +14,9 @@ public final class ChatCommand {
     public record OpenAdmin(String name) {
     }
 
-    public record SendMessage(String content) {
+    public record SendMessage(String content, String clientMessageId) {
+        public SendMessage(String content) {
+            this(content, null);
+        }
     }
 }

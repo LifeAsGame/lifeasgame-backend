@@ -50,6 +50,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,6 +61,7 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -189,6 +192,125 @@ class DirectChatBlockIntegrationTest {
                 .andExpect(jsonPath("$.code").value("SOC-404-NOT-FRIEND"));
         assertThat(messageCount()).isEqualTo(3);
         verify(gateway, times(2)).publish(any());
+    }
+
+    @Test
+    @DisplayName("같은 clientMessageId의 재전송은 한 행과 한 이벤트만 만들고 다른 본문은 충돌한다")
+    void deduplicatesRetry() {
+        var command = new ChatCommand.SendMessage("once", "stable-1");
+        long first = chatService.sendMessage(A, channelId, command).id();
+        assertThat(chatService.sendMessage(A, channelId, command).id()).isEqualTo(first);
+        assertError(() -> chatService.sendMessage(A, channelId,
+                new ChatCommand.SendMessage("changed", "stable-1")), SocialError.CHAT_MESSAGE_KEY_CONFLICT);
+        assertThat(messageCount()).isEqualTo(2);
+        verify(gateway).publish(any());
+    }
+
+    @Test
+    @DisplayName("읽음은 지정한 친구 메시지까지만 증가하고 내 발신은 미확인 수에서 제외한다")
+    void advancesReadOnlyToVisibleMessage() throws Exception {
+        long first = chatService.sendMessage(A, channelId, new ChatCommand.SendMessage("first")).id();
+        long second = chatService.sendMessage(B, channelId, new ChatCommand.SendMessage("second")).id();
+        String path = "/api/v1/chat/channels/" + channelId + "/read";
+        mvc.perform(auth(post(path).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastReadMessageId\":" + first + "}"), B))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.lastReadMessageId").value(first))
+                .andExpect(jsonPath("$.result.unreadCount").value(0));
+        mvc.perform(auth(post(path).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastReadMessageId\":" + second + "}"), A))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.unreadCount").value(0));
+        mvc.perform(auth(post(path).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastReadMessageId\":" + first + "}"), A))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.lastReadMessageId").value(second));
+        mvc.perform(auth(post(path).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastReadMessageId\":999999999}"), A))
+                .andExpect(status().isBadRequest());
+        mvc.perform(auth(post(path).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastReadMessageId\":" + second + "}"), B + 1))
+                .andExpect(status().isForbidden());
+        verify(gateway, times(2)).publishRead(any());
+    }
+
+    @Test
+    @DisplayName("Redis 발행 실패는 커밋된 전송 응답을 실패로 바꾸지 않는다")
+    void keepsCommittedResponseWhenRealtimeFails() {
+        doThrow(new IllegalStateException("redis unavailable")).when(gateway).publish(any());
+        long id = chatService.sendMessage(A, channelId, new ChatCommand.SendMessage("committed")).id();
+        assertThat(jdbc.queryForObject("SELECT content FROM chat_messages WHERE id = ?", String.class, id))
+                .isEqualTo("committed");
+    }
+
+    @Test
+    @DisplayName("롤백된 메시지는 Redis 이벤트를 발행하지 않는다")
+    void doesNotPublishRolledBackMessage() {
+        transaction().executeWithoutResult(status -> {
+            chatService.sendMessage(A, channelId, new ChatCommand.SendMessage("rolled back"));
+            status.setRollbackOnly();
+        });
+        assertThat(messageCount()).isEqualTo(1);
+        verifyNoInteractions(gateway);
+    }
+
+    @Test
+    @DisplayName("동시 재전송은 DB 고유 제약으로 하나의 메시지에 합쳐진다")
+    void deduplicatesConcurrentSends() throws Exception {
+        jdbc.update("UPDATE chat_channels SET type = 'GLOBAL' WHERE id = ?", channelId);
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<Long> send = () -> {
+            start.await();
+            return chatService.sendMessage(A, channelId,
+                    new ChatCommand.SendMessage("concurrent", "key-concurrent")).id();
+        };
+        try (var executor = Executors.newFixedThreadPool(4)) {
+            List<Future<Long>> results = List.of(executor.submit(send), executor.submit(send),
+                    executor.submit(send), executor.submit(send));
+            start.countDown();
+            Long id = results.getFirst().get(10, TimeUnit.SECONDS);
+            for (Future<Long> result : results) assertThat(result.get(10, TimeUnit.SECONDS)).isEqualTo(id);
+        }
+        assertThat(messageCount()).isEqualTo(2);
+        verify(gateway).publish(any());
+    }
+
+    @Test
+    @DisplayName("동시 친구 채널 개설은 기존 Follow 잠금으로 한 채널을 공유한다")
+    void opensOneFriendChannelConcurrently() throws Exception {
+        jdbc.update("DELETE FROM chat_messages");
+        jdbc.update("DELETE FROM channel_participants");
+        jdbc.update("DELETE FROM chat_channels");
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<Void> open = () -> {
+            start.await();
+            mvc.perform(auth(open(A), A)).andExpect(status().isOk());
+            return null;
+        };
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            Future<Void> first = executor.submit(open);
+            Future<Void> second = executor.submit(open);
+            start.countDown();
+            first.get(10, TimeUnit.SECONDS);
+            second.get(10, TimeUnit.SECONDS);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM chat_channels", Long.class)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("재접속 페이지는 경계 ID를 중복하지 않고 오래된 이력까지 이어진다")
+    void pagesHistoryWithoutBoundaryDuplicates() {
+        for (int i = 0; i < 4; i++) {
+            chatService.sendMessage(A, channelId, new ChatCommand.SendMessage("page-" + i));
+        }
+        var newest = chatService.messages(A, channelId, null, 2);
+        var middle = chatService.messages(A, channelId, newest.nextCursor(), 2);
+        var oldest = chatService.messages(A, channelId, middle.nextCursor(), 2);
+        assertThat(newest.hasMore()).isTrue();
+        assertThat(middle.hasMore()).isTrue();
+        assertThat(oldest.hasMore()).isFalse();
+        assertThat(java.util.stream.Stream.of(newest, middle, oldest)
+                .flatMap(page -> page.messages().stream()).map(m -> m.id()).distinct().count()).isEqualTo(5);
     }
 
     @Test

@@ -16,6 +16,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.context.ActiveProfiles;
@@ -37,7 +38,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @Testcontainers
 @SpringBootTest(properties = {
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect",
-        "app.outbox.enabled=false"
+        "app.outbox.enabled=false",
+        "app.redis.pubsub.enabled=false"
 })
 @ActiveProfiles("local")
 @DisplayName("Flyway profile cutover")
@@ -149,7 +151,7 @@ class FlywayProfileCutoverTest {
     class StartLocalWithCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V41까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
+        @DisplayName("V1부터 V42까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
         void migratesThenValidates() {
             ConfigurableEnvironment environment =
                     (ConfigurableEnvironment) applicationContext.getEnvironment();
@@ -161,8 +163,9 @@ class FlywayProfileCutoverTest {
             assertThat(environment.getProperty(
                     "spring.flyway.baseline-on-migrate", Boolean.class
             )).isFalse();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("41");
-            assertThat(appliedMigrationCount()).isEqualTo(41);
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("42");
+            assertThat(appliedMigrationCount()).isEqualTo(42);
+            assertThat(applicationContext.getBeansOfType(RedisMessageListenerContainer.class)).isEmpty();
         }
     }
 
@@ -191,6 +194,7 @@ class FlywayProfileCutoverTest {
                                     + FLYWAY_DISABLED_MYSQL.getDriverClassName(),
                             "--spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect",
                             "--lifeasgame.jwt.secret=test-secret-key-must-be-at-least-32-characters-long",
+                            "--app.redis.pubsub.enabled=false",
                             "--spring.main.banner-mode=off"
                     ));
 

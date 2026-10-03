@@ -9,8 +9,12 @@ import online.lifeasgame.social.domain.repository.ChatMessageRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.MANDATORY)
 public class ChatWriter {
@@ -52,7 +56,6 @@ public class ChatWriter {
         ).orElseGet(() -> chatChannelRepository.save(ChatChannel.admin(playerId, normalized)));
     }
 
-    // 동시 저장 문제 고려 필요
     public ChatChannel ensureFriendChannel(Long playerId, Long friendId, String name) {
         Guard.check(!playerId.equals(friendId), "friend channel participants must differ");
         String normalized = normalizeName(name, "친구 채팅");
@@ -75,10 +78,20 @@ public class ChatWriter {
         });
     }
 
-    public ChatMessage publish(ChatChannel channel, Long senderId, String content) {
+    public ChatMessage publish(ChatChannel channel, Long senderId, String content, String clientMessageId) {
         channel.ensureWritable();
-        ChatMessage saved = chatMessageRepository.save(ChatMessage.create(channel, senderId, content));
-        chatRealtimeGateway.publish(ChatRealtimePayload.from(saved));
+        ChatMessage saved = chatMessageRepository.save(ChatMessage.create(channel, senderId, content, clientMessageId));
+        ChatRealtimePayload payload = ChatRealtimePayload.from(saved);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    chatRealtimeGateway.publish(payload);
+                } catch (RuntimeException ex) {
+                    log.warn("Chat realtime publish failed for messageId={}", payload.id());
+                }
+            }
+        });
         return saved;
     }
 

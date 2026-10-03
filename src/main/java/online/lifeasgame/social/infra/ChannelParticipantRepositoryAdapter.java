@@ -26,6 +26,11 @@ public class ChannelParticipantRepositoryAdapter implements ChannelParticipantRe
     }
 
     @Override
+    public Optional<ChannelParticipant> findByChannelIdAndUserIdForUpdate(Long channelId, Long userId) {
+        return jpaRepository.findByChannelIdAndUserIdForUpdate(channelId, userId);
+    }
+
+    @Override
     public List<ChannelParticipant> findAllByUserId(Long userId) {
         return jpaRepository.findAllWithChannelByUserId(userId);
     }
@@ -39,4 +44,5 @@ public class ChannelParticipantRepositoryAdapter implements ChannelParticipantRe
     public boolean existsByChannelId(Long channelId) {
         return jpaRepository.existsByChannelId(channelId);
     }
+
 }

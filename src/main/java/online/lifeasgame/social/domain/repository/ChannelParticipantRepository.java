@@ -12,9 +12,12 @@ public interface ChannelParticipantRepository {
 
     Optional<ChannelParticipant> findByChannelIdAndUserId(Long channelId, Long userId);
 
+    Optional<ChannelParticipant> findByChannelIdAndUserIdForUpdate(Long channelId, Long userId);
+
     List<ChannelParticipant> findAllByUserId(Long userId);
 
     List<ChannelParticipant> findAllByChannelIds(Set<Long> channelIds);
 
     boolean existsByChannelId(Long channelId);
+
 }
