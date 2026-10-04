@@ -43,11 +43,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ControllerSliceTest(controllers = {RoleController.class, PersonController.class})
@@ -149,6 +151,22 @@ class RolePersonApiContractTest {
                 new PersonRequest.Create("Alice", null, null, "x".repeat(121)),
                 PersonError.INVALID_PERSON_CONTACT
         );
+    }
+
+    @Test
+    void rejectsInvalidPersonDatesBeforeMutation() throws Exception {
+        mockMvc.perform(post("/api/v1/persons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Alice\",\"birthday\":\"+100000-01-01\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("REQ-VALIDATION"));
+        mockMvc.perform(put("/api/v1/persons/20")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Alice\",\"profile\":{\"firstMetOn\":\"0000-01-01\"}}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("REQ-VALIDATION"));
+        verifyNoInteractions(personService);
     }
 
     @Test

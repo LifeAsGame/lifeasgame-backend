@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 
 public final class AdminExerciseRequest {
 
@@ -26,7 +27,7 @@ public final class AdminExerciseRequest {
             @NotNull @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            @NotNull LocalDate exercisedOn,
+            @NotNull @DatabaseCalendarDate LocalDate exercisedOn,
             String memo
     ) {
     }
@@ -36,7 +37,7 @@ public final class AdminExerciseRequest {
             @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            LocalDate exercisedOn,
+            @DatabaseCalendarDate LocalDate exercisedOn,
             String memo
     ) {
     }

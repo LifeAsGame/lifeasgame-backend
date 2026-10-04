@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.platform.web.response.ApiResponses;
+import online.lifeasgame.platform.web.validation.CalendarInstantDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import online.lifeasgame.social.application.GuildEventService;
 import online.lifeasgame.social.application.GuildGroupLinkService;
 import online.lifeasgame.social.application.result.GuildResult;
@@ -26,7 +28,9 @@ public class GuildGroupsEventsController {
     public record Propose(@NotBlank String groupType, @NotNull @Positive Long groupId, @NotBlank String displayName) {}
     public record Label(@NotBlank String displayName) {}
     public record EventDetails(@NotBlank String title, String sharedDescription,
-                               @NotNull Instant startsAt, @NotNull Instant endsAt, String location) {
+                               @NotNull @JsonDeserialize(using = CalendarInstantDeserializer.class) Instant startsAt,
+                               @NotNull @JsonDeserialize(using = CalendarInstantDeserializer.class) Instant endsAt,
+                               String location) {
         GuildEventService.Details toCommand() {
             return new GuildEventService.Details(title, sharedDescription, startsAt, endsAt, location);
         }
