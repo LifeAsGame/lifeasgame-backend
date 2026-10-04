@@ -1,6 +1,6 @@
-# Date input contract (DRAFT)
+# Date input contract (READY)
 
-This contract is not yet deployed to the dedicated 19081 backend. FE may use it to prepare validation; confirm the running version before relying on the new API checks.
+Verified on the dedicated 19081 backend running `d4dba66e94110ce3c3faec218e025d999763ba06` on 2026-10-05. The FE 13005 origin passed CORS preflight against this server.
 
 | API | Input fields | Accepted values |
 | --- | --- | --- |
