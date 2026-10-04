@@ -1,6 +1,6 @@
-# Date input contract (READY)
+# Date input contract (DRAFT)
 
-Verified on the dedicated 19081 backend running `d4dba66e94110ce3c3faec218e025d999763ba06` on 2026-10-05. The FE 13005 origin passed CORS preflight against this server.
+The Person, Certification, Hobby, Exercise, RoleEvent, and GuildEvent rows below were verified on dedicated 19081 backend `d4dba66e94110ce3c3faec218e025d999763ba06` on 2026-10-05. Invite expiry and admin Quest due date checks are pending deployment; FE 13005 CORS already passed.
 
 | API | Input fields | Accepted values |
 | --- | --- | --- |
@@ -12,6 +12,8 @@ Verified on the dedicated 19081 backend running `d4dba66e94110ce3c3faec218e025d9
 | `GET /api/v1/players/exercises/search`, `GET /admin/v1/players/{playerId}/exercises/search` | `from`, `to` query parameters | Optional ISO calendar date filters in the MySQL `DATE` range. |
 | `POST /api/v1/roles/{roleId}/events`, `PATCH /api/v1/roles/{roleId}/events/{eventId}` | `startsAt`, `endsAt` | Optional ISO offset date-time strings with four-digit years; the resulting instant, converted to the backend JDBC zone `Asia/Seoul`, must fit MySQL `DATETIME` local dates `1000-01-01` through `9999-12-31`. Both present: end may equal start, but not precede it. Future schedules are allowed. |
 | `POST /api/v1/guilds/{guildId}/events`, `PATCH /api/v1/guilds/{guildId}/events/{eventId}` | `startsAt`, `endsAt` | Required ISO offset date-time strings with the same range. End must be strictly after start. Future schedules are allowed. |
+| `POST /api/v1/parties/{partyId}/invite`, `POST /api/v1/guilds/{guildId}/invite`; `POST /admin/v1/players/{playerId}/parties/{partyId}/invite`, `POST /admin/v1/players/{playerId}/guilds/{guildId}/invite` | `expiresAt` | Optional ISO local date-time string without an offset, in the MySQL `DATETIME` local range `1000-01-01` through `9999-12-31`. Null/omission retain the existing no-expiry behavior. |
+| `PATCH /admin/v1/quests/definitions/{questCode}` | `dueAt` | Optional ISO offset date-time string with four-digit year and the same `Asia/Seoul` DB range as event instants. Omission/null retains the existing update behavior. Future due dates are allowed. |
 
 All calendar dates must be real Gregorian dates. Year `0000`, negative years, expanded years (five or more digits), and invalid days such as non-leap `2025-02-29` are rejected. Date-only values do not accept a time or offset. Schedule values require an offset (`Z` is accepted); the server compares instants, so different offsets are allowed.
 

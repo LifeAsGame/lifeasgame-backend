@@ -5,10 +5,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import online.lifeasgame.character.api.player.request.PlayerCertificationRequest;
+import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.person.api.request.PersonRequest;
+import online.lifeasgame.quest.api.admin.request.AdminQuestRequest;
 import online.lifeasgame.role.api.request.RoleEventRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.time.format.DateTimeParseException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,6 +56,21 @@ class CalendarInputTest {
         }
         for (String date : new String[]{"0000-01-01T00:00:00Z", "-0001-01-01T00:00:00Z", "0999-12-31T00:00:00Z", "+10000-01-01T00:00:00Z", "+100000-01-01T00:00:00Z", "2025-02-29T12:00:00Z", "2026-01-01T12:00:00", "9999-12-31T15:00:00Z"}) {
             assertThatThrownBy(() -> json.readValue("{\"title\":\"A\",\"startsAt\":\"" + date + "\"}", RoleEventRequest.Create.class)).as(date).isInstanceOf(Exception.class);
+        }
+        assertThat(json.readValue("{\"dueAt\":\"2030-01-01T09:00:00+09:00\"}", AdminQuestRequest.Update.class).dueAt()).isNotNull();
+        assertThatThrownBy(() -> json.readValue("{\"dueAt\":\"+100000-01-01T00:00:00Z\"}", AdminQuestRequest.Update.class))
+                .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("초대 만료 시각은 기존 offset 없는 형식에서 DATETIME 범위만 받는다")
+    void invitationExpiry() {
+        for (String date : new String[]{"1000-01-01T00:00:00", "2030-01-01T12:00:00", "9999-12-31T23:59:59"}) {
+            assertThat(CalendarDateRange.parseDateTimeColumn(date)).isNotNull();
+        }
+        for (String date : new String[]{"0000-01-01T00:00:00", "0999-12-31T23:59:59", "+100000-01-01T00:00:00", "2025-02-29T00:00:00", "2030-01-01T00:00:00Z"}) {
+            assertThatThrownBy(() -> CalendarDateRange.parseDateTimeColumn(date)).as(date)
+                    .isInstanceOf(DateTimeParseException.class);
         }
     }
 }

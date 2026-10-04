@@ -2,6 +2,7 @@ package online.lifeasgame.social.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.social.application.command.GuildCommand;
 import online.lifeasgame.social.application.result.GuildResult;
 import online.lifeasgame.social.domain.Guild;
@@ -306,7 +307,7 @@ public class GuildService {
         }
 
         try {
-            return LocalDateTime.parse(iso);
+            return CalendarDateRange.parseDateTimeColumn(iso);
         } catch (DateTimeParseException e) {
             throw new DomainException(SocialError.INVALID_STATE, "INVALID_EXPIRES_AT");
         }

@@ -3,7 +3,9 @@ package online.lifeasgame.core.time;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.DateTimeException;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 
 public final class CalendarDateRange {
     private static final LocalDate FIRST_DATABASE_DATE = LocalDate.of(1000, 1, 1);
@@ -28,6 +30,14 @@ public final class CalendarDateRange {
         } catch (DateTimeException ignored) {
             return false;
         }
+    }
+
+    public static LocalDateTime parseDateTimeColumn(String value) {
+        LocalDateTime dateTime = LocalDateTime.parse(value);
+        if (!inDateColumn(dateTime.toLocalDate())) {
+            throw new DateTimeParseException("Date is outside the supported range", value, 0);
+        }
+        return dateTime;
     }
 
     public static void requireDateColumn(LocalDate date) {
