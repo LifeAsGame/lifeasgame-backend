@@ -17,8 +17,14 @@ public final class CollectionCommand {
             String conditionNote,
             String acquiredFrom,
             Set<String> tags,
-            LifeLogRecordMetadataCommand lifeLogMetadata
+            LifeLogRecordMetadataCommand lifeLogMetadata,
+            Long personalCategoryId
     ) {
+        public Create(String category, String title, String originalTitle, Integer quantity,
+                      String conditionNote, String acquiredFrom, Set<String> tags,
+                      LifeLogRecordMetadataCommand lifeLogMetadata) {
+            this(category, title, originalTitle, quantity, conditionNote, acquiredFrom, tags, lifeLogMetadata, null);
+        }
         public Create(
                 String category,
                 String title,
@@ -36,7 +42,8 @@ public final class CollectionCommand {
                     conditionNote,
                     acquiredFrom,
                     tags,
-                    LifeLogRecordMetadataCommand.none()
+                    LifeLogRecordMetadataCommand.none(),
+                    null
             );
         }
     }

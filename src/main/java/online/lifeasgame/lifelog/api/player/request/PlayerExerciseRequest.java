@@ -23,8 +23,15 @@ public final class PlayerExerciseRequest {
             String lifeLogSubtype,
             String reflectionScope,
             @Positive Long primaryRoleId,
-            @Positive Long roleEventId
+            @Positive Long roleEventId,
+            @Positive Long personalCategoryId
     ) {
+        public Create(String category, Integer durationMinutes, Double distanceKm, Integer calories,
+                      LocalDate exercisedOn, String memo, String lifeLogSubtype, String reflectionScope,
+                      Long primaryRoleId, Long roleEventId) {
+            this(category, durationMinutes, distanceKm, calories, exercisedOn, memo,
+                    lifeLogSubtype, reflectionScope, primaryRoleId, roleEventId, null);
+        }
         public Create(
                 String category,
                 Integer durationMinutes,
@@ -45,6 +52,7 @@ public final class PlayerExerciseRequest {
                     lifeLogSubtype,
                     reflectionScope,
                     null,
+                    null,
                     null
             );
         }
@@ -64,6 +72,7 @@ public final class PlayerExerciseRequest {
                     calories,
                     exercisedOn,
                     memo,
+                    null,
                     null,
                     null,
                     null,

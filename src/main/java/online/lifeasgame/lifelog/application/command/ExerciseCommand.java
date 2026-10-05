@@ -16,8 +16,13 @@ public final class ExerciseCommand {
             Integer calories,
             LocalDate exercisedOn,
             String memo,
-            LifeLogRecordMetadataCommand lifeLogMetadata
+            LifeLogRecordMetadataCommand lifeLogMetadata,
+            Long personalCategoryId
     ) {
+        public Create(String category, Integer durationMinutes, Double distanceKm, Integer calories,
+                      LocalDate exercisedOn, String memo, LifeLogRecordMetadataCommand lifeLogMetadata) {
+            this(category, durationMinutes, distanceKm, calories, exercisedOn, memo, lifeLogMetadata, null);
+        }
         public Create(
                 String category,
                 Integer durationMinutes,
@@ -33,7 +38,8 @@ public final class ExerciseCommand {
                     calories,
                     exercisedOn,
                     memo,
-                    LifeLogRecordMetadataCommand.none()
+                    LifeLogRecordMetadataCommand.none(),
+                    null
             );
         }
     }

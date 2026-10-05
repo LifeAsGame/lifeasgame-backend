@@ -10,7 +10,12 @@ public final class MediaLogQuery {
             String status,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
+        public Search(String category, String status, String titleLike, int page, int size) {
+            this(category, status, titleLike, page, size, null, false);
+        }
     }
 }

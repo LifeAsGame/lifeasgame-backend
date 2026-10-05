@@ -5,6 +5,7 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.query.CollectionQuery;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
 import online.lifeasgame.lifelog.domain.CollectionLog;
+import online.lifeasgame.lifelog.domain.LifeLogCategoryKind;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ public class CollectionLogQueryService {
 
     private final CollectionLogReader collectionLogReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService categoryService;
 
     public List<CollectionResult.Info> recent(int limit) {
         return recent(currentPlayerAccessor.currentPlayerIdOrThrow(), limit);
@@ -33,12 +35,16 @@ public class CollectionLogQueryService {
     }
 
     public List<CollectionResult.Info> search(Long playerId, CollectionQuery.Search query) {
+        categoryService.validateFilter(playerId, LifeLogCategoryKind.COLLECTION,
+                query.personalCategoryId(), query.unclassified());
         return collectionLogReader.search(
                         playerId,
                         query.category(),
                         query.titleLike(),
                         query.page(),
-                        query.size()
+                        query.size(),
+                        query.personalCategoryId(),
+                        query.unclassified()
                 ).stream()
                 .map(CollectionResult.Info::from)
                 .toList();

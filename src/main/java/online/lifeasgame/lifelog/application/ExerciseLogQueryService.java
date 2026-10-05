@@ -5,6 +5,7 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.query.ExerciseQuery;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
+import online.lifeasgame.lifelog.domain.LifeLogCategoryKind;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ public class ExerciseLogQueryService {
 
     private final ExerciseLogReader exerciseLogReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService categoryService;
 
     public List<ExerciseResult.Info> recent(int limit) {
         return recent(currentPlayerAccessor.currentPlayerIdOrThrow(), limit);
@@ -33,13 +35,17 @@ public class ExerciseLogQueryService {
     }
 
     public List<ExerciseResult.Info> search(Long playerId, ExerciseQuery.Search query) {
+        categoryService.validateFilter(playerId, LifeLogCategoryKind.EXERCISE,
+                query.personalCategoryId(), query.unclassified());
         return exerciseLogReader.search(
                         playerId,
                         query.category(),
                         query.from(),
                         query.to(),
                         query.page(),
-                        query.size()
+                        query.size(),
+                        query.personalCategoryId(),
+                        query.unclassified()
                 ).stream()
                 .map(ExerciseResult.Info::from)
                 .toList();

@@ -44,12 +44,16 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository {
             CollectionCategory category,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         Page<Long> idPage = jpa.searchIds(
                 playerId,
                 category,
                 titleLike,
+                personalCategoryId,
+                unclassified,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"))
         );
         if (idPage.isEmpty()) return List.of();

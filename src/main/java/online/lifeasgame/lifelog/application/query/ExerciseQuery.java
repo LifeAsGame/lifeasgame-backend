@@ -12,7 +12,12 @@ public final class ExerciseQuery {
             LocalDate from,
             LocalDate to,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
+        public Search(String category, LocalDate from, LocalDate to, int page, int size) {
+            this(category, from, to, page, size, null, false);
+        }
     }
 }

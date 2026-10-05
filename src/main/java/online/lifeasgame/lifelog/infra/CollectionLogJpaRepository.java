@@ -32,11 +32,15 @@ public interface CollectionLogJpaRepository extends JpaRepository<CollectionLog,
         where c.playerId = :playerId
           and (:category is null or c.category = :category)
           and (:titleLike is null or lower(c.title.value) like lower(concat('%', :titleLike, '%')))
+          and (:personalCategoryId is null or c.personalCategoryId = :personalCategoryId)
+          and (:unclassified = false or c.personalCategoryId is null)
         order by c.id desc
     """)
     Page<Long> searchIds(@Param("playerId") Long playerId,
                          @Param("category") CollectionCategory category,
                          @Param("titleLike") String titleLike,
+                         @Param("personalCategoryId") Long personalCategoryId,
+                         @Param("unclassified") boolean unclassified,
                          Pageable pageable);
 
     @Query("""

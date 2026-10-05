@@ -5,6 +5,8 @@ import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.lifelog.application.query.LifeLogJournalQuery;
@@ -41,7 +43,10 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
             Long primaryRoleId,
             LifeLogSubtype subtype,
             int page,
-            int size
+            int size,
+            LifeLogSourceType categoryKind,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         List<CanonicalRecord> content = queryFactory
                 .select(canonicalRecordProjection())
@@ -49,7 +54,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                 .where(
                         lifeLogRecord.playerId.eq(playerId),
                         primaryRoleIdEq(primaryRoleId),
-                        subtypeEq(subtype)
+                        subtypeEq(subtype),
+                        personalCategoryMatches(playerId, categoryKind, personalCategoryId, unclassified)
                 )
                 .orderBy(
                         lifeLogRecord.occurredAt.desc(),
@@ -64,12 +70,43 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                 .where(
                         lifeLogRecord.playerId.eq(playerId),
                         primaryRoleIdEq(primaryRoleId),
-                        subtypeEq(subtype)
+                        subtypeEq(subtype),
+                        personalCategoryMatches(playerId, categoryKind, personalCategoryId, unclassified)
                 )
                 .fetchOne();
         long total = count == null ? 0L : count;
         int totalPages = (int) Math.ceil(total / (double) size);
         return new CanonicalPage(content, page, size, total, totalPages);
+    }
+
+    private BooleanExpression personalCategoryMatches(Long playerId, LifeLogSourceType kind,
+                                                       Long categoryId, boolean unclassified) {
+        if (categoryId == null && !unclassified) return null;
+        BooleanExpression collections = lifeLogRecord.sourceType.eq(LifeLogSourceType.COLLECTION)
+                .and(JPAExpressions.selectOne().from(collectionLog).where(
+                        collectionLog.id.eq(lifeLogRecord.sourceId),
+                        collectionLog.playerId.eq(playerId),
+                        categoryPredicate(collectionLog.personalCategoryId, categoryId)).exists());
+        BooleanExpression exercises = lifeLogRecord.sourceType.eq(LifeLogSourceType.EXERCISE)
+                .and(JPAExpressions.selectOne().from(exerciseLog).where(
+                        exerciseLog.id.eq(lifeLogRecord.sourceId),
+                        exerciseLog.playerId.eq(playerId),
+                        categoryPredicate(exerciseLog.personalCategoryId, categoryId)).exists());
+        BooleanExpression media = lifeLogRecord.sourceType.eq(LifeLogSourceType.MEDIA)
+                .and(JPAExpressions.selectOne().from(mediaLog).where(
+                        mediaLog.id.eq(lifeLogRecord.sourceId),
+                        mediaLog.playerId.eq(playerId),
+                        categoryPredicate(mediaLog.personalCategoryId, categoryId)).exists());
+        if (kind != null) return switch (kind) {
+            case COLLECTION -> collections;
+            case EXERCISE -> exercises;
+            case MEDIA -> media;
+        };
+        return collections.or(exercises).or(media);
+    }
+
+    private BooleanExpression categoryPredicate(NumberPath<Long> path, Long categoryId) {
+        return categoryId == null ? path.isNull() : path.eq(categoryId);
     }
 
     @Override
@@ -202,7 +239,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         collectionLog.id,
                         collectionLog.category,
                         collectionLog.title.value,
-                        collectionLog.quantity.value
+                        collectionLog.quantity.value,
+                        collectionLog.personalCategoryId
                 )
                 .from(collectionLog)
                 .where(
@@ -218,7 +256,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                 new LifeLogJournalResult.CollectionPreview(
                         row.get(collectionLog.category).name(),
                         row.get(collectionLog.title.value),
-                        row.get(collectionLog.quantity.value)
+                        row.get(collectionLog.quantity.value),
+                        row.get(collectionLog.personalCategoryId)
                 )
         ));
     }
@@ -239,7 +278,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         exerciseLog.metrics.distanceKm,
                         exerciseLog.metrics.calories,
                         exerciseLog.exercisedOn,
-                        exerciseLog.memo
+                        exerciseLog.memo,
+                        exerciseLog.personalCategoryId
                 )
                 .from(exerciseLog)
                 .where(
@@ -258,7 +298,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         row.get(exerciseLog.metrics.distanceKm),
                         row.get(exerciseLog.metrics.calories),
                         row.get(exerciseLog.exercisedOn),
-                        row.get(exerciseLog.memo)
+                        row.get(exerciseLog.memo),
+                        row.get(exerciseLog.personalCategoryId)
                 )
         ));
     }
@@ -279,7 +320,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         mediaLog.progress.current,
                         mediaLog.progress.total,
                         mediaLog.status,
-                        mediaLog.rating.score
+                        mediaLog.rating.score,
+                        mediaLog.personalCategoryId
                 )
                 .from(mediaLog)
                 .where(
@@ -298,7 +340,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         row.get(mediaLog.progress.current),
                         row.get(mediaLog.progress.total),
                         row.get(mediaLog.status).name(),
-                        row.get(mediaLog.rating.score)
+                        row.get(mediaLog.rating.score),
+                        row.get(mediaLog.personalCategoryId)
                 )
         ));
     }
@@ -326,7 +369,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         value.getAcquiredFrom(),
                         value.getTags().values(),
                         value.getCreatedAt(),
-                        value.getUpdatedAt()
+                        value.getUpdatedAt(),
+                        value.getPersonalCategoryId()
                 ));
     }
 
@@ -350,7 +394,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         value.getExercisedOn(),
                         value.getMemo(),
                         value.getCreatedAt(),
-                        value.getUpdatedAt()
+                        value.getUpdatedAt(),
+                        value.getPersonalCategoryId()
                 ));
     }
 
@@ -381,7 +426,8 @@ public class LifeLogJournalQueryAdapter implements LifeLogJournalQuery {
                         value.getStartedOn(),
                         value.getFinishedOn(),
                         value.getCreatedAt(),
-                        value.getUpdatedAt()
+                        value.getUpdatedAt(),
+                        value.getPersonalCategoryId()
                 ));
     }
 

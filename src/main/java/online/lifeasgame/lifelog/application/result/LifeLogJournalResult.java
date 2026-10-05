@@ -108,8 +108,12 @@ public final class LifeLogJournalResult {
     public record CollectionPreview(
             String category,
             String title,
-            Integer quantity
+            Integer quantity,
+            Long personalCategoryId
     ) implements Preview {
+        public CollectionPreview(String category, String title, Integer quantity) {
+            this(category, title, quantity, null);
+        }
     }
 
     public record ExercisePreview(
@@ -118,8 +122,13 @@ public final class LifeLogJournalResult {
             Double distanceKm,
             Integer calories,
             LocalDate exercisedOn,
-            String memo
+            String memo,
+            Long personalCategoryId
     ) implements Preview {
+        public ExercisePreview(String category, Integer durationMinutes, Double distanceKm,
+                               Integer calories, LocalDate exercisedOn, String memo) {
+            this(category, durationMinutes, distanceKm, calories, exercisedOn, memo, null);
+        }
     }
 
     public record MediaPreview(
@@ -128,8 +137,13 @@ public final class LifeLogJournalResult {
             Integer currentEpisode,
             Integer totalEpisode,
             String status,
-            Double rating
+            Double rating,
+            Long personalCategoryId
     ) implements Preview {
+        public MediaPreview(String category, String title, Integer currentEpisode,
+                            Integer totalEpisode, String status, Double rating) {
+            this(category, title, currentEpisode, totalEpisode, status, rating, null);
+        }
     }
 
     public sealed interface Source permits
@@ -147,8 +161,15 @@ public final class LifeLogJournalResult {
             String acquiredFrom,
             Set<String> tags,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
+        public CollectionSource(String category, String title, String originalTitle, Integer quantity,
+                                String conditionNote, String acquiredFrom, Set<String> tags,
+                                Instant createdAt, Instant updatedAt) {
+            this(category, title, originalTitle, quantity, conditionNote, acquiredFrom, tags,
+                    createdAt, updatedAt, null);
+        }
     }
 
     public record ExerciseSource(
@@ -159,8 +180,13 @@ public final class LifeLogJournalResult {
             LocalDate exercisedOn,
             String memo,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
+        public ExerciseSource(String category, Integer durationMinutes, Double distanceKm, Integer calories,
+                              LocalDate exercisedOn, String memo, Instant createdAt, Instant updatedAt) {
+            this(category, durationMinutes, distanceKm, calories, exercisedOn, memo, createdAt, updatedAt, null);
+        }
     }
 
     public record MediaSource(
@@ -176,7 +202,15 @@ public final class LifeLogJournalResult {
             LocalDate startedOn,
             LocalDate finishedOn,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
+        public MediaSource(String category, String title, String originalTitle, Integer currentEpisode,
+                           Integer totalEpisode, String status, Double rating, Set<String> tags,
+                           int rewatchCount, LocalDate startedOn, LocalDate finishedOn,
+                           Instant createdAt, Instant updatedAt) {
+            this(category, title, originalTitle, currentEpisode, totalEpisode, status, rating, tags,
+                    rewatchCount, startedOn, finishedOn, createdAt, updatedAt, null);
+        }
     }
 }

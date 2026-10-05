@@ -10,6 +10,7 @@ import online.lifeasgame.lifelog.api.player.spec.PlayerCollectionSpecV1;
 import online.lifeasgame.lifelog.application.CollectionLogQueryService;
 import online.lifeasgame.lifelog.application.CollectionLogService;
 import online.lifeasgame.lifelog.application.result.CollectionResult;
+import online.lifeasgame.lifelog.application.query.CollectionQuery;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,13 +40,19 @@ public class PlayerCollectionController implements PlayerCollectionSpecV1 {
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     ) {
         List<CollectionResult.Info> results = collectionLogQueryService.search(
-                PlayerCollectionWebMapper.toSearchQuery(category, titleLike, page, size)
+                new CollectionQuery.Search(category, titleLike, page, size, personalCategoryId, unclassified)
         );
 
         return ResponseEntity.ok(PlayerCollectionWebMapper.toInfos(results));
+    }
+
+    public ResponseEntity<List<PlayerCollectionResponse.Info>> search(String category, String titleLike, int page, int size) {
+        return search(category, titleLike, page, size, null, false);
     }
 
     @Override
