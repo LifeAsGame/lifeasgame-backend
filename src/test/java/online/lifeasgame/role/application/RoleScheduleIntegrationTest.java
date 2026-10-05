@@ -117,8 +117,11 @@ class RoleScheduleIntegrationTest {
                 String key = UUID.randomUUID().toString();
                 result(post(base).content(create(key, "first")), A, 403);
                 result(get(base), C, 404);
+                assertThat(result(get(base), A, 200).at("/capabilities/canCreate").asBoolean()).isFalse();
+                assertThat(result(get(base), B, 200).at("/capabilities/canCreate").asBoolean()).isTrue();
                 result(put(base + "/editors/" + A), A, 403);
                 result(put(base + "/editors/" + A), B, 204);
+                assertThat(result(get(base), A, 200).at("/capabilities/canCreate").asBoolean()).isTrue();
                 var created = result(post(base).content(create(key, "first")), A, 201);
                 long id = created.path("id").asLong();
                 assertThat(result(post(base).content(create(key, "first")), A, 201).path("id").asLong()).isEqualTo(id);

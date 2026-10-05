@@ -31,14 +31,14 @@ public class GroupActivityService {
     private final CurrentPlayerAccessor players;
     private final Clock clock;
 
-    public GroupActivityResult.Page<GroupActivityResult.Activity> list(ActivityGroupType type, Long groupId,
-                                                                        int page, int size) {
+    public GroupActivityResult.ActivityPage list(ActivityGroupType type, Long groupId, int page, int size) {
         paging(page, size);
         Long actor = actor();
         Access access = access(type, groupId, actor, false);
         var rows = store.activities(type, groupId, actor, page, size).stream()
                 .map(row -> result(type, groupId, row, access)).toList();
-        return GroupActivityResult.Page.of(rows, page, size, store.count(type, groupId));
+        return GroupActivityResult.ActivityPage.of(rows, page, size, store.count(type, groupId),
+                new GroupActivityResult.GroupCapabilities(access.canEdit(), access.leader()));
     }
 
     public GroupActivityResult.Activity detail(ActivityGroupType type, Long groupId, Long activityId) {

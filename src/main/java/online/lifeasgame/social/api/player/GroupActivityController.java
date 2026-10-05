@@ -52,7 +52,7 @@ public class GroupActivityController {
     public record Version(@NotNull @Min(0) Long version) {}
 
     @GetMapping
-    public ResponseEntity<ApiResponse<GroupActivityResult.Page<GroupActivityResult.Activity>>> list(
+    public ResponseEntity<ApiResponse<GroupActivityResult.ActivityPage>> list(
             @PathVariable String groupKind, @PathVariable Long groupId,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(service.list(type(groupKind), groupId, page, size));
