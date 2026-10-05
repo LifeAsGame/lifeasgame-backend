@@ -5,6 +5,8 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.role.application.internal.RoleLookupApi;
 import online.lifeasgame.social.domain.RoleParty;
+import online.lifeasgame.social.domain.ActivityGroupType;
+import online.lifeasgame.social.infra.GroupActivityStore;
 import online.lifeasgame.social.domain.RolePartyInvitation;
 import online.lifeasgame.social.domain.error.SocialError;
 import online.lifeasgame.social.domain.repository.RolePartyRepository;
@@ -21,6 +23,7 @@ public class RolePartyService {
     private final CurrentPlayerAccessor currentPlayerAccessor;
     private final FriendshipVerifier friendshipVerifier;
     private final Clock clock;
+    private final GroupActivityStore activities;
 
     @Transactional
     public RolePartyResult.Detail create(Long roleId, String name, String description, int maxMembers) {
@@ -69,12 +72,18 @@ public class RolePartyService {
     }
 
     @Transactional
-    public void leave(Long id) { locked(id).leave(actor()); }
+    public void leave(Long id) {
+        Long playerId = actor();
+        locked(id).leave(playerId);
+        activities.revoke(ActivityGroupType.ROLE_PARTY, id, playerId);
+    }
 
     @Transactional
     public RolePartyResult.Detail transferLeader(Long id, Long toPlayerId) {
         RoleParty party = locked(id);
-        party.transferLeader(actor(), toPlayerId);
+        Long playerId = actor();
+        party.transferLeader(playerId, toPlayerId);
+        activities.revoke(ActivityGroupType.ROLE_PARTY, id, playerId);
         return RolePartyResult.Detail.from(repository.saveAndFlush(party));
     }
 

@@ -11,6 +11,8 @@ import online.lifeasgame.social.domain.PartyMemberRole;
 import online.lifeasgame.social.domain.PartyVisibility;
 import online.lifeasgame.social.domain.PartyWaitType;
 import online.lifeasgame.social.domain.PartyStatus;
+import online.lifeasgame.social.domain.ActivityGroupType;
+import online.lifeasgame.social.infra.GroupActivityStore;
 import online.lifeasgame.social.domain.repository.PartyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,7 @@ public class PartyService {
     private final PartyReader partyReader;
     private final PartyWriter partyWriter;
     private final PartyRepository repository;
+    private final GroupActivityStore activities;
 
     @Transactional
     public PartyResult.Info create(Long playerId, PartyCommand.Create command) {
@@ -54,14 +57,14 @@ public class PartyService {
 
     @Transactional
     public PartyResult.Info rename(Long playerId, Long id, PartyCommand.Rename command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
         party.rename(command.name());
         return PartyResult.Info.from(party);
     }
 
     @Transactional
     public PartyResult.Info changePolicy(Long playerId, Long id, PartyCommand.ChangePolicy command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
 
         if (command.visibility() != null) {
             party.changeVisibility(PartyVisibility.valueOf(command.visibility()));
@@ -78,28 +81,28 @@ public class PartyService {
 
     @Transactional
     public PartyResult.Info changeDescription(Long playerId, Long id, PartyCommand.ChangeDescription command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
         party.updateDescription(command.descriptionMd());
         return PartyResult.Info.from(party);
     }
 
     @Transactional
     public PartyResult.Info changeBanner(Long playerId, Long id, PartyCommand.ChangeEmblem command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
         party.updateBanner(command.emblemImageUrl(), command.emblemBgColor());
         return PartyResult.Info.from(party);
     }
 
     @Transactional
     public PartyResult.Info addTag(Long playerId, Long id, PartyCommand.TagOp command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
         party.addTag(command.tag());
         return PartyResult.Info.from(party);
     }
 
     @Transactional
     public PartyResult.Info removeTag(Long playerId, Long id, PartyCommand.TagOp command) {
-        Party party = partyReader.getByPlayerIdAndId(playerId, id);
+        Party party = partyReader.getByPlayerIdAndIdForUpdate(playerId, id);
         party.removeTag(command.tag());
         return PartyResult.Info.from(party);
     }
@@ -107,87 +110,90 @@ public class PartyService {
     // 가입/권한
     @Transactional
     public void requestJoin(Long playerId, Long id, PartyCommand.RequestJoin command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         party.requestJoin(playerId, command.message());
     }
 
     @Transactional
     public void approveJoin(Long playerId, Long id, PartyCommand.Approve command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.approveJoin(command.applicantPlayerId());
     }
 
     @Transactional
     public void rejectJoin(Long playerId, Long id, PartyCommand.Reject command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.rejectJoin(command.applicantPlayerId());
     }
 
     @Transactional
     public void cancelJoin(Long playerId, Long id) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         party.cancelJoinRequest(playerId);
     }
 
     @Transactional
     public void transferLeader(Long playerId, Long id, PartyCommand.TransferLeader command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.transferLeadership(command.fromLeaderPlayerId(), command.toPlayerId());
+        activities.revoke(ActivityGroupType.PARTY, id, playerId);
     }
 
     @Transactional
     public void kick(Long playerId, Long id, PartyCommand.Kick command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeaderOrOfficer(party, playerId);
         party.kickMember(command.targetPlayerId());
+        activities.revoke(ActivityGroupType.PARTY, id, command.targetPlayerId());
     }
 
     @Transactional
     public void promote(Long playerId, Long id, PartyCommand.Promote command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.promoteOfficer(party.getLeaderPlayerId(), command.targetPlayerId());
     }
 
     @Transactional
     public void demote(Long playerId, Long id, PartyCommand.Demote command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.demoteToMember(party.getLeaderPlayerId(), command.targetPlayerId());
     }
 
     @Transactional
     public void leave(Long playerId, Long id) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         party.leave(playerId);
+        activities.revoke(ActivityGroupType.PARTY, id, playerId);
     }
 
     @Transactional
     public void disbandByLeader(Long playerId, Long id) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.disbandByLeader(playerId);
     }
 
     @Transactional
     public void invite(Long playerId, Long id, PartyCommand.Invite command) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         ensureLeaderOrOfficer(party, playerId);
         party.invite(playerId, command.inviteePlayerId(), command.message(), parseDateTime(command.expiresAtIso()));
     }
 
     @Transactional
     public void acceptInvitation(Long playerId, Long id) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         party.acceptInvitation(playerId);
     }
 
     @Transactional
     public void declineInvitation(Long playerId, Long id) {
-        Party party = partyReader.getById(id);
+        Party party = partyReader.getForUpdate(id);
         party.declineInvitation(playerId);
     }
 

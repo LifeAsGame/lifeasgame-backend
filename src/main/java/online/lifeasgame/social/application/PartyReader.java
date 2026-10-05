@@ -24,6 +24,17 @@ public class PartyReader {
                 .orElseThrow(() -> new DomainException(SocialError.PARTY_NOT_FOUND));
     }
 
+    public Party getForUpdate(Long id) {
+        return repository.findForUpdate(id)
+                .orElseThrow(() -> new DomainException(SocialError.PARTY_NOT_FOUND));
+    }
+
+    public Party getByPlayerIdAndIdForUpdate(Long playerId, Long id) {
+        Party party = getForUpdate(id);
+        if (!party.getPlayerId().equals(playerId)) throw new DomainException(SocialError.PARTY_NOT_FOUND);
+        return party;
+    }
+
     public Party getByPlayerIdAndId(Long playerId, Long id) {
         return repository.findByIdAndPlayerId(id, playerId)
                 .orElseThrow(() -> new DomainException(SocialError.PARTY_NOT_FOUND));
