@@ -166,6 +166,55 @@ class MemberPersonGuildNoteIntegrationTest {
                 Long.class, OWNER, MEMBER_USER)).isEqualTo(1);
     }
 
+    @Test @DisplayName("다른 기존 인물을 동시에 선택하면 승자만 연결하고 패자는 409를 받는다")
+    void concurrentSelections() throws Exception {
+        long one = result(post("/api/v1/persons").content("{\"displayName\":\"One\"}"), OWNER, 201).path("id").asLong();
+        long two = result(post("/api/v1/persons").content("{\"displayName\":\"Two\"}"), OWNER, 201).path("id").asLong();
+        var ready = new CountDownLatch(2);
+        var start = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            java.util.function.LongFunction<java.util.concurrent.Callable<Integer>> select = person -> () -> {
+                ready.countDown(); start.await(5, TimeUnit.SECONDS);
+                String body = "{\"groupType\":\"GUILD\",\"groupId\":" + (person == one ? GUILD_ONE : GUILD_TWO)
+                        + ",\"memberPlayerId\":" + MEMBER + ",\"personId\":" + person + "}";
+                return mvc.perform(put("/api/v1/member-person-links").contentType(MediaType.APPLICATION_JSON).content(body)
+                        .header("Authorization", "Bearer " + jwt.createAccessToken(OWNER, OWNER)))
+                        .andReturn().getResponse().getStatus();
+            };
+            var first = pool.submit(select.apply(one));
+            var second = pool.submit(select.apply(two));
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue(); start.countDown();
+            assertThat(List.of(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(200, 409);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons WHERE linked_user_id = ?", Long.class, MEMBER_USER)).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT display_name FROM persons ORDER BY id", String.class)).containsExactly("One", "Two");
+    }
+
+    @Test @DisplayName("다른 소유자·다른 신원·대기 멤버를 거부하고 실패한 트랜잭션은 Person을 남기지 않는다")
+    void ownershipAndRollback() throws Exception {
+        String createBody = "{\"groupType\":\"GUILD\",\"groupId\":" + GUILD_ONE
+                + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Confirmed\"}";
+        result(post("/api/v1/member-person-links").content(createBody), OUTSIDER, 404);
+        assertThatThrownBy(() -> new TransactionTemplate(transactions).execute(tx -> {
+            try { result(post("/api/v1/member-person-links").content(createBody), OWNER, 200); }
+            catch (Exception e) { throw new AssertionError(e); }
+            throw new IllegalStateException("rollback fixture");
+        })).isInstanceOf(IllegalStateException.class);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons", Long.class)).isZero();
+        long foreign = result(post("/api/v1/persons").content("{\"displayName\":\"Foreign\"}"), MEMBER, 201).path("id").asLong();
+        String selection = "{\"groupType\":\"GUILD\",\"groupId\":" + GUILD_ONE
+                + ",\"memberPlayerId\":" + MEMBER + ",\"personId\":" + foreign + "}";
+        result(put("/api/v1/member-person-links").content(selection), OWNER, 404);
+        long self = result(post("/api/v1/member-person-links").content(createBody.replace("memberPlayerId\":" + MEMBER,
+                "memberPlayerId\":" + OWNER)), OWNER, 200).path("personId").asLong();
+        result(put("/api/v1/member-person-links").content(selection.replace("personId\":" + foreign, "personId\":" + self)), OWNER, 409);
+        jdbc.update("INSERT INTO role_party_invitations(role_party_id,inviter_player_id,invitee_player_id,expires_at,status,created_at,updated_at)"
+                + " VALUES (?,?,?,NOW(6)+INTERVAL 1 DAY,'PENDING',NOW(6),NOW(6))", GUILD_ONE, MEMBER, OUTSIDER);
+        result(post("/api/v1/member-person-links").content(createBody.replace("GUILD", "ROLE_PARTY")
+                .replace("memberPlayerId\":" + MEMBER, "memberPlayerId\":" + OUTSIDER)), OWNER, 404);
+    }
+
     @ParameterizedTest @ValueSource(strings = {"unlink", "archive", "leave"})
     @DisplayName("메모 작성 중 신원 해제·보관·탈퇴는 커밋 이후에 적용되고 기존 이력은 보존된다")
     void writesSerializeWithAccessLoss(String change) throws Exception {
