@@ -30,6 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -61,6 +63,22 @@ class RoleEventApiContractTest {
 
     @MockitoBean
     private ErrorDocLinker errorDocLinker;
+
+    @Test
+    @DisplayName("잘못된 일정 연도와 월일은 변경 없이 problem 400을 반환한다")
+    void rejectsInvalidScheduleBeforeMutation() throws Exception {
+        mockMvc.perform(post("/api/v1/roles/2/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Meeting\",\"startsAt\":\"+100000-01-01T00:00:00Z\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("REQ-BAD-INPUT"));
+        mockMvc.perform(patch("/api/v1/roles/2/events/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Meeting\",\"endsAt\":\"2025-02-29T00:00:00Z\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
 
     @Nested
     @DisplayName("self RoleEvent endpoint를 노출할 때")

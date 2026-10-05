@@ -3,6 +3,7 @@ package online.lifeasgame.lifelog.api.player;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
+import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.lifelog.api.player.mapper.PlayerExerciseWebMapper;
 import online.lifeasgame.lifelog.api.player.request.PlayerExerciseRequest;
 import online.lifeasgame.lifelog.api.player.response.PlayerExerciseResponse;
@@ -41,6 +42,8 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
+        CalendarDateRange.requireDateColumn(from);
+        CalendarDateRange.requireDateColumn(to);
         List<ExerciseResult.Info> results = exerciseLogQueryService.search(
                 PlayerExerciseWebMapper.toSearchQuery(category, from, to, page, size)
         );

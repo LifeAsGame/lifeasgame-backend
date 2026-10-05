@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 
 import java.time.LocalDate;
 
@@ -17,7 +18,7 @@ public final class PlayerExerciseRequest {
             @NotNull @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            @NotNull LocalDate exercisedOn,
+            @NotNull @DatabaseCalendarDate LocalDate exercisedOn,
             String memo,
             String lifeLogSubtype,
             String reflectionScope,
@@ -76,7 +77,7 @@ public final class PlayerExerciseRequest {
             @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            LocalDate exercisedOn,
+            @DatabaseCalendarDate LocalDate exercisedOn,
             String memo
     ) {}
 

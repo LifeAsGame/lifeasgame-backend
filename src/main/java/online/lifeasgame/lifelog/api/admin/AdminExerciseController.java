@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
+import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.lifelog.api.admin.mapper.AdminExerciseWebMapper;
 import online.lifeasgame.lifelog.api.admin.request.AdminExerciseRequest;
 import online.lifeasgame.lifelog.api.admin.response.AdminExerciseResponse;
@@ -48,6 +49,8 @@ public class AdminExerciseController implements AdminExerciseSpecV1 {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
+        CalendarDateRange.requireDateColumn(from);
+        CalendarDateRange.requireDateColumn(to);
         List<ExerciseResult.Info> results = exerciseLogQueryService.search(
                 playerId,
                 AdminExerciseWebMapper.toSearchQuery(category, from, to, page, size)
