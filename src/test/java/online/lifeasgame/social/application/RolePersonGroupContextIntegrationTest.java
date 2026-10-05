@@ -111,6 +111,8 @@ class RolePersonGroupContextIntegrationTest {
                     {"displayName":"Alice","notes":"common","profile":{"nickname":"unchanged"}}
                     """), A, 201);
             long personId = person.path("id").asLong();
+            // Compare persisted reads: MySQL DATETIME(6) truncates Linux clock nanoseconds.
+            JsonNode persistedPerson = result(get("/api/v1/persons/" + personId), A, 200);
             long r1 = relation(ROLE, personId, "A memo");
             long r2 = relation(OTHER_ROLE, personId, "B memo");
             String path = "/api/v1/persons/" + personId + "/role-contexts";
@@ -122,7 +124,7 @@ class RolePersonGroupContextIntegrationTest {
             assertThat(result(get(path).param("keyword", "%"), A, 200).path("totalElements").asInt()).isEqualTo(1);
             result(put("/api/v1/roles/" + ROLE + "/relations/" + r1)
                     .content("{\"relationType\":\"FRIEND\",\"roleNotes\":\"A changed\"}"), A, 200);
-            assertThat(result(get("/api/v1/persons/" + personId), A, 200)).isEqualTo(person);
+            assertThat(result(get("/api/v1/persons/" + personId), A, 200)).isEqualTo(persistedPerson);
             assertThat(result(get("/api/v1/roles/" + OTHER_ROLE + "/relations/" + r2), A, 200)
                     .path("roleNotes").asText()).isEqualTo("B memo");
             result(get(path), C, 404);
