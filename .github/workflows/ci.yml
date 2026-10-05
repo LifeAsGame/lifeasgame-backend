@@ -29,7 +29,8 @@ jobs:
 
       - name: Record verified guide-only skip
         if: steps.classify.outputs.heavy == 'false'
-        run: echo 'Verified guide-only PR: demo checks and Gradle test/build were skipped.' >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo 'Verified guide-only PR: demo checks and Gradle test/build were skipped.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up JDK 21 (Temurin)
         if: steps.classify.outputs.heavy == 'true'
