@@ -1,6 +1,6 @@
 # Role shared schedule contract (3B2)
 
-Status: **DRAFT** — source review complete; runtime HTTP verification pending.
+Status: **READY — API/runtime verified 2026-10-06 KST**. [Draft BE #401](https://github.com/LifeAsGame/lifeasgame-backend/pull/401) remains unmerged and depends on #396 → #397 → #398 → #400. Deployed product HEAD `58244e4337f968a4876dbaeaa990cd2edc811fe1`, tree `1ef65b28af76fc5819ad007a97e6314313ccecd3`, JAR SHA-256 `cfee483e4e9fbcae0198736b98a8d2f6fd0c868ce23bf07a60b4a5a24f7483d3` passed [full required CI](https://github.com/LifeAsGame/lifeasgame-backend/actions/runs/37336897209). This subsequent contract update does not change product source or require another app restart.
 
 ## Scope and identity
 
@@ -26,6 +26,8 @@ The response uses the existing `ApiResponse` envelope and a page object `{conten
 
 Role ownership is checked first; another player's Role returns 404. Archived Roles retain personal history. A GuildEvent appears only through that Role's direct `GUILD` personal group link while the Guild is ACTIVE and the actor is a current Guild member. Pending invitation/request, historical membership, public visibility, and an indirect GuildGroupLink grant no access. Unlinking one Role removes its Guild rows on the next read without changing another Role, the original GuildEvent, or RSVP. Leave, kick, and disband remove the Guild row and count on the next read; original GuildEvent detail/commands also recheck current membership. Original source edits and RSVP changes appear on the next read. No push or polling contract is introduced.
 
-## Verification gate
+## Verification
 
-READY requires focused MySQL tests of mixed global pagination, source ID collision, ownership and live membership, time boundaries and nullable times, filters and RSVP, no GET mutations, plus actual 19081 HTTP checks of mixed rows, source edits, RSVP, unlink, membership loss, existing representative reads, health and 13005 CORS. Record deployed SHA/tree/JAR and migration state after final CI succeeds.
+Focused MySQL tests proved mixed global pagination, source ID collision, ownership and live membership, time boundaries and nullable times, filters and RSVP, and no GET mutations. The local `./gradlew clean test build` passed, followed by the full required CI above. After database/JAR/runtime backup, only the 19081 app was replaced. Flyway stayed at V47 (checksum `-699207067`); no migration was added. MySQL/Redis containers and volumes, existing 45 Players, 19080 and FE 13005 were preserved.
+
+Actual HTTP verification with three new disposable Players passed 26 checks: mixed rows and global page, original title/time/completion updates, RSVP register/withdraw, direct link scope and unlink, membership loss hiding Guild row/count/detail, archived Role personal history, GET row/EXP invariance, previous 3A links and 3B1 Guild notes, category/catalog reads, health, and exact 13005 CORS. Original RSVP remained active after unlink and leave while current membership was absent; Player count became 48 solely through the disposable accounts. Evidence: `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/feedback03b2-http-verification.json`. Credentials stay in its referenced 0600 file. Backup paths are recorded in `backend-next.json` and `preview-environment.md`.
