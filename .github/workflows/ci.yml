@@ -6,6 +6,10 @@ on:
       - develop
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -16,7 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Classify complete PR diff
+        id: classify
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 -B scripts/ci_change_scope.py
+
+      - name: Record verified guide-only skip
+        if: steps.classify.outputs.heavy == 'false'
+        run: echo 'Verified guide-only PR: demo checks and Gradle test/build were skipped.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Set up JDK 21 (Temurin)
+        if: steps.classify.outputs.heavy == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -24,12 +40,19 @@ jobs:
           cache: 'gradle'
 
       - name: Make gradlew executable
+        if: steps.classify.outputs.heavy == 'true'
         run: chmod +x ./gradlew
 
       - name: Demo preparation safety checks
+        if: steps.classify.outputs.heavy == 'true'
         run: python3 -B -m unittest discover -s scripts -p 'test_demo.py'
 
+      - name: CI scope safety checks
+        if: steps.classify.outputs.heavy == 'true'
+        run: python3 -B -m unittest discover -s scripts -p 'test_ci_change_scope.py'
+
       - name: Build & Test
+        if: steps.classify.outputs.heavy == 'true'
         run: ./gradlew clean test build
 
       - name: Upload test reports (실패 시)
