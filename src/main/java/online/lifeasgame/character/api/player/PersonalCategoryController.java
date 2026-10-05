@@ -25,6 +25,11 @@ public class PersonalCategoryController {
 
     public record NameRequest(String name) {}
 
+    @GetMapping("/{kind}/owned")
+    public ResponseEntity<ApiResponse<List<Category>>> owned(@PathVariable Kind kind) {
+        return ApiResponses.ok(service.owned(kind));
+    }
+
     @GetMapping("/{kind}")
     public ResponseEntity<ApiResponse<List<Category>>> list(@PathVariable Kind kind) {
         return ApiResponses.ok(service.list(kind));

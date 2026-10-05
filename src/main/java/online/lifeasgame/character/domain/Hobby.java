@@ -32,6 +32,12 @@ public class Hobby extends AbstractTime {
     @Column(name = "category", nullable = false)
     HobbyCategory category;
 
+    @Column(name = "source", nullable = false, length = 32)
+    String source = "LEGACY";
+
+    @Column(name = "active", nullable = false)
+    boolean active = true;
+
     public Hobby(String name, HobbyCategory category) {
         this.name = name;
         this.category = category;
@@ -44,5 +50,9 @@ public class Hobby extends AbstractTime {
     public void update(String name, HobbyCategory category) {
         this.name = name;
         this.category = category;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 }

@@ -23,12 +23,12 @@ public class CertificationRepositoryAdapter implements CertificationRepository {
 
     @Override
     public List<Certification> findAll() {
-        return jpaRepository.findAll();
+        return jpaRepository.findByActiveTrue();
     }
 
     @Override
     public List<Certification> findByCategoryIn(List<CertificationCategory> CertificationCategories) {
-        return jpaRepository.findByCategoryIn(CertificationCategories);
+        return jpaRepository.findByCategoryInAndActiveTrue(CertificationCategories);
     }
 
     @Override
@@ -37,7 +37,12 @@ public class CertificationRepositoryAdapter implements CertificationRepository {
     }
 
     @Override
+    public Optional<Certification> findByProviderAndSourceCode(String provider, String sourceCode) {
+        return jpaRepository.findByProviderAndSourceCode(provider, sourceCode);
+    }
+
+    @Override
     public void delete(Long certificationId) {
-        jpaRepository.deleteById(certificationId);
+        jpaRepository.findById(certificationId).ifPresent(Certification::deactivate);
     }
 }

@@ -12,4 +12,14 @@ public interface PlayerHobbyRepository {
     void deleteByPlayerIdAndHobbyId(Long playerId, Long hobbyId);
 
     boolean existsByPlayerIdAndHobbyId(Long playerId, Long hobbyId);
+
+    Optional<PlayerHobby> findPrivate(Long playerId, Long ownedItemId);
+
+    boolean existsPrivateName(Long playerId, String normalizedName);
+
+    PlayerHobby saveAndFlush(PlayerHobby hobby);
+
+    void delete(PlayerHobby hobby);
+
+    java.util.List<PlayerHobby> findPrivateByPlayerId(Long playerId);
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.query.PlayerCertificationQuery;
 import online.lifeasgame.character.application.query.PlayerHobbyQuery;
+import online.lifeasgame.character.application.query.CharacterCatalogQuery;
 import online.lifeasgame.character.application.result.PlayerCertificationResult;
 import online.lifeasgame.character.application.result.PlayerHobbyResult;
 import online.lifeasgame.character.domain.CertificationCategory;
@@ -26,13 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PersonalCategoryService {
-    public enum Source { SYSTEM, PERSONAL }
+    public enum Source { SYSTEM, OFFICIAL, PERSONAL }
     private final PersonalCategoryRepository categories;
     private final PlayerCertificationRepository certifications;
     private final PlayerHobbyRepository hobbies;
     private final PlayerCertificationQuery certificationQuery;
     private final PlayerHobbyQuery hobbyQuery;
     private final CurrentPlayerAccessor currentPlayer;
+    private final CharacterCatalogQuery catalog;
 
     public record Category(Long id, String code, String name, Source source, Kind kind) {
         static Category personal(PersonalCategory category) {
@@ -52,6 +54,25 @@ public class PersonalCategoryService {
                 ? Arrays.stream(CertificationCategory.values()).map(c -> Category.system(c.name(), kind)).toList()
                 : Arrays.stream(HobbyCategory.values()).map(c -> Category.system(c.name(), kind)).toList();
         List<Category> result = new java.util.ArrayList<>(systems);
+        categories.findByOwnerPlayerIdAndKind(owner, kind).stream().map(Category::personal).forEach(result::add);
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> owned(Kind kind) {
+        Long owner = currentPlayer.currentPlayerIdOrThrow();
+        List<Category> result = new java.util.ArrayList<>();
+        if (kind == Kind.CERTIFICATION) {
+            catalog.ownedLegacyCertificationCategories(owner).stream()
+                    .map(category -> Category.system(category.name(), kind)).forEach(result::add);
+            catalog.ownedOfficialGroups(owner).stream()
+                    .map(group -> new Category(null, "HRDK:" + group.majorCode() + ":" + group.minorCode(),
+                            group.majorName() + " / " + group.minorName(), Source.OFFICIAL, kind))
+                    .forEach(result::add);
+        } else {
+            catalog.ownedHobbyCategories(owner).stream()
+                    .map(category -> Category.system(category.name(), kind)).forEach(result::add);
+        }
         categories.findByOwnerPlayerIdAndKind(owner, kind).stream().map(Category::personal).forEach(result::add);
         return result;
     }

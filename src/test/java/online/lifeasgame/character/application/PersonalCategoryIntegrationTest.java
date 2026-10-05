@@ -1,6 +1,10 @@
 package online.lifeasgame.character.application;
 
 import online.lifeasgame.character.domain.PersonalCategory.Kind;
+import online.lifeasgame.character.domain.error.PlayerHobbyError;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import online.lifeasgame.character.domain.error.PersonalCategoryError;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
@@ -42,6 +46,9 @@ class PersonalCategoryIntegrationTest {
     }
 
     @Autowired private PersonalCategoryService service;
+    @Autowired private PrivateHobbyService privateHobbies;
+    @Autowired private OfficialCertificationImporter importer;
+    @Autowired private CharacterCatalogService catalog;
     @Autowired private JdbcTemplate jdbc;
     @MockitoBean private CurrentPlayerAccessor currentPlayer;
 
@@ -73,6 +80,100 @@ class PersonalCategoryIntegrationTest {
                 VALUES (101, 301, 'Hobby', 0, 'ACTIVE', 0)
                 """);
         given(currentPlayer.currentPlayerIdOrThrow()).willReturn(101L);
+    }
+
+    @Test
+    @DisplayName("독립 취미는 카탈로그 없이 저장되고 소유자만 수정하며 분류 삭제 후에도 남는다")
+    void privateHobbyOwnershipAndCategoryPreservation() {
+        var category = service.create(Kind.HOBBY, "Personal notes");
+        var created = privateHobbies.create("  나만의 취미  ", "memory", 25, "ACTIVE",
+                LocalDate.of(2025, 3, 1), category.id());
+        assertThat(created.catalogItemId()).isNull();
+        assertThat(created.source()).isEqualTo("PRIVATE");
+        assertThat(created.name()).isEqualTo("나만의 취미");
+        assertThat(privateHobbies.list()).hasSize(1);
+        assertThatThrownBy(() -> privateHobbies.create("나만의 취미", null, null, null, null, null))
+                .isInstanceOfSatisfying(DomainException.class,
+                        error -> assertThat(error.getErrorCode()).isEqualTo(PlayerHobbyError.DUPLICATE_PRIVATE_HOBBY));
+        assertThatThrownBy(() -> privateHobbies.get(301L))
+                .isInstanceOfSatisfying(DomainException.class,
+                        error -> assertThat(error.getErrorCode()).isEqualTo(PlayerHobbyError.PLAYER_HOBBY_NOT_FOUND));
+        given(currentPlayer.currentPlayerIdOrThrow()).willReturn(102L);
+        assertThatThrownBy(() -> privateHobbies.get(created.ownedItemId()))
+                .isInstanceOfSatisfying(DomainException.class,
+                        error -> assertThat(error.getErrorCode()).isEqualTo(PlayerHobbyError.PLAYER_HOBBY_NOT_FOUND));
+        given(currentPlayer.currentPlayerIdOrThrow()).willReturn(101L);
+        var changed = privateHobbies.update(created.ownedItemId(), "Other name", null, null, null,
+                null, null, false);
+        assertThat(changed.name()).isEqualTo("Other name");
+        service.delete(Kind.HOBBY, category.id());
+        assertThat(privateHobbies.get(created.ownedItemId()).personalCategoryId()).isNull();
+        privateHobbies.delete(created.ownedItemId());
+        assertThat(privateHobbies.list()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공식 재수입은 이름이 바뀌어도 ID를 유지하고 불완전 입력은 기존 데이터를 건드리지 않는다")
+    void importPreservesIdentityAndRejectsIncompleteSource() {
+        var first = officialManifest("Old name");
+        assertThat(importer.importManifest(first, false).applied()).isFalse();
+        assertThat(importer.importManifest(first, true).created()).isEqualTo(1);
+        Long id = jdbc.queryForObject("SELECT id FROM certification WHERE source_code='T001'", Long.class);
+        assertThat(importer.importManifest(officialManifest("New name"), true).updated()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT id FROM certification WHERE source_code='T001'", Long.class)).isEqualTo(id);
+        assertThat(catalog.get(Kind.CERTIFICATION, id).name()).isEqualTo("New name");
+        assertThatThrownBy(() -> importer.importManifest(new OfficialCertificationImporter.Manifest(
+                false, 1, Instant.now(), "https://www.data.go.kr/data/15003003/openapi.do",
+                first.pages(), first.items()), true))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> importer.importManifest(new OfficialCertificationImporter.Manifest(
+                true, 1, Instant.now(), first.listingSourceUrl(),
+                List.of(new OfficialCertificationImporter.PageEvidence(2, 1, 1, 1)), first.items()), true))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(jdbc.queryForObject("SELECT name FROM certification WHERE id=?", String.class, id)).isEqualTo("New name");
+    }
+
+    @Test
+    @DisplayName("내 분류는 소유한 시스템·공식 분류와 비어 있는 개인 분류만 포함한다")
+    void ownedCategoriesUseServerOwnership() {
+        var empty = service.create(Kind.CERTIFICATION, "Empty");
+        assertThat(service.owned(Kind.CERTIFICATION)).extracting(PersonalCategoryService.Category::code)
+                .contains("CLOUD").doesNotContain("SECURITY");
+        importer.importManifest(officialManifest("Technical qualification"), true);
+        Long officialId = jdbc.queryForObject("SELECT id FROM certification WHERE source_code='T001'", Long.class);
+        jdbc.update("INSERT INTO player_certifications (player_id, certification_id, granted_at, created_at, updated_at) VALUES (101, ?, NOW(6), NOW(6), NOW(6))", officialId);
+        assertThat(service.owned(Kind.CERTIFICATION)).extracting(PersonalCategoryService.Category::code)
+                .contains("HRDK:21:211");
+        assertThat(service.owned(Kind.CERTIFICATION)).extracting(PersonalCategoryService.Category::id)
+                .contains(empty.id());
+    }
+
+    @Test
+    @DisplayName("카탈로그 페이지는 보유 상태를 현재 소유자로 계산하고 비활성 정의의 소유 기록은 보존한다")
+    void catalogReadAndDeactivation() {
+        var page = catalog.search(Kind.HOBBY, "Hobby", "ARTS", null, 0, 10);
+        assertThat(page.totalElements()).isEqualTo(1);
+        assertThat(page.items().getFirst().owned()).isTrue();
+        assertThat(page.items().getFirst().ownedItemId()).isNotNull();
+        assertThat(page.items().getFirst().catalogItemId()).isEqualTo(301L);
+        assertThat(page.items().getFirst().source()).isEqualTo("LEGACY");
+        given(currentPlayer.currentPlayerIdOrThrow()).willReturn(102L);
+        assertThat(catalog.get(Kind.HOBBY, 301L).owned()).isFalse();
+        assertThat(catalog.get(Kind.HOBBY, 301L).ownedItemId()).isNull();
+        given(currentPlayer.currentPlayerIdOrThrow()).willReturn(101L);
+        jdbc.update("UPDATE hobbies SET active=0 WHERE id=301");
+        assertThat(catalog.search(Kind.HOBBY, null, null, null, 0, 10).items()).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM player_hobbies WHERE player_id=101 AND hobby_id=301", Long.class))
+                .isEqualTo(1L);
+    }
+
+    private OfficialCertificationImporter.Manifest officialManifest(String name) {
+        var entry = new OfficialCertificationImporter.Entry("T001", name, null, "21", "정보통신",
+                "211", "정보기술", "한국산업인력공단", null, "BASIC",
+                "https://www.data.go.kr/data/15003003/openapi.do");
+        return new OfficialCertificationImporter.Manifest(true, 1, Instant.parse("2026-10-05T00:00:00Z"),
+                "https://www.hrdkorea.or.kr/7/3/2",
+                List.of(new OfficialCertificationImporter.PageEvidence(1, 1, 1, 1)), List.of(entry));
     }
 
     @Test
