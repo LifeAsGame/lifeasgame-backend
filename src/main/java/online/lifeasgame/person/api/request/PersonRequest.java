@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.AssertTrue;
-import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.person.domain.PersonProfile;
 import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 
@@ -65,10 +64,6 @@ public final class PersonRequest {
     }
 
     private static boolean profileDatesValid(PersonProfile profile) {
-        return profile == null || CalendarDateRange.inJson(profile.ageReferenceDate())
-                && CalendarDateRange.inJson(profile.firstMetOn())
-                && CalendarDateRange.inJson(profile.lastContactOn())
-                && (profile.importantDates() == null || profile.importantDates().stream()
-                        .allMatch(date -> date == null || CalendarDateRange.inJson(date.date())));
+        return profile == null || profile.hasValidCalendarDates();
     }
 }

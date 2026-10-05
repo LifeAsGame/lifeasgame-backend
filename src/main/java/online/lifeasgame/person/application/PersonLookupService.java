@@ -37,6 +37,14 @@ public class PersonLookupService implements PersonLookupApi {
     }
 
     @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public PersonReference getOwnedActiveForUpdate(Long personId, Long ownerPlayerId) {
+        Person person = reader.getOwnedForUpdate(personId, ownerPlayerId);
+        if (person.getStatus() == PersonStatus.ARCHIVED) throw new DomainException(PersonError.PERSON_ARCHIVED);
+        return reference(person);
+    }
+
+    @Override
     public Map<Long, PersonReference> findOwnedByIds(
             Set<Long> personIds,
             Long ownerPlayerId

@@ -78,10 +78,11 @@ public class GuildNoteSqlStore implements GuildNoteStore {
     }
 
     @Override
-    public Page<Note> page(Long author, Long personId, Long guildId, boolean includeHistory, Pageable pageable) {
+    public Page<Note> page(Long author, Long personId, Long guildId, String keyword, boolean includeHistory, Pageable pageable) {
         var p = params(author).addValue("personId", personId).addValue("guildId", guildId)
-                .addValue("limit", pageable.getPageSize()).addValue("offset", pageable.getOffset());
+                .addValue("keyword", keyword).addValue("limit", pageable.getPageSize()).addValue("offset", pageable.getOffset());
         String where = FROM + " AND n.person_id = :personId AND (:guildId IS NULL OR n.guild_id = :guildId)"
+                + " AND LOCATE(LOWER(:keyword), LOWER(COALESCE(n.note_text, ''))) > 0"
                 + (includeHistory ? "" : " AND g.guild_id IS NOT NULL AND tm.player_id IS NOT NULL");
         Long total = jdbc.queryForObject("SELECT COUNT(*) " + where, p, Long.class);
         List<Note> notes = jdbc.query(SELECT + where + " ORDER BY n.id DESC LIMIT :limit OFFSET :offset",

@@ -26,6 +26,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -35,8 +37,13 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -63,6 +70,7 @@ class MemberPersonGuildNoteIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;
     @Autowired ObjectMapper json;
+    @Autowired PlatformTransactionManager transactions;
     @MockitoBean UserAuthApi userAuthApi;
 
     @BeforeEach void seed() {
@@ -134,15 +142,17 @@ class MemberPersonGuildNoteIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT linked_user_id FROM persons WHERE id = ?", Long.class, selected)).isEqualTo(MEMBER_USER);
     }
 
-    @Test @DisplayName("동시 신규 연결은 한 Person으로 수렴하고 중복 기록을 남기지 않는다")
+    @Test @DisplayName("서로 다른 길드의 동시 신규 연결도 한 Person으로 수렴한다")
     void concurrentCreate() throws Exception {
-        String body = "{\"groupType\":\"GUILD\",\"groupId\":" + GUILD_ONE
-                + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Confirmed\"}";
         var ready = new CountDownLatch(2);
         var start = new CountDownLatch(1);
+        var sequence = new AtomicInteger();
         try (var pool = Executors.newFixedThreadPool(2)) {
             java.util.concurrent.Callable<Long> add = () -> {
                 ready.countDown(); start.await(10, TimeUnit.SECONDS);
+                long guild = sequence.getAndIncrement() == 0 ? GUILD_ONE : GUILD_TWO;
+                String body = "{\"groupType\":\"GUILD\",\"groupId\":" + guild
+                        + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Confirmed\"}";
                 return result(post("/api/v1/member-person-links").content(body), OWNER, 200)
                         .path("personId").asLong();
             };
@@ -154,6 +164,39 @@ class MemberPersonGuildNoteIntegrationTest {
         }
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons WHERE owner_player_id = ? AND linked_user_id = ?",
                 Long.class, OWNER, MEMBER_USER)).isEqualTo(1);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"unlink", "archive", "leave"})
+    @DisplayName("메모 작성 중 신원 해제·보관·탈퇴는 커밋 이후에 적용되고 기존 이력은 보존된다")
+    void writesSerializeWithAccessLoss(String change) throws Exception {
+        long person = result(post("/api/v1/member-person-links").content("{\"groupType\":\"GUILD\",\"groupId\":"
+                + GUILD_ONE + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Friend\"}"), OWNER, 200)
+                .path("personId").asLong();
+        var attempted = new CountDownLatch(1);
+        var pending = new AtomicReference<Future<JsonNode>>();
+        try (var pool = Executors.newSingleThreadExecutor()) {
+            new TransactionTemplate(transactions).executeWithoutResult(tx -> {
+                try {
+                    result(put(notePath(GUILD_ONE)).content("{\"personId\":" + person + ",\"text\":\"history\"}"), OWNER, 200);
+                    pending.set(pool.submit(() -> {
+                        attempted.countDown();
+                        return switch (change) {
+                            case "unlink" -> result(delete("/api/v1/persons/" + person + "/linked-user"), OWNER, 204);
+                            case "archive" -> result(delete("/api/v1/persons/" + person), OWNER, 204);
+                            default -> result(post("/api/v1/guilds/" + GUILD_ONE + "/leave"), OWNER, 200);
+                        };
+                    }));
+                    assertThat(attempted.await(5, TimeUnit.SECONDS)).isTrue();
+                    assertThatThrownBy(() -> pending.get().get(300, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+                } catch (Exception e) { throw new AssertionError(e); }
+            });
+            pending.get().get(10, TimeUnit.SECONDS);
+        }
+        var history = result(get("/api/v1/persons/" + person + "/guild-notes"), OWNER, 200);
+        assertThat(history.path("totalElements").asInt()).isEqualTo(1);
+        assertThat(history.at("/contents/0/targetMemberPlayerId").asLong()).isEqualTo(MEMBER);
+        result(put(notePath(GUILD_ONE)).content("{\"personId\":" + person + ",\"text\":\"blocked\",\"version\":0}"),
+                OWNER, change.equals("leave") ? 404 : 409);
     }
 
     @Test @DisplayName("길드별 메모와 역할 메모를 분리하고 작성자·버전·탈퇴 이력을 지킨다")
@@ -177,6 +220,10 @@ class MemberPersonGuildNoteIntegrationTest {
         result(put(first).content("{\"personId\":" + person + ",\"text\":\"stale\",\"version\":0}"), OWNER, 409);
         assertThat(result(get("/api/v1/persons/" + person + "/guild-notes").param("size", "1"), OWNER, 200)
                 .path("totalElements").asInt()).isEqualTo(2);
+        assertThat(result(get("/api/v1/persons/" + person + "/guild-notes").param("keyword", "TWO"), OWNER, 200)
+                .path("totalElements").asInt()).isEqualTo(1);
+        assertThat(result(get("/api/v1/persons/" + person + "/guild-notes").param("keyword", "%"), OWNER, 200)
+                .path("totalElements").asInt()).isZero();
         assertThat(result(get("/api/v1/roles/" + ROLE + "/relations/" + relation), OWNER, 200)
                 .path("roleNotes").asText()).isEqualTo("role private");
         result(delete("/api/v1/persons/" + person + "/linked-user"), OWNER, 204);

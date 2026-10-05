@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.AssertTrue;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.core.response.ApiResponse;
 import online.lifeasgame.person.application.command.PersonCommand;
 import online.lifeasgame.person.domain.PersonProfile;
@@ -51,11 +50,7 @@ public class MemberPersonLinkController {
                          @DatabaseCalendarDate LocalDate birthday, String contact, PersonProfile profile) {
         @JsonIgnore @AssertTrue(message = "Profile contains an invalid calendar date")
         public boolean isProfileDatesValid() {
-            return profile == null || CalendarDateRange.inJson(profile.ageReferenceDate())
-                    && CalendarDateRange.inJson(profile.firstMetOn())
-                    && CalendarDateRange.inJson(profile.lastContactOn())
-                    && (profile.importantDates() == null || profile.importantDates().stream()
-                    .allMatch(date -> date == null || CalendarDateRange.inJson(date.date())));
+            return profile == null || profile.hasValidCalendarDates();
         }
     }
 }

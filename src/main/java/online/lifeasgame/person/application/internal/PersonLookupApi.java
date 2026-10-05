@@ -7,6 +7,8 @@ public interface PersonLookupApi {
 
     PersonReference getOwnedActive(Long personId, Long ownerPlayerId);
 
+    PersonReference getOwnedActiveForUpdate(Long personId, Long ownerPlayerId);
+
     PersonReference getOwned(Long personId, Long ownerPlayerId);
 
     Map<Long, PersonReference> findOwnedByIds(

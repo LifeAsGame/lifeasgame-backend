@@ -6,6 +6,7 @@ import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.person.application.internal.PersonLookupApi;
 import online.lifeasgame.social.domain.PersonalGroupType;
+import online.lifeasgame.social.domain.GuildNoteText;
 import online.lifeasgame.social.domain.error.SocialError;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,10 +36,10 @@ public class GuildNoteService {
         Long author = currentPlayer.currentPlayerIdOrThrow();
         access.requirePair(PersonalGroupType.GUILD, guildId, author, target, true);
         if (personId == null || personId <= 0) throw new DomainException(SocialError.GUILD_NOTE_INVALID_INPUT);
-        var person = persons.getOwnedActive(personId, author);
+        var person = persons.getOwnedActiveForUpdate(personId, author);
         if (!players.findUserIdByPlayerId(target).equals(person.linkedUserId()))
             throw new DomainException(SocialError.GUILD_NOTE_CONFLICT);
-        return notes.put(author, guildId, target, personId, normalized(text), version);
+        return notes.put(author, guildId, target, personId, new GuildNoteText(text).value(), version);
     }
 
     @Transactional
@@ -48,18 +49,13 @@ public class GuildNoteService {
     }
 
     @Transactional(readOnly = true)
-    public Page<GuildNoteStore.Note> page(Long personId, Long guildId, boolean includeHistory, int page, int size) {
+    public Page<GuildNoteStore.Note> page(Long personId, Long guildId, String keyword, boolean includeHistory, int page, int size) {
         if (page < 0 || size < 1 || size > 100 || (guildId != null && guildId <= 0))
             throw new DomainException(SocialError.GUILD_NOTE_INVALID_INPUT);
         Long author = currentPlayer.currentPlayerIdOrThrow();
         persons.getOwned(personId, author);
-        return notes.page(author, personId, guildId, includeHistory, PageRequest.of(page, size));
-    }
-
-    private static String normalized(String text) {
-        if (text == null || text.isBlank()) return null;
-        String value = text.strip();
-        if (value.length() > 2000) throw new DomainException(SocialError.GUILD_NOTE_INVALID_INPUT);
-        return value;
+        String search = keyword == null ? "" : keyword.strip();
+        if (search.length() > 2000) throw new DomainException(SocialError.GUILD_NOTE_INVALID_INPUT);
+        return notes.page(author, personId, guildId, search, includeHistory, PageRequest.of(page, size));
     }
 }

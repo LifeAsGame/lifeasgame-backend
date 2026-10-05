@@ -38,9 +38,10 @@ public class GuildNoteController {
     @GetMapping("/api/v1/persons/{personId}/guild-notes")
     public ResponseEntity<ApiResponse<GuildResult.Page<GuildNoteStore.Note>>> page(
             @PathVariable Long personId, @RequestParam(required = false) Long guildId,
+            @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "true") boolean includeHistory,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        var result = notes.page(personId, guildId, includeHistory, page, size);
+        var result = notes.page(personId, guildId, keyword, includeHistory, page, size);
         return ApiResponses.ok(GuildResult.Page.of(result.getContent(), page, size, result.getTotalElements()));
     }
 

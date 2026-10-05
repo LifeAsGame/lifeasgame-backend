@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.time.CalendarDateRange;
 import online.lifeasgame.person.domain.error.PersonError;
 
 import java.time.LocalDate;
@@ -30,13 +31,20 @@ public record PersonProfile(
         return normalized(null);
     }
 
+    public boolean hasValidCalendarDates() {
+        return CalendarDateRange.inJson(ageReferenceDate) && CalendarDateRange.inJson(firstMetOn)
+                && CalendarDateRange.inJson(lastContactOn)
+                && (importantDates == null || importantDates.stream()
+                .allMatch(date -> date == null || CalendarDateRange.inJson(date.date())));
+    }
+
     public static PersonProfile normalized(PersonProfile raw) {
         if (raw == null) {
             raw = new PersonProfile(null, null, null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null);
         }
-        if ((raw.ageAtReference == null) != (raw.ageReferenceDate == null)
+        if (!raw.hasValidCalendarDates() || (raw.ageAtReference == null) != (raw.ageReferenceDate == null)
                 || raw.ageAtReference != null && (raw.ageAtReference < 0 || raw.ageAtReference > 150)) {
             throw invalid();
         }

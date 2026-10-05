@@ -8,6 +8,7 @@ import online.lifeasgame.person.application.internal.PersonLinkApi;
 import online.lifeasgame.social.domain.PersonalGroupType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class MemberPersonLinkService {
         return identity(type, groupId, memberPlayerId, persons.find(owner, userId));
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Identity select(PersonalGroupType type, Long groupId, Long memberPlayerId, Long personId) {
         Long owner = currentPlayer.currentPlayerIdOrThrow();
         access.requirePair(type, groupId, owner, memberPlayerId, true);
@@ -33,7 +34,7 @@ public class MemberPersonLinkService {
         return identity(type, groupId, memberPlayerId, persons.select(owner, userId, personId));
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Identity create(PersonalGroupType type, Long groupId, Long memberPlayerId, PersonCommand.Create command) {
         Long owner = currentPlayer.currentPlayerIdOrThrow();
         access.requirePair(type, groupId, owner, memberPlayerId, true);
