@@ -11,6 +11,9 @@ class ChangeScopeTest(unittest.TestCase):
         for name_status, expected in [
             (b"M\0README.md\0", True),
             (b"D\0FORSETTING.md\0", True),
+            (b"A\0README.md\0", True),
+            (b"R100\0README.md\0FORSETTING.md\0", True),
+            (b"C100\0README.md\0FORSETTING.md\0", True),
             (b"M\0README.md\0M\0src/main/App.java\0", False),
             (b"M\0src/main/resources/db/migration/V47.sql\0", False),
             (b"M\0docs/contracts/social/contract.md\0", False),
@@ -23,11 +26,30 @@ class ChangeScopeTest(unittest.TestCase):
                 self.assertEqual(all(p in scope.GUIDES for p in scope.paths_from_name_status(name_status)), expected)
 
     def test_unknown_or_incomplete_diff_runs_full(self):
-        for raw in [b"", b"X\0README.md\0", b"R100\0README.md\0", b"M\0README.md"]:
+        for raw in [b"", b"X\0README.md\0", b"T\0README.md\0",
+                    b"Mextra\0README.md\0", b"R101\0README.md\0FORSETTING.md\0",
+                    b"R100\0README.md\0", b"M\0README.md"]:
             with self.subTest(raw=raw), self.assertRaises(ValueError):
                 scope.paths_from_name_status(raw)
         with patch.object(scope.subprocess, "run", side_effect=OSError("fetch failed")):
             self.assertFalse(scope.guide_only("base", "head"))
+
+    def test_sha_and_merge_base_must_be_unambiguous(self):
+        from subprocess import CompletedProcess
+        sha = "a" * 40
+        with patch.object(scope.subprocess, "run") as run:
+            self.assertFalse(scope.guide_only("a" * 39, sha))
+            self.assertFalse(scope.guide_only(sha + "é", sha))
+            run.assert_not_called()
+            run.return_value = CompletedProcess([], 0, (sha + "\n" + "b" * 40 + "\n").encode())
+            self.assertFalse(scope.guide_only(sha, sha))
+            run.return_value = CompletedProcess([], 0, b"")
+            self.assertFalse(scope.guide_only(sha, sha))
+
+    def test_workflow_only_skips_on_explicit_false(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml").read_text()
+        self.assertEqual(workflow.count("if: steps.classify.outputs.heavy != 'false'"), 4)
+        self.assertIn("if: steps.classify.outputs.heavy == 'false'", workflow)
 
     def test_merge_base_covers_code_in_earlier_commit(self):
         import subprocess

@@ -33,7 +33,7 @@ jobs:
           echo 'Verified guide-only PR: demo checks and Gradle test/build were skipped.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up JDK 21 (Temurin)
-        if: steps.classify.outputs.heavy == 'true'
+        if: steps.classify.outputs.heavy != 'false'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -41,19 +41,18 @@ jobs:
           cache: 'gradle'
 
       - name: Make gradlew executable
-        if: steps.classify.outputs.heavy == 'true'
+        if: steps.classify.outputs.heavy != 'false'
         run: chmod +x ./gradlew
 
       - name: Demo preparation safety checks
-        if: steps.classify.outputs.heavy == 'true'
+        if: steps.classify.outputs.heavy != 'false'
         run: python3 -B -m unittest discover -s scripts -p 'test_demo.py'
 
       - name: CI scope safety checks
-        if: steps.classify.outputs.heavy == 'true'
         run: python3 -B -m unittest discover -s scripts -p 'test_ci_change_scope.py'
 
       - name: Build & Test
-        if: steps.classify.outputs.heavy == 'true'
+        if: steps.classify.outputs.heavy != 'false'
         run: ./gradlew clean test build
 
       - name: Upload test reports (실패 시)
