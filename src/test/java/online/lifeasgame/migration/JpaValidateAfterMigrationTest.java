@@ -84,14 +84,14 @@ class JpaValidateAfterMigrationTest {
     private QuestDefinitionBootstrapper questDefinitionBootstrapper;
 
     @Nested
-    @DisplayName("V1부터 V46까지 적용된 schema로 ApplicationContext를 기동할 때")
+    @DisplayName("V1부터 V47까지 적용된 schema로 ApplicationContext를 기동할 때")
     class LoadApplicationContext {
 
         @Test
         @DisplayName("ddl-auto validate 상태로 정상 기동한다")
         void loadsWithJpaValidation() {
             assertThat(applicationContext).isNotNull();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("46");
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("47");
             assertThat(applicationContext.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto"))
                     .isEqualTo("validate");
             assertThat(applicationContext.getEnvironment()

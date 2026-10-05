@@ -32,6 +32,11 @@ public class PersonLookupService implements PersonLookupApi {
     }
 
     @Override
+    public PersonReference getOwned(Long personId, Long ownerPlayerId) {
+        return reference(reader.getOwned(personId, ownerPlayerId));
+    }
+
+    @Override
     public Map<Long, PersonReference> findOwnedByIds(
             Set<Long> personIds,
             Long ownerPlayerId

@@ -11,6 +11,8 @@ public interface PersonRepository {
 
     Optional<Person> findByIdAndOwnerPlayerId(Long id, Long ownerPlayerId);
 
+    Optional<Person> findByOwnerPlayerIdAndLinkedUserId(Long ownerPlayerId, Long linkedUserId);
+
     List<Person> findAllByIdInAndOwnerPlayerId(
             Set<Long> ids,
             Long ownerPlayerId

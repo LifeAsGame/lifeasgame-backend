@@ -11,6 +11,8 @@ import java.util.Set;
 public interface JpaPersonRepository extends JpaRepository<Person, Long> {
     Optional<Person> findByIdAndOwnerPlayerId(Long id, Long ownerPlayerId);
 
+    Optional<Person> findByOwnerPlayerIdAndLinkedUserId(Long ownerPlayerId, Long linkedUserId);
+
     List<Person> findAllByIdInAndOwnerPlayerId(
             Set<Long> ids,
             Long ownerPlayerId

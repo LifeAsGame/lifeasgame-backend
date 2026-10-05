@@ -1,0 +1,204 @@
+package online.lifeasgame.social.application;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.platform.security.jwt.JwtCurrentPlayerAccessor;
+import online.lifeasgame.platform.security.jwt.JwtProvider;
+import online.lifeasgame.user.application.internal.UserAuthApi;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@Testcontainers
+@SpringBootTest(properties = "spring.test.mockmvc.print=NONE")
+@AutoConfigureMockMvc
+@ActiveProfiles({"test", "migration-test"})
+@Import(MemberPersonGuildNoteIntegrationTest.IdentityConfig.class)
+@DisplayName("검증된 멤버와 개인 Person 연결 및 길드 개인 메모")
+class MemberPersonGuildNoteIntegrationTest {
+    private static final long OWNER = 81301, MEMBER = 81302, OUTSIDER = 81303, MEMBER_USER = 91302;
+    private static final long GUILD_ONE = 81501, GUILD_TWO = 81502, ROLE = 81401;
+    @Container static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.39")
+            .withDatabaseName("member_person_note").withUsername("lifeasgame").withPassword("lifeasgame");
+    @DynamicPropertySource static void database(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", MYSQL::getJdbcUrl);
+        r.add("spring.datasource.username", MYSQL::getUsername);
+        r.add("spring.datasource.password", MYSQL::getPassword);
+        r.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
+    }
+    @Autowired JdbcTemplate jdbc;
+    @Autowired MockMvc mvc;
+    @Autowired JwtProvider jwt;
+    @Autowired ObjectMapper json;
+    @MockitoBean UserAuthApi userAuthApi;
+
+    @BeforeEach void seed() {
+        for (String table : List.of("private_guild_member_notes", "role_relations", "persons", "role_party_invitations",
+                "role_party_members", "role_parties", "guild_members", "party_members", "guilds", "parties", "roles", "player"))
+            jdbc.update("DELETE FROM " + table);
+        given(userAuthApi.resolveAuthorization(any())).willReturn(Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
+        for (long id : List.of(OWNER, MEMBER, OUTSIDER)) jdbc.update("""
+                INSERT INTO player (id,user_id,name,level,exp,hp_cur,hp_cap,mp_cur,mp_cap,
+                 str_stat,agi_stat,dex_stat,int_stat,vit_stat,luc_stat,extra_stats,status_effects,version,created_at,updated_at)
+                VALUES (?,?,'fixture',1,0,100,100,50,50,1,1,1,1,1,1,JSON_OBJECT(),'[]',0,NOW(6),NOW(6))
+                """, id, id == MEMBER ? MEMBER_USER : id);
+        jdbc.update("INSERT INTO roles(id,player_id,role_type,name,status,version,created_at,updated_at)"
+                + " VALUES (?,?,'WORK','Work','ACTIVE',0,NOW(6),NOW(6))", ROLE, OWNER);
+        for (long guild : List.of(GUILD_ONE, GUILD_TWO)) {
+            jdbc.update("INSERT INTO guilds(guild_id,player_id,leader_player_id,name_original,name_value,code_value,"
+                    + "visibility,join_policy,status,max_members,created_at,updated_at)"
+                    + " VALUES (?,?,?,'Private Guild','private guild',?,'PRIVATE','INVITE_ONLY','ACTIVE',10,NOW(6),NOW(6))",
+                    guild, MEMBER, MEMBER, "g" + guild);
+            for (long player : List.of(OWNER, MEMBER)) jdbc.update("INSERT INTO guild_members"
+                    + "(guild_id,player_id,role,joined_at,created_at,updated_at)"
+                    + " VALUES (?,?,?,NOW(6),NOW(6),NOW(6))", guild, player, player == MEMBER ? "LEADER" : "MEMBER");
+        }
+        jdbc.update("INSERT INTO parties(party_id,player_id,leader_player_id,name_original,name_value,code_value,"
+                + "visibility,join_policy,status,max_members,created_at,updated_at)"
+                + " VALUES (?,?,?,'Private Party','private party','p','PRIVATE','INVITE_ONLY','ACTIVE',10,NOW(6),NOW(6))",
+                GUILD_ONE, MEMBER, MEMBER);
+        for (long player : List.of(OWNER, MEMBER)) jdbc.update("INSERT INTO party_members"
+                + "(party_id,player_id,role,joined_at,created_at,updated_at)"
+                + " VALUES (?,?,?,NOW(6),NOW(6),NOW(6))", GUILD_ONE, player, player == MEMBER ? "LEADER" : "MEMBER");
+        jdbc.update("INSERT INTO role_parties(id,role_id,creator_player_id,leader_player_id,name,status,max_members,version,created_at,updated_at)"
+                + " VALUES (?,?,?,?,'Private Role Party','ACTIVE',10,0,NOW(6),NOW(6))", GUILD_ONE, ROLE, OWNER, MEMBER);
+        for (long player : List.of(OWNER, MEMBER)) jdbc.update("INSERT INTO role_party_members"
+                + "(role_party_id,player_id,joined_at,created_at,updated_at) VALUES (?,?,NOW(6),NOW(6),NOW(6))",
+                GUILD_ONE, player);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"GUILD", "PARTY", "ROLE_PARTY"})
+    @DisplayName("현재 양쪽 멤버만 User ID로 Person을 연결하고 조회는 변경하지 않는다")
+    void linksVerifiedMembers(String type) throws Exception {
+        String query = "/api/v1/member-person-links?groupType=" + type + "&groupId=" + GUILD_ONE + "&memberPlayerId=" + MEMBER;
+        assertThat(result(get(query), OWNER, 200).path("personId").isNull()).isTrue();
+        result(get(query.replace("memberPlayerId=" + MEMBER, "memberPlayerId=" + OUTSIDER)), OWNER, 404);
+        result(get(query), OUTSIDER, 404);
+        String body = "{\"groupType\":\"" + type + "\",\"groupId\":" + GUILD_ONE
+                + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Confirmed name\"}";
+        long id = result(post("/api/v1/member-person-links").content(body), OWNER, 200).path("personId").asLong();
+        assertThat(result(post("/api/v1/member-person-links").content(body), OWNER, 200).path("personId").asLong()).isEqualTo(id);
+        assertThat(jdbc.queryForObject("SELECT linked_user_id FROM persons WHERE id = ?", Long.class, id)).isEqualTo(MEMBER_USER);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons", Long.class)).isEqualTo(1);
+        result(delete("/api/v1/persons/" + id + "/linked-user"), OWNER, 204);
+        assertThat(result(get(query), OWNER, 200).path("personId").isNull()).isTrue();
+        result(put("/api/v1/member-person-links").content("{\"groupType\":\"" + type
+                + "\",\"groupId\":" + GUILD_ONE + ",\"memberPlayerId\":" + MEMBER
+                + ",\"personId\":" + id + "}"), OWNER, 200);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons", Long.class)).isEqualTo(1);
+    }
+
+    @Test @DisplayName("선택 충돌·보관 인물·동시 재전송은 원본을 보존한다")
+    void conflictsAndConcurrency() throws Exception {
+        long selected = result(post("/api/v1/persons").content("{\"displayName\":\"Selected\"}"), OWNER, 201).path("id").asLong();
+        String select = "{\"groupType\":\"GUILD\",\"groupId\":" + GUILD_ONE + ",\"memberPlayerId\":" + MEMBER
+                + ",\"personId\":" + selected + "}";
+        result(put("/api/v1/member-person-links").content(select), OWNER, 200);
+        long alternative = result(post("/api/v1/persons").content("{\"displayName\":\"Alternative\"}"), OWNER, 201).path("id").asLong();
+        result(put("/api/v1/member-person-links").content(select.replace("personId\":" + selected, "personId\":" + alternative)), OWNER, 409);
+        result(delete("/api/v1/persons/" + selected), OWNER, 204);
+        result(put("/api/v1/member-person-links").content(select), OWNER, 409);
+        assertThat(jdbc.queryForObject("SELECT linked_user_id FROM persons WHERE id = ?", Long.class, selected)).isEqualTo(MEMBER_USER);
+    }
+
+    @Test @DisplayName("동시 신규 연결은 한 Person으로 수렴하고 중복 기록을 남기지 않는다")
+    void concurrentCreate() throws Exception {
+        String body = "{\"groupType\":\"GUILD\",\"groupId\":" + GUILD_ONE
+                + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Confirmed\"}";
+        var ready = new CountDownLatch(2);
+        var start = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Long> add = () -> {
+                ready.countDown(); start.await(10, TimeUnit.SECONDS);
+                return result(post("/api/v1/member-person-links").content(body), OWNER, 200)
+                        .path("personId").asLong();
+            };
+            var one = pool.submit(add);
+            var two = pool.submit(add);
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            assertThat(one.get(20, TimeUnit.SECONDS)).isEqualTo(two.get(20, TimeUnit.SECONDS));
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM persons WHERE owner_player_id = ? AND linked_user_id = ?",
+                Long.class, OWNER, MEMBER_USER)).isEqualTo(1);
+    }
+
+    @Test @DisplayName("길드별 메모와 역할 메모를 분리하고 작성자·버전·탈퇴 이력을 지킨다")
+    void privateNotesAndHistory() throws Exception {
+        long person = result(post("/api/v1/member-person-links").content("{\"groupType\":\"GUILD\",\"groupId\":"
+                + GUILD_ONE + ",\"memberPlayerId\":" + MEMBER + ",\"displayName\":\"Friend\"}"), OWNER, 200)
+                .path("personId").asLong();
+        long relation = result(post("/api/v1/roles/" + ROLE + "/relations").content("{\"personId\":" + person
+                + ",\"relationType\":\"FRIEND\",\"roleNotes\":\"role private\"}"), OWNER, 201).path("id").asLong();
+        String first = notePath(GUILD_ONE);
+        String second = notePath(GUILD_TWO);
+        JsonNode note1 = result(put(first).content("{\"personId\":" + person + ",\"text\":\" one \"}"), OWNER, 200);
+        JsonNode note2 = result(put(second).content("{\"personId\":" + person + ",\"text\":\"two\"}"), OWNER, 200);
+        assertThat(note1.path("text").asText()).isEqualTo("one");
+        assertThat(note2.path("text").asText()).isEqualTo("two");
+        result(get(first), MEMBER, 404);
+        result(put(first).content("{\"personId\":" + person + ",\"text\":\"stolen\"}"), MEMBER, 404);
+        result(delete("/api/v1/guild-notes/" + note1.path("id").asLong()), MEMBER, 404);
+        result(get("/api/v1/persons/" + person + "/guild-notes"), MEMBER, 404);
+        result(put(first).content("{\"personId\":" + person + ",\"text\":\"updated\",\"version\":0}"), OWNER, 200);
+        result(put(first).content("{\"personId\":" + person + ",\"text\":\"stale\",\"version\":0}"), OWNER, 409);
+        assertThat(result(get("/api/v1/persons/" + person + "/guild-notes").param("size", "1"), OWNER, 200)
+                .path("totalElements").asInt()).isEqualTo(2);
+        assertThat(result(get("/api/v1/roles/" + ROLE + "/relations/" + relation), OWNER, 200)
+                .path("roleNotes").asText()).isEqualTo("role private");
+        result(delete("/api/v1/persons/" + person + "/linked-user"), OWNER, 204);
+        assertThat(result(get("/api/v1/persons/" + person + "/guild-notes"), OWNER, 200).path("totalElements").asInt()).isEqualTo(2);
+        result(put(first).content("{\"personId\":" + person + ",\"text\":\"blocked\",\"version\":1}"), OWNER, 409);
+        jdbc.update("DELETE FROM guild_members WHERE guild_id = ? AND player_id = ?", GUILD_ONE, OWNER);
+        JsonNode history = result(get("/api/v1/persons/" + person + "/guild-notes").param("guildId", "" + GUILD_ONE), OWNER, 200);
+        assertThat(history.at("/contents/0/availability").asText()).isEqualTo("HISTORY");
+        assertThat(history.at("/contents/0/guildName").isNull()).isTrue();
+        result(get(first), OWNER, 404);
+        result(delete("/api/v1/guild-notes/" + note1.path("id").asLong()), OWNER, 204);
+        assertThat(result(get("/api/v1/persons/" + person + "/guild-notes"), OWNER, 200).path("totalElements").asInt()).isEqualTo(1);
+    }
+
+    private static String notePath(long guild) { return "/api/v1/guilds/" + guild + "/members/" + MEMBER + "/my-note"; }
+    private JsonNode result(MockHttpServletRequestBuilder request, long actor, int expected) throws Exception {
+        var response = mvc.perform(request.contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + jwt.createAccessToken(actor, actor)))
+                .andExpect(status().is(expected)).andReturn().getResponse();
+        return response.getContentAsString().isEmpty() ? json.nullNode() : json.readTree(response.getContentAsString()).path("result");
+    }
+    @TestConfiguration static class IdentityConfig {
+        @Bean @Primary CurrentPlayerAccessor contextPlayerAccessor() { return new JwtCurrentPlayerAccessor(); }
+    }
+}

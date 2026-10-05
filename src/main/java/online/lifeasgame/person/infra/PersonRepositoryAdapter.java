@@ -26,6 +26,11 @@ public class PersonRepositoryAdapter implements PersonRepository {
     }
 
     @Override
+    public Optional<Person> findByOwnerPlayerIdAndLinkedUserId(Long ownerPlayerId, Long linkedUserId) {
+        return repository.findByOwnerPlayerIdAndLinkedUserId(ownerPlayerId, linkedUserId);
+    }
+
+    @Override
     public List<Person> findAllByIdInAndOwnerPlayerId(
             Set<Long> ids,
             Long ownerPlayerId

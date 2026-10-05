@@ -5,4 +5,6 @@ public interface PlayerLookupApi {
     Long findPlayerIdByUserId(Long userId);
 
     Long findUserIdByPlayerId(Long playerId);
+
+    void lockPlayer(Long playerId);
 }
