@@ -93,7 +93,7 @@ class RoleRelationPersistenceIntegrationTest {
 
     @Test
     void persistsCrudRejectsActiveDuplicateAndReactivatesArchivedRow() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("45");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("46");
         Long roleId = createRole("Owner role");
         Long personId = createPerson("Alice");
 
