@@ -3,6 +3,9 @@ package online.lifeasgame.character.application;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ActivatedContentQuery {
+    private static final ZoneId DATABASE_ZONE = ZoneId.of("Asia/Seoul");
     private static final List<Definition> DEFINITIONS = List.of(
             new Definition("ACHIEVEMENT", "ACH_FIRST_LIFELOG", "내용이 완성된 첫 사용자 기록을 남기세요."),
             new Definition("ACHIEVEMENT", "ACH_FIRST_QUEST_COMPLETE", "첫 퀘스트를 실제로 완료하세요."),
@@ -47,7 +51,10 @@ public class ActivatedContentQuery {
         if (definition.kind.equals("ACHIEVEMENT")) {
             return jdbc.queryForObject("""
                     SELECT a.id, a.name, a.definition_version, pa.acquired_at,
-                           r.status receipt_status, r.source_occurred_at
+                           CASE WHEN r.status = 'GRANTED' AND pa.acquired_at = r.processed_at
+                                THEN 'GRANTED' WHEN r.status = 'GRANTED' THEN NULL
+                                ELSE r.status END receipt_status,
+                           r.source_occurred_at
                     FROM achievements a
                     LEFT JOIN player_achievements pa
                       ON pa.achievement_id = a.id AND pa.player_id = ?
@@ -74,21 +81,25 @@ public class ActivatedContentQuery {
     }
 
     private Entry map(Definition definition, ResultSet rs) throws SQLException {
-        Instant acquiredAt = timestamp(rs, "acquired_at");
         String receipt = rs.getString("receipt_status");
+        boolean receiptGrant = "GRANTED".equals(receipt);
+        // Receipt-backed JDBC awards store Seoul wall time; earlier JPA grants store UTC.
+        Instant acquiredAt = timestamp(rs, "acquired_at",
+                receiptGrant ? DATABASE_ZONE : ZoneOffset.UTC);
         String evidence = acquiredAt == null
                 ? "REVOKED".equals(receipt) ? "REVOKED" : "NONE"
-                : "GRANTED".equals(receipt) ? "CONFIRMED" : "ADMIN_OR_LEGACY";
+                : receiptGrant ? "CONFIRMED" : "ADMIN_OR_LEGACY";
         return new Entry(definition.kind, definition.code, rs.getLong("id"),
                 rs.getString("name"), rs.getInt("definition_version"),
                 definition.condition, acquiredAt == null ? "UNACQUIRED" : "ACQUIRED",
                 evidence, acquiredAt,
-                "CONFIRMED".equals(evidence) ? timestamp(rs, "source_occurred_at") : null);
+                "CONFIRMED".equals(evidence)
+                        ? timestamp(rs, "source_occurred_at", DATABASE_ZONE) : null);
     }
 
-    private static Instant timestamp(ResultSet rs, String column) throws SQLException {
-        var value = rs.getTimestamp(column);
-        return value == null ? null : value.toInstant();
+    private static Instant timestamp(ResultSet rs, String column, ZoneId zone) throws SQLException {
+        var value = rs.getObject(column, LocalDateTime.class);
+        return value == null ? null : value.atZone(zone).toInstant();
     }
 
     private record Definition(String kind, String code, String condition) {}
