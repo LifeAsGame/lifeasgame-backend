@@ -19,6 +19,7 @@ public class GroupRosterStore {
     private final NamedParameterJdbcTemplate jdbc;
 
     public enum Type { GUILD, PARTY }
+    public record GroupAccess(String status, Long leaderId, boolean member) {}
     public record Entry(Long id, Type type, Long groupId, String displayName, String groupRoleLabel,
                         Long linkedPlayerId, String memberStatus, long version, String status) {}
     public record Invitation(Long id, Long entryId, Type type, Long groupId, String groupName,
@@ -31,6 +32,16 @@ public class GroupRosterStore {
     private static LocalDateTime db(Instant instant) { return LocalDateTime.ofInstant(instant, ZoneOffset.UTC); }
     private static Instant instant(Timestamp timestamp) { return timestamp.toLocalDateTime().toInstant(ZoneOffset.UTC); }
     private static MapSqlParameterSource p(Long groupId) { return new MapSqlParameterSource("groupId", groupId); }
+
+    public GroupAccess access(Type type, Long groupId, Long actor) {
+        String owner = column(type);
+        return jdbc.query("SELECT g.status,g.leader_player_id,EXISTS(SELECT 1 FROM " + memberTable(type)
+                        + " m WHERE m." + owner + "=g." + owner + " AND m.player_id=:actor) "
+                        + "FROM " + groupTable(type) + " g WHERE g." + owner + "=:groupId",
+                p(groupId).addValue("actor", actor), (rs, n) ->
+                        new GroupAccess(rs.getString(1), rs.getLong(2), rs.getBoolean(3)))
+                .stream().findFirst().orElse(null);
+    }
 
     private static RowMapper<Entry> entryMapper(Type type) {
         return (rs, n) -> new Entry(rs.getLong("id"), type, rs.getLong("group_id"), rs.getString("display_name"),

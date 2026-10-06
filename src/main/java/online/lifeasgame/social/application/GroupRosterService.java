@@ -55,11 +55,11 @@ public class GroupRosterService {
         page(page, size);
         if (!List.of("ALL", "UNLINKED", "LINKED").contains(status) || keyword != null && keyword.length() > 80)
             throw error(SocialError.ROSTER_INVALID_INPUT);
-        Access access = access(type, groupId, false);
-        if (!access.member()) throw hidden(type);
+        var access = readAccess(type, groupId);
         long count = store.entryCount(type, groupId, status, keyword);
+        boolean leader = access.leaderId().equals(actor());
         return Page.of(store.entries(type, groupId, status, keyword, page, size), page, size, count,
-                new Capabilities(access.leader(), access.leader()));
+                new Capabilities(leader, leader));
     }
 
     @Transactional
@@ -119,7 +119,8 @@ public class GroupRosterService {
     @Transactional(readOnly = true)
     public InvitationPage pending(Type type, Long groupId, int page, int size) {
         page(page, size);
-        requireLeader(access(type, groupId, false));
+        var access = readAccess(type, groupId);
+        if (!access.leaderId().equals(actor())) throw error(SocialError.LEADER_ONLY);
         Instant now = clock.instant();
         long count = store.pendingCount(type, groupId, now);
         return InvitationPage.of(store.pending(type, groupId, now, page, size), page, size, count);
@@ -214,6 +215,12 @@ public class GroupRosterService {
         if (party.getStatus() != PartyStatus.ACTIVE) throw hidden(type);
         return new Access(null, party, party.getLeaderPlayerId(), party.findMember(actor).isPresent(),
                 party.getLeaderPlayerId().equals(actor) && party.findMember(actor).isPresent());
+    }
+
+    private GroupRosterStore.GroupAccess readAccess(Type type, Long groupId) {
+        var access = store.access(type, groupId, actor());
+        if (access == null || !"ACTIVE".equals(access.status()) || !access.member()) throw hidden(type);
+        return access;
     }
 
     private static String name(String raw) {
