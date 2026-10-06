@@ -10,6 +10,7 @@ import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.economy.domain.event.EconomyEvent;
 import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
+import online.lifeasgame.inventory.domain.event.ItemRewardClaimed;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
@@ -20,6 +21,7 @@ import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
 import online.lifeasgame.quest.domain.event.QuestEvent;
 import online.lifeasgame.quest.domain.event.QuestEventType;
+import online.lifeasgame.quest.domain.event.QuestRouteCompleted;
 import online.lifeasgame.social.domain.ChatChannelType;
 import online.lifeasgame.social.domain.event.ChatChannelDeactivated;
 import online.lifeasgame.user.domain.event.UserRegistered;
@@ -74,6 +76,7 @@ class OutboxEventCodecRegistryTest {
                             2,
                             OCCURRED_AT
                     ),
+                    new ItemRewardClaimed(197L, 32L, 31L, 2, OCCURRED_AT),
                     new CollectionLogged(
                             197L,
                             41L,
@@ -126,6 +129,7 @@ class OutboxEventCodecRegistryTest {
                             "inactive"
                     ),
                     questEvent(),
+                    new QuestRouteCompleted(197L, 82L, "ROUTE_RECORD_START", OCCURRED_AT),
                     rewardReadyFact(),
                     economyEvent()
             );

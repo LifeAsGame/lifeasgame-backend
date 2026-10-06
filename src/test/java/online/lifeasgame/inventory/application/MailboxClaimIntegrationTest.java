@@ -46,6 +46,7 @@ class MailboxClaimIntegrationTest
         @Test
         @DisplayName("single claim은 attrs/bound를 보존하며 stack merge와 신규 stack을 적용한다")
         void claimsSingleAfterCompletePreflight() {
+            int factsBefore = claimFactCount();
             insertInventoryEntry(0, itemId(ITEM_A), 9, true, "A");
             mailboxService.deliver(
                     PLAYER_ID,
@@ -66,11 +67,13 @@ class MailboxClaimIntegrationTest
             assertThat(inventoryQuantities()).containsExactly(4, 10);
             assertThat(inventoryBoundCount()).isEqualTo(2);
             assertThat(inventoryGradeCount("A")).isEqualTo(2);
+            assertThat(claimFactCount()).isEqualTo(factsBefore + 1);
         }
 
         @Test
         @DisplayName("claimAll은 서로 다른 stack key를 한 batch로 옮긴다")
         void claimsAllAfterBatchPreflight() {
+            int factsBefore = claimFactCount();
             mailboxService.deliver(
                     PLAYER_ID,
                     new MailboxCommand.Deliver(
@@ -103,6 +106,7 @@ class MailboxClaimIntegrationTest
             assertThat(inventoryEntryCount()).isEqualTo(2);
             assertThat(inventoryGradeCount("A")).isEqualTo(1);
             assertThat(inventoryGradeCount("B")).isEqualTo(1);
+            assertThat(claimFactCount()).isEqualTo(factsBefore + 2);
         }
     }
 
@@ -113,6 +117,7 @@ class MailboxClaimIntegrationTest
         @Test
         @DisplayName("single Inventory full은 Mailbox와 Inventory를 모두 유지한다")
         void keepsBothAggregatesOnSingleFailure() {
+            int factsBefore = claimFactCount();
             cleanState();
             ensureItems();
             insertContainers(1, 10);
@@ -137,6 +142,7 @@ class MailboxClaimIntegrationTest
             );
 
             assertThat(state()).isEqualTo(before);
+            assertThat(claimFactCount()).isEqualTo(factsBefore);
         }
 
         @Test
@@ -237,6 +243,13 @@ class MailboxClaimIntegrationTest
                         true
                 )
         );
+    }
+
+    private int claimFactCount() {
+        return jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM outbox_events
+                WHERE event_type = 'inventory.item-reward-claimed.v1'
+                """, Integer.class);
     }
 
     private void ensureItems() {

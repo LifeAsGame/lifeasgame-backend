@@ -3,6 +3,10 @@ package online.lifeasgame.character.application;
 import online.lifeasgame.character.domain.GenderType;
 import online.lifeasgame.character.domain.Name;
 import online.lifeasgame.character.domain.Player;
+import online.lifeasgame.character.domain.Achievement;
+import online.lifeasgame.character.domain.AchievementCategory;
+import online.lifeasgame.character.domain.Title;
+import online.lifeasgame.character.domain.TitleCategory;
 import online.lifeasgame.character.domain.error.PlayerTitleError;
 import online.lifeasgame.character.domain.repository.PlayerTitleRepository;
 import online.lifeasgame.core.error.DomainException;
@@ -60,6 +64,9 @@ class CharacterApplicationBoundaryTest {
     @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
+    @Mock
+    private AchievementFactProcessor factProcessor;
+
     private PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
     private PlayerTitleRevoker playerTitleRevoker;
 
@@ -72,6 +79,21 @@ class CharacterApplicationBoundaryTest {
     @Nested
     @DisplayName("대표 칭호를 선택할 때")
     class ChangeRepresentativeTitle {
+
+        @Test
+        @DisplayName("현재 Player의 대표 칭호를 소유권 변경 없이 해제한다")
+        void clearsCurrentRepresentative() {
+            Player player = player();
+            player.changeRepresentativeTitle(TITLE_ID);
+            given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
+            given(playerReader.getByIdForUpdateOrThrow(PLAYER_ID)).willReturn(player);
+
+            var result = playerService().clearRepresentativeTitle();
+
+            assertThat(result.titleId()).isNull();
+            assertThat(player.getTitleId()).isNull();
+            verify(playerTitleRepository, never()).deleteByPlayerIdAndTitleId(PLAYER_ID, TITLE_ID);
+        }
 
         @Test
         @DisplayName("Player를 잠근 뒤 보유한 칭호를 대표 칭호로 변경한다")
@@ -122,6 +144,8 @@ class CharacterApplicationBoundaryTest {
             given(playerReader.getByIdForUpdateOrThrow(PLAYER_ID)).willReturn(player);
             given(playerTitleRepository.existsByPlayerIdAndTitleId(PLAYER_ID, TITLE_ID))
                     .willReturn(true);
+            given(titleReader.getByIdOrThrow(TITLE_ID)).willReturn(
+                    Title.create("TITLE_TEST", "Test", TitleCategory.ACHIEVEMENT, null));
             given(playerTitleRepository.deleteByPlayerIdAndTitleId(PLAYER_ID, TITLE_ID))
                     .willAnswer(invocation -> {
                         assertThat(player.getTitleId()).isNull();
@@ -163,8 +187,12 @@ class CharacterApplicationBoundaryTest {
                 playerAchievementWriter,
                 achievementReader,
                 playerReader,
-                currentPlayerAccessor
+                currentPlayerAccessor,
+                factProcessor
         );
+
+        given(achievementReader.getByIdOrThrow(232L)).willReturn(
+                Achievement.create("ACH_TEST", "Test", AchievementCategory.STORY, null));
 
         var result = service.revokeAchievement(PLAYER_ID, 232L);
 
@@ -193,7 +221,8 @@ class CharacterApplicationBoundaryTest {
                 playerTitleRevoker,
                 titleReader,
                 playerReader,
-                currentPlayerAccessor
+                currentPlayerAccessor,
+                factProcessor
         );
     }
 

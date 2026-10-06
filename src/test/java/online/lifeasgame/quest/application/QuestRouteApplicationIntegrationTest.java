@@ -337,6 +337,7 @@ class QuestRouteApplicationIntegrationTest {
         @Test
         @DisplayName("criteria가 충족되면 정확히 다음 한 Step으로 이동한다")
         void advancesExactlyOneStep() {
+            int factsBefore = routeFactCount();
             Long routeId = routeId();
             Long firstStepId = stepId("RS_RECORD_01_LEAVE_TRACE");
             Long secondStepId = stepId("RS_RECORD_02_CONNECT_TRACES");
@@ -356,6 +357,7 @@ class QuestRouteApplicationIntegrationTest {
                     .isEqualTo(secondStepId);
             assertThat(currentStepId(PLAYER_ID, routeId))
                     .isEqualTo(secondStepId);
+            assertThat(routeFactCount()).isEqualTo(factsBefore);
         }
 
         @Test
@@ -413,6 +415,7 @@ class QuestRouteApplicationIntegrationTest {
         @Test
         @DisplayName("마지막 Step advance는 Route를 완료하고 replay를 거부한다")
         void completesFinalStepOnce() {
+            int factsBefore = routeFactCount();
             Long routeId = routeId();
             Long first = stepId("RS_RECORD_01_LEAVE_TRACE");
             Long second = stepId("RS_RECORD_02_CONNECT_TRACES");
@@ -435,6 +438,7 @@ class QuestRouteApplicationIntegrationTest {
             selectService.select(routeId);
             advanceService.advance(routeId, first);
             advanceService.advance(routeId, second);
+            assertThat(routeFactCount()).isEqualTo(factsBefore);
 
             QuestRouteResult.Route completed = advanceService.advance(
                     routeId,
@@ -444,6 +448,7 @@ class QuestRouteApplicationIntegrationTest {
             assertThat(completed.playerProgress().status())
                     .isEqualTo(PlayerQuestRouteStatus.COMPLETED.name());
             assertThat(completed.playerProgress().completedAt()).isNotNull();
+            assertThat(routeFactCount()).isEqualTo(factsBefore + 1);
             assertThat(completed.steps())
                     .extracting(QuestRouteResult.Step::state)
                     .containsOnly(QuestRouteStepState.COMPLETED.name());
@@ -451,7 +456,15 @@ class QuestRouteApplicationIntegrationTest {
                     () -> advanceService.advance(routeId, third),
                     QuestError.ROUTE_ALREADY_COMPLETED
             );
+            assertThat(routeFactCount()).isEqualTo(factsBefore + 1);
         }
+    }
+
+    private int routeFactCount() {
+        return jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM outbox_events
+                WHERE event_type = 'quest.route-completed.v1'
+                """, Integer.class);
     }
 
     @Nested
