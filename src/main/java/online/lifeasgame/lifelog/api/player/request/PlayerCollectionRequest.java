@@ -23,8 +23,15 @@ public final class PlayerCollectionRequest {
             String lifeLogSubtype,
             String reflectionScope,
             @Positive Long primaryRoleId,
-            @Positive Long roleEventId
+            @Positive Long roleEventId,
+            @Positive Long personalCategoryId
     ) {
+        public Create(String category, String title, String originalTitle, Integer quantity,
+                      String conditionNote, String acquiredFrom, Set<String> tags,
+                      String lifeLogSubtype, String reflectionScope, Long primaryRoleId, Long roleEventId) {
+            this(category, title, originalTitle, quantity, conditionNote, acquiredFrom, tags,
+                    lifeLogSubtype, reflectionScope, primaryRoleId, roleEventId, null);
+        }
         public Create(
                 String category,
                 String title,
@@ -47,6 +54,7 @@ public final class PlayerCollectionRequest {
                     lifeLogSubtype,
                     reflectionScope,
                     null,
+                    null,
                     null
             );
         }
@@ -68,6 +76,7 @@ public final class PlayerCollectionRequest {
                     conditionNote,
                     acquiredFrom,
                     tags,
+                    null,
                     null,
                     null,
                     null,

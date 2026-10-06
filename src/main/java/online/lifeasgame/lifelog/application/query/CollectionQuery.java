@@ -9,7 +9,12 @@ public final class CollectionQuery {
             String category,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
+        public Search(String category, String titleLike, int page, int size) {
+            this(category, titleLike, page, size, null, false);
+        }
     }
 }

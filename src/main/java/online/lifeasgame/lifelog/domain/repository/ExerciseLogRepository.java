@@ -22,8 +22,14 @@ public interface ExerciseLogRepository {
             LocalDate from,
             LocalDate to,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     );
+    default List<ExerciseLog> search(Long playerId, ExerciseCategory category, LocalDate from, LocalDate to,
+                                     int page, int size) {
+        return search(playerId, category, from, to, page, size, null, false);
+    }
 
     long deleteByIdAndPlayerId(Long exerciseId, Long playerId);
 }

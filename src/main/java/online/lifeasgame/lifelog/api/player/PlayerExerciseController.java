@@ -11,6 +11,7 @@ import online.lifeasgame.lifelog.api.player.spec.PlayerExerciseSpecV1;
 import online.lifeasgame.lifelog.application.ExerciseLogQueryService;
 import online.lifeasgame.lifelog.application.ExerciseLogService;
 import online.lifeasgame.lifelog.application.result.ExerciseResult;
+import online.lifeasgame.lifelog.application.query.ExerciseQuery;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +41,21 @@ public class PlayerExerciseController implements PlayerExerciseSpecV1 {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     ) {
         CalendarDateRange.requireDateColumn(from);
         CalendarDateRange.requireDateColumn(to);
         List<ExerciseResult.Info> results = exerciseLogQueryService.search(
-                PlayerExerciseWebMapper.toSearchQuery(category, from, to, page, size)
+                new ExerciseQuery.Search(category, from, to, page, size, personalCategoryId, unclassified)
         );
         return ResponseEntity.ok(PlayerExerciseWebMapper.toInfos(results));
+    }
+
+    public ResponseEntity<List<PlayerExerciseResponse.Info>> search(String category, LocalDate from, LocalDate to,
+                                                                     int page, int size) {
+        return search(category, from, to, page, size, null, false);
     }
 
     @PostMapping

@@ -28,7 +28,8 @@ public final class CollectionResult {
             String acquiredFrom,
             Set<String> tags,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
         public static Info from(CollectionLog log) {
             return new Info(
@@ -42,7 +43,8 @@ public final class CollectionResult {
                     log.getAcquiredFrom(),
                     log.getTags().values(),
                     log.getCreatedAt(),
-                    log.getUpdatedAt()
+                    log.getUpdatedAt(),
+                    log.getPersonalCategoryId()
             );
         }
     }

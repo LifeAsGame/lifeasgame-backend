@@ -18,8 +18,14 @@ public final class MediaLogCommand {
             Integer totalEpisode,
             String status,
             Set<String> tags,
-            LifeLogRecordMetadataCommand lifeLogMetadata
+            LifeLogRecordMetadataCommand lifeLogMetadata,
+            Long personalCategoryId
     ) {
+        public Create(String category, String title, String originalTitle, Integer currentEpisode,
+                      Integer totalEpisode, String status, Set<String> tags,
+                      LifeLogRecordMetadataCommand lifeLogMetadata) {
+            this(category, title, originalTitle, currentEpisode, totalEpisode, status, tags, lifeLogMetadata, null);
+        }
         public Create(
                 String category,
                 String title,
@@ -37,7 +43,8 @@ public final class MediaLogCommand {
                     totalEpisode,
                     status,
                     tags,
-                    LifeLogRecordMetadataCommand.none()
+                    LifeLogRecordMetadataCommand.none(),
+                    null
             );
         }
     }

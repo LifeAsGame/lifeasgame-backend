@@ -30,7 +30,8 @@ public final class PlayerMediaLogResponse {
             LocalDate startedOn,
             LocalDate finishedOn,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
     }
 

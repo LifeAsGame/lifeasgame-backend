@@ -27,7 +27,8 @@ public final class ExerciseResult {
             LocalDate exercisedOn,
             String memo,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
         public static Info from(ExerciseLog log) {
             return new Info(
@@ -40,7 +41,8 @@ public final class ExerciseResult {
                     log.getExercisedOn(),
                     log.getMemo(),
                     log.getCreatedAt(),
-                    log.getUpdatedAt()
+                    log.getUpdatedAt(),
+                    log.getPersonalCategoryId()
             );
         }
     }

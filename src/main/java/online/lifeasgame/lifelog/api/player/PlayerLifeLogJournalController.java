@@ -29,15 +29,24 @@ public class PlayerLifeLogJournalController
             @RequestParam(required = false) Long primaryRoleId,
             @RequestParam(required = false) String subtype,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     ) {
         LifeLogJournalResult.Page result = journalQueryService.list(
                 primaryRoleId,
                 subtype,
                 page,
-                size
+                size,
+                personalCategoryId,
+                unclassified
         );
         return ApiResponses.ok(PlayerLifeLogJournalWebMapper.toPage(result));
+    }
+
+    public ResponseEntity<ApiResponse<PlayerLifeLogJournalResponse.Page>> list(
+            Long primaryRoleId, String subtype, int page, int size) {
+        return list(primaryRoleId, subtype, page, size, null, false);
     }
 
     @Override

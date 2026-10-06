@@ -33,9 +33,15 @@ class CollectionLogReader {
             String category,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         CollectionCategory collectionCategory = CollectionCategory.parseNullable(category);
-        return repository.search(playerId, collectionCategory, titleLike, page, size);
+        return repository.search(playerId, collectionCategory, titleLike, page, size, personalCategoryId, unclassified);
+    }
+
+    public List<CollectionLog> search(Long playerId, String category, String titleLike, int page, int size) {
+        return search(playerId, category, titleLike, page, size, null, false);
     }
 }

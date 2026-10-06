@@ -41,7 +41,8 @@ public final class PlayerCollectionWebMapper {
                         request.reflectionScope(),
                         request.primaryRoleId(),
                         request.roleEventId()
-                )
+                ),
+                request.personalCategoryId()
         );
     }
 
@@ -65,7 +66,8 @@ public final class PlayerCollectionWebMapper {
                 result.acquiredFrom(),
                 result.tags(),
                 result.createdAt(),
-                result.updatedAt()
+                result.updatedAt(),
+                result.personalCategoryId()
         );
     }
 

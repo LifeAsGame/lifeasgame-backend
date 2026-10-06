@@ -33,7 +33,8 @@ public final class MediaLogResult {
             LocalDate startedOn,
             LocalDate finishedOn,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
         public static Info from(MediaLog mediaLog) {
             return new Info(
@@ -47,7 +48,8 @@ public final class MediaLogResult {
                     mediaLog.getMediaTags().values(),
                     mediaLog.getRewatchCount(),
                     mediaLog.getStartedOn(), mediaLog.getFinishedOn(),
-                    mediaLog.getCreatedAt(), mediaLog.getUpdatedAt()
+                    mediaLog.getCreatedAt(), mediaLog.getUpdatedAt(),
+                    mediaLog.getPersonalCategoryId()
             );
         }
     }

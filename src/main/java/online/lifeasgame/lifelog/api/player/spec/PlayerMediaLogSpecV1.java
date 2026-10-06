@@ -25,7 +25,9 @@ public interface PlayerMediaLogSpecV1 {
             @RequestParam(required = false) String status,
             @RequestParam(required = false, name = "titleLike") String titleLike,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     );
 
     @Operation(summary = "미디어 로그 생성(플레이어)")

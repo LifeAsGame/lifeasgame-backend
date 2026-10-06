@@ -25,7 +25,8 @@ public final class PlayerCollectionResponse {
             String acquiredFrom,
             Set<String> tags,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
     }
 
