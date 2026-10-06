@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +60,7 @@ import static org.mockito.BDDMockito.given;
 @SpringBootTest(properties =
         "spring.jpa.properties.hibernate.generate_statistics=true")
 @ActiveProfiles("test")
+@Sql("/character/achievement-award-receipts.sql")
 @Transactional
 @DisplayName("Home provider read integration")
 class HomeProviderIntegrationTest {
