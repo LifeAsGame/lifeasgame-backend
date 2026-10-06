@@ -82,7 +82,7 @@ class GuildCreateRosterIntegrationTest {
         jdbc.update("DELETE FROM parties");
         jdbc.update("DELETE FROM guild_members");
         jdbc.update("DELETE FROM guilds");
-        jdbc.update("DELETE FROM roles WHERE player_id = ?", LEADER);
+        jdbc.update("DELETE FROM roles WHERE player_id BETWEEN ? AND ?", LEADER, OUTSIDER);
         jdbc.update("DELETE FROM player WHERE id BETWEEN ? AND ?", LEADER, OUTSIDER);
         given(userAuthApi.resolveAuthorization(any())).willReturn(Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
         for (long id = LEADER; id <= OUTSIDER; id++) jdbc.update("""
@@ -198,6 +198,15 @@ class GuildCreateRosterIntegrationTest {
                 + ",\"name\":\"role group\",\"maxMembers\":2}}";
         mvc.perform(auth(post(base), LEADER).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.result.linkStatus").value("ACTIVE"));
+        jdbc.update("""
+                INSERT INTO roles (player_id,role_type,name,status,created_at,updated_at,version)
+                VALUES (?,'WORK','member role','ACTIVE',NOW(6),NOW(6),0)
+                """, MEMBER);
+        long memberRoleId = jdbc.queryForObject("SELECT id FROM roles WHERE player_id=?", Long.class, MEMBER);
+        mvc.perform(auth(post(base), MEMBER).contentType(MediaType.APPLICATION_JSON)
+                .content(body.replaceFirst("[0-9a-f-]{36}", UUID.randomUUID().toString())
+                        .replace("\"roleId\":" + roleId, "\"roleId\":" + memberRoleId)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.result.linkStatus").value("PENDING"));
         mvc.perform(auth(post(base), MEMBER).contentType(MediaType.APPLICATION_JSON)
                 .content(body.replaceFirst("[0-9a-f-]{36}", UUID.randomUUID().toString())))
                 .andExpect(status().isNotFound());
@@ -206,7 +215,7 @@ class GuildCreateRosterIntegrationTest {
                 .content(body.replaceFirst("[0-9a-f-]{36}", UUID.randomUUID().toString())
                         .replace("shared label", invalidLabel)))
                 .andExpect(status().isBadRequest());
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM role_parties", Long.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM role_parties", Long.class)).isEqualTo(2);
     }
 
     @Test
@@ -278,6 +287,39 @@ class GuildCreateRosterIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM guild_members WHERE guild_id=?", Long.class, GUILD)).isEqualTo(3);
         Long linked = jdbc.queryForObject("SELECT linked_player_id FROM group_roster_entries WHERE id=?", Long.class, entry);
         assertThat(linked == null || linked == TARGET).isTrue();
+    }
+
+    @Test
+    @DisplayName("삭제·만료·취소된 명부 초대는 가입시키지 않고 기존 회원수를 유지한다")
+    void rejectsClosedInvitations() throws Exception {
+        String roster = "/api/v1/guilds/" + GUILD + "/roster";
+        long entry = result(mvc.perform(auth(post(roster), LEADER).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"displayName\":\"offline\"}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("rosterEntryId").asLong();
+        long invitation = result(mvc.perform(auth(post(roster + "/" + entry + "/invitations"), LEADER)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"targetPlayerId\":" + TARGET + "}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("invitationId").asLong();
+        jdbc.update("UPDATE group_roster_invitations SET expires_at=DATE_SUB(NOW(6),INTERVAL 1 SECOND) WHERE id=?", invitation);
+        mvc.perform(auth(post("/api/v1/roster-invitations/" + invitation + "/accept"), TARGET))
+                .andExpect(status().isConflict());
+        long renewed = result(mvc.perform(auth(post(roster + "/" + entry + "/invitations"), LEADER)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"targetPlayerId\":" + TARGET + "}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("invitationId").asLong();
+        assertThat(renewed).isNotEqualTo(invitation);
+        mvc.perform(auth(post(roster + "/invitations/" + renewed + "/cancel"), LEADER))
+                .andExpect(status().isOk());
+        mvc.perform(auth(post("/api/v1/roster-invitations/" + renewed + "/accept"), TARGET))
+                .andExpect(status().isConflict());
+        long third = result(mvc.perform(auth(post(roster + "/" + entry + "/invitations"), LEADER)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"targetPlayerId\":" + TARGET + "}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("invitationId").asLong();
+        mvc.perform(auth(delete(roster + "/" + entry), LEADER).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"version\":0}"))
+                .andExpect(status().isNoContent());
+        mvc.perform(auth(post("/api/v1/roster-invitations/" + third + "/accept"), TARGET))
+                .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM guild_members WHERE guild_id=?", Long.class, GUILD)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM group_roster_invitations WHERE status='ACCEPTED'", Long.class)).isZero();
     }
 
     private JsonNode result(String body) throws Exception { return json.readTree(body).path("result"); }
