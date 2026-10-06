@@ -3,6 +3,7 @@ package online.lifeasgame.role.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum RoleError implements ErrorCode {
+    INVALID_ROLE_CONTEXT_QUERY("ROL-400-INVALID-CONTEXT-QUERY", "Invalid Role context query", 400),
     INVALID_ROLE_TYPE("ROL-400-INVALID-ROLE-TYPE", "Invalid Role type", 400),
     INVALID_ROLE_NAME("ROL-400-INVALID-ROLE-NAME", "Invalid Role name", 400),
     INVALID_ROLE_DESCRIPTION("ROL-400-INVALID-ROLE-DESCRIPTION", "Invalid Role description", 400),

@@ -56,7 +56,7 @@ class GuildGroupsEventsUpgradeFlywayTest {
         var before = jdbc.queryForList("SELECT version, checksum FROM flyway_schema_history WHERE version IN ('38','39','40') ORDER BY installed_rank");
         Flyway latest = Flyway.configure().dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(5);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(6);
         latest.validate();
         assertThat(jdbc.queryForList("SELECT version, checksum FROM flyway_schema_history WHERE version IN ('38','39','40') ORDER BY installed_rank"))
                 .isEqualTo(before);

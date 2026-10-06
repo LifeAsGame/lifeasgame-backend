@@ -3,6 +3,7 @@ package online.lifeasgame.social.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum SocialError implements ErrorCode {
+    PERSONAL_GROUP_INVALID_INPUT("SOC-400-PERSONAL-GROUP-INPUT", "Invalid personal group input", 400),
     GUILD_NOT_FOUND("SOC-404-GUILD-NOT-FOUND","Guild Not Found",404),
     NOT_MEMBER("SOC-403-NOT-MEMBER","Not a member",403),
     LEADER_ONLY("SOC-403-LEADER-ONLY","Leader Only",403),
