@@ -150,9 +150,10 @@ public class GroupRosterStore {
     }
 
     public void cancelPending(Type type, Long groupId, Instant now) {
-        jdbc.update("UPDATE group_roster_invitations i JOIN group_roster_entries r ON r.id=i.roster_entry_id "
-                        + "SET i.status='CANCELED',i.updated_at=:now WHERE r." + column(type)
-                        + "=:groupId AND i.status='PENDING'", p(groupId).addValue("now", db(now)));
+        jdbc.update("UPDATE group_roster_invitations SET status='CANCELED',updated_at=:now "
+                        + "WHERE status='PENDING' AND EXISTS (SELECT 1 FROM group_roster_entries r "
+                        + "WHERE r.id=group_roster_invitations.roster_entry_id AND r." + column(type)
+                        + "=:groupId)", p(groupId).addValue("now", db(now)));
     }
 
     public List<Invitation> pending(Type type, Long groupId, Instant now, int page, int size) {
