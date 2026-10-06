@@ -8,10 +8,12 @@ import online.lifeasgame.inventory.application.command.MailboxCommand;
 import online.lifeasgame.inventory.application.result.MailboxResult;
 import online.lifeasgame.inventory.domain.*;
 import online.lifeasgame.inventory.domain.error.InventoryError;
+import online.lifeasgame.inventory.domain.event.ItemRewardClaimed;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.time.Clock;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +26,7 @@ public class MailboxService {
     private final ItemReader itemReader;
     private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final Clock clock;
 
     @Transactional
     public MailboxResult.Slot deliver(Long playerId, MailboxCommand.Deliver command) {
@@ -99,6 +102,11 @@ public class MailboxService {
                 addition.bound()
         ));
         domainEventPublisher.publishAll(inventory.pullEvents());
+        var occurredAt = clock.instant();
+        plans.forEach(plan -> domainEventPublisher.publish(new ItemRewardClaimed(
+                mailbox.getPlayerId(), plan.mailboxEntryId(), plan.itemId(),
+                plan.quantity(), occurredAt
+        )));
     }
 
     private PlayerMailbox.ClaimPlan planClaim(

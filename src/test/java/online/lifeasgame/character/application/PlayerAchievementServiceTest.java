@@ -39,6 +39,9 @@ class PlayerAchievementServiceTest {
     @Mock
     private CurrentPlayerAccessor currentPlayerAccessor;
 
+    @Mock
+    private AchievementFactProcessor factProcessor;
+
     private PlayerAchievementService service;
 
     @BeforeEach
@@ -48,7 +51,8 @@ class PlayerAchievementServiceTest {
                 playerAchievementWriter,
                 achievementReader,
                 playerReader,
-                currentPlayerAccessor
+                currentPlayerAccessor,
+                factProcessor
         );
     }
 
@@ -81,7 +85,7 @@ class PlayerAchievementServiceTest {
             assertThat(result.name()).isEqualTo("첫 Home");
             assertThat(result.category()).isEqualTo("STORY");
             assertThat(result.acquiredAt()).isNotNull();
-            verify(playerReader).assertExistsById(PLAYER_ID);
+            verify(playerReader).getByIdForUpdateOrThrow(PLAYER_ID);
             verify(achievementReader).getByIdOrThrow(ACHIEVEMENT_ID);
         }
     }
@@ -93,6 +97,8 @@ class PlayerAchievementServiceTest {
         @Test
         @DisplayName("Player와 Achievement 확인 후 기존 ownership key로 삭제한다")
         void revokesExistingAchievement() {
+            given(achievementReader.getByIdOrThrow(ACHIEVEMENT_ID)).willReturn(
+                    Achievement.create("ACH_TEST", "Test", AchievementCategory.STORY, null));
             var result = service.revokeAchievement(
                     PLAYER_ID,
                     ACHIEVEMENT_ID
@@ -100,8 +106,8 @@ class PlayerAchievementServiceTest {
 
             assertThat(result.playerId()).isEqualTo(PLAYER_ID);
             assertThat(result.achievementId()).isEqualTo(ACHIEVEMENT_ID);
-            verify(playerReader).assertExistsById(PLAYER_ID);
-            verify(achievementReader).assertExistsById(ACHIEVEMENT_ID);
+            verify(playerReader).getByIdForUpdateOrThrow(PLAYER_ID);
+            verify(achievementReader).getByIdOrThrow(ACHIEVEMENT_ID);
             verify(playerAchievementWriter).revoke(
                     PLAYER_ID,
                     ACHIEVEMENT_ID

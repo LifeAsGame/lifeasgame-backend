@@ -59,7 +59,8 @@ class MailboxClaimBoundaryTest {
                 inventoryReader,
                 itemReader,
                 domainEventPublisher,
-                currentPlayerAccessor
+                currentPlayerAccessor,
+                java.time.Clock.systemUTC()
         );
     }
 

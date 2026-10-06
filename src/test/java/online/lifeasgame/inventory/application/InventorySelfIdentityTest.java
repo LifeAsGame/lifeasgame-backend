@@ -89,7 +89,8 @@ class InventorySelfIdentityTest {
                     mock(InventoryReader.class),
                     mock(ItemReader.class),
                     mock(online.lifeasgame.core.event.DomainEventPublisher.class),
-                    accessor
+                    accessor,
+                    java.time.Clock.systemUTC()
             ));
             query = mock(MailboxQuery.class);
             queryService = new MailboxQueryService(query, accessor);

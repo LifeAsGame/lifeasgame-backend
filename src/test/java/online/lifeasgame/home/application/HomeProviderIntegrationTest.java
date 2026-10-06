@@ -461,9 +461,10 @@ class HomeProviderIntegrationTest {
                     updated_at,
                     code,
                     name,
+                    definition_version,
                     category,
                     desc_md
-                ) VALUES (?, ?, ?, ?, 'STORY', ?)
+                ) VALUES (?, ?, ?, ?, 1, 'STORY', ?)
                 """, NOW, NOW, code, name, "Home feed");
         Long achievementId = jdbcTemplate.queryForObject(
                 "SELECT id FROM achievements WHERE code = ?",
