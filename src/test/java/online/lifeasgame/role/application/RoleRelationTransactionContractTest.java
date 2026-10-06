@@ -98,7 +98,7 @@ class RoleRelationTransactionContractTest {
         PersonLookupApi personLookupApi() {
             PersonLookupApi api = mock(PersonLookupApi.class);
             given(api.getOwnedActive(any(), any())).willReturn(
-                    new PersonLookupApi.PersonReference(3L, null, "Alice")
+                    new PersonLookupApi.PersonReference(3L, null, "Alice", "ACTIVE")
             );
             return api;
         }

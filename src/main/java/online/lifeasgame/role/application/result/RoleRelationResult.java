@@ -48,6 +48,7 @@ public final class RoleRelationResult {
             String relationType,
             String roleNotes,
             String status,
+            String personStatus,
             Instant createdAt,
             Instant updatedAt,
             Long version
@@ -67,6 +68,7 @@ public final class RoleRelationResult {
                     stored.relationType(),
                     stored.roleNotes(),
                     stored.status(),
+                    person.status(),
                     stored.createdAt(),
                     stored.updatedAt(),
                     stored.version()

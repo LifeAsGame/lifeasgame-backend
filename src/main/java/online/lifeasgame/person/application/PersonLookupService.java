@@ -51,7 +51,8 @@ public class PersonLookupService implements PersonLookupApi {
         return new PersonReference(
                 person.getId(),
                 person.getLinkedUserId(),
-                person.getDisplayName()
+                person.getDisplayName(),
+                person.getStatus().name()
         );
     }
 }
