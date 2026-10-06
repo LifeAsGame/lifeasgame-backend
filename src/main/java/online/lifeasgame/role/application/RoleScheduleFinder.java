@@ -40,8 +40,8 @@ public class RoleScheduleFinder {
         roles.getOwned(roleId, owner);
         if (page < 0 || page > 1000 || size < 1 || size > 50 ||
                 time == null || source == null || status == null ||
-                participating && (source != Source.GUILD || time != TimeMode.DATED) ||
-                time == TimeMode.UNSCHEDULED && (from != null || to != null || source == Source.GUILD) ||
+                participating && (source == Source.ALL || source == Source.PERSONAL || time != TimeMode.DATED) ||
+                time == TimeMode.UNSCHEDULED && (from != null || to != null || source != Source.ALL && source != Source.PERSONAL) ||
                 (from == null) != (to == null)) invalid();
 
         if (time == TimeMode.DATED) {

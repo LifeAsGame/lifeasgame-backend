@@ -34,6 +34,10 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,7 +78,9 @@ class RoleScheduleIntegrationTest {
     @MockitoBean UserAuthApi userAuthApi;
 
     @BeforeEach void seed() {
-        for (String table : List.of("guild_event_rsvps", "guild_events", "personal_role_group_links",
+        for (String table : List.of("group_activity_rsvps", "group_activity_editors", "group_activities",
+                "role_party_invitations", "role_party_members", "role_parties", "party_wait_members", "party_members", "parties",
+                "guild_event_rsvps", "guild_events", "personal_role_group_links",
                 "guild_members", "guild_wait_members", "guilds", "role_events", "roles", "player"))
             jdbc.update("DELETE FROM " + table);
         given(userAuthApi.resolveAuthorization(any())).willReturn(Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
@@ -98,6 +104,207 @@ class RoleScheduleIntegrationTest {
                     VALUES (?,?,?,NOW(6),NOW(6),NOW(6))
                     """, id, member, member == B ? "LEADER" : "MEMBER");
         }
+    }
+
+    @Nested @DisplayName("Party와 RoleParty 공유 활동을 연결하면")
+    class GroupActivities {
+        @Test @DisplayName("리더가 지정한 편집자만 쓰고, 생성 재시도·버전·RSVP를 보존한다")
+        void permissionsAndCommands() throws Exception {
+            groups();
+            String party = "/api/v1/parties/87301/activities";
+            String roleParty = "/api/v1/role-parties/87302/activities";
+            for (String base : List.of(party, roleParty)) {
+                String key = UUID.randomUUID().toString();
+                result(post(base).content(create(key, "first")), A, 403);
+                result(get(base), C, 404);
+                assertThat(result(get(base), A, 200).at("/capabilities/canCreate").asBoolean()).isFalse();
+                assertThat(result(get(base), B, 200).at("/capabilities/canCreate").asBoolean()).isTrue();
+                result(put(base + "/editors/" + A), A, 403);
+                result(put(base + "/editors/" + A), B, 204);
+                assertThat(result(get(base), A, 200).at("/capabilities/canCreate").asBoolean()).isTrue();
+                var created = result(post(base).content(create(key, "first")), A, 201);
+                long id = created.path("id").asLong();
+                assertThat(result(post(base).content(create(key, "first")), A, 201).path("id").asLong()).isEqualTo(id);
+                result(post(base).content(create(key, "different")), A, 409);
+                assertThat(result(get(base), B, 200).path("totalElements").asInt()).isEqualTo(1);
+                result(get(base + "/" + id), C, 404);
+                assertThat(result(put(base + "/" + id + "/rsvp"), A, 200).path("participantCount").asInt()).isEqualTo(1);
+                assertThat(result(put(base + "/" + id + "/rsvp"), A, 200).path("participantCount").asInt()).isEqualTo(1);
+                assertThat(result(get(base + "/" + id + "/participants"), B, 200).path("totalElements").asInt()).isEqualTo(1);
+                result(patch(base + "/" + id).content(edit(7, "stale")), A, 409);
+                assertThat(result(patch(base + "/" + id).content(edit(0, "updated")), A, 200).path("version").asLong()).isEqualTo(1);
+                result(delete(base + "/editors/" + A), B, 204);
+                result(patch(base + "/" + id).content(edit(1, "blocked")), A, 403);
+                assertThat(result(post(base + "/" + id + "/complete").content("{\"version\":1}"), B, 200)
+                        .path("status").asText()).isEqualTo("COMPLETED");
+                result(put(base + "/" + id + "/rsvp"), A, 409);
+                result(post(base + "/" + id + "/cancel").content("{\"version\":2}"), B, 409);
+            }
+        }
+
+        @Test @DisplayName("네 소스를 한 페이지로 정렬하고 연결·멤버십 상실을 즉시 숨긴다")
+        void mixedScheduleAndRevocation() throws Exception {
+            groups();
+            roleEvent(88001, ROLE, "personal", "2026-10-31 15:00:00", "2026-10-31 15:30:00", "PLANNED");
+            guildEvent(88001, GUILD, "guild", "2026-10-31 15:00:00", "2026-10-31 15:30:00", "PLANNED");
+            link(ROLE, GUILD);
+            jdbc.update("INSERT INTO personal_role_group_links(owner_player_id,role_id,group_type,group_id) VALUES (?,?,?,?)", A, ROLE, "PARTY", 87301);
+            jdbc.update("INSERT INTO personal_role_group_links(owner_player_id,role_id,group_type,group_id) VALUES (?,?,?,?)", A, ROLE, "ROLE_PARTY", 87302);
+            var p = result(post("/api/v1/parties/87301/activities").content(create(UUID.randomUUID().toString(), "party")), B, 201);
+            var rp = result(post("/api/v1/role-parties/87302/activities").content(create(UUID.randomUUID().toString(), "role party")), B, 201);
+            result(put("/api/v1/parties/87301/activities/" + p.path("id").asLong() + "/rsvp"), A, 200);
+            var all = result(window(ROLE).param("size", "2"), A, 200);
+            assertThat(all.path("totalElements").asInt()).isEqualTo(4);
+            assertThat(all.at("/contents/0/sourceType").asText()).isEqualTo("GUILD_EVENT");
+            assertThat(all.at("/contents/1/sourceType").asText()).isEqualTo("PARTY_ACTIVITY");
+            var second = result(window(ROLE).param("size", "2").param("page", "1"), A, 200);
+            assertThat(second.at("/contents/0/sourceType").asText()).isEqualTo("ROLE_EVENT");
+            assertThat(second.at("/contents/1/sourceType").asText()).isEqualTo("ROLE_PARTY_ACTIVITY");
+            assertThat(result(window(ROLE).param("source", "SHARED").param("participating", "true"), A, 200)
+                    .path("totalElements").asInt()).isEqualTo(1);
+            assertThat(result(window(ROLE).param("source", "ROLE_PARTY"), A, 200)
+                    .at("/contents/0/groupId").asLong()).isEqualTo(87302);
+            jdbc.update("UPDATE role_party_members SET left_at=NOW(6) WHERE role_party_id=87302 AND player_id=?", A);
+            assertThat(result(window(ROLE), A, 200).path("totalElements").asInt()).isEqualTo(3);
+            result(get("/api/v1/role-parties/87302/activities/" + rp.path("id").asLong()), A, 404);
+            jdbc.update("DELETE FROM personal_role_group_links WHERE role_id=? AND group_type='PARTY'", ROLE);
+            assertThat(result(window(ROLE), A, 200).path("totalElements").asInt()).isEqualTo(2);
+            assertThat(result(get("/api/v1/parties/87301/activities/" + p.path("id").asLong()), A, 200)
+                    .path("myRsvp").asBoolean()).isTrue();
+        }
+
+        @Test @DisplayName("리더 이전과 재가입 후 옛 편집 권한·RSVP가 복원되지 않는다")
+        void transferAndRejoin() throws Exception {
+            groups();
+            String party = "/api/v1/parties/87301/activities";
+            String roleParty = "/api/v1/role-parties/87302/activities";
+            result(put(roleParty + "/editors/" + A), B, 204);
+            long activityId = result(post(roleParty).content(create(UUID.randomUUID().toString(), "meeting")), A, 201)
+                    .path("id").asLong();
+            result(put(roleParty + "/" + activityId + "/rsvp"), A, 200);
+            result(post("/api/v1/role-parties/87302/leave"), A, 204);
+            result(get(roleParty + "/" + activityId), A, 404);
+            jdbc.update("UPDATE role_party_members SET left_at=NULL, joined_at=DATE_ADD(joined_at, INTERVAL 1 SECOND)"
+                    + " WHERE role_party_id=87302 AND player_id=?", A);
+            var rejoined = result(get(roleParty + "/" + activityId), A, 200);
+            assertThat(rejoined.path("myRsvp").asBoolean()).isFalse();
+            assertThat(rejoined.path("participantCount").asInt()).isZero();
+            assertThat(rejoined.at("/capabilities/canEdit").asBoolean()).isFalse();
+            result(post(roleParty + "/" + activityId + "/complete").content("{\"version\":0}"), A, 403);
+            result(post("/api/v1/role-parties/87302/transfer-leader").content("{\"toPlayerId\":" + A + "}"), B, 200);
+            result(post(roleParty).content(create(UUID.randomUUID().toString(), "old leader")), B, 403);
+            result(post(roleParty).content(create(UUID.randomUUID().toString(), "new leader")), A, 201);
+            result(post("/api/v1/parties/87301/transfer-leader")
+                    .content("{\"fromLeaderPlayerId\":" + B + ",\"toPlayerId\":" + A + "}"), B, 200);
+            result(post(party).content(create(UUID.randomUUID().toString(), "old party leader")), B, 403);
+            result(post(party).content(create(UUID.randomUUID().toString(), "new party leader")), A, 201);
+        }
+
+        @Test @DisplayName("동시 수정은 한 요청만 반영하고, 권한 회수 후 쓰기를 거부한다")
+        void serializesMutations() throws Exception {
+            groups();
+            String base = "/api/v1/parties/87301/activities";
+            result(put(base + "/editors/" + A), B, 204);
+            long id = result(post(base).content(create(UUID.randomUUID().toString(), "before")), B, 201)
+                    .path("id").asLong();
+            try (var pool = Executors.newFixedThreadPool(2)) {
+                var start = new CountDownLatch(1);
+                var first = pool.submit(() -> {
+                    start.await();
+                    return statusOf(patch(base + "/" + id).content(edit(0, "first")), A);
+                });
+                var second = pool.submit(() -> {
+                    start.await();
+                    return statusOf(patch(base + "/" + id).content(edit(0, "second")), B);
+                });
+                start.countDown();
+                assertThat(List.of(first.get(15, TimeUnit.SECONDS), second.get(15, TimeUnit.SECONDS)))
+                        .containsExactlyInAnyOrder(200, 409);
+            }
+            assertThat(result(get(base + "/" + id), A, 200).path("version").asLong()).isEqualTo(1);
+            try (var pool = Executors.newFixedThreadPool(2)) {
+                var start = new CountDownLatch(1);
+                var edit = pool.submit(() -> {
+                    start.await();
+                    return statusOf(patch(base + "/" + id).content(edit(1, "racing edit")), A);
+                });
+                var revoke = pool.submit(() -> {
+                    start.await();
+                    return statusOf(delete(base + "/editors/" + A), B);
+                });
+                start.countDown();
+                assertThat(edit.get(15, TimeUnit.SECONDS)).isIn(200, 403);
+                assertThat(revoke.get(15, TimeUnit.SECONDS)).isEqualTo(204);
+            }
+            long latestVersion = result(get(base + "/" + id), B, 200).path("version").asLong();
+            assertThat(latestVersion).isIn(1L, 2L);
+            result(patch(base + "/" + id).content(edit(1, "blocked")), A, 403);
+            String terminal = base + "/" + id + "/complete";
+            result(post(terminal).content("{\"version\":" + latestVersion + "}"), B, 200);
+            result(put(base + "/" + id + "/rsvp"), A, 409);
+
+            String requestKey = UUID.randomUUID().toString();
+            try (var pool = Executors.newFixedThreadPool(2)) {
+                var start = new CountDownLatch(1);
+                var first = pool.submit(() -> {
+                    start.await();
+                    return result(post(base).content(create(requestKey, "same request")), B, 201).path("id").asLong();
+                });
+                var second = pool.submit(() -> {
+                    start.await();
+                    return result(post(base).content(create(requestKey, "same request")), B, 201).path("id").asLong();
+                });
+                start.countDown();
+                assertThat(first.get(15, TimeUnit.SECONDS)).isEqualTo(second.get(15, TimeUnit.SECONDS));
+            }
+            assertThat(result(get(base), B, 200).path("totalElements").asInt()).isEqualTo(2);
+            long nextId = result(post(base).content(create(UUID.randomUUID().toString(), "finish race")), B, 201)
+                    .path("id").asLong();
+            try (var pool = Executors.newFixedThreadPool(2)) {
+                var start = new CountDownLatch(1);
+                var complete = pool.submit(() -> {
+                    start.await();
+                    return statusOf(post(base + "/" + nextId + "/complete").content("{\"version\":0}"), B);
+                });
+                var rsvp = pool.submit(() -> {
+                    start.await();
+                    return statusOf(put(base + "/" + nextId + "/rsvp"), A);
+                });
+                start.countDown();
+                assertThat(complete.get(15, TimeUnit.SECONDS)).isEqualTo(200);
+                assertThat(rsvp.get(15, TimeUnit.SECONDS)).isIn(200, 409);
+            }
+            assertThat(result(get(base + "/" + nextId), A, 200).path("status").asText()).isEqualTo("COMPLETED");
+        }
+    }
+
+    private void groups() {
+        jdbc.update("""
+                INSERT INTO parties (party_id,player_id,leader_player_id,name_original,name_value,code_value,
+                 visibility,join_policy,status,max_members,created_at,updated_at)
+                VALUES (87301,?,?, 'Party','party','SCHEDULE-PARTY','PUBLIC','APPROVAL','ACTIVE',10,NOW(6),NOW(6))
+                """, B, B);
+        for (long id : List.of(A, B)) jdbc.update("""
+                INSERT INTO party_members(party_id,player_id,role,joined_at,created_at,updated_at)
+                VALUES (87301,?,?,NOW(6),NOW(6),NOW(6))
+                """, id, id == B ? "LEADER" : "OFFICER");
+        jdbc.update("""
+                INSERT INTO role_parties(id,role_id,creator_player_id,leader_player_id,name,status,max_members,version,created_at,updated_at)
+                VALUES (87302,?,?,?,'Role Party','ACTIVE',10,0,NOW(6),NOW(6))
+                """, FOREIGN_ROLE, C, B);
+        for (long id : List.of(A, B)) jdbc.update("""
+                INSERT INTO role_party_members(role_party_id,player_id,joined_at,created_at,updated_at)
+                VALUES (87302,?,NOW(6),NOW(6),NOW(6))
+                """, id);
+    }
+
+    private static String create(String key, String title) {
+        return "{\"clientRequestId\":\"" + key + "\",\"title\":\"" + title
+                + "\",\"startsAt\":\"2026-10-31T15:00:00Z\",\"endsAt\":\"2026-10-31T15:30:00Z\"}";
+    }
+    private static String edit(long version, String title) {
+        return "{\"version\":" + version + ",\"title\":\"" + title
+                + "\",\"startsAt\":\"2026-10-31T15:00:00Z\",\"endsAt\":\"2026-10-31T15:30:00Z\"}";
     }
 
     @Nested @DisplayName("혼합 목록을 조회하면")
@@ -257,6 +464,11 @@ class RoleScheduleIntegrationTest {
                 .header("Authorization", "Bearer " + jwt.createAccessToken(actor, actor)))
                 .andExpect(status().is(expected)).andReturn().getResponse();
         return response.getContentAsString().isEmpty() ? json.nullNode() : json.readTree(response.getContentAsString()).path("result");
+    }
+    private int statusOf(MockHttpServletRequestBuilder request, long actor) throws Exception {
+        return mvc.perform(request.contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + jwt.createAccessToken(actor, actor)))
+                .andReturn().getResponse().getStatus();
     }
 
     @TestConfiguration static class IdentityConfig {

@@ -7,7 +7,8 @@ public final class RoleScheduleResult {
     private RoleScheduleResult() {}
 
     public record Row(String sourceType, Long sourceId, Long roleId, Long guildId,
-                      String guildName, String title, Instant startsAt, Instant endsAt,
+                      String guildName, String groupType, Long groupId, String groupName,
+                      String title, Instant startsAt, Instant endsAt,
                       String status, Boolean myRsvp) {}
 
     public record Page(List<Row> contents, int page, int size, long totalElements, int totalPages) {

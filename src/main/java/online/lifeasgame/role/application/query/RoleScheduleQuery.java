@@ -12,6 +12,6 @@ public interface RoleScheduleQuery {
                     Status status, boolean participating, int page, int size) {}
 
     enum TimeMode { DATED, UNSCHEDULED }
-    enum Source { ALL, PERSONAL, GUILD }
+    enum Source { ALL, PERSONAL, GUILD, PARTY, ROLE_PARTY, SHARED }
     enum Status { ALL, PLANNED, COMPLETED, CANCELED }
 }
