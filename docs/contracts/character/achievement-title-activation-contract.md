@@ -1,12 +1,12 @@
-# Achievement and title activation — DRAFT
+# Achievement and title activation — READY on 19081
 
 This contract records the 2026-10-06 activation decision. Earlier catalog rows were GATED, DEFERRED or candidates; they did not authorize automatic grants. Implementation, definition data and 19081 runtime readiness are tracked separately below.
 
 | Readiness | State |
 | --- | --- |
-| Implementation | LOCAL TESTED; required CI pending |
-| Definition data | V50 local MySQL tested; 19081 pending |
-| Dedicated 19081 runtime | NOT VERIFIED |
+| Implementation | `49e0bb7aa459afc921bbd01462bd8cc7755ddd21` locally tested and deployed; required PR CI pending |
+| Definition data | V50 applied on 19081; five achievements and two titles confirmed |
+| Dedicated 19081 runtime | READY; real HTTP acquisition, representative title, and bounded reconciliation verified |
 
 ## Activated definitions and conditions
 
@@ -37,3 +37,5 @@ A separate server-side reconciliation command supports dry-run, bounded apply an
 The ADMIN-only command is `POST /admin/v1/achievement-activation/reconcile` with `{ "afterPlayerId": 0, "batchSize": 100, "apply": false }`. A dry run is read only. The response includes `mode`, `nextAfterPlayerId`, `hasMore`, and per-Player `grantable`, `existing`, `revoked`, `unknown` counts. Apply uses the same request with `apply=true`, recomputes each Player under transaction, and can resume from the returned cursor. Batch size is 1–100. The only historical state fallback is QuestAcceptance `DONE` with `completed_at` and PlayerQuestRoute `COMPLETED` with `completed_at`. Earlier Mailbox claims without a retained durable fact remain unknown.
 
 Before V50, a read-only 19081 catalog check found none of these seven stable codes, so no existing Korean name or definition row conflicts with the proposed V50 insert. This does not assert that the original full Achievement/Title catalog source files were obtained.
+
+On 2026-10-06, the dedicated 19081 runtime applied V50 (Flyway checksum `-1719862403`) and served JAR SHA-256 `692d7c574d88b124ac66f645e331934f9a35fd41600c04d856d6ce55ccf1d41e`. A disposable Player acquired all five achievements and both titles through ordinary HTTP actions: three record Quests auto-completed from content-ready LifeLogs, both Routes required explicit final advances, and a successful Mailbox Claim triggered the item achievement. The linked titles remained unselected; selecting and clearing a representative title worked. A separate untouched showcase Player remained at seven `UNACQUIRED` entries after reconciliation. The ADMIN-only reconciliation ran in three batches of 20 over 58 Players: dry-run found 29 evidence-backed missing awards, apply granted those 29, and the following dry-run found zero grantable awards. It left 256 achievement decisions unknown for lack of qualifying evidence. The disposable verifier's temporary ADMIN authority was restored to USER. The required PR CI was triggered and was still running at handoff; this READY status refers to the verified dedicated runtime and local tests, not a CI conclusion.
