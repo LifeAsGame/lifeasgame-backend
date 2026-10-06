@@ -1,12 +1,12 @@
 # Guild internal creation and offline roster (Feedback 4B)
 
-Status: **IMPLEMENTED — runtime verification pending**. Baseline is BE #402 `f589bf881c75f5801ad88cc5e1ae11916e57622d` (4A runtime product `83a380b0e508770c4898d371a5939631bab924fa`, V48). This contract was shared as DRAFT before implementation. A and B have separate readiness flags; the whole contract becomes READY only after both pass 19081 verification.
+Status: **API/runtime READY**. Baseline is BE #402 `f589bf881c75f5801ad88cc5e1ae11916e57622d` (4A runtime product `83a380b0e508770c4898d371a5939631bab924fa`, V48). This contract was shared as DRAFT before implementation. A and B each passed their implementation and dedicated 19081 runtime gates.
 
 All routes require the authenticated Current Player; the server derives the actor Player ID. Responses use the existing `ApiResponse.result` envelope, paged responses use `{contents,page,size,totalElements,totalPages}`, and failures use the existing `application/problem+json` format. IDs called `rosterEntryId`, `playerId`, `userId`, `personId`, and legacy invitation ID belong to different namespaces and are never interchangeable.
 
 ## A. Create a group inside a Guild
 
-`implementationReady=true`; `runtimeReady=false`.
+`implementationReady=true`; `runtimeReady=true`.
 
 `POST /api/v1/guilds/{guildId}/groups` creates an independent group and proposes its GuildGroupLink in one transaction. The request is `{clientRequestId,groupType,displayName,party?,roleParty?}`. `clientRequestId` is a required UUID. `groupType` is `PARTY` or `ROLE_PARTY`. Exactly the matching detail object is required:
 
@@ -22,7 +22,7 @@ The existing `GET /api/v1/guilds/{guildId}/group-links` keeps its ACTIVE rows an
 
 ## B. Offline roster
 
-`implementationReady=true`; `runtimeReady=false`.
+`implementationReady=true`; `runtimeReady=true`.
 
 Roster exists only for `GUILD` and ordinary `PARTY`. It is shared group data, distinct from service membership and from private Person/notes. An active group member may read; only its **current leader** may create, edit, soft-delete, invite, or cancel. Guild OFFICER and Party OFFICER do not manage it. Disbanded groups expose neither roster nor pending invitations. No roster data is projected into public preview, search, STOMP, group-link summaries, or logs.
 
@@ -54,4 +54,6 @@ Current members may use existing member-to-Person links only **after** the accou
 
 The implementation gate requires focused MySQL tests for creation, rollback and retry, access, roster persistence and paging, invitation state, atomic acceptance and lock races, plus representative existing membership/activity regressions. The runtime gate requires full required CI, a backup of the dedicated DB/JAR, additive post-V48 migration, deployment to 19081 only, real HTTP with disposable accounts for A and Guild/Party B, 13005 CORS, and representative 4A/3B1 reads. Record the deployed product SHA/tree/JAR checksum and migration checksum separately from documentation-only commits. Do not mark READY before these gates pass.
 
-Local implementation verification: `GuildCreateRosterIntegrationTest` passed leader/member creation for both group types, replay/payload conflict, Role ownership, rollback, Guild/Party roster acceptance, existing-member link, version conflict, expired/canceled/deleted invitation denial, leader-change cancellation, departed-member replay, duplicate Player binding, and last-seat race with ordinary join. The focused Guild group/event, private Guild note, Role schedule, fresh/explicit-baseline/history/JPA migration regressions passed. A full local `clean test build` encountered a V48-era expected migration count in `GuildGroupsEventsUpgradeFlywayTest`; that assertion was corrected and the focused upgrade test passed. The interrupted full run is not counted as a passing build. Required PR CI is the final full-suite gate.
+Local implementation verification: `GuildCreateRosterIntegrationTest` passed leader/member creation for both group types, replay/payload conflict, Role ownership, rollback, Guild/Party roster acceptance, existing-member link, version conflict, expired/canceled/deleted invitation denial, leader-change cancellation, departed-member replay, duplicate Player binding, and last-seat race with ordinary join. The focused Guild group/event, private Guild note, Role schedule, fresh/explicit-baseline/history/JPA migration regressions passed. A full local `clean test build` was stopped during repeated local Testcontainers MySQL startup; this is not counted as a passing local full run. The focused H2 leader-transfer regression and MySQL roster test passed after the H2 fixture correction. `./gradlew build -x test` passed. Required [full PR CI build-and-test](https://github.com/LifeAsGame/lifeasgame-backend/actions/runs/37398382264) passed on product HEAD `ce18a4c631f2bdb88559ee4c3da55161cb84d770`.
+
+Dedicated runtime verification (2026-10-06): product HEAD `ce18a4c631f2bdb88559ee4c3da55161cb84d770`, tree `c12bed8cb7bfb85e09bf44befc5bb89c5c2adfd7`, JAR SHA-256 `a3712bfe778fd40279e2ead711d7b1104ec7846f646c517379bec827fc1683ee`. V49 checksum `-946678138` applied after V48; Hibernate validation and health passed. The 19081 app, MySQL, and Redis container identities were preserved, as were 19080 and FE 13005. Four disposable Players (existing 51 → 55) passed 32 real HTTP checks across A and Guild/Party B, ownership/privacy, idempotency, stale versions, consent and membership, representative 4A/3B1 reads, no LifeLog/Quest/reward/outbox/EXP/Person side effects, and exact 13005 CORS. Evidence: `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/feedback04b-http-verification.json`; credentials (0600): `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/namespaces/be-feedback04b-20261006/credentials.json`. The dedicated DB/JAR/runtime pre-V49 backups are under the same runtime directory. This READY document commit is separate from the deployed product source.
