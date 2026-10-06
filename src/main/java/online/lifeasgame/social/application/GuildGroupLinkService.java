@@ -32,19 +32,24 @@ public class GuildGroupLinkService {
                        boolean groupLeaderApproved, Instant createdAt, Instant updatedAt) {}
     public record ActiveLink(Long id, String groupType, Long groupId, String displayName,
                              String status, String entryAction) {}
+    public record ActivePage(List<ActiveLink> contents, int page, int size, long totalElements,
+                             int totalPages, Capabilities capabilities) {}
+    public record Capabilities(boolean canStartCreateGroup, boolean rolePartyRequiresOwnedActiveRole) {}
 
     @Transactional(readOnly = true)
-    public GuildResult.Page<ActiveLink> active(Long guildId, int page, int size) {
+    public ActivePage active(Long guildId, int page, int size) {
         PageRequest paging = page(page, size);
         Guild guild = guild(guildId, false);
         Long actor = actor();
         if (!guilds.isActiveMember(guildId, actor)) throw error(SocialError.GUILD_NOT_FOUND);
         Page<GuildGroupLink> rows = links.findByGuildIdAndStatusOrderByIdDesc(guildId, GuildGroupLink.Status.ACTIVE, paging);
         Map<Long, GuildGroupLinkRepository.LinkTarget> targets = targets(rows.getContent(), actor);
-        return GuildResult.Page.of(rows.stream().map(row -> {
+        List<ActiveLink> contents = rows.stream().map(row -> {
             Link link = result(row, targets.get(row.getId()), guild.getLeaderPlayerId());
             return new ActiveLink(link.id(), link.groupType(), link.groupId(), link.displayName(), link.status(), link.entryAction());
-        }).toList(), page, size, rows.getTotalElements());
+        }).toList();
+        return new ActivePage(contents, page, size, rows.getTotalElements(), rows.getTotalPages(),
+                new Capabilities(true, true));
     }
 
     @Transactional(readOnly = true)
