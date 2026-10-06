@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -185,6 +186,10 @@ class SocialCreationIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"guilds", "parties"})
+    @Sql(statements = {
+            "CREATE TABLE IF NOT EXISTS group_roster_entries (id BIGINT PRIMARY KEY, guild_id BIGINT, party_id BIGINT)",
+            "CREATE TABLE IF NOT EXISTS group_roster_invitations (roster_entry_id BIGINT, status VARCHAR(20), updated_at TIMESTAMP)"
+    })
     @DisplayName("공개 모임의 가입 승인 후 현재 멤버가 상세를 보고 리더 위임은 이전 리더의 수정 권한을 제거한다")
     void membershipFollowsLeaderTransfer(String groups) throws Exception {
         String base = path(groups);

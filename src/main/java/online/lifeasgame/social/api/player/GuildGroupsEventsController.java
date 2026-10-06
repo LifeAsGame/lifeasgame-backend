@@ -11,22 +11,50 @@ import online.lifeasgame.platform.web.validation.CalendarInstantDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import online.lifeasgame.social.application.GuildEventService;
 import online.lifeasgame.social.application.GuildGroupLinkService;
+import online.lifeasgame.social.application.GuildGroupCreator;
+import online.lifeasgame.social.application.command.PartyCommand;
+import online.lifeasgame.social.api.player.request.PlayerPartyRequest;
 import online.lifeasgame.social.application.result.GuildResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/guilds/{guildId}")
 public class GuildGroupsEventsController {
     private final GuildGroupLinkService links;
+    private final GuildGroupCreator creator;
     private final GuildEventService events;
 
     public record Propose(@NotBlank String groupType, @NotNull @Positive Long groupId, @NotBlank String displayName) {}
     public record Label(@NotBlank String displayName) {}
+    public record CreateGroup(@NotNull UUID clientRequestId, @NotBlank String groupType,
+                              @NotBlank String displayName, @Valid PlayerPartyRequest.Create party,
+                              @Valid RolePartyDetails roleParty) {
+        public record RolePartyDetails(@NotNull @Positive Long roleId, @NotBlank String name,
+                                       String description, int maxMembers) {}
+        GuildGroupCreator.Command toCommand() {
+            PartyCommand.Create p = party == null ? null : new PartyCommand.Create(party.name(), party.code(),
+                    party.descriptionMd(), party.bannerImageUrl(), party.bannerBgColor(), party.visibility(),
+                    party.joinPolicy(), party.maxMembers());
+            GuildGroupCreator.RolePartyDetails rp = roleParty == null ? null :
+                    new GuildGroupCreator.RolePartyDetails(roleParty.roleId(), roleParty.name(),
+                            roleParty.description(), roleParty.maxMembers());
+            return new GuildGroupCreator.Command(clientRequestId, groupType, displayName, p, rp);
+        }
+    }
+
+    @PostMapping("/groups")
+    public ResponseEntity<ApiResponse<GuildGroupCreator.Result>> createGroup(
+            @PathVariable Long guildId, @Valid @RequestBody CreateGroup request) {
+        var result = creator.create(guildId, request.toCommand());
+        return result.replayed() ? ApiResponses.ok(result) :
+                ApiResponses.created(URI.create("/api/v1/guilds/" + guildId + "/group-links/" + result.linkId()), result);
+    }
     public record EventDetails(@NotBlank String title, String sharedDescription,
                                @NotNull @JsonDeserialize(using = CalendarInstantDeserializer.class) Instant startsAt,
                                @NotNull @JsonDeserialize(using = CalendarInstantDeserializer.class) Instant endsAt,
@@ -37,7 +65,7 @@ public class GuildGroupsEventsController {
     }
 
     @GetMapping("/group-links")
-    public ResponseEntity<ApiResponse<GuildResult.Page<GuildGroupLinkService.ActiveLink>>> links(
+    public ResponseEntity<ApiResponse<GuildGroupLinkService.ActivePage>> links(
             @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ApiResponses.ok(links.active(guildId, page, size));

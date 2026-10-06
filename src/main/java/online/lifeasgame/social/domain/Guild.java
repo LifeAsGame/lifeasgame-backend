@@ -281,6 +281,14 @@ public class Guild extends AbstractTime {
         this.members.add(guildMember);
     }
 
+    public void joinFromRosterInvitation(Long playerId) {
+        if (status != GuildStatus.ACTIVE || findMember(playerId).isPresent() || memberCount() >= maxMembers)
+            throw new DomainException(SocialError.ROSTER_CONFLICT);
+        findPendingJoin(playerId).ifPresent(GuildWaitMember::cancel);
+        findPendingInvite(playerId).ifPresent(GuildWaitMember::cancel);
+        members.add(GuildMember.createMember(this, playerId));
+    }
+
     public void declineInvitation(Long playerId) {
         GuildWaitMember inv = findPendingInvite(playerId)
                 .orElseThrow(() -> new IllegalStateException("invitation not found"));
