@@ -28,7 +28,7 @@ class HobbyReader {
     }
 
     public Hobby getByIdOrThrow(Long hobbyId) {
-        return repository.findById(hobbyId)
+        return repository.findById(hobbyId).filter(Hobby::isActive)
                 .orElseThrow(() -> new DomainException(HobbyError.HOBBY_NOT_FOUND));
     }
 }

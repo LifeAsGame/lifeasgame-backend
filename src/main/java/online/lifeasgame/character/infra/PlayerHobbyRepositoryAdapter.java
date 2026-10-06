@@ -39,4 +39,29 @@ public class PlayerHobbyRepositoryAdapter implements PlayerHobbyRepository, Play
     public List<PlayerHobbyView> findViewsByPlayerId(Long playerId) {
         return jpaRepository.findPlayerHobbyViews(playerId);
     }
+
+    @Override
+    public Optional<PlayerHobby> findPrivate(Long playerId, Long ownedItemId) {
+        return jpaRepository.findByIdAndPlayerIdAndSource(ownedItemId, playerId, "PRIVATE");
+    }
+
+    @Override
+    public boolean existsPrivateName(Long playerId, String normalizedName) {
+        return jpaRepository.existsByPlayerIdAndPrivateNameKey(playerId, normalizedName);
+    }
+
+    @Override
+    public PlayerHobby saveAndFlush(PlayerHobby hobby) {
+        return jpaRepository.saveAndFlush(hobby);
+    }
+
+    @Override
+    public void delete(PlayerHobby hobby) {
+        jpaRepository.delete(hobby);
+    }
+
+    @Override
+    public List<PlayerHobby> findPrivateByPlayerId(Long playerId) {
+        return jpaRepository.findByPlayerIdAndSourceOrderByIdDesc(playerId, "PRIVATE");
+    }
 }

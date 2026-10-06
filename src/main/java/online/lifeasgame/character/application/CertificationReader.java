@@ -28,7 +28,7 @@ class CertificationReader {
     }
 
     public Certification getByIdOrThrow(Long certificationId) {
-        return repository.findById(certificationId)
+        return repository.findById(certificationId).filter(Certification::isActive)
                 .orElseThrow(() -> new DomainException(CertificationError.CERTIFICATION_NOT_FOUND));
     }
 }

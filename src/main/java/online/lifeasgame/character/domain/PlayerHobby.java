@@ -16,6 +16,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.core.guard.Guard;
+import online.lifeasgame.character.domain.error.PlayerHobbyError;
+import online.lifeasgame.core.error.DomainException;
+import java.util.Locale;
 
 @Getter
 @Entity
@@ -35,8 +38,14 @@ public class PlayerHobby {
     @Column(name = "player_id", nullable = false)
     private Long playerId;
 
-    @Column(name = "hobby_id", nullable = false)
+    @Column(name = "hobby_id")
     private Long hobbyId;
+
+    @Column(name = "source", nullable = false, length = 16)
+    private String source = "CATALOG";
+
+    @Column(name = "private_name_key", length = 60)
+    private String privateNameKey;
 
     @Column(name = "personal_category_id")
     private Long personalCategoryId;
@@ -113,6 +122,41 @@ public class PlayerHobby {
         this.proficiency = validatedProficiency;
         this.status = status;
         this.startedOn = startedOn;
+    }
+
+    public static PlayerHobby createPrivate(Long playerId, String name, String detail, int proficiency,
+                                            PlayerHobbyStatus status, LocalDate startedOn) {
+        String normalized = normalizePrivateName(name);
+        validatePrivateDetail(detail);
+        PlayerHobby hobby = create(playerId, null, name.strip(), detail, proficiency, status, startedOn);
+        hobby.source = "PRIVATE";
+        hobby.privateNameKey = normalized;
+        return hobby;
+    }
+
+    public void changePrivate(String name, String detail, int proficiency, PlayerHobbyStatus status, LocalDate startedOn) {
+        if (!"PRIVATE".equals(source)) throw new DomainException(PlayerHobbyError.PLAYER_HOBBY_NOT_FOUND);
+        String normalized = normalizePrivateName(name);
+        validatePrivateDetail(detail);
+        changeHobby(name.strip(), detail, proficiency, status, startedOn);
+        this.privateNameKey = normalized;
+    }
+
+    private static String normalizePrivateName(String name) {
+        if (name == null || name.isBlank() || name.strip().codePointCount(0, name.strip().length()) > 60) {
+            throw new DomainException(PlayerHobbyError.INVALID_PRIVATE_HOBBY_NAME);
+        }
+        String normalized = name.strip().toLowerCase(Locale.ROOT);
+        if (normalized.codePointCount(0, normalized.length()) > 60) {
+            throw new DomainException(PlayerHobbyError.INVALID_PRIVATE_HOBBY_NAME);
+        }
+        return normalized;
+    }
+
+    private static void validatePrivateDetail(String detail) {
+        if (detail != null && detail.codePointCount(0, detail.length()) > 200) {
+            throw new DomainException(PlayerHobbyError.INVALID_PRIVATE_HOBBY_DETAIL);
+        }
     }
 
     public void assignPersonalCategory(Long personalCategoryId) {
