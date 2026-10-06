@@ -1,12 +1,12 @@
 # Guild internal creation and offline roster (Feedback 4B)
 
-Status: **DRAFT**. Baseline is BE #402 `f589bf881c75f5801ad88cc5e1ae11916e57622d` (4A runtime product `83a380b0e508770c4898d371a5939631bab924fa`, V48). This contract is shared before implementation. A and B each track `implementationReady=false`, `runtimeReady=false` until the corresponding code and 19081 verification finish. The whole contract is READY only when both are true for both sections.
+Status: **IMPLEMENTED — runtime verification pending**. Baseline is BE #402 `f589bf881c75f5801ad88cc5e1ae11916e57622d` (4A runtime product `83a380b0e508770c4898d371a5939631bab924fa`, V48). This contract was shared as DRAFT before implementation. A and B have separate readiness flags; the whole contract becomes READY only after both pass 19081 verification.
 
 All routes require the authenticated Current Player; the server derives the actor Player ID. Responses use the existing `ApiResponse.result` envelope, paged responses use `{contents,page,size,totalElements,totalPages}`, and failures use the existing `application/problem+json` format. IDs called `rosterEntryId`, `playerId`, `userId`, `personId`, and legacy invitation ID belong to different namespaces and are never interchangeable.
 
 ## A. Create a group inside a Guild
 
-`implementationReady=false`; `runtimeReady=false`.
+`implementationReady=true`; `runtimeReady=false`.
 
 `POST /api/v1/guilds/{guildId}/groups` creates an independent group and proposes its GuildGroupLink in one transaction. The request is `{clientRequestId,groupType,displayName,party?,roleParty?}`. `clientRequestId` is a required UUID. `groupType` is `PARTY` or `ROLE_PARTY`. Exactly the matching detail object is required:
 
@@ -22,7 +22,7 @@ The existing `GET /api/v1/guilds/{guildId}/group-links` keeps its ACTIVE rows an
 
 ## B. Offline roster
 
-`implementationReady=false`; `runtimeReady=false`.
+`implementationReady=true`; `runtimeReady=false`.
 
 Roster exists only for `GUILD` and ordinary `PARTY`. It is shared group data, distinct from service membership and from private Person/notes. An active group member may read; only its **current leader** may create, edit, soft-delete, invite, or cancel. Guild OFFICER and Party OFFICER do not manage it. Disbanded groups expose neither roster nor pending invitations. No roster data is projected into public preview, search, STOMP, group-link summaries, or logs.
 
@@ -53,3 +53,5 @@ Current members may use existing member-to-Person links only **after** the accou
 ## Verification gate
 
 The implementation gate requires focused MySQL tests for creation, rollback and retry, access, roster persistence and paging, invitation state, atomic acceptance and lock races, plus representative existing membership/activity regressions. The runtime gate requires full required CI, a backup of the dedicated DB/JAR, additive post-V48 migration, deployment to 19081 only, real HTTP with disposable accounts for A and Guild/Party B, 13005 CORS, and representative 4A/3B1 reads. Record the deployed product SHA/tree/JAR checksum and migration checksum separately from documentation-only commits. Do not mark READY before these gates pass.
+
+Local implementation verification: `GuildCreateRosterIntegrationTest` passed creation, replay/payload conflict, Role ownership, rollback, Guild/Party roster acceptance, existing-member link, version conflict, leader-change cancellation, departed-member replay, duplicate Player binding, and last-seat race with ordinary join. The focused Guild group/event, private Guild note, Role schedule, fresh/explicit-baseline/history/JPA migration regressions passed. A full local `clean test build` encountered a V48-era expected migration count in `GuildGroupsEventsUpgradeFlywayTest`; that assertion was corrected and the focused upgrade test passed. The interrupted full run is not counted as a passing build. Required PR CI is the final full-suite gate.

@@ -12,6 +12,7 @@ import online.lifeasgame.social.domain.GuildVisibility;
 import online.lifeasgame.social.domain.GuildWaitType;
 import online.lifeasgame.social.domain.GuildStatus;
 import online.lifeasgame.social.domain.repository.GuildRepository;
+import online.lifeasgame.social.infra.GroupRosterStore;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class GuildService {
     private final GuildReader guildReader;
     private final GuildWriter guildWriter;
     private final GuildRepository repository;
+    private final GroupRosterStore roster;
 
     @Transactional
     public GuildResult.Info create(Long playerId, GuildCommand.Create command) {
@@ -106,87 +108,89 @@ public class GuildService {
 
     @Transactional
     public void requestJoin(Long playerId, Long id, GuildCommand.RequestJoin command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         guild.requestJoin(playerId, command.message());
     }
 
     @Transactional
     public void approveJoin(Long playerId, Long id, GuildCommand.Approve command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.approveJoin(command.applicantPlayerId());
     }
 
     @Transactional
     public void rejectJoin(Long playerId, Long id, GuildCommand.Reject command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.rejectJoin(command.applicantPlayerId());
     }
 
     @Transactional
     public void cancelJoin(Long playerId, Long id) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         guild.cancelJoinRequest(playerId);
     }
 
     @Transactional
     public void transferLeader(Long playerId, Long id, GuildCommand.TransferLeader command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.transferLeadership(guild.getLeaderPlayerId(), command.toPlayerId());
+        roster.cancelPending(GroupRosterStore.Type.GUILD, id, java.time.Instant.now());
     }
 
     @Transactional
     public void kick(Long playerId, Long id, GuildCommand.Kick command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeaderOrOfficer(guild, playerId);
         guild.kickMember(command.targetPlayerId());
     }
 
     @Transactional
     public void promote(Long playerId, Long id, GuildCommand.Promote command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.promoteOfficer(guild.getLeaderPlayerId(), command.targetPlayerId());
     }
 
     @Transactional
     public void demote(Long playerId, Long id, GuildCommand.Demote command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.demoteToMember(guild.getLeaderPlayerId(), command.targetPlayerId());
     }
 
     @Transactional
     public void leave(Long playerId, Long id) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         guild.leave(playerId);
     }
 
     @Transactional
     public void disbandByLeader(Long playerId, Long id) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeader(guild, playerId);
         guild.disbandByLeader(guild.getLeaderPlayerId());
+        roster.cancelPending(GroupRosterStore.Type.GUILD, id, java.time.Instant.now());
     }
 
     @Transactional
     public void invite(Long playerId, Long id, GuildCommand.Invite command) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         ensureLeaderOrOfficer(guild, playerId);
         guild.invite(playerId, command.inviteePlayerId(), command.message(), parseDateTime(command.expiresAtIso()));
     }
 
     @Transactional
     public void acceptInvitation(Long playerId, Long id) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         guild.acceptInvitation(playerId);
     }
 
     @Transactional
     public void declineInvitation(Long playerId, Long id) {
-        Guild guild = guildReader.getByIdOrThrow(id);
+        Guild guild = locked(id);
         guild.declineInvitation(playerId);
     }
 
@@ -279,6 +283,10 @@ public class GuildService {
     private static PageRequest pageOf(int page, int size) {
         if (page < 0 || size < 1 || size > 100) throw new DomainException(SocialError.INVALID_STATE);
         return PageRequest.of(page, size);
+    }
+
+    private Guild locked(Long id) {
+        return repository.findForUpdate(id).orElseThrow(() -> new DomainException(SocialError.GUILD_NOT_FOUND));
     }
 
     private static void requireMember(Guild group, Long playerId) {

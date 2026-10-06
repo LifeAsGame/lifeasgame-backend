@@ -13,6 +13,7 @@ import online.lifeasgame.social.domain.PartyWaitType;
 import online.lifeasgame.social.domain.PartyStatus;
 import online.lifeasgame.social.domain.ActivityGroupType;
 import online.lifeasgame.social.infra.GroupActivityStore;
+import online.lifeasgame.social.infra.GroupRosterStore;
 import online.lifeasgame.social.domain.repository.PartyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ public class PartyService {
     private final PartyWriter partyWriter;
     private final PartyRepository repository;
     private final GroupActivityStore activities;
+    private final GroupRosterStore roster;
 
     @Transactional
     public PartyResult.Info create(Long playerId, PartyCommand.Create command) {
@@ -140,6 +142,7 @@ public class PartyService {
         ensureLeader(party, playerId);
         party.transferLeadership(command.fromLeaderPlayerId(), command.toPlayerId());
         activities.revoke(ActivityGroupType.PARTY, id, playerId);
+        roster.cancelPending(GroupRosterStore.Type.PARTY, id, java.time.Instant.now());
     }
 
     @Transactional
@@ -176,6 +179,7 @@ public class PartyService {
         Party party = partyReader.getForUpdate(id);
         ensureLeader(party, playerId);
         party.disbandByLeader(playerId);
+        roster.cancelPending(GroupRosterStore.Type.PARTY, id, java.time.Instant.now());
     }
 
     @Transactional
