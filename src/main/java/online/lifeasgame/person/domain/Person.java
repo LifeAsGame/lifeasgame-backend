@@ -136,6 +136,18 @@ public class Person extends AbstractTime {
         status = PersonStatus.ARCHIVED;
     }
 
+    public void linkUser(Long userId) {
+        if (status == PersonStatus.ARCHIVED) throw new DomainException(PersonError.PERSON_ARCHIVED);
+        if (linkedUserId != null && !linkedUserId.equals(userId))
+            throw new DomainException(PersonError.PERSON_LINK_CONFLICT);
+        this.linkedUserId = Guard.minValue(Guard.notNull(userId, "userId"), 1, "userId");
+    }
+
+    public void unlinkUser() {
+        if (status == PersonStatus.ARCHIVED) throw new DomainException(PersonError.PERSON_ARCHIVED);
+        this.linkedUserId = null;
+    }
+
     private static Long positive(Long value) {
         return Guard.minValue(
                 Guard.notNull(value, "ownerPlayerId"),

@@ -25,6 +25,9 @@ public enum SocialError implements ErrorCode {
     GUILD_EVENT_NOT_FOUND("SOC-404-GUILD-EVENT-NOT-FOUND", "Guild event not found", 404),
     GUILD_EVENT_INVALID_INPUT("SOC-400-GUILD-EVENT-INVALID-INPUT", "Invalid guild event input", 400),
     GUILD_EVENT_CONFLICT("SOC-409-GUILD-EVENT-CONFLICT", "Guild event state conflict", 409),
+    GUILD_NOTE_NOT_FOUND("SOC-404-GUILD-NOTE-NOT-FOUND", "Guild note not found", 404),
+    GUILD_NOTE_INVALID_INPUT("SOC-400-GUILD-NOTE-INVALID-INPUT", "Invalid guild note input", 400),
+    GUILD_NOTE_CONFLICT("SOC-409-GUILD-NOTE-CONFLICT", "Guild note conflict", 409),
 
     FOLLOW_NOT_FOUND("SOC-404-FOLLOW-NOT-FOUND","Follow Not Found",404),
     FOLLOW_TARGET_NOT_FOUND("SOC-404-FOLLOW-TARGET-NOT-FOUND", "Follow target not found", 404),

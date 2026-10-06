@@ -24,6 +24,12 @@ class PersonReader {
                 .orElseThrow(() -> new DomainException(PersonError.PERSON_NOT_FOUND));
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    Person getOwnedForUpdate(Long personId, Long ownerPlayerId) {
+        return repository.findOwnedForUpdate(personId, ownerPlayerId)
+                .orElseThrow(() -> new DomainException(PersonError.PERSON_NOT_FOUND));
+    }
+
     List<Person> findOwnedByIds(Set<Long> personIds, Long ownerPlayerId) {
         return repository.findAllByIdInAndOwnerPlayerId(personIds, ownerPlayerId);
     }

@@ -24,4 +24,10 @@ public class PlayerLookupService implements PlayerLookupApi {
         Player player = playerReader.getByUserId(userId);
         return player == null ? null : player.getId();
     }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void lockPlayer(Long playerId) {
+        playerReader.getByIdForUpdateOrThrow(playerId);
+    }
 }

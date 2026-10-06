@@ -7,7 +7,8 @@ public enum PersonError implements ErrorCode {
     INVALID_PERSON_CONTACT("PER-400-INVALID-PERSON-CONTACT", "Invalid Person contact", 400),
     INVALID_PERSON_PROFILE("PER-400-INVALID-PERSON-PROFILE", "Invalid Person profile", 400),
     PERSON_NOT_FOUND("PER-404-NOT-FOUND", "Person not found", 404),
-    PERSON_ARCHIVED("PER-409-ARCHIVED", "Archived Person cannot be updated", 409);
+    PERSON_ARCHIVED("PER-409-ARCHIVED", "Archived Person cannot be updated", 409),
+    PERSON_LINK_CONFLICT("PER-409-LINK-CONFLICT", "Person link conflicts with an existing link", 409);
 
     private final String code;
     private final String message;
