@@ -12,6 +12,8 @@ import online.lifeasgame.economy.domain.event.EconomyEventType;
 import online.lifeasgame.economy.domain.repository.MarketplacePurchaseReceiptRepository;
 import online.lifeasgame.inventory.application.internal.InventoryMarketAvailabilityApi;
 import online.lifeasgame.inventory.application.internal.InventoryMarketTransferApi;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,10 +37,13 @@ public class MarketplaceService {
     private final InventoryMarketTransferApi inventoryMarketTransferApi;
     private final MarketplacePurchaseReceiptRepository purchaseReceiptRepository;
     private final DomainEventPublisher domainEventPublisher;
+    private final DemoActorScopeApi demoActorScope;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Transactional
     public EconomyResult.Reservation reserve(Long buyerId, EconomyCommand.ReserveListing command) {
         Listing listing = listingReader.getForUpdate(command.listingId());
+        demoActorScope.requireSameBoundary(buyerId, listing.getSellerPlayerId());
         Instant now = Instant.now();
 
         if (listing.getStatus() != ListingStatus.OPEN
@@ -115,6 +120,7 @@ public class MarketplaceService {
         }
 
         Listing listing = listingReader.getForUpdate(command.listingId());
+        demoActorScope.requireSameBoundary(buyerId, listing.getSellerPlayerId());
 
         Instant now = Instant.now();
         if (buyerId.equals(listing.getSellerPlayerId())) {
@@ -245,7 +251,10 @@ public class MarketplaceService {
     @Transactional(readOnly = true)
     public EconomyResult.ListingSummaries listOpen() {
         List<Listing> listings = listingReader.listOpen();
-        return new EconomyResult.ListingSummaries(summarizeListings(listings));
+        Long viewer = currentPlayerAccessor.currentPlayerIdOrThrow();
+        return new EconomyResult.ListingSummaries(summarizeListings(listings.stream()
+                .filter(listing -> demoActorScope.sameBoundary(viewer, listing.getSellerPlayerId()))
+                .toList()));
     }
 
     @Transactional(readOnly = true)

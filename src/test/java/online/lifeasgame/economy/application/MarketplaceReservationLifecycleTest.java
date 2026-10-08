@@ -1,6 +1,8 @@
 package online.lifeasgame.economy.application;
 
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.domain.Currency;
@@ -72,6 +74,10 @@ class MarketplaceReservationLifecycleTest {
     private MarketplacePurchaseReceiptRepository purchaseReceiptRepository;
     @Mock
     private DomainEventPublisher eventPublisher;
+    @Mock
+    private DemoActorScopeApi demoActorScope;
+    @Mock
+    private CurrentPlayerAccessor currentPlayerAccessor;
     @InjectMocks
     private MarketplaceService service;
 

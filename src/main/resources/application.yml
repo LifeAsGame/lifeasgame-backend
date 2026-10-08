@@ -72,6 +72,12 @@ logging:
     org.hibernate.type.descriptor.sql: WARN
 
 lifeasgame:
+  portfolio-demo:
+    enabled: ${LIFEASGAME_PORTFOLIO_DEMO_ENABLED:false}
+    ttl-hours: ${LIFEASGAME_PORTFOLIO_DEMO_TTL_HOURS:24}
+    max-active-runs: ${LIFEASGAME_PORTFOLIO_DEMO_MAX_ACTIVE_RUNS:20}
+    max-daily-runs: ${LIFEASGAME_PORTFOLIO_DEMO_MAX_DAILY_RUNS:30}
+    max-total-runs: ${LIFEASGAME_PORTFOLIO_DEMO_MAX_TOTAL_RUNS:500}
   web:
     cors:
       allowed-origins: ${LIFEASGAME_WEB_ALLOWED_ORIGINS:http://localhost:3000}

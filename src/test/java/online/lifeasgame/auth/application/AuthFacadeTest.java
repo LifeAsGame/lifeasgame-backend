@@ -4,6 +4,7 @@ import online.lifeasgame.auth.application.result.AuthResult;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.core.error.api.AuthError;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.junit.jupiter.api.*;
@@ -22,6 +23,7 @@ class AuthFacadeTest {
     @Mock PlayerLookupApi playerLookupApi;
     @Mock AuthService authService;
     @Mock JwtProvider jwtProvider;
+    @Mock DemoActorScopeApi demoActorScope;
     @InjectMocks AuthFacade authFacade;
 
     private static final AuthResult.TokenPair PAIR =

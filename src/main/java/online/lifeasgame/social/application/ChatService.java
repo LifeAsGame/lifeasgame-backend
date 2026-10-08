@@ -9,6 +9,7 @@ import online.lifeasgame.social.application.result.ChatResult;
 import online.lifeasgame.social.domain.*;
 import online.lifeasgame.social.domain.error.SocialError;
 import online.lifeasgame.social.domain.repository.ChatMessageRepository;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class ChatService {
     private final CurrentPlayerAccessor currentPlayerAccessor;
     private final ChatMessageRegistrar chatMessageRegistrar;
     private final ChatMessageRepository chatMessageRepository;
+    private final DemoActorScopeApi demoActorScope;
 
     @Transactional
     public ChatResult.Channel openGlobal(ChatCommand.OpenGlobal command) {
@@ -79,6 +81,7 @@ public class ChatService {
     @Transactional
     public ChatResult.Channel openFriend(Long friendId, ChatCommand.OpenFriend command) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        demoActorScope.requireSameBoundary(playerId, friendId);
         directChatBlockGuard.requireUnblocked(playerId, friendId);
         friendshipVerifier.verify(playerId, friendId);
 

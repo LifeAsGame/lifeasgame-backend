@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.security.jwt.JwtAuthenticationFilter;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.user.application.internal.UserAuthApi;
+import online.lifeasgame.demo.api.DemoActorHttpGate;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.demo.application.DemoRunStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,6 +29,8 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final UserAuthApi userAuthApi;
     private final WebCorsProperties webCorsProperties;
+    private final DemoRunStore demoRunStore;
+    private final DemoActorScopeApi demoActorScope;
 
     @Bean
     SecurityFilterChain security(HttpSecurity http) throws Exception {
@@ -44,6 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers("/api/v1/demo/**").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/users/register").permitAll()
                         .requestMatchers(
@@ -59,6 +65,8 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtProvider, userAuthApi),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new DemoActorHttpGate(demoRunStore, demoActorScope, jwtProvider),
+                        JwtAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable);
@@ -75,6 +83,7 @@ public class SecurityConfig {
                 "Content-Type",
                 "Accept",
                 "Idempotency-Key",
+                "X-Demo-Proof",
                 "X-Correlation-Id"
         ));
         cfg.setAllowCredentials(true);

@@ -2,6 +2,7 @@ package online.lifeasgame.social.infra.config;
 
 import io.jsonwebtoken.Claims;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.social.application.ChatReader;
 import online.lifeasgame.user.application.internal.UserAuthApi;
@@ -34,6 +35,7 @@ class ChatStompAccessConfigTest {
     @Mock UserAuthApi userAuthApi;
     @Mock PlayerLookupApi playerLookupApi;
     @Mock ChatReader chatReader;
+    @Mock DemoActorScopeApi demoActorScope;
     @Mock Claims claims;
 
     @Test
@@ -45,7 +47,7 @@ class ChatStompAccessConfigTest {
         given(playerLookupApi.findPlayerIdByUserId(21L)).willReturn(42L);
         given(userAuthApi.resolveAuthorization(21L))
                 .willReturn(Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
-        var config = new ChatStompAccessConfig(jwtProvider, userAuthApi, playerLookupApi, chatReader);
+        var config = new ChatStompAccessConfig(jwtProvider, userAuthApi, playerLookupApi, chatReader, demoActorScope);
         ChannelRegistration inboundRegistration = mock(ChannelRegistration.class);
         ChannelRegistration outboundRegistration = mock(ChannelRegistration.class);
         config.configureClientInboundChannel(inboundRegistration);
@@ -59,6 +61,7 @@ class ChatStompAccessConfigTest {
 
         Message<?> connect = frame(StompCommand.CONNECT, null);
         assertThat(inbound.preSend(connect, null)).isSameAs(connect);
+        verify(demoActorScope).requireActive(21L, 42L);
         Message<?> subscribe = frame(StompCommand.SUBSCRIBE, "/topic/social/chat/17");
         assertThat(inbound.preSend(subscribe, null)).isSameAs(subscribe);
         verify(chatReader).getMemberChannel(17L, 42L);
