@@ -1,7 +1,8 @@
 package online.lifeasgame.character.application;
 
-import java.sql.Timestamp;
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.outbox.application.OutboxEventDelivery;
 import org.springframework.context.event.EventListener;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class AchievementFactProcessor {
+    private static final ZoneId DATABASE_ZONE = ZoneId.of("Asia/Seoul");
     private final PlayerReader playerReader;
     private final JdbcTemplate jdbc;
     private final Clock clock;
@@ -43,7 +45,7 @@ public class AchievementFactProcessor {
         if (receipts != null && receipts > 0) return;
 
         Long achievementId = requiredDefinition("achievements", fact.achievementCode());
-        Timestamp now = Timestamp.from(clock.instant());
+        LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), DATABASE_ZONE);
         boolean alreadyOwned = owned("player_achievements", "achievement_id",
                 fact.playerId(), achievementId);
         if (!alreadyOwned) {
@@ -73,14 +75,15 @@ public class AchievementFactProcessor {
                  processed_at, status, linked_title_code, title_revoked)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
                 """, fact.playerId(), fact.achievementCode(), fact.sourceKind(),
-                fact.sourceKey(), sourceEventId, Timestamp.from(fact.occurredAt()),
+                fact.sourceKey(), sourceEventId,
+                LocalDateTime.ofInstant(fact.occurredAt(), DATABASE_ZONE),
                 provenance, now, alreadyOwned ? "EXISTING" : "GRANTED",
                 fact.linkedTitleCode(), titleBlocked(fact.playerId(), fact.linkedTitleCode()));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void markAchievementRevoked(Long playerId, String code) {
-        Timestamp now = Timestamp.from(clock.instant());
+        LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), DATABASE_ZONE);
         jdbc.update("""
                 INSERT INTO achievement_award_receipts
                 (player_id, achievement_code, rule_version, processed_at, status, title_revoked)
@@ -95,7 +98,8 @@ public class AchievementFactProcessor {
                 INSERT INTO title_award_blocks (player_id, title_code, revoked_at)
                 VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE revoked_at = VALUES(revoked_at)
-                """, playerId, code, Timestamp.from(clock.instant()));
+                """, playerId, code,
+                LocalDateTime.ofInstant(clock.instant(), DATABASE_ZONE));
         jdbc.update("""
                 UPDATE achievement_award_receipts SET title_revoked = TRUE
                 WHERE player_id = ? AND linked_title_code = ?

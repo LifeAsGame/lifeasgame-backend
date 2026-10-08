@@ -8,6 +8,7 @@ import online.lifeasgame.core.annotation.AggregateRoot;
 import online.lifeasgame.platform.persistence.jpa.AbstractTime;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @Entity
@@ -35,7 +36,7 @@ public class PlayerAchievement extends AbstractTime {
     public PlayerAchievement(Long playerId, Long achievementId) {
         this.playerId = playerId;
         this.achievementId = achievementId;
-        this.acquiredAt = Instant.now();
+        this.acquiredAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public static PlayerAchievement create(Long playerId, Long achievementId) {

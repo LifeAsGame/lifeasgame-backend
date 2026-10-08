@@ -22,11 +22,16 @@ public class JwtProvider {
     }
 
     public String createAccessToken(Long userId, Long playerId) {
+        return createAccessToken(userId, playerId, false);
+    }
+
+    public String createAccessToken(Long userId, Long playerId, boolean demoProvisioning) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("pid", playerId)
                 .claim("type", "access")
+                .claim("demoProvisioning", demoProvisioning)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + properties.getAccessTokenExpiryMs()))
                 .signWith(key())

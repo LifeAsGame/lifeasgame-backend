@@ -7,6 +7,7 @@ import online.lifeasgame.core.error.AuthException;
 import online.lifeasgame.core.error.api.AuthError;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.user.application.internal.UserAuthApi;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,7 @@ public class AuthFacade {
     private final PlayerLookupApi playerLookupApi;
     private final AuthService authService;
     private final JwtProvider jwtProvider;
+    private final DemoActorScopeApi demoActorScope;
 
     public AuthResult.TokenPair login(String email, String password) {
         Long userId = userAuthApi.authenticate(email, password);
@@ -42,6 +44,7 @@ public class AuthFacade {
                         AuthError.TOKEN_INVALID
         ));
         Long playerId = playerLookupApi.findPlayerIdByUserId(userId);
+        demoActorScope.requireActive(userId, playerId);
         return authService.reissueToken(userId, playerId);
     }
 }

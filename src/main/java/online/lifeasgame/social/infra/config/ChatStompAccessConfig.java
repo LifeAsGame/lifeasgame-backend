@@ -8,6 +8,7 @@ import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.social.application.ChatReader;
 import online.lifeasgame.user.application.internal.UserAuthApi;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
@@ -40,6 +41,7 @@ public class ChatStompAccessConfig implements WebSocketMessageBrokerConfigurer {
     private final UserAuthApi userAuthApi;
     private final PlayerLookupApi playerLookupApi;
     private final ChatReader chatReader;
+    private final DemoActorScopeApi demoActorScope;
     private final ConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();
 
     @EventListener
@@ -141,6 +143,7 @@ public class ChatStompAccessConfig implements WebSocketMessageBrokerConfigurer {
                     || userAuthApi.resolveAuthorization(userId).filter(UserAuthApi.AccountAuthorization::active).isEmpty()) {
                 throw denied();
             }
+            demoActorScope.requireActive(userId, playerId);
             return new UsernamePasswordAuthenticationToken(new JwtPrincipal(userId, playerId), null, List.of());
         } catch (IllegalArgumentException ex) {
             throw denied();
