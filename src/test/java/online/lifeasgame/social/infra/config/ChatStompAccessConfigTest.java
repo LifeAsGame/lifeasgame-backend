@@ -3,6 +3,8 @@ package online.lifeasgame.social.infra.config;
 import io.jsonwebtoken.Claims;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.demo.domain.DemoError;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.social.application.ChatReader;
 import online.lifeasgame.user.application.internal.UserAuthApi;
@@ -74,6 +76,11 @@ class ChatStompAccessConfigTest {
         assertThat(outbound.preSend(delivered, null)).isSameAs(delivered);
 
         given(userAuthApi.resolveAuthorization(21L)).willReturn(Optional.empty());
+        assertThat(outbound.preSend(delivered, null)).isNull();
+        given(userAuthApi.resolveAuthorization(21L))
+                .willReturn(Optional.of(new UserAuthApi.AccountAuthorization(true, false)));
+        doThrow(new DomainException(DemoError.RUN_EXPIRED))
+                .when(demoActorScope).requireActive(21L, 42L);
         assertThat(outbound.preSend(delivered, null)).isNull();
     }
 

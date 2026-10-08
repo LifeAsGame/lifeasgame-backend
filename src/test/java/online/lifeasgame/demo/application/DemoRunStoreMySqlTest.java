@@ -79,6 +79,10 @@ class DemoRunStoreMySqlTest {
         jdbc.update("UPDATE portfolio_demo_runs SET expires_at=? WHERE id=?",
                 LocalDateTime.of(2000, 1, 1, 0, 0), runId);
         assertThat(store.byManager("manager-a").status()).isEqualTo("EXPIRED");
+        var scope = new DemoActorScope(store, new DemoProperties(true, 24, 3, 3, 3));
+        assertThatThrownBy(() -> scope.requireActive(900001L, 800001L))
+                .isInstanceOfSatisfying(DomainException.class,
+                        error -> assertThat(error.getErrorCode()).isEqualTo(DemoError.RUN_EXPIRED));
     }
 
     @Test

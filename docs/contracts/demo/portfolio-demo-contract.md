@@ -1,6 +1,6 @@
-# Portfolio demo run contract — DRAFT
+# Portfolio demo run contract — READY
 
-`templateVersion: portfolio-v1`; `implementationReady: true`; `runtimeReady: false`.
+`templateVersion: portfolio-v1`; `implementationReady: true`; `runtimeReady: true` (19081, 2026-10-08 KST).
 This contract applies only to the explicitly enabled, loopback-bound 19081 preview. Success bodies use the existing `ApiResponse` envelope (`result` contains the shapes below); errors use the existing `application/problem+json` shape with `status` and `code`. Times are UTC ISO-8601 instants. No credential or one-time code is stored in this document.
 
 ## Session and authentication
@@ -32,3 +32,7 @@ All IDs in `scenarios` are resolved from the run, never guessed. Demo actors may
 ## Server limits and cleanup
 
 Default TTL: 24 hours. Preview configuration sets ceilings of 20 active runs, 30 creations per UTC day, and 500 total retained runs; all are configurable. At capacity the start returns 429 without provisioning anything. `scripts/portfolio-demo-cleanup.py` defaults to a dry run and reports only expired/closed run IDs and counts. `--apply` prunes expired proof and peer-link rows for that scope. Run/actor revocation rows and domain accounts, balances, inventory, listings, trades, chat, receipts, and outbox history remain physically retained, so reaching the total cap requires a separate reviewed archival policy. No global DB reset or prefix-based deletion is part of this contract.
+
+## Runtime verification
+
+The isolated 19081 preview applied Flyway V51 and passed JPA schema validation. One disposable run reached READY and completed the initial wallet/record checks, marketplace trade, three-record reward mail claim, journey step-one advance, peer-link chat send/read, and close/token revocation. A separate 19082 stage verified two-run ownership isolation, ordinary-account exclusion, replay, and a fresh run after closing the previous one. The existing 19081 accounts and the separate 19080 and 13005 previews remained available. The disposable 19081 run is CLOSED; its audit and product rows are retained by the cleanup policy above.
