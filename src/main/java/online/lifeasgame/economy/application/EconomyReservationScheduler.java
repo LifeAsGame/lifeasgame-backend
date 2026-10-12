@@ -19,9 +19,13 @@ public class EconomyReservationScheduler {
     public void expireReservations() {
         try {
             marketplaceService.expireReservations();
+        } catch (RuntimeException ex) {
+            log.warn("Failed to expire Marketplace reservations", ex);
+        }
+        try {
             shopService.expireReservations();
-        } catch (Exception ex) {
-            log.warn("Failed to expire economy reservations", ex);
+        } catch (RuntimeException ex) {
+            log.warn("Failed to expire Shop reservations", ex);
         }
     }
 }
