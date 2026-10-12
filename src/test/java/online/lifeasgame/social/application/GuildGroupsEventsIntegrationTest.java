@@ -123,7 +123,11 @@ class GuildGroupsEventsIntegrationTest {
         String base = "/api/v1/guilds/" + GUILD + "/group-links";
         long link = result(mvc.perform(auth(post(base), A).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"groupType\":\"PARTY\",\"groupId\":" + PARTY + ",\"displayName\":\"공유 모임\"}"))
-                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("id").asLong();
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result.entryAction").value("INVITE_REQUIRED"))
+                .andExpect(jsonPath("$.result.guildLeaderApproved").value(true))
+                .andExpect(jsonPath("$.result.groupLeaderApproved").value(false))
+                .andReturn().getResponse().getContentAsString()).path("id").asLong();
         mvc.perform(auth(post(base), A).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"groupType\":\"PARTY\",\"groupId\":" + PARTY + ",\"displayName\":\"새 이름\"}"))
                 .andExpect(status().isConflict());
@@ -142,7 +146,10 @@ class GuildGroupsEventsIntegrationTest {
                 .andExpect(jsonPath("$.result.contents[0].groupLeaderApproved").value(false));
         mvc.perform(auth(post(base + "/" + link + "/approve"), B).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"displayName\":\" 공유 모임 \"}"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("ACTIVE"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.entryAction").value("OPEN_DETAIL"))
+                .andExpect(jsonPath("$.result.guildLeaderApproved").value(true))
+                .andExpect(jsonPath("$.result.groupLeaderApproved").value(true));
         String list = mvc.perform(auth(get(base), C)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.contents[0].entryAction").value("INVITE_REQUIRED"))
                 .andReturn().getResponse().getContentAsString();

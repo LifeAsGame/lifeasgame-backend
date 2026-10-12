@@ -79,7 +79,7 @@ public class GuildGroupLinkService {
         GuildGroupLink link = links.findOpen(guildId, type, groupId).orElse(null);
         if (link == null) link = links.saveAndFlush(GuildGroupLink.propose(guildId, type, groupId, displayName, actor, guildLeader, groupLeader));
         else link.requireProposedName(displayName);
-        return result(link, target, actor);
+        return result(link, target, actor, guild.getLeaderPlayerId());
     }
 
     @Transactional
@@ -94,7 +94,7 @@ public class GuildGroupLinkService {
         if (!guildLeader && !groupLeader) throw error(SocialError.GUILD_GROUP_NOT_FOUND);
         link.reconcileLeaders(guild.getLeaderPlayerId(), target.leaderId());
         link.approve(actor, guildLeader, groupLeader, displayName);
-        return result(links.saveAndFlush(link), target, actor);
+        return result(links.saveAndFlush(link), target, actor, guild.getLeaderPlayerId());
     }
 
     @Transactional
@@ -119,7 +119,7 @@ public class GuildGroupLinkService {
             if (status == GuildGroupLink.Status.REJECTED) link.reject();
             else link.unlink();
         }
-        return result(links.saveAndFlush(link), target, actor);
+        return result(links.saveAndFlush(link), target, actor, guild.getLeaderPlayerId());
     }
 
     private GuildGroupLink link(Long guildId, Long id) {
@@ -149,13 +149,9 @@ public class GuildGroupLinkService {
                 false, party::hasMember);
     }
 
-    private Link result(GuildGroupLink link, Target target, Long actor) {
-        String action = target.member().test(actor) ? "OPEN_DETAIL" : target.publicPreview() && target.active() ? "OPEN_PUBLIC_PREVIEW" : "INVITE_REQUIRED";
-        return new Link(link.getId(), link.getGroupType().name(), link.getGroupId(), link.getDisplayName(),
-                link.getStatus().name(), action, link.getProposedByPlayerId(),
-                link.getGuildApprovedByPlayerId() != null && link.getGuildApprovedByPlayerId().equals(guild(link.getGuildId(), false).getLeaderPlayerId()),
-                link.getGroupApprovedByPlayerId() != null && link.getGroupApprovedByPlayerId().equals(target.leaderId()),
-                link.getCreatedAt(), link.getUpdatedAt());
+    private Link result(GuildGroupLink link, Target target, Long actor, Long guildLeader) {
+        return result(link, target.member().test(actor), target.publicPreview() && target.active(),
+                guildLeader, target.leaderId());
     }
 
     private Map<Long, GuildGroupLinkRepository.LinkTarget> targets(List<GuildGroupLink> rows, Long actor) {
@@ -165,12 +161,16 @@ public class GuildGroupLinkService {
     }
 
     private Link result(GuildGroupLink link, GuildGroupLinkRepository.LinkTarget target, Long guildLeader) {
-        String action = target.getMember() != 0 ? "OPEN_DETAIL" : target.getPublicPreview() != 0 && target.getActive() != 0
-                ? "OPEN_PUBLIC_PREVIEW" : "INVITE_REQUIRED";
+        return result(link, target.getMember() != 0, target.getPublicPreview() != 0 && target.getActive() != 0,
+                guildLeader, target.getLeaderId());
+    }
+
+    private Link result(GuildGroupLink link, boolean member, boolean publicPreview, Long guildLeader, Long groupLeader) {
+        String action = member ? "OPEN_DETAIL" : publicPreview ? "OPEN_PUBLIC_PREVIEW" : "INVITE_REQUIRED";
         return new Link(link.getId(), link.getGroupType().name(), link.getGroupId(), link.getDisplayName(),
                 link.getStatus().name(), action, link.getProposedByPlayerId(),
-                guildLeader.equals(link.getGuildApprovedByPlayerId()), target.getLeaderId() != null
-                && target.getLeaderId().equals(link.getGroupApprovedByPlayerId()), link.getCreatedAt(), link.getUpdatedAt());
+                guildLeader.equals(link.getGuildApprovedByPlayerId()), groupLeader != null
+                && groupLeader.equals(link.getGroupApprovedByPlayerId()), link.getCreatedAt(), link.getUpdatedAt());
     }
 
     private void requireActive(Guild guild, Target target) {
