@@ -13,8 +13,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -162,20 +161,19 @@ class UserServiceTest {
     class ChangeNickname {
 
         @Test
-        @DisplayName("정상 → user.changeNickname() 호출 + NicknameChanged 반환")
+        @DisplayName("변경 전후 닉네임을 각각 응답한다")
         void success() {
-            User u = mock(User.class);
-            when(u.getId()).thenReturn(1L);
-            when(u.getNickname()).thenReturn(Nickname.of("NewNick"));
-            when(u.getUpdatedAt()).thenReturn(Instant.now());
+            User u = User.register(Email.of("e@e.com"), TEST_HASH, Nickname.of("OldNick"));
+            ReflectionTestUtils.setField(u, "id", 1L);
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
             when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
 
             UserResult.NicknameChanged result = userService.changeNickname("NewNick");
 
-            verify(u).changeNickname(any(Nickname.class));
             assertThat(result.userId()).isEqualTo(1L);
+            assertThat(result.oldNickname()).isEqualTo("OldNick");
             assertThat(result.newNickname()).isEqualTo("NewNick");
+            assertThat(u.getNickname().getValue()).isEqualTo("NewNick");
         }
 
         @Test
@@ -186,6 +184,26 @@ class UserServiceTest {
 
             assertThatThrownBy(() -> userService.changeNickname(999L, "NewNick"))
                     .isInstanceOf(DomainException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("계정 상태를 변경할 때")
+    class ChangeStatus {
+
+        @Test
+        @DisplayName("변경 전후 상태를 각각 응답한다")
+        void reportsTransition() {
+            User user = User.register(Email.of("e@e.com"), TEST_HASH, Nickname.of("OldNick"));
+            ReflectionTestUtils.setField(user, "id", 1L);
+            when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+
+            UserResult.StatusChanged result = userService.changeStatus(
+                    1L, new UserCommand.ChangeStatus("BANNED", "moderation"));
+
+            assertThat(result.fromStatus()).isEqualTo("ACTIVE");
+            assertThat(result.toStatus()).isEqualTo("BANNED");
+            assertThat(user.getStatus()).isEqualTo(UserStatus.BANNED);
         }
     }
 

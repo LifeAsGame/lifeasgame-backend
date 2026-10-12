@@ -41,11 +41,12 @@ public class UserService {
     @Transactional
     public UserResult.NicknameChanged changeNickname(Long userId, String nickname) {
         User user = userReader.findByIdOrElseThrow(userId);
+        String oldNickname = user.getNickname().getValue();
         user.changeNickname(Nickname.of(nickname));
 
         return new UserResult.NicknameChanged(
                 user.getId(),
-                nickname,
+                oldNickname,
                 user.getNickname().getValue(),
                 user.getUpdatedAt()
         );
@@ -66,11 +67,12 @@ public class UserService {
     @Transactional
     public UserResult.StatusChanged changeStatus(Long userId, UserCommand.ChangeStatus command) {
         User user = userReader.findByIdOrElseThrow(userId);
+        String previousStatus = user.getStatus().name();
         user.changeStatus(UserStatus.parse(command.status()));
 
         return new UserResult.StatusChanged(
                 user.getId(),
-                command.status(),
+                previousStatus,
                 user.getStatus().name(),
                 command.reason(),
                 user.getUpdatedAt()
