@@ -52,6 +52,14 @@ class UserServiceTest {
         return new UserService(userWriter, userReader, realHasher, currentUserAccessor);
     }
 
+    private User storedOAuthUser() {
+        User user = User.registerByOAuth(Email.of("oauth@example.com"), Nickname.of("OAuthUser"));
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "id", 1L);
+        when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+        when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+        return user;
+    }
+
     // ── register() ───────────────────────────────────────────────────────────
 
     @Nested
@@ -236,6 +244,17 @@ class UserServiceTest {
     @Nested
     @DisplayName("delete()")
     class Delete {
+        @Test
+        @DisplayName("비밀번호가 없는 OAuth 계정은 현재 비밀번호 오류로 거부하고 상태를 유지한다")
+        void oauthAccount() {
+            User user = storedOAuthUser();
+
+            assertThatThrownBy(() -> passwordService().delete("password1"))
+                    .isInstanceOfSatisfying(DomainException.class, error ->
+                            assertThat(error.getErrorCode()).isEqualTo(UserError.INCORRECT_PASSWORD));
+            assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        }
+
 
         @Test
         @DisplayName("현재 비밀번호가 맞으면 현재 계정을 삭제한다")
@@ -266,6 +285,18 @@ class UserServiceTest {
     @Nested
     @DisplayName("changePassword()")
     class ChangePassword {
+        @Test
+        @DisplayName("비밀번호가 없는 OAuth 계정은 현재 비밀번호 오류로 거부하고 placeholder를 유지한다")
+        void oauthAccount() {
+            User user = storedOAuthUser();
+
+            assertThatThrownBy(() -> passwordService().changePassword(
+                    new UserCommand.ChangePassword("password1", "newPassword1")))
+                    .isInstanceOfSatisfying(DomainException.class, error ->
+                            assertThat(error.getErrorCode()).isEqualTo(UserError.INCORRECT_PASSWORD));
+            assertThat(user.isOAuthAccount()).isTrue();
+        }
+
 
         @Test
         @DisplayName("현재 비밀번호가 맞으면 새 비밀번호로 변경한다")
@@ -278,6 +309,13 @@ class UserServiceTest {
             assertThat(result.userId()).isEqualTo(1L);
             assertThat(realHasher.matches(RawPassword.of("newPassword1"), user.getPasswordHash())).isTrue();
             assertThat(realHasher.matches(RawPassword.of("password1"), user.getPasswordHash())).isFalse();
+            when(userReader.findByEmailOrElseThrow("e@e.com")).thenReturn(user);
+            UserAuthService auth = new UserAuthService(userService, userWriter, userReader, realHasher);
+            assertThat(auth.authenticate("e@e.com", "newPassword1")).isEqualTo(1L);
+            assertThatThrownBy(() -> auth.authenticate("e@e.com", "password1"))
+                    .isInstanceOfSatisfying(AuthException.class, error ->
+                            assertThat(error.getErrorCode()).isEqualTo(
+                                    online.lifeasgame.core.error.api.AuthError.BAD_CREDENTIALS));
         }
 
         @Test
