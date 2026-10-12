@@ -43,6 +43,7 @@ public class UserService {
         User user = userReader.findByIdOrElseThrow(userId);
         String oldNickname = user.getNickname().getValue();
         user.changeNickname(Nickname.of(nickname));
+        user = userWriter.persistChanged(user);
 
         return new UserResult.NicknameChanged(
                 user.getId(),
@@ -69,6 +70,7 @@ public class UserService {
         User user = userReader.findByIdOrElseThrow(userId);
         String previousStatus = user.getStatus().name();
         user.changeStatus(UserStatus.parse(command.status()));
+        user = userWriter.persistChanged(user);
 
         return new UserResult.StatusChanged(
                 user.getId(),

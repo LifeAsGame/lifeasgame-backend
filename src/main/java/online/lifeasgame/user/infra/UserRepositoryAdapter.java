@@ -25,6 +25,11 @@ public class UserRepositoryAdapter implements UserRepository, UserQueryRepositor
     }
 
     @Override
+    public User saveAndFlush(User user) {
+        return jpa.saveAndFlush(user);
+    }
+
+    @Override
     public Optional<User> findById(Long userId) {
         return jpa.findById(userId);
     }

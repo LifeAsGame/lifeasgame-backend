@@ -167,6 +167,7 @@ class UserServiceTest {
             ReflectionTestUtils.setField(u, "id", 1L);
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
             when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+            when(userWriter.persistChanged(u)).thenReturn(u);
 
             UserResult.NicknameChanged result = userService.changeNickname("NewNick");
 
@@ -197,6 +198,7 @@ class UserServiceTest {
             User user = User.register(Email.of("e@e.com"), TEST_HASH, Nickname.of("OldNick"));
             ReflectionTestUtils.setField(user, "id", 1L);
             when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+            when(userWriter.persistChanged(user)).thenReturn(user);
 
             UserResult.StatusChanged result = userService.changeStatus(
                     1L, new UserCommand.ChangeStatus("BANNED", "moderation"));
