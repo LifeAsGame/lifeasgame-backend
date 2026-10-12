@@ -55,12 +55,7 @@ public class RoleEventService {
             RoleEventCommand.Update command
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.update(
                 command.title(),
                 command.description(),
@@ -73,12 +68,7 @@ public class RoleEventService {
     @Transactional
     public RoleEventResult.Detail complete(Long roleId, Long eventId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.complete(clock.instant());
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -86,12 +76,7 @@ public class RoleEventService {
     @Transactional
     public RoleEventResult.Detail cancel(Long roleId, Long eventId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.cancel();
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -103,12 +88,7 @@ public class RoleEventService {
             RoleEventCommand.AddParticipant command
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         RoleEventParticipantType type = RoleEventParticipantType.parse(
                 command.participantType()
         );
@@ -131,12 +111,7 @@ public class RoleEventService {
             Long participantLinkId
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.removeParticipant(participantLinkId);
         eventWriter.saveAndFlush(event);
     }
@@ -153,6 +128,11 @@ public class RoleEventService {
             );
             case SERVICE_USER -> userLookupApi.getActive(participantId);
         }
+    }
+
+    private RoleEvent ownedActiveEventForUpdate(Long roleId, Long eventId, Long playerId) {
+        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
+        return eventReader.getOwnedForUpdate(eventId, roleId, playerId);
     }
 
     private void requireActive(Role role) {
