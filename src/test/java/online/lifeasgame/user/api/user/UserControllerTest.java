@@ -6,6 +6,7 @@ import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import online.lifeasgame.user.application.UserQueryService;
 import online.lifeasgame.user.application.UserService;
 import online.lifeasgame.user.application.result.UserResult;
+import online.lifeasgame.user.domain.error.UserError;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,39 @@ class UserControllerTest {
     @MockitoBean UserQueryService userQueryService;
     @MockitoBean AppErrorProperties appErrorProperties;
     @MockitoBean ErrorDocLinker errorDocLinker;
+
+    @Nested
+    @DisplayName("사용 가능 여부를 조회할 때")
+    class Availability {
+
+        @Test
+        @DisplayName("사용 가능한 이메일에는 실패 이유 없이 같은 응답 필드를 반환한다")
+        void availableEmailHasNoFailureReason() throws Exception {
+            given(userQueryService.checkEmailAvailability("free@example.com"))
+                    .willReturn(UserResult.Availability.available());
+
+            mockMvc.perform(get("/api/v1/users/availability/email")
+                            .param("email", "free@example.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.available").value(true))
+                    .andExpect(jsonPath("$.result.reason").value((Object) null));
+        }
+
+        @Test
+        @DisplayName("중복 닉네임에는 웹 경계가 기존 이유 문구를 매핑한다")
+        void duplicateNicknameMapsReason() throws Exception {
+            given(userQueryService.checkNicknameAvailability("Taken"))
+                    .willReturn(UserResult.Availability.unavailable(
+                            UserError.NICKNAME_DUPLICATE));
+
+            mockMvc.perform(get("/api/v1/users/availability/nickname")
+                            .param("nickname", "Taken"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.available").value(false))
+                    .andExpect(jsonPath("$.result.reason")
+                            .value(UserError.NICKNAME_DUPLICATE.message()));
+        }
+    }
 
     @Nested
     @DisplayName("GET /api/v1/users/me")

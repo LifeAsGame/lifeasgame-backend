@@ -2,9 +2,11 @@ package online.lifeasgame.user.application.result;
 
 import online.lifeasgame.user.application.query.UserSearchQuery;
 import online.lifeasgame.user.domain.User;
+import online.lifeasgame.user.domain.error.UserError;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 public final class UserResult {
 
@@ -37,7 +39,20 @@ public final class UserResult {
         }
     }
 
-    public record Availability(boolean isAvailable, String reason) {
+    public record Availability(boolean isAvailable, UserError reason) {
+        public Availability {
+            if (isAvailable == (reason != null)) {
+                throw new IllegalArgumentException("Availability and reason must agree");
+            }
+        }
+
+        public static Availability available() {
+            return new Availability(true, null);
+        }
+
+        public static Availability unavailable(UserError reason) {
+            return new Availability(false, Objects.requireNonNull(reason));
+        }
     }
 
     public record NicknameChanged(

@@ -24,7 +24,5 @@ public interface QuestAcceptanceRepository {
 
     Optional<QuestAcceptance> findLatestByQuestAndPlayer(Long questId, Long playerId);
 
-    boolean existsByPlayerIdAndId(Long playerId, Long questId);
-
     Set<Long> findCompletedQuestIds(Long playerId, Set<Long> questIds);
 }

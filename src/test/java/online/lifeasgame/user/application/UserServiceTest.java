@@ -34,6 +34,24 @@ class UserServiceTest {
     @InjectMocks UserAuthService userAuthService;
     @InjectMocks UserQueryService userQueryService;
 
+    private final PasswordHasher realHasher =
+            new online.lifeasgame.user.infra.PasswordHasherAdapter(
+                    org.springframework.security.crypto.factory.PasswordEncoderFactories
+                            .createDelegatingPasswordEncoder());
+
+    private User storedUser() {
+        User user = User.register(Email.of("e@e.com"), realHasher.hash(RawPassword.of("password1")),
+                Nickname.of("Hero"));
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "id", 1L);
+        when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+        when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+        return user;
+    }
+
+    private UserService passwordService() {
+        return new UserService(userWriter, userReader, realHasher, currentUserAccessor);
+    }
+
     // ── register() ───────────────────────────────────────────────────────────
 
     @Nested
@@ -119,7 +137,9 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(false);
 
-            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isTrue();
+            UserResult.Availability result = userQueryService.checkEmailAvailability("e@e.com");
+            assertThat(result.isAvailable()).isTrue();
+            assertThat(result.reason()).isNull();
         }
 
         @Test
@@ -127,7 +147,9 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(true);
 
-            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isFalse();
+            UserResult.Availability result = userQueryService.checkEmailAvailability("e@e.com");
+            assertThat(result.isAvailable()).isFalse();
+            assertThat(result.reason()).isEqualTo(UserError.EMAIL_DUPLICATE);
         }
     }
 
@@ -142,7 +164,9 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(false);
 
-            assertThat(userQueryService.checkNicknameAvailability("NewNick").isAvailable()).isTrue();
+            UserResult.Availability result = userQueryService.checkNicknameAvailability("NewNick");
+            assertThat(result.isAvailable()).isTrue();
+            assertThat(result.reason()).isNull();
         }
 
         @Test
@@ -150,7 +174,9 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(true);
 
-            assertThat(userQueryService.checkNicknameAvailability("Kirito").isAvailable()).isFalse();
+            UserResult.Availability result = userQueryService.checkNicknameAvailability("Kirito");
+            assertThat(result.isAvailable()).isFalse();
+            assertThat(result.reason()).isEqualTo(UserError.NICKNAME_DUPLICATE);
         }
     }
 
@@ -214,20 +240,26 @@ class UserServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("현재 사용자 identity로 삭제한다")
-        void currentUser() {
-            User user = mock(User.class);
-            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
-            when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
-            when(passwordHasher.hash(any(RawPassword.class))).thenReturn(TEST_HASH);
-            when(user.getId()).thenReturn(1L);
-            when(user.getStatus()).thenReturn(UserStatus.DELETED);
+        @DisplayName("현재 비밀번호가 맞으면 현재 계정을 삭제한다")
+        void currentPassword() {
+            User user = storedUser();
 
-            UserResult.Deleted result = userService.delete("password1");
+            UserResult.Deleted result = passwordService().delete("password1");
 
-            verify(user).delete(TEST_HASH);
             assertThat(result.userId()).isEqualTo(1L);
             assertThat(result.status()).isEqualTo("DELETED");
+            assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+        }
+
+        @Test
+        @DisplayName("현재 비밀번호가 틀리면 계정을 유지하고 오류를 반환한다")
+        void wrongPassword() {
+            User user = storedUser();
+
+            assertThatThrownBy(() -> passwordService().delete("wrongpass1"))
+                    .isInstanceOfSatisfying(DomainException.class, error ->
+                            assertThat(error.getErrorCode()).isEqualTo(UserError.INCORRECT_PASSWORD));
+            assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
         }
     }
 
@@ -238,19 +270,28 @@ class UserServiceTest {
     class ChangePassword {
 
         @Test
-        @DisplayName("정상 → user.changePassword() 호출 + PasswordChanged 반환")
+        @DisplayName("현재 비밀번호가 맞으면 새 비밀번호로 변경한다")
         void success() {
-            User u = mock(User.class);
-            when(u.getId()).thenReturn(1L);
-            when(userReader.findByIdOrElseThrow(1L)).thenReturn(u);
-            when(passwordHasher.hash(any(RawPassword.class))).thenReturn(TEST_HASH);
-            when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
+            User user = storedUser();
 
-            UserResult.PasswordChanged result = userService.changePassword(
-                    new UserCommand.ChangePassword("currentPw1", "newPassword1"));
+            UserResult.PasswordChanged result = passwordService().changePassword(
+                    new UserCommand.ChangePassword("password1", "newPassword1"));
 
-            verify(u).changePassword(any(HashedPassword.class), any(HashedPassword.class));
             assertThat(result.userId()).isEqualTo(1L);
+            assertThat(realHasher.matches(RawPassword.of("newPassword1"), user.getPasswordHash())).isTrue();
+            assertThat(realHasher.matches(RawPassword.of("password1"), user.getPasswordHash())).isFalse();
+        }
+
+        @Test
+        @DisplayName("현재 비밀번호가 틀리면 기존 비밀번호를 유지한다")
+        void wrongPassword() {
+            User user = storedUser();
+
+            assertThatThrownBy(() -> passwordService().changePassword(
+                    new UserCommand.ChangePassword("wrongpass1", "newPassword1")))
+                    .isInstanceOfSatisfying(DomainException.class, error ->
+                            assertThat(error.getErrorCode()).isEqualTo(UserError.INCORRECT_PASSWORD));
+            assertThat(realHasher.matches(RawPassword.of("password1"), user.getPasswordHash())).isTrue();
         }
     }
 
