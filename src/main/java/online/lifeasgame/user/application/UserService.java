@@ -58,7 +58,8 @@ public class UserService {
     public UserResult.PasswordChanged changePassword(UserCommand.ChangePassword command) {
         Long userId = currentUserAccessor.currentUserIdOrThrow();
         User user = userReader.findByIdOrElseThrow(userId);
-        if (!passwordHasher.matches(RawPassword.of(command.currentPassword()), user.getPasswordHash())) {
+        if (user.isOAuthAccount()
+                || !passwordHasher.matches(RawPassword.of(command.currentPassword()), user.getPasswordHash())) {
             throw new DomainException(UserError.INCORRECT_PASSWORD);
         }
         user.changePassword(passwordHasher.hash(RawPassword.of(command.newPassword())));
@@ -85,7 +86,8 @@ public class UserService {
     public UserResult.Deleted delete(String password) {
         Long userId = currentUserAccessor.currentUserIdOrThrow();
         User user = userReader.findByIdOrElseThrow(userId);
-        if (!passwordHasher.matches(RawPassword.of(password), user.getPasswordHash())) {
+        if (user.isOAuthAccount()
+                || !passwordHasher.matches(RawPassword.of(password), user.getPasswordHash())) {
             throw new DomainException(UserError.INCORRECT_PASSWORD);
         }
         user.deleteByOwner();

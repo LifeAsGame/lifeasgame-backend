@@ -27,6 +27,9 @@ public class UserAuthService implements UserAuthApi {
     @Transactional(readOnly = true)
     public Long authenticate(String email, String rawPassword) {
         User user = userReader.findByEmailOrElseThrow(email);
+        if (user.isOAuthAccount()) {
+            throw new AuthException(AuthError.BAD_CREDENTIALS);
+        }
 
         boolean passwordMatches = passwordHasher.matches(
                 RawPassword.of(rawPassword),
