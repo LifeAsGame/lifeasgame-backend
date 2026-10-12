@@ -1,5 +1,6 @@
 package online.lifeasgame.user.infra;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.user.application.query.UserSearchQuery;
 import online.lifeasgame.user.application.query.UserQueryRepository;
@@ -18,6 +19,7 @@ public class UserRepositoryAdapter implements UserRepository, UserQueryRepositor
 
     private final JpaUserRepository jpa;
     private final QuerydslUserRepository querydsl;
+    private final EntityManager entityManager;
 
     @Override
     public User save(User user) {
@@ -26,7 +28,9 @@ public class UserRepositoryAdapter implements UserRepository, UserQueryRepositor
 
     @Override
     public User saveAndFlush(User user) {
-        return jpa.saveAndFlush(user);
+        User saved = jpa.saveAndFlush(user);
+        entityManager.refresh(saved);
+        return saved;
     }
 
     @Override
