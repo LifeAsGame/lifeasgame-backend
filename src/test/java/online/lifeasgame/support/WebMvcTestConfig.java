@@ -1,5 +1,7 @@
 package online.lifeasgame.support;
 
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.demo.application.DemoRunStore;
 import online.lifeasgame.platform.web.error.GlobalExceptionHandler;
 import online.lifeasgame.platform.web.error.PiiScrubber;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
@@ -19,6 +21,18 @@ public class WebMvcTestConfig {
     @ConditionalOnMissingBean(UserAuthApi.class)
     UserAuthApi userAuthApi() {
         return mock(UserAuthApi.class);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DemoRunStore.class)
+    DemoRunStore demoRunStore() {
+        return mock(DemoRunStore.class);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DemoActorScopeApi.class)
+    DemoActorScopeApi demoActorScopeApi() {
+        return mock(DemoActorScopeApi.class);
     }
 
     @Bean

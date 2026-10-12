@@ -5,6 +5,9 @@ import online.lifeasgame.social.application.command.FollowCommand;
 import online.lifeasgame.social.application.result.FollowResult;
 import online.lifeasgame.social.domain.Follow;
 import online.lifeasgame.social.domain.FollowState;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.demo.domain.DemoError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +22,12 @@ public class FollowService {
     private final FollowReader followReader;
     private final FollowRegistrar followRegistrar;
     private final FollowTargetVerifier followTargetVerifier;
+    private final DemoActorScopeApi demoActorScope;
 
     @Transactional
     public FollowResult.Info follow(Long playerId, FollowCommand.Create command) {
         Long targetPlayerId = command.targetPlayerId();
+        demoActorScope.requireSameBoundary(playerId, targetPlayerId);
         followTargetVerifier.verifyExists(targetPlayerId);
         Follow follow = followReader.findByPlayerIdAndTargetPlayerId(
                 playerId,

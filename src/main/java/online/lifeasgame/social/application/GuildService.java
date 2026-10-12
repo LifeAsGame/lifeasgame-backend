@@ -12,6 +12,7 @@ import online.lifeasgame.social.domain.GuildVisibility;
 import online.lifeasgame.social.domain.GuildWaitType;
 import online.lifeasgame.social.domain.GuildStatus;
 import online.lifeasgame.social.domain.repository.GuildRepository;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.social.infra.GroupRosterStore;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ public class GuildService {
     private final GuildWriter guildWriter;
     private final GuildRepository repository;
     private final GroupRosterStore roster;
+    private final DemoActorScopeApi demoActorScope;
 
     @Transactional
     public GuildResult.Info create(Long playerId, GuildCommand.Create command) {
@@ -177,6 +179,7 @@ public class GuildService {
 
     @Transactional
     public void invite(Long playerId, Long id, GuildCommand.Invite command) {
+        demoActorScope.requireSameBoundary(playerId, command.inviteePlayerId());
         Guild guild = locked(id);
         ensureLeaderOrOfficer(guild, playerId);
         guild.invite(playerId, command.inviteePlayerId(), command.message(), parseDateTime(command.expiresAtIso()));

@@ -3,7 +3,10 @@ package online.lifeasgame.auth.application;
 import online.lifeasgame.auth.application.result.AuthResult;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
 import online.lifeasgame.core.error.AuthException;
+import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.error.api.AuthError;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.demo.domain.DemoError;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.user.application.internal.UserAuthApi;
 import org.junit.jupiter.api.*;
@@ -22,6 +25,7 @@ class AuthFacadeTest {
     @Mock PlayerLookupApi playerLookupApi;
     @Mock AuthService authService;
     @Mock JwtProvider jwtProvider;
+    @Mock DemoActorScopeApi demoActorScope;
     @InjectMocks AuthFacade authFacade;
 
     private static final AuthResult.TokenPair PAIR =
@@ -63,6 +67,18 @@ class AuthFacadeTest {
             assertThatThrownBy(() -> authFacade.login("e@e.com","pw"))
                     .isInstanceOf(AuthException.class);
             verifyNoInteractions(playerLookupApi, authService);
+        }
+
+        @Test @DisplayName("데모 계정이 비활성화되어 있으면 일반 로그인도 토큰을 발급하지 않는다")
+        void disabledDemoActor() {
+            when(userAuthApi.authenticate("demo@example.invalid", "pw")).thenReturn(1L);
+            when(playerLookupApi.findPlayerIdByUserId(1L)).thenReturn(2L);
+            doThrow(new DomainException(DemoError.ACTOR_FORBIDDEN))
+                    .when(demoActorScope).requireActive(1L, 2L);
+
+            assertThatThrownBy(() -> authFacade.login("demo@example.invalid", "pw"))
+                    .isInstanceOf(DomainException.class);
+            verifyNoInteractions(authService);
         }
     }
 

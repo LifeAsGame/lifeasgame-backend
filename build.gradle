@@ -7,6 +7,8 @@ plugins {
 group = 'online'
 version = '0.0.1-SNAPSHOT'
 
+tasks.named('bootJar') { archiveFileName = 'app.jar' }
+
 repositories { mavenCentral() }
 
 java {

@@ -15,6 +15,7 @@ import online.lifeasgame.social.domain.ActivityGroupType;
 import online.lifeasgame.social.infra.GroupActivityStore;
 import online.lifeasgame.social.infra.GroupRosterStore;
 import online.lifeasgame.social.domain.repository.PartyRepository;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class PartyService {
     private final PartyRepository repository;
     private final GroupActivityStore activities;
     private final GroupRosterStore roster;
+    private final DemoActorScopeApi demoActorScope;
 
     @Transactional
     public PartyResult.Info create(Long playerId, PartyCommand.Create command) {
@@ -184,6 +186,7 @@ public class PartyService {
 
     @Transactional
     public void invite(Long playerId, Long id, PartyCommand.Invite command) {
+        demoActorScope.requireSameBoundary(playerId, command.inviteePlayerId());
         Party party = partyReader.getForUpdate(id);
         ensureLeaderOrOfficer(party, playerId);
         party.invite(playerId, command.inviteePlayerId(), command.message(), parseDateTime(command.expiresAtIso()));

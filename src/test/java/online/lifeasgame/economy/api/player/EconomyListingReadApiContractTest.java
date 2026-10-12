@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import online.lifeasgame.economy.api.player.response.EconomyResponse;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.economy.application.ListingOpenService;
 import online.lifeasgame.economy.application.ListingReader;
 import online.lifeasgame.economy.application.ListingReservationReader;
@@ -85,6 +86,8 @@ class EconomyListingReadApiContractTest {
     @MockitoBean
     private ListingReader listingReader;
     @MockitoBean
+    private DemoActorScopeApi demoActorScope;
+    @MockitoBean
     private ListingWriter listingWriter;
     @MockitoBean
     private ListingReservationReader reservationReader;
@@ -134,7 +137,10 @@ class EconomyListingReadApiContractTest {
                 LISTING_ID, PLAYER_ID, "synthetic-hold", Instant.parse("2026-09-29T00:00:00Z"), 60);
         boolean reservationPath = path.endsWith("reservations");
         switch (path) {
-            case "listings" -> when(listingReader.listOpen()).thenReturn(List.of(listing));
+            case "listings" -> {
+                when(listingReader.listOpen()).thenReturn(List.of(listing));
+                when(demoActorScope.sameBoundary(PLAYER_ID, listing.getSellerPlayerId())).thenReturn(true);
+            }
             case "listings/me" -> when(listingReader.listBySeller(PLAYER_ID)).thenReturn(List.of(listing));
             case "listings/reservations" -> {
                 when(reservationReader.listActiveByBuyer(PLAYER_ID)).thenReturn(List.of(reservation));

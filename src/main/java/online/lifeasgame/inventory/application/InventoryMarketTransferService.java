@@ -21,6 +21,7 @@ public class InventoryMarketTransferService
     private final InventoryReader inventoryReader;
     private final ItemReader itemReader;
     private final DomainEventPublisher domainEventPublisher;
+    private final InventoryContainerProvisioningService provisioningService;
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
@@ -41,6 +42,7 @@ public class InventoryMarketTransferService
                     InventoryError.MARKET_TRANSFER_CONFLICT
             );
         }
+        provisioningService.ensureContainers(buyerPlayerId);
         PlayerInventory first = inventoryReader
                 .getByPlayerIdForUpdateOrThrow(
                         Math.min(sellerPlayerId, buyerPlayerId)

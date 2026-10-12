@@ -3,6 +3,7 @@ package online.lifeasgame.social.application;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.internal.PlayerLookupApi;
+import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.social.domain.Guild;
@@ -35,6 +36,7 @@ public class GroupRosterService {
     private final PlayerLookupApi players;
     private final EntityManager entityManager;
     private final Clock clock;
+    private final DemoActorScopeApi demoActorScope;
 
     public record Capabilities(boolean canManageRoster, boolean canInvite) {}
     public record Page<T>(List<T> contents, int page, int size, long totalElements, int totalPages,
@@ -101,6 +103,7 @@ public class GroupRosterService {
         Entry entry = entry(type, groupId, entryId);
         if (entry.linkedPlayerId() != null) throw error(SocialError.ROSTER_CONFLICT);
         if (targetPlayerId == null || targetPlayerId <= 0) throw error(SocialError.ROSTER_INVALID_INPUT);
+        demoActorScope.requireSameBoundary(actor(), targetPlayerId);
         players.findUserIdByPlayerId(targetPlayerId);
         Instant now = clock.instant();
         Invitation pending = store.pendingForEntry(entryId);
