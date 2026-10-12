@@ -120,7 +120,9 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(false);
 
-            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isTrue();
+            UserResult.Availability result = userQueryService.checkEmailAvailability("e@e.com");
+            assertThat(result.isAvailable()).isTrue();
+            assertThat(result.reason()).isNull();
         }
 
         @Test
@@ -128,7 +130,9 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByEmail(any(Email.class))).thenReturn(true);
 
-            assertThat(userQueryService.checkEmailAvailability("e@e.com").isAvailable()).isFalse();
+            UserResult.Availability result = userQueryService.checkEmailAvailability("e@e.com");
+            assertThat(result.isAvailable()).isFalse();
+            assertThat(result.reason()).isEqualTo(UserError.EMAIL_DUPLICATE);
         }
     }
 
@@ -143,7 +147,9 @@ class UserServiceTest {
         void available() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(false);
 
-            assertThat(userQueryService.checkNicknameAvailability("NewNick").isAvailable()).isTrue();
+            UserResult.Availability result = userQueryService.checkNicknameAvailability("NewNick");
+            assertThat(result.isAvailable()).isTrue();
+            assertThat(result.reason()).isNull();
         }
 
         @Test
@@ -151,7 +157,9 @@ class UserServiceTest {
         void duplicate() {
             when(userReader.existsByNickname(any(Nickname.class))).thenReturn(true);
 
-            assertThat(userQueryService.checkNicknameAvailability("Kirito").isAvailable()).isFalse();
+            UserResult.Availability result = userQueryService.checkNicknameAvailability("Kirito");
+            assertThat(result.isAvailable()).isFalse();
+            assertThat(result.reason()).isEqualTo(UserError.NICKNAME_DUPLICATE);
         }
     }
 
