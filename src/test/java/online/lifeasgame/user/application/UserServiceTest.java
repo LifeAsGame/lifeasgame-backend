@@ -188,6 +188,26 @@ class UserServiceTest {
     }
 
     @Nested
+    @DisplayName("계정 상태를 변경할 때")
+    class ChangeStatus {
+
+        @Test
+        @DisplayName("변경 전후 상태를 각각 응답한다")
+        void reportsTransition() {
+            User user = User.register(Email.of("e@e.com"), TEST_HASH, Nickname.of("OldNick"));
+            ReflectionTestUtils.setField(user, "id", 1L);
+            when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
+
+            UserResult.StatusChanged result = userService.changeStatus(
+                    1L, new UserCommand.ChangeStatus("BANNED", "moderation"));
+
+            assertThat(result.fromStatus()).isEqualTo("ACTIVE");
+            assertThat(result.toStatus()).isEqualTo("BANNED");
+            assertThat(user.getStatus()).isEqualTo(UserStatus.BANNED);
+        }
+    }
+
+    @Nested
     @DisplayName("delete()")
     class Delete {
 

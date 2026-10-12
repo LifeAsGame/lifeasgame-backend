@@ -67,11 +67,12 @@ public class UserService {
     @Transactional
     public UserResult.StatusChanged changeStatus(Long userId, UserCommand.ChangeStatus command) {
         User user = userReader.findByIdOrElseThrow(userId);
+        String previousStatus = user.getStatus().name();
         user.changeStatus(UserStatus.parse(command.status()));
 
         return new UserResult.StatusChanged(
                 user.getId(),
-                command.status(),
+                previousStatus,
                 user.getStatus().name(),
                 command.reason(),
                 user.getUpdatedAt()
