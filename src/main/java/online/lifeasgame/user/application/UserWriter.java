@@ -21,6 +21,10 @@ class UserWriter {
     private final UserSettingWriter userSettingWriter;
     private final DomainEventPublisher domainEventPublisher;
 
+    public User persistChanged(User user) {
+        return userRepository.saveAndFlush(user);
+    }
+
     public Long register(Email email, HashedPassword hashedPassword, Nickname nickname) {
 
         User user = userRepository.save(User.register(email, hashedPassword, nickname));
