@@ -23,6 +23,7 @@ public class AuthFacade {
     public AuthResult.TokenPair login(String email, String password) {
         Long userId = userAuthApi.authenticate(email, password);
         Long playerId = playerLookupApi.findPlayerIdByUserId(userId);
+        demoActorScope.requireActive(userId, playerId);
         return authService.issueToken(userId, playerId);
     }
 

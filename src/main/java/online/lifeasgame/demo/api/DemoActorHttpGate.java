@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.demo.application.DemoProperties;
 import online.lifeasgame.demo.application.DemoRunStore;
 import online.lifeasgame.demo.domain.DemoError;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
@@ -20,6 +21,7 @@ import java.io.IOException;
 public class DemoActorHttpGate extends OncePerRequestFilter {
     private final DemoRunStore store;
     private final DemoActorScopeApi scope;
+    private final DemoProperties properties;
     private final JwtProvider jwt;
 
     @Override
@@ -40,7 +42,7 @@ public class DemoActorHttpGate extends OncePerRequestFilter {
             DemoRunStore.Actor actor = store.actorByUser(userId);
             if (actor != null) {
                 Boolean provisioning = claims.get("demoProvisioning", Boolean.class);
-                boolean internal = Boolean.TRUE.equals(provisioning)
+                boolean internal = properties.enabled() && Boolean.TRUE.equals(provisioning)
                         && ("127.0.0.1".equals(request.getRemoteAddr()) || "::1".equals(request.getRemoteAddr()));
                 if (!internal) {
                     scope.requireActive(userId, claims.get("pid", Long.class));

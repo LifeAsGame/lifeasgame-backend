@@ -7,6 +7,7 @@ import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.user.application.internal.UserAuthApi;
 import online.lifeasgame.demo.api.DemoActorHttpGate;
 import online.lifeasgame.demo.application.DemoActorScopeApi;
+import online.lifeasgame.demo.application.DemoProperties;
 import online.lifeasgame.demo.application.DemoRunStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final WebCorsProperties webCorsProperties;
     private final DemoRunStore demoRunStore;
     private final DemoActorScopeApi demoActorScope;
+    private final DemoProperties demoProperties;
 
     @Bean
     SecurityFilterChain security(HttpSecurity http) throws Exception {
@@ -65,7 +67,7 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtProvider, userAuthApi),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new DemoActorHttpGate(demoRunStore, demoActorScope, jwtProvider),
+                .addFilterAfter(new DemoActorHttpGate(demoRunStore, demoActorScope, demoProperties, jwtProvider),
                         JwtAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
