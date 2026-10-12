@@ -93,6 +93,7 @@ public class RoleRelationService {
                 roleId,
                 playerId
         );
+        personLookupApi.getOwnedActive(relation.getPersonId(), playerId);
         relation.update(
                 RoleRelationType.of(command.relationType()),
                 command.roleNotes()

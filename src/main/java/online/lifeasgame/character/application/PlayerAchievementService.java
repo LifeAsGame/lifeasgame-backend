@@ -22,6 +22,7 @@ public class PlayerAchievementService {
     private final AchievementReader achievementReader;
     private final PlayerReader playerReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final AchievementFactProcessor factProcessor;
 
     @Transactional(readOnly = true)
     public List<PlayerAchievementResult.Info> getPlayerAchievementInfos() {
@@ -45,7 +46,7 @@ public class PlayerAchievementService {
 
     @Transactional
     public PlayerAchievementResult.Granted grantAchievement(Long playerId, Long achievementId) {
-        playerReader.assertExistsById(playerId);
+        playerReader.getByIdForUpdateOrThrow(playerId);
 
         Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
 
@@ -65,10 +66,11 @@ public class PlayerAchievementService {
 
     @Transactional
     public PlayerAchievementResult.Revoked revokeAchievement(Long playerId, Long achievementId) {
-        playerReader.assertExistsById(playerId);
-        achievementReader.assertExistsById(achievementId);
+        playerReader.getByIdForUpdateOrThrow(playerId);
+        Achievement achievement = achievementReader.getByIdOrThrow(achievementId);
 
         playerAchievementWriter.revoke(playerId, achievementId);
+        factProcessor.markAchievementRevoked(playerId, achievement.getCode());
         return new PlayerAchievementResult.Revoked(playerId, achievementId);
     }
 }

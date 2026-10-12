@@ -7,6 +7,7 @@ import online.lifeasgame.quest.domain.seed.SeedLevel1Quest;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -20,9 +21,10 @@ public class StaticQuestBlueprintCatalog implements QuestBlueprintCatalog {
     private final Map<QuestCode, QuestBlueprint> blueprintsByCode;
 
     public StaticQuestBlueprintCatalog() {
-        orderedBlueprints = SeedLevel1Quest.definitions().stream()
-                .map(SeedLevel1QuestBlueprintAdapter::toBlueprint)
-                .toList();
+        orderedBlueprints = Stream.concat(
+                SeedLevel1Quest.definitions().stream().map(SeedLevel1QuestBlueprintAdapter::toBlueprint),
+                BackendJourneyQuestBlueprints.all().stream()
+        ).toList();
 
         EnumMap<QuestCode, QuestBlueprint> byCode = new EnumMap<>(QuestCode.class);
         orderedBlueprints.forEach(blueprint -> byCode.put(blueprint.code(), blueprint));

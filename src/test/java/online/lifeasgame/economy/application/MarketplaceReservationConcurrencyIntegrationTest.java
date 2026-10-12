@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEventPublisher;
-import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.economy.api.player.mapper.EconomyWebMapper;
 import online.lifeasgame.economy.application.command.EconomyCommand;
 import online.lifeasgame.economy.application.result.EconomyResult;
@@ -43,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -85,13 +83,9 @@ class MarketplaceReservationConcurrencyIntegrationTest {
     @Autowired
     private JpaListingReservationRepository reservationRepository;
     @Autowired
-    private EconomyFacade facade;
-    @Autowired
     private EntityManagerFactory entityManagerFactory;
     @Autowired
     private ObjectMapper objectMapper;
-    @MockitoBean
-    private CurrentPlayerAccessor currentPlayerAccessor;
     @MockitoSpyBean
     private DomainEventPublisher eventPublisher;
 
@@ -116,7 +110,6 @@ class MarketplaceReservationConcurrencyIntegrationTest {
         Long entryId = insertEntry(itemId);
         listingId = insertListing(itemId, entryId);
         insertBuyerWallet();
-        given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(SELLER_ID);
     }
 
     @Nested
@@ -136,8 +129,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
             assertThat(marketplaceService.listReservations(BUYER_ID).reservations()).singleElement()
                     .satisfies(row -> assertThat(row.listingId()).isEqualTo(listingId));
             assertThat(marketplaceService.listReservations(BUYER_ID + 1).reservations()).isEmpty();
-            given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(BUYER_ID);
-            assertThat(facade.myListings().listings()).isEmpty();
+            assertThat(marketplaceService.listBySeller(BUYER_ID).listings()).isEmpty();
             assertThat(jdbc.queryForObject("SELECT status FROM listings WHERE id = ?", String.class, listingId))
                     .isEqualTo("OPEN");
             var publicJson = objectMapper.valueToTree(EconomyWebMapper.toListings(marketplaceService.listOpen()));
@@ -313,7 +305,7 @@ class MarketplaceReservationConcurrencyIntegrationTest {
     }
 
     private void assertSellerStatus(String expected) {
-        assertThat(facade.myListings().listings()).singleElement()
+        assertThat(marketplaceService.listBySeller(SELLER_ID).listings()).singleElement()
                 .extracting(EconomyResult.ListingSummary::status).isEqualTo(expected);
     }
 

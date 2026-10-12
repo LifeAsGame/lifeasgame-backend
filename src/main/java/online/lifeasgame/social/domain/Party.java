@@ -273,6 +273,14 @@ public class Party extends AbstractTime {
         members.add(partyMember);
     }
 
+    public void joinFromRosterInvitation(Long playerId) {
+        if (status != PartyStatus.ACTIVE || findMember(playerId).isPresent() || memberCount() >= maxMembers)
+            throw new DomainException(SocialError.ROSTER_CONFLICT);
+        findPendingJoin(playerId).ifPresent(PartyWaitMember::cancel);
+        findPendingInvite(playerId).ifPresent(PartyWaitMember::cancel);
+        members.add(PartyMember.createMember(this, playerId));
+    }
+
     public void declineInvitation(Long playerId) {
         PartyWaitMember inv = findPendingInvite(playerId)
                 .orElseThrow(() -> new IllegalStateException("invitation not found"));

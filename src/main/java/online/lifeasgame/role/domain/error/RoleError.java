@@ -3,6 +3,8 @@ package online.lifeasgame.role.domain.error;
 import online.lifeasgame.core.error.ErrorCode;
 
 public enum RoleError implements ErrorCode {
+    INVALID_ROLE_CONTEXT_QUERY("ROL-400-INVALID-CONTEXT-QUERY", "Invalid Role context query", 400),
+    INVALID_ROLE_SCHEDULE_QUERY("ROL-400-INVALID-SCHEDULE-QUERY", "Invalid Role schedule query", 400),
     INVALID_ROLE_TYPE("ROL-400-INVALID-ROLE-TYPE", "Invalid Role type", 400),
     INVALID_ROLE_NAME("ROL-400-INVALID-ROLE-NAME", "Invalid Role name", 400),
     INVALID_ROLE_DESCRIPTION("ROL-400-INVALID-ROLE-DESCRIPTION", "Invalid Role description", 400),
@@ -12,7 +14,6 @@ public enum RoleError implements ErrorCode {
     ROLE_ARCHIVED("ROL-409-ARCHIVED", "Archived Role cannot be updated", 409),
     ROLE_RELATION_ALREADY_EXISTS("ROL-409-RELATION-ALREADY-EXISTS", "Role relation already exists", 409),
     ROLE_RELATION_ARCHIVED("ROL-409-RELATION-ARCHIVED", "Archived Role relation cannot be updated", 409),
-    ROLE_EVENT_COMMAND_GATED("ROL-403-EVENT-COMMAND-GATED", "Role event commands are not available", 403),
     ROLE_EVENT_NOT_FOUND("ROL-404-EVENT-NOT-FOUND", "Role event not found", 404),
     ROLE_EVENT_PARTICIPANT_NOT_FOUND("ROL-404-EVENT-PARTICIPANT-NOT-FOUND", "Role event participant not found", 404),
     INVALID_ROLE_EVENT_TITLE("ROL-400-INVALID-EVENT-TITLE", "Invalid Role event title", 400),

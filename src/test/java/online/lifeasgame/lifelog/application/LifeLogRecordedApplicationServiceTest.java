@@ -79,7 +79,8 @@ class LifeLogRecordedApplicationServiceTest {
                 writer,
                 recordRegistrar,
                 publisher,
-                mock(CurrentPlayerAccessor.class)
+                mock(CurrentPlayerAccessor.class),
+                mock(LifeLogCategoryService.class)
         );
 
         CollectionResult.Created result = service.create(
@@ -142,7 +143,8 @@ class LifeLogRecordedApplicationServiceTest {
                 writer,
                 recordRegistrar,
                 publisher,
-                mock(CurrentPlayerAccessor.class)
+                mock(CurrentPlayerAccessor.class),
+                mock(LifeLogCategoryService.class)
         );
 
         ExerciseResult.Created result = service.create(
@@ -204,7 +206,8 @@ class LifeLogRecordedApplicationServiceTest {
                 writer,
                 recordRegistrar,
                 publisher,
-                mock(CurrentPlayerAccessor.class)
+                mock(CurrentPlayerAccessor.class),
+                mock(LifeLogCategoryService.class)
         );
 
         MediaLogResult.Created result = service.create(

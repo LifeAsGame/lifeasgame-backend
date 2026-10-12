@@ -31,6 +31,13 @@ public class ExerciseLog extends AbstractTime {
     @Column(name = "player_id", nullable = false, updatable = false)
     private Long playerId;
 
+    @Column(name = "personal_category_id")
+    private Long personalCategoryId;
+
+    public void assignPersonalCategory(Long categoryId) {
+        this.personalCategoryId = categoryId;
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 20)
     private ExerciseCategory category;

@@ -28,11 +28,12 @@ public final class PlayerChatRequest {
 
     public record SendMessage(
             @NotBlank
-            String content
+            String content,
+            @Size(max = 80) @jakarta.validation.constraints.Pattern(regexp = "\\S+") String clientMessageId
     ) {
     }
 
-    public record Read(Long lastReadMessageId) {
+    public record Read(@jakarta.validation.constraints.NotNull Long lastReadMessageId) {
     }
 
 }

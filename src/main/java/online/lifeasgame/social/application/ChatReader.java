@@ -25,17 +25,33 @@ public class ChatReader {
     private final ChatChannelRepository chatChannelRepository;
     private final ChannelParticipantRepository channelParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final GuildReader guildReader;
+    private final PartyReader partyReader;
 
     public ChatChannel get(Long channelId) {
         return chatChannelRepository.findById(channelId).orElseThrow(() -> new DomainException(SocialError.CHAT_CHANNEL_NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
     public ChatChannel getMemberChannel(Long channelId, Long playerId) {
         ChatChannel channel = get(channelId);
         channelParticipantRepository.findByChannelIdAndUserId(
                 channelId,
                 playerId
         ).orElseThrow(() -> new DomainException(SocialError.CHAT_CHANNEL_FORBIDDEN));
+        if (channel.getType() == ChatChannelType.GUILD) {
+            var guild = guildReader.getByIdOrThrow(channel.getContextId());
+            if (guild.getStatus() != online.lifeasgame.social.domain.GuildStatus.ACTIVE
+                    || guild.findMember(playerId).isEmpty()) {
+                throw new DomainException(SocialError.CHAT_CHANNEL_FORBIDDEN);
+            }
+        } else if (channel.getType() == ChatChannelType.PARTY) {
+            var party = partyReader.getById(channel.getContextId());
+            if (party.getStatus() != online.lifeasgame.social.domain.PartyStatus.ACTIVE
+                    || party.findMember(playerId).isEmpty()) {
+                throw new DomainException(SocialError.CHAT_CHANNEL_FORBIDDEN);
+            }
+        }
         return channel;
     }
 

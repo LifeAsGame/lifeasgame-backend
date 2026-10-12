@@ -41,12 +41,13 @@ public final class PlayerCollectionWebMapper {
                         request.reflectionScope(),
                         request.primaryRoleId(),
                         request.roleEventId()
-                )
+                ),
+                request.personalCategoryId()
         );
     }
 
     public static PlayerCollectionResponse.Created toCreated(CollectionResult.Created result) {
-        return new PlayerCollectionResponse.Created(result.id());
+        return new PlayerCollectionResponse.Created(result.id(), result.lifeLogId());
     }
 
     public static CollectionCommand.Update toUpdateCommand(PlayerCollectionRequest.Update request) {
@@ -65,7 +66,8 @@ public final class PlayerCollectionWebMapper {
                 result.acquiredFrom(),
                 result.tags(),
                 result.createdAt(),
-                result.updatedAt()
+                result.updatedAt(),
+                result.personalCategoryId()
         );
     }
 

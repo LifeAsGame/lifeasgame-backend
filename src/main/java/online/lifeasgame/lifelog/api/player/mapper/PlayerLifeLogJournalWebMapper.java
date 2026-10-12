@@ -66,7 +66,8 @@ public final class PlayerLifeLogJournalWebMapper {
                     new PlayerLifeLogJournalResponse.CollectionPreview(
                             value.category(),
                             value.title(),
-                            value.quantity()
+                            value.quantity(),
+                            value.personalCategoryId()
                     );
             case LifeLogJournalResult.ExercisePreview value ->
                     new PlayerLifeLogJournalResponse.ExercisePreview(
@@ -75,7 +76,8 @@ public final class PlayerLifeLogJournalWebMapper {
                             value.distanceKm(),
                             value.calories(),
                             value.exercisedOn(),
-                            value.memo()
+                            value.memo(),
+                            value.personalCategoryId()
                     );
             case LifeLogJournalResult.MediaPreview value ->
                     new PlayerLifeLogJournalResponse.MediaPreview(
@@ -84,7 +86,8 @@ public final class PlayerLifeLogJournalWebMapper {
                             value.currentEpisode(),
                             value.totalEpisode(),
                             value.status(),
-                            value.rating()
+                            value.rating(),
+                            value.personalCategoryId()
                     );
         };
     }
@@ -103,7 +106,8 @@ public final class PlayerLifeLogJournalWebMapper {
                             value.acquiredFrom(),
                             value.tags(),
                             value.createdAt(),
-                            value.updatedAt()
+                            value.updatedAt(),
+                            value.personalCategoryId()
                     );
             case LifeLogJournalResult.ExerciseSource value ->
                     new PlayerLifeLogJournalResponse.ExerciseSource(
@@ -114,7 +118,8 @@ public final class PlayerLifeLogJournalWebMapper {
                             value.exercisedOn(),
                             value.memo(),
                             value.createdAt(),
-                            value.updatedAt()
+                            value.updatedAt(),
+                            value.personalCategoryId()
                     );
             case LifeLogJournalResult.MediaSource value ->
                     new PlayerLifeLogJournalResponse.MediaSource(
@@ -130,7 +135,8 @@ public final class PlayerLifeLogJournalWebMapper {
                             value.startedOn(),
                             value.finishedOn(),
                             value.createdAt(),
-                            value.updatedAt()
+                            value.updatedAt(),
+                            value.personalCategoryId()
                     );
         };
     }

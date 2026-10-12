@@ -63,4 +63,10 @@ public class PlayerController implements PlayerApiSpecV1 {
         PlayerResult.UpdatedTitle result = playerService.changeRepresentativeTitle(titleId);
         return ApiResponses.ok(PlayerWebMapper.toUpdatedTitle(result));
     }
+
+    @DeleteMapping("/titles/representative")
+    public ResponseEntity<ApiResponse<PlayerResponse.UpdatedTitle>> clearTitle() {
+        return ApiResponses.ok(PlayerWebMapper.toUpdatedTitle(
+                playerService.clearRepresentativeTitle()));
+    }
 }

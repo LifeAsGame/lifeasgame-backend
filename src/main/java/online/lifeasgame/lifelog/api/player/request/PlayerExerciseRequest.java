@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 
 import java.time.LocalDate;
 
@@ -17,13 +18,20 @@ public final class PlayerExerciseRequest {
             @NotNull @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            @NotNull LocalDate exercisedOn,
+            @NotNull @DatabaseCalendarDate LocalDate exercisedOn,
             String memo,
             String lifeLogSubtype,
             String reflectionScope,
             @Positive Long primaryRoleId,
-            @Positive Long roleEventId
+            @Positive Long roleEventId,
+            @Positive Long personalCategoryId
     ) {
+        public Create(String category, Integer durationMinutes, Double distanceKm, Integer calories,
+                      LocalDate exercisedOn, String memo, String lifeLogSubtype, String reflectionScope,
+                      Long primaryRoleId, Long roleEventId) {
+            this(category, durationMinutes, distanceKm, calories, exercisedOn, memo,
+                    lifeLogSubtype, reflectionScope, primaryRoleId, roleEventId, null);
+        }
         public Create(
                 String category,
                 Integer durationMinutes,
@@ -43,6 +51,7 @@ public final class PlayerExerciseRequest {
                     memo,
                     lifeLogSubtype,
                     reflectionScope,
+                    null,
                     null,
                     null
             );
@@ -66,6 +75,7 @@ public final class PlayerExerciseRequest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
         }
@@ -76,7 +86,7 @@ public final class PlayerExerciseRequest {
             @Min(1) Integer durationMinutes,
             @DecimalMin("0.0") Double distanceKm,
             @Min(0) Integer calories,
-            LocalDate exercisedOn,
+            @DatabaseCalendarDate LocalDate exercisedOn,
             String memo
     ) {}
 

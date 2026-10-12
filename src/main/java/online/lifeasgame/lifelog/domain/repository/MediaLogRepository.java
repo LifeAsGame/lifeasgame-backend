@@ -23,8 +23,14 @@ public interface MediaLogRepository {
             WatchStatus status,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     );
+    default List<MediaLog> search(Long playerId, MediaCategory category, WatchStatus status, String titleLike,
+                                  int page, int size) {
+        return search(playerId, category, status, titleLike, page, size, null, false);
+    }
 
     long deleteByIdAndPlayerId(Long mediaId, Long playerId);
 }

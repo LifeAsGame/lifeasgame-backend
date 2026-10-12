@@ -10,6 +10,7 @@ import online.lifeasgame.quest.application.event.QuestDefinitionEventFactory;
 import online.lifeasgame.quest.application.event.QuestTransitionEventFactory;
 import online.lifeasgame.quest.application.result.QuestResult;
 import online.lifeasgame.quest.domain.*;
+import online.lifeasgame.quest.domain.repository.JourneyEvidenceStore;
 import online.lifeasgame.quest.domain.error.QuestError;
 import online.lifeasgame.reward.application.internal.RewardProfileLookupApi;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,8 @@ public class QuestService {
     private final PlayerTimezoneResolver playerTimezoneResolver;
     private final Clock clock;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final BackendJourneyAccess backendJourneyAccess;
+    private final JourneyEvidenceStore journeyEvidenceStore;
 
     @Transactional
     public QuestResult.Definition ensureDefinition(QuestCommand.EnsureDefinition command) {
@@ -140,6 +143,7 @@ public class QuestService {
     @Transactional
     public QuestResult.Acceptance accept(Long playerId, QuestCommand.Accept command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
+        if (BackendJourneyAccess.isJourney(questCode)) backendJourneyAccess.requireSelectedRole(playerId);
         questBlueprintCatalog.require(questCode);
         Quest quest = questReader.getByCode(questCode);
         Instant acceptedAt = clock.instant();
@@ -206,9 +210,19 @@ public class QuestService {
     public QuestResult.Canceled cancel(Long playerId, QuestCommand.Cancel command) {
         QuestCode questCode = QuestCode.parse(command.questCode());
         Quest quest = questReader.getByCode(questCode);
-        QuestAcceptance acceptance = questReader.findLatest(quest.getId(), playerId);
-        if (acceptance == null) {
+        QuestAcceptance latest = questReader.findLatest(quest.getId(), playerId);
+        if (latest == null) {
             throw new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND);
+        }
+        QuestAcceptance acceptance = questReader.getAcceptanceForUpdate(latest.getId());
+        if (!playerId.equals(acceptance.getPlayerId())) {
+            throw new DomainException(QuestError.QUEST_ACCEPTANCE_NOT_FOUND);
+        }
+        if (BackendJourneyAccess.isJourney(questCode)) {
+            if (acceptance.isCompleted()) {
+                throw new DomainException(QuestError.QUEST_ACCEPTANCE_CANCELLATION_NOT_ALLOWED);
+            }
+            journeyEvidenceStore.delete(acceptance.getId());
         }
         acceptance.cancel();
         questWriter.saveAcceptance(acceptance);

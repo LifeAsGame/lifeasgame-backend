@@ -1,5 +1,7 @@
 package online.lifeasgame.quest.api.admin.request;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import online.lifeasgame.platform.web.validation.CalendarInstantDeserializer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -24,7 +26,7 @@ public final class AdminQuestRequest {
             @Size(max = 80) String rewardProfileCode,
             Integer rewardExp,
             Map<String, Integer> rewardStats,
-            Instant dueAt,
+            @JsonDeserialize(using = CalendarInstantDeserializer.class) Instant dueAt,
             String semanticCategory,
             String progressSource,
             String repeatPolicy,

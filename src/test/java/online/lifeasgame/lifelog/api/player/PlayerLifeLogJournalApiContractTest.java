@@ -130,7 +130,7 @@ class PlayerLifeLogJournalApiContractTest {
         @Test
         @DisplayName("self filter와 page만 위임하고 canonical metadata와 preview를 반환한다")
         void returnsCanonicalPage() throws Exception {
-            given(queryService.list(31L, "MEMORY", 1, 5))
+            given(queryService.list(31L, "MEMORY", 1, 5, null, false))
                     .willReturn(new LifeLogJournalResult.Page(
                             List.of(new LifeLogJournalResult.Entry(
                                     101L,
@@ -178,7 +178,7 @@ class PlayerLifeLogJournalApiContractTest {
                             .value("기록"))
                     .andExpect(jsonPath("$.result.content[0].playerId")
                             .doesNotExist());
-            verify(queryService).list(31L, "MEMORY", 1, 5);
+            verify(queryService).list(31L, "MEMORY", 1, 5, null, false);
         }
     }
 

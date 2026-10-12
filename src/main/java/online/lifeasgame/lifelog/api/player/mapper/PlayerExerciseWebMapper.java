@@ -42,7 +42,8 @@ public final class PlayerExerciseWebMapper {
                         request.reflectionScope(),
                         request.primaryRoleId(),
                         request.roleEventId()
-                )
+                ),
+                request.personalCategoryId()
         );
     }
 
@@ -72,7 +73,8 @@ public final class PlayerExerciseWebMapper {
                 result.exercisedOn(),
                 result.memo(),
                 result.createdAt(),
-                result.updatedAt()
+                result.updatedAt(),
+                result.personalCategoryId()
         );
     }
 

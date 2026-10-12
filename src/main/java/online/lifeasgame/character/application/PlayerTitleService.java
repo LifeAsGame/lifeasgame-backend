@@ -24,6 +24,7 @@ public class PlayerTitleService {
     private final TitleReader titleReader;
     private final PlayerReader playerReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final AchievementFactProcessor factProcessor;
 
     @Transactional(readOnly = true)
     public List<PlayerTitleResult.Info> getPlayerTitleInfos() {
@@ -36,7 +37,7 @@ public class PlayerTitleService {
 
     @Transactional
     public PlayerTitleResult.Created createTitle(Long playerId, Long titleId) {
-        playerReader.assertExistsById(playerId);
+        playerReader.getByIdForUpdateOrThrow(playerId);
 
         Title title = titleReader.getByIdOrThrow(titleId);
 
@@ -51,8 +52,10 @@ public class PlayerTitleService {
     public PlayerTitleResult.Revoked revokeTitle(Long playerId, Long titleId) {
         var player = playerReader.getByIdForUpdateOrThrow(playerId);
         playerTitleOwnershipVerifier.verifyOwned(playerId, titleId);
+        Title title = titleReader.getByIdOrThrow(titleId);
         player.clearRepresentativeTitleIfMatches(titleId);
         playerTitleRevoker.revoke(playerId, titleId);
+        factProcessor.markTitleRevoked(playerId, title.getCode());
         return new PlayerTitleResult.Revoked(playerId, titleId);
     }
 }

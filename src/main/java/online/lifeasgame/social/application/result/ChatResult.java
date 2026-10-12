@@ -66,7 +66,10 @@ public final class ChatResult {
     public record FriendChannel(
             Long channelId,
             Peer peer,
-            boolean readOnly
+            boolean readOnly,
+            Long lastReadMessageId,
+            Long peerLastReadMessageId,
+            long unreadCount
     ) {
     }
 
@@ -76,7 +79,8 @@ public final class ChatResult {
             Long senderId,
             String content,
             boolean edited,
-            Instant createdAt
+            Instant createdAt,
+            String clientMessageId
     ) {
         public static Message from(ChatMessage message) {
             return new Message(
@@ -85,7 +89,8 @@ public final class ChatResult {
                     message.getSenderId(),
                     message.getContent(),
                     message.isEdited(),
-                    message.getCreatedAt()
+                    message.getCreatedAt(),
+                    message.getClientMessageId()
             );
         }
     }

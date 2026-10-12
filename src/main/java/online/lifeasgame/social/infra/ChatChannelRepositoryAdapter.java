@@ -25,6 +25,11 @@ public class ChatChannelRepositoryAdapter implements ChatChannelRepository {
     }
 
     @Override
+    public Optional<ChatChannel> findByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id);
+    }
+
+    @Override
     public Optional<ChatChannel> findByContext(ChatChannelType type, Long contextId) {
         return jpaRepository.findByTypeAndContextId(type, contextId);
     }

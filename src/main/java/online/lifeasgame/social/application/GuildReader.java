@@ -40,7 +40,7 @@ public class GuildReader {
     }
 
     private GuildVisibility parseVisibility(String visibility) {
-        return (visibility == null || visibility.isBlank()) ? null : GuildVisibility.valueOf(visibility);
+        return (visibility == null || visibility.isBlank()) ? null : GuildVisibility.parse(visibility);
     }
 
     public List<Guild> recent(int limit) {

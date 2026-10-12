@@ -58,7 +58,8 @@ public final class PlayerLifeLogJournalResponse {
     public record CollectionPreview(
             String category,
             String title,
-            Integer quantity
+            Integer quantity,
+            Long personalCategoryId
     ) implements Preview {
     }
 
@@ -68,7 +69,8 @@ public final class PlayerLifeLogJournalResponse {
             Double distanceKm,
             Integer calories,
             LocalDate exercisedOn,
-            String memo
+            String memo,
+            Long personalCategoryId
     ) implements Preview {
     }
 
@@ -78,7 +80,8 @@ public final class PlayerLifeLogJournalResponse {
             Integer currentEpisode,
             Integer totalEpisode,
             String status,
-            Double rating
+            Double rating,
+            Long personalCategoryId
     ) implements Preview {
     }
 
@@ -97,7 +100,8 @@ public final class PlayerLifeLogJournalResponse {
             String acquiredFrom,
             Set<String> tags,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
     }
 
@@ -109,7 +113,8 @@ public final class PlayerLifeLogJournalResponse {
             LocalDate exercisedOn,
             String memo,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
     }
 
@@ -126,7 +131,8 @@ public final class PlayerLifeLogJournalResponse {
             LocalDate startedOn,
             LocalDate finishedOn,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) implements Source {
     }
 }

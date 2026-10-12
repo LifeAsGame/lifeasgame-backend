@@ -21,12 +21,14 @@ public class PlayerQuestRouteRepositoryAdapter
             Long playerId,
             Long routeId,
             Long firstStepId,
+            Long roleId,
             Instant selectedAt
     ) {
         jpaRepository.insertIfAbsent(
                 playerId,
                 routeId,
                 firstStepId,
+                roleId,
                 selectedAt
         );
     }

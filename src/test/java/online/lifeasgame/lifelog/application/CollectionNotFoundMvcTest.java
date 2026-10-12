@@ -52,6 +52,7 @@ class CollectionNotFoundMvcTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean CollectionLogRepository repository;
     @MockitoBean CollectionLogWriter writer;
+    @MockitoBean LifeLogCategoryService categoryService;
     @MockitoBean LifeLogRecordRegistrar registrar;
     @MockitoBean DomainEventPublisher publisher;
     @MockitoBean CurrentPlayerAccessor currentPlayerAccessor;

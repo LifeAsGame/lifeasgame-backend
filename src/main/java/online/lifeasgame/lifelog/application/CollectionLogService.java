@@ -29,6 +29,7 @@ public class CollectionLogService {
     private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService lifeLogCategoryService;
 
     @Transactional
     public CollectionResult.Created create(CollectionCommand.Create command) {
@@ -74,6 +75,8 @@ public class CollectionLogService {
                 )
         );
 
+        saved.assignPersonalCategory(lifeLogCategoryService.requirePersonal(
+                command.personalCategoryId(), playerId, LifeLogCategoryKind.COLLECTION));
         LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.COLLECTION,

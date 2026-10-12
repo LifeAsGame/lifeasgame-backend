@@ -125,7 +125,14 @@ class SeedLevel1QuestBlueprintAdapterTest {
                         QuestCode.Q_RECORD_WEEKLY_LOOKBACK,
                         QuestCode.Q_GROWTH_ONE_FOCUS,
                         QuestCode.Q_RECOVERY_REST_TEN,
-                        QuestCode.Q_ADVENTURE_PREPARATION
+                        QuestCode.Q_ADVENTURE_PREPARATION,
+                        QuestCode.Q_DEV_DEFINE_BACKEND_GOAL,
+                        QuestCode.Q_DEV_RECORD_JAVA_STUDY,
+                        QuestCode.Q_DEV_BUILD_SPRING_CRUD,
+                        QuestCode.Q_DEV_MODEL_DATABASE,
+                        QuestCode.Q_DEV_WRITE_DOMAIN_TEST,
+                        QuestCode.Q_DEV_DEPLOY_SERVICE,
+                        QuestCode.Q_DEV_POLISH_README
                 );
         assertThat(catalog.find(QuestCode.PLAYER_WELCOME)).isEmpty();
     }

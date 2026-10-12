@@ -8,6 +8,7 @@ import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.command.ExerciseCommand;
 import online.lifeasgame.lifelog.application.command.MediaLogCommand;
+import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
 import online.lifeasgame.lifelog.domain.event.LifeLogType;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
 import online.lifeasgame.lifelog.domain.record.LifeLogRecord;
@@ -43,6 +44,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -129,6 +131,9 @@ class QuickRecordServiceIntegrationTest {
         jdbcTemplate.update("DELETE FROM collection_logs");
         jdbcTemplate.update("DELETE FROM exercise_logs");
         jdbcTemplate.update("DELETE FROM media_logs");
+        jdbcTemplate.update(
+                "DELETE FROM lifelog_categories WHERE owner_player_id = ? AND source = 'PERSONAL'",
+                PLAYER_ID);
         jdbcTemplate.update("DELETE FROM outbox_events");
         eventPublisher.reset();
         receiptRepository.reset();
@@ -189,6 +194,35 @@ class QuickRecordServiceIntegrationTest {
                 )
         );
         assertThat(tableExists("quick_lifelog_entries")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Quick Record는 선택한 개인 카테고리를 저장하고 다른 카테고리로 같은 key를 재사용하지 않는다")
+    void persistsPersonalCategoryAndRejectsChangedReplay() {
+        Long firstCategory = personalCategory("Quick first");
+        Long secondCategory = personalCategory("Quick second");
+        var firstPayload = new CollectionCommand.Create(
+                "BOOK", "Categorized record", null, 1, null, null, Set.of(),
+                LifeLogRecordMetadataCommand.none(),
+                firstCategory);
+        var changedPayload = new CollectionCommand.Create(
+                "BOOK", "Categorized record", null, 1, null, null, Set.of(),
+                LifeLogRecordMetadataCommand.none(),
+                secondCategory);
+        var firstCommand = new QuickRecordCommand.Create("COLLECTION", firstPayload, null, null);
+
+        var first = quickRecordService.record(PLAYER_ID, "quick-category", firstCommand);
+        var replay = quickRecordService.record(PLAYER_ID, "quick-category", firstCommand);
+        assertConflict(() -> quickRecordService.record(
+                PLAYER_ID, "quick-category",
+                new QuickRecordCommand.Create("COLLECTION", changedPayload, null, null)));
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT personal_category_id FROM collection_logs WHERE id = ?",
+                Long.class, first.sourceId())).isEqualTo(firstCategory);
+        assertThat(replay.replay()).isTrue();
+        assertThat(count("collection_logs")).isEqualTo(1);
+        assertThat(outboxCount(RECORDED_ALIAS)).isEqualTo(1);
     }
 
     @Test
@@ -637,6 +671,17 @@ class QuickRecordServiceIntegrationTest {
                 ),
                 mediaId
         );
+    }
+
+    private Long personalCategory(String name) {
+        jdbcTemplate.update("""
+                INSERT INTO lifelog_categories
+                    (owner_player_id, kind, source, name, normalized_name)
+                VALUES (?, 'COLLECTION', 'PERSONAL', ?, ?)
+                """, PLAYER_ID, name, name.toLowerCase(Locale.ROOT));
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM lifelog_categories WHERE owner_player_id = ? AND normalized_name = ?",
+                Long.class, PLAYER_ID, name.toLowerCase(Locale.ROOT));
     }
 
     private void assertFirstResult(

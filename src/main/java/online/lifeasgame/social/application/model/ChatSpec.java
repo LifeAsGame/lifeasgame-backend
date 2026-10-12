@@ -37,9 +37,4 @@ public final class ChatSpec {
         }
     }
 
-    public record SendMessage(Long channelId, Long senderId, String content) {
-        public static SendMessage from(Long channelId, Long senderId, ChatCommand.SendMessage command) {
-            return new SendMessage(channelId, senderId, command.content());
-        }
-    }
 }

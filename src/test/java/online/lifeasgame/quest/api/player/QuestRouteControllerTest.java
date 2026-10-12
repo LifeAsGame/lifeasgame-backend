@@ -128,7 +128,7 @@ class QuestRouteControllerTest {
         @Test
         @DisplayName("path routeId만 전달하고 선택된 runtime을 반환한다")
         void selectsWithSelfIdentityOwnedByService() throws Exception {
-            when(selectService.select(250L)).thenReturn(route(progress(350L)));
+            when(selectService.select(250L, null)).thenReturn(route(progress(350L)));
 
             mockMvc.perform(authenticated(post(
                             "/api/v1/quest-routes/{routeId}/select",
@@ -138,7 +138,7 @@ class QuestRouteControllerTest {
                     .andExpect(jsonPath("$.result.playerProgress.currentStepId")
                             .value(350L));
 
-            verify(selectService).select(250L);
+            verify(selectService).select(250L, null);
         }
     }
 
@@ -225,6 +225,7 @@ class QuestRouteControllerTest {
         return new QuestRouteResult.PlayerProgress(
                 550L,
                 currentStepId,
+                null,
                 "IN_PROGRESS",
                 Instant.parse("2026-08-10T01:00:00Z"),
                 null

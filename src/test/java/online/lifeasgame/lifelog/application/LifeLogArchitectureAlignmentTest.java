@@ -60,24 +60,25 @@ class LifeLogArchitectureAlignmentTest {
         given(accessor.currentPlayerIdOrThrow()).willReturn(PLAYER_ID);
         given(collectionReader.recent(PLAYER_ID, 5)).willReturn(List.of());
         given(exerciseReader.search(
-                PLAYER_ID, null, null, null, 0, 20
+                PLAYER_ID, null, null, null, 0, 20, null, false
         )).willReturn(List.of());
         given(mediaReader.search(
-                PLAYER_ID, null, null, null, 0, 20
+                PLAYER_ID, null, null, null, 0, 20, null, false
         )).willReturn(List.of());
 
-        assertThat(new CollectionLogQueryService(collectionReader, accessor)
+        LifeLogCategoryService categoryService = mock(LifeLogCategoryService.class);
+        assertThat(new CollectionLogQueryService(collectionReader, accessor, categoryService)
                 .recent(5)).isEmpty();
-        assertThat(new ExerciseLogQueryService(exerciseReader, accessor)
+        assertThat(new ExerciseLogQueryService(exerciseReader, accessor, categoryService)
                 .search(new ExerciseQuery.Search(null, null, null, 0, 20)))
                 .isEmpty();
-        assertThat(new MediaLogQueryService(mediaReader, accessor)
+        assertThat(new MediaLogQueryService(mediaReader, accessor, categoryService)
                 .search(new MediaLogQuery.Search(null, null, null, 0, 20)))
                 .isEmpty();
 
         verify(collectionReader).recent(PLAYER_ID, 5);
-        verify(exerciseReader).search(PLAYER_ID, null, null, null, 0, 20);
-        verify(mediaReader).search(PLAYER_ID, null, null, null, 0, 20);
+        verify(exerciseReader).search(PLAYER_ID, null, null, null, 0, 20, null, false);
+        verify(mediaReader).search(PLAYER_ID, null, null, null, 0, 20, null, false);
 
         for (Class<?> type : List.of(
                 CollectionLogQueryService.class,

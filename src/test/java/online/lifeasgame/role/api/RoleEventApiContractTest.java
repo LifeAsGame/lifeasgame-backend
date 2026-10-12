@@ -1,13 +1,11 @@
 package online.lifeasgame.role.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
 import online.lifeasgame.role.api.request.RoleEventRequest;
 import online.lifeasgame.role.application.RoleEventQueryService;
 import online.lifeasgame.role.application.RoleEventService;
 import online.lifeasgame.role.application.result.RoleEventResult;
-import online.lifeasgame.role.domain.error.RoleError;
 import online.lifeasgame.support.ControllerSliceTest;
 import online.lifeasgame.system.bootstrap.error.handler.AppErrorProperties;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -64,6 +63,22 @@ class RoleEventApiContractTest {
 
     @MockitoBean
     private ErrorDocLinker errorDocLinker;
+
+    @Test
+    @DisplayName("잘못된 일정 연도와 월일은 변경 없이 problem 400을 반환한다")
+    void rejectsInvalidScheduleBeforeMutation() throws Exception {
+        mockMvc.perform(post("/api/v1/roles/2/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Meeting\",\"startsAt\":\"+100000-01-01T00:00:00Z\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("REQ-BAD-INPUT"));
+        mockMvc.perform(patch("/api/v1/roles/2/events/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Meeting\",\"endsAt\":\"2025-02-29T00:00:00Z\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
 
     @Nested
     @DisplayName("self RoleEvent endpoint를 노출할 때")
@@ -109,27 +124,23 @@ class RoleEventApiContractTest {
     class DelegateUseCases {
 
         @Test
-        @DisplayName("조회 성공과 command 차단을 Application 결과대로 응답한다")
-        void delegatesGatedLifecycleAndReads() throws Exception {
+        @DisplayName("조회와 생성·수정·완료·취소 결과를 응답한다")
+        void delegatesLifecycleAndReads() throws Exception {
             RoleEventResult.Detail detail = detail();
-            given(service.create(eq(2L), any()))
-                    .willThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED));
+            given(service.create(eq(2L), any())).willReturn(detail);
             given(queryService.list(2L)).willReturn(List.of(detail));
             given(queryService.detail(2L, 5L)).willReturn(detail);
-            given(service.update(eq(2L), eq(5L), any()))
-                    .willThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED));
-            given(service.complete(2L, 5L))
-                    .willThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED));
-            given(service.cancel(2L, 5L))
-                    .willThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED));
+            given(service.update(eq(2L), eq(5L), any())).willReturn(detail);
+            given(service.complete(2L, 5L)).willReturn(detail);
+            given(service.cancel(2L, 5L)).willReturn(detail);
 
             mockMvc.perform(post("/api/v1/roles/2/events")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(json(new RoleEventRequest.Create(
                                     "팀 회고", null, null, null
                             ))))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.code").value("ROL-403-EVENT-COMMAND-GATED"));
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.result.status").value("PLANNED"));
             mockMvc.perform(get("/api/v1/roles/2/events"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result[0].status")
@@ -142,20 +153,18 @@ class RoleEventApiContractTest {
                             .content(json(new RoleEventRequest.Update(
                                     "팀 회고", null, null, null
                             ))))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk());
             mockMvc.perform(post("/api/v1/roles/2/events/5/complete"))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk());
             mockMvc.perform(post("/api/v1/roles/2/events/5/cancel"))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk());
         }
 
         @Test
-        @DisplayName("participant 추가와 제거도 gated 오류를 응답한다")
+        @DisplayName("participant 추가와 제거 결과를 응답한다")
         void delegatesParticipantChanges() throws Exception {
             given(service.addParticipant(eq(2L), eq(5L), any()))
-                    .willThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED));
-            doThrow(new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED))
-                    .when(service).removeParticipant(2L, 5L, 9L);
+                    .willReturn(new RoleEventResult.Participant(9L, "PERSON", 3L));
 
             mockMvc.perform(post("/api/v1/roles/2/events/5/participants")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -165,13 +174,13 @@ class RoleEventApiContractTest {
                                             3L
                                     )
                             )))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.code").value("ROL-403-EVENT-COMMAND-GATED"));
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.participantLinkId").value(9));
 
             mockMvc.perform(delete(
                             "/api/v1/roles/2/events/5/participants/9"
                     ))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isNoContent());
             verify(service).removeParticipant(2L, 5L, 9L);
         }
     }

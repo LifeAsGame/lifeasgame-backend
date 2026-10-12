@@ -25,6 +25,8 @@ public interface ExerciseLogJpaRepository extends JpaRepository<ExerciseLog, Lon
                           AND (:category IS NULL OR e.category = :category)
                           AND (:from IS NULL OR e.exercisedOn >= :from)
                           AND (:to IS NULL OR e.exercisedOn <= :to)
+                          AND (:personalCategoryId IS NULL OR e.personalCategoryId = :personalCategoryId)
+                          AND (:unclassified = false OR e.personalCategoryId IS NULL)
                     """
     )
     Page<ExerciseLog> search(
@@ -32,6 +34,8 @@ public interface ExerciseLogJpaRepository extends JpaRepository<ExerciseLog, Lon
             @Param("category") ExerciseCategory category,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
+            @Param("personalCategoryId") Long personalCategoryId,
+            @Param("unclassified") boolean unclassified,
             Pageable pageable
     );
 

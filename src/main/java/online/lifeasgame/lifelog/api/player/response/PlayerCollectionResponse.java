@@ -9,7 +9,7 @@ public final class PlayerCollectionResponse {
     private PlayerCollectionResponse() {
     }
 
-    public record Created(Long id) {
+    public record Created(Long id, Long lifeLogId) {
     }
 
     public record Deleted(Long id) {}
@@ -25,7 +25,8 @@ public final class PlayerCollectionResponse {
             String acquiredFrom,
             Set<String> tags,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
     }
 

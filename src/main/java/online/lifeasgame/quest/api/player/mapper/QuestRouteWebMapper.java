@@ -58,6 +58,7 @@ public final class QuestRouteWebMapper {
         return new QuestRouteResponse.PlayerProgress(
                 result.id(),
                 result.currentStepId(),
+                result.roleId(),
                 result.status(),
                 result.selectedAt(),
                 result.completedAt()

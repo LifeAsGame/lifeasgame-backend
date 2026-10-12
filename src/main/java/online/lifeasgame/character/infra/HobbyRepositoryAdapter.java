@@ -23,12 +23,12 @@ public class HobbyRepositoryAdapter implements HobbyRepository {
 
     @Override
     public List<Hobby> findAll() {
-        return jpaRepository.findAll();
+        return jpaRepository.findByActiveTrue();
     }
 
     @Override
     public List<Hobby> findByCategoryIn(List<HobbyCategory> HobbyCategories) {
-        return jpaRepository.findByCategoryIn(HobbyCategories);
+        return jpaRepository.findByCategoryInAndActiveTrue(HobbyCategories);
     }
 
     @Override
@@ -38,6 +38,6 @@ public class HobbyRepositoryAdapter implements HobbyRepository {
 
     @Override
     public void delete(Long hobbyId) {
-        jpaRepository.deleteById(hobbyId);
+        jpaRepository.findById(hobbyId).ifPresent(Hobby::deactivate);
     }
 }

@@ -5,6 +5,7 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.query.MediaLogQuery;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
 import online.lifeasgame.lifelog.domain.MediaLog;
+import online.lifeasgame.lifelog.domain.LifeLogCategoryKind;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ public class MediaLogQueryService {
 
     private final MediaLogReader mediaLogReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService categoryService;
 
     public List<MediaLogResult.Info> recent(int limit) {
         return recent(currentPlayerAccessor.currentPlayerIdOrThrow(), limit);
@@ -33,13 +35,17 @@ public class MediaLogQueryService {
     }
 
     public List<MediaLogResult.Info> search(Long playerId, MediaLogQuery.Search query) {
+        categoryService.validateFilter(playerId, LifeLogCategoryKind.MEDIA,
+                query.personalCategoryId(), query.unclassified());
         return mediaLogReader.search(
                         playerId,
                         query.category(),
                         query.status(),
                         query.titleLike(),
                         query.page(),
-                        query.size()
+                        query.size(),
+                        query.personalCategoryId(),
+                        query.unclassified()
                 ).stream()
                 .map(MediaLogResult.Info::from)
                 .toList();

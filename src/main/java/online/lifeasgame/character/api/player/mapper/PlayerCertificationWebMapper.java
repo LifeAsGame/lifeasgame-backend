@@ -23,7 +23,8 @@ public final class PlayerCertificationWebMapper {
                                                 result.category(),
                                                 result.acquiredDate(),
                                                 result.expiresDate(),
-                                                result.grantedAt()
+                                                result.grantedAt(),
+                                                result.personalCategoryId()
                                         )
                         )
                         .toList()

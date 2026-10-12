@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,6 +23,27 @@ public class ChatMessageRepositoryAdapter implements ChatMessageRepository {
     @Override
     public ChatMessage save(ChatMessage message) {
         return chatMessageJpaRepository.save(message);
+    }
+
+    @Override
+    public Optional<ChatMessage> findByClientMessageId(Long channelId, Long senderId, String clientMessageId) {
+        return chatMessageJpaRepository.findByChannelIdAndSenderIdAndClientMessageId(channelId, senderId, clientMessageId);
+    }
+
+    @Override
+    public boolean existsByChannelIdAndId(Long channelId, Long messageId) {
+        return chatMessageJpaRepository.existsByChannelIdAndId(channelId, messageId);
+    }
+
+    @Override
+    public long countUnread(Long channelId, Long playerId, Long lastReadMessageId) {
+        return chatMessageJpaRepository.countUnread(channelId, playerId, lastReadMessageId);
+    }
+
+    @Override
+    public Map<Long, Long> unreadCounts(Long playerId, Set<Long> channelIds) {
+        return chatMessageJpaRepository.unreadCounts(playerId, channelIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     @Override
@@ -37,4 +62,3 @@ public class ChatMessageRepositoryAdapter implements ChatMessageRepository {
         return new MessageSlice(trimmed, hasMore, nextCursor);
     }
 }
-

@@ -48,7 +48,8 @@ class ExerciseLogServiceTest {
                 mock(ExerciseLogWriter.class),
                 mock(LifeLogRecordRegistrar.class),
                 mock(DomainEventPublisher.class),
-                currentPlayerAccessor
+                currentPlayerAccessor,
+                mock(LifeLogCategoryService.class)
         );
         exerciseLog = ExerciseLog.create(
                 PLAYER_ID,

@@ -62,4 +62,10 @@ public interface PlayerChatApiSpecV1 {
             @PathVariable Long channelId,
             @Valid @RequestBody PlayerChatRequest.SendMessage request
     );
+
+    @Operation(summary = "친구 채팅 읽음 위치 갱신")
+    ResponseEntity<ApiResponse<PlayerChatResponse.Read>> markRead(
+            @PathVariable Long channelId,
+            @Valid @RequestBody PlayerChatRequest.Read request
+    );
 }

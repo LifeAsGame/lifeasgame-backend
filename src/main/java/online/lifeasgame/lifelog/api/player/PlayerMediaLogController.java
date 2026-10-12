@@ -10,6 +10,7 @@ import online.lifeasgame.lifelog.api.player.spec.PlayerMediaLogSpecV1;
 import online.lifeasgame.lifelog.application.MediaLogQueryService;
 import online.lifeasgame.lifelog.application.MediaLogService;
 import online.lifeasgame.lifelog.application.result.MediaLogResult;
+import online.lifeasgame.lifelog.application.query.MediaLogQuery;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,13 +41,20 @@ public class PlayerMediaLogController implements PlayerMediaLogSpecV1 {
             @RequestParam(required = false) String status,
             @RequestParam(required = false, name = "titleLike") String titleLike,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     ) {
         List<MediaLogResult.Info> infos = mediaLogQueryService.search(
-                PlayerMediaLogWebMapper.toSearchQuery(category, status, titleLike, page, size)
+                new MediaLogQuery.Search(category, status, titleLike, page, size, personalCategoryId, unclassified)
         );
 
         return ResponseEntity.ok(PlayerMediaLogWebMapper.toInfos(infos));
+    }
+
+    public ResponseEntity<List<PlayerMediaLogResponse.Info>> search(String category, String status, String titleLike,
+                                                                     int page, int size) {
+        return search(category, status, titleLike, page, size, null, false);
     }
 
     @Override

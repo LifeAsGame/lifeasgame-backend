@@ -11,6 +11,7 @@ import online.lifeasgame.lifelog.application.result.ExerciseResult;
 import online.lifeasgame.lifelog.domain.ExerciseCategory;
 import online.lifeasgame.lifelog.domain.ExerciseLog;
 import online.lifeasgame.lifelog.domain.ExerciseMetrics;
+import online.lifeasgame.lifelog.domain.LifeLogCategoryKind;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
@@ -31,6 +32,7 @@ public class ExerciseLogService {
     private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService lifeLogCategoryService;
 
     @Transactional
     public ExerciseResult.Created create(ExerciseCommand.Create command) {
@@ -72,6 +74,8 @@ public class ExerciseLogService {
                 )
         );
 
+        saved.assignPersonalCategory(lifeLogCategoryService.requirePersonal(
+                command.personalCategoryId(), playerId, LifeLogCategoryKind.EXERCISE));
         LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.EXERCISE,

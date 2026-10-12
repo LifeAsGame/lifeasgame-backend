@@ -8,7 +8,6 @@ import online.lifeasgame.role.application.command.RoleEventCommand;
 import online.lifeasgame.role.application.result.RoleEventResult;
 import online.lifeasgame.role.domain.Role;
 import online.lifeasgame.role.domain.RoleEvent;
-import online.lifeasgame.role.domain.RoleEventParticipant;
 import online.lifeasgame.role.domain.RoleEventParticipantType;
 import online.lifeasgame.role.domain.RoleStatus;
 import online.lifeasgame.role.domain.error.RoleError;
@@ -36,9 +35,7 @@ public class RoleEventService {
             RoleEventCommand.Create command
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        Role role = roleReader.getOwnedForUpdate(roleId, playerId);
-        requireCommandsEnabled();
-        requireActive(role);
+        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(
                 RoleEvent.create(
                         playerId,
@@ -58,12 +55,7 @@ public class RoleEventService {
             RoleEventCommand.Update command
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
-        requireCommandsEnabled();
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.update(
                 command.title(),
                 command.description(),
@@ -76,12 +68,7 @@ public class RoleEventService {
     @Transactional
     public RoleEventResult.Detail complete(Long roleId, Long eventId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
-        requireCommandsEnabled();
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.complete(clock.instant());
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -89,12 +76,7 @@ public class RoleEventService {
     @Transactional
     public RoleEventResult.Detail cancel(Long roleId, Long eventId) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
-        requireCommandsEnabled();
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.cancel();
         return RoleEventResult.Detail.from(eventWriter.saveAndFlush(event));
     }
@@ -106,22 +88,20 @@ public class RoleEventService {
             RoleEventCommand.AddParticipant command
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
-        requireCommandsEnabled();
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         RoleEventParticipantType type = RoleEventParticipantType.parse(
                 command.participantType()
         );
         validateParticipant(type, command.participantId(), playerId);
-        RoleEventParticipant participant = event.addParticipant(
+        event.addParticipant(
                 type,
                 command.participantId()
         );
-        eventWriter.saveAndFlush(event);
-        return RoleEventResult.Participant.from(participant);
+        RoleEvent saved = eventWriter.saveAndFlush(event);
+        return RoleEventResult.Participant.from(saved.getParticipants().stream()
+                .filter(value -> value.getParticipantType() == type
+                        && value.getParticipantId().equals(command.participantId()))
+                .findFirst().orElseThrow());
     }
 
     @Transactional
@@ -131,19 +111,9 @@ public class RoleEventService {
             Long participantLinkId
     ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
-        RoleEvent event = eventReader.getOwnedForUpdate(
-                eventId,
-                roleId,
-                playerId
-        );
-        requireCommandsEnabled();
+        RoleEvent event = ownedActiveEventForUpdate(roleId, eventId, playerId);
         event.removeParticipant(participantLinkId);
         eventWriter.saveAndFlush(event);
-    }
-
-    private void requireCommandsEnabled() {
-        // CFC-EVT-001 remains GATED_FAIL_CLOSED; historical reads stay available.
-        throw new DomainException(RoleError.ROLE_EVENT_COMMAND_GATED);
     }
 
     private void validateParticipant(
@@ -158,6 +128,11 @@ public class RoleEventService {
             );
             case SERVICE_USER -> userLookupApi.getActive(participantId);
         }
+    }
+
+    private RoleEvent ownedActiveEventForUpdate(Long roleId, Long eventId, Long playerId) {
+        requireActive(roleReader.getOwnedForUpdate(roleId, playerId));
+        return eventReader.getOwnedForUpdate(eventId, roleId, playerId);
     }
 
     private void requireActive(Role role) {

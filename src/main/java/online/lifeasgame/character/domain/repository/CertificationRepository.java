@@ -15,5 +15,7 @@ public interface CertificationRepository {
 
     Optional<Certification> findById(Long id);
 
+    Optional<Certification> findByProviderAndSourceCode(String provider, String sourceCode);
+
     void delete(Long certificationId);
 }

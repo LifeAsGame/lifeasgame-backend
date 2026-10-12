@@ -18,7 +18,10 @@ public interface LifeLogJournalQuery {
             Long primaryRoleId,
             LifeLogSubtype subtype,
             int page,
-            int size
+            int size,
+            LifeLogSourceType categoryKind,
+            Long personalCategoryId,
+            boolean unclassified
     );
 
     List<CanonicalRecord> findRecent(Long playerId, int limit);

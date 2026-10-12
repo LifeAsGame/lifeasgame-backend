@@ -20,7 +20,8 @@ public final class PlayerHobbyResult {
             int proficiency,
             String status,
             LocalDate startedOn,
-            long xp
+            long xp,
+            Long personalCategoryId
     ) {
         public static Info from(PlayerHobbyView v) {
             return new Info(
@@ -32,7 +33,8 @@ public final class PlayerHobbyResult {
                     v.getProficiency(),
                     v.getStatus() != null ? v.getStatus().name() : null,
                     v.getStartedOn(),
-                    v.getXp()
+                    v.getXp(),
+                    v.getPersonalCategoryId()
             );
         }
     }

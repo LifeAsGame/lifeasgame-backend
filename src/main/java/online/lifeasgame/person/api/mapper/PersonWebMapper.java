@@ -15,7 +15,8 @@ public final class PersonWebMapper {
                 request.displayName(),
                 request.notes(),
                 request.birthday(),
-                request.contact()
+                request.contact(),
+                request.profile()
         );
     }
 
@@ -24,7 +25,9 @@ public final class PersonWebMapper {
                 request.displayName(),
                 request.notes(),
                 request.birthday(),
-                request.contact()
+                request.contact(),
+                request.profile(),
+                request.profileProvided()
         );
     }
 
@@ -39,7 +42,8 @@ public final class PersonWebMapper {
                 result.status(),
                 result.createdAt(),
                 result.updatedAt(),
-                result.version()
+                result.version(),
+                result.profile()
         );
     }
 }

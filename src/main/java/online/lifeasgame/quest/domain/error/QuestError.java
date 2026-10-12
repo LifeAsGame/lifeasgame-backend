@@ -137,6 +137,12 @@ public enum QuestError implements ErrorCode {
             "Reward profile and legacy inline reward cannot be changed together",
             400
     ),
+    JOURNEY_ROLE_REQUIRED("QUE-400-JOURNEY-ROLE-REQUIRED", "A compatible active Role is required", 400),
+    JOURNEY_ROLE_MISMATCH("QUE-409-JOURNEY-ROLE-MISMATCH", "Role is not compatible with the journey", 409),
+    JOURNEY_SELECTION_REQUIRED("QUE-409-JOURNEY-SELECTION-REQUIRED", "Select the journey and Role first", 409),
+    JOURNEY_EVIDENCE_INVALID("QUE-400-JOURNEY-EVIDENCE-INVALID", "Invalid journey evidence", 400),
+    JOURNEY_EVIDENCE_CONFLICT("QUE-409-JOURNEY-EVIDENCE-CONFLICT", "Evidence conflicts with the current Quest state", 409),
+    JOURNEY_EVIDENCE_NOT_FOUND("QUE-404-JOURNEY-EVIDENCE-NOT-FOUND", "Journey evidence not found", 404),
     ROUTE_NOT_FOUND(
             "QUE-404-ROUTE-NOT-FOUND",
             "Quest route not found",

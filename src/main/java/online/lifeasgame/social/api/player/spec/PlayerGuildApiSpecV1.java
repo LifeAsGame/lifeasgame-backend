@@ -23,8 +23,8 @@ public interface PlayerGuildApiSpecV1 {
     ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String visibility,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     );
 
     @Operation(summary = "최근 길드 조회")

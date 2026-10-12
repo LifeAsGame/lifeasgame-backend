@@ -57,11 +57,6 @@ public class QuestAcceptanceRepositoryAdapter implements QuestAcceptanceReposito
     }
 
     @Override
-    public boolean existsByPlayerIdAndId(Long playerId, Long questId) {
-        return jpaQuestAcceptanceRepository.existsByPlayerIdAndId(playerId, questId);
-    }
-
-    @Override
     public Set<Long> findCompletedQuestIds(
             Long playerId,
             Set<Long> questIds

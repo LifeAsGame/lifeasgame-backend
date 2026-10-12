@@ -44,6 +44,9 @@ public class PlayerCertification extends AbstractTime {
     @Column(name = "certification_id", nullable = false)
     private Long certificationId;
 
+    @Column(name = "personal_category_id")
+    private Long personalCategoryId;
+
     @Column(name = "acquired_date")
     private LocalDate acquiredDate;
 
@@ -80,6 +83,10 @@ public class PlayerCertification extends AbstractTime {
         validateDateOrder(acquiredDate, expiresDate);
         this.acquiredDate = acquiredDate;
         this.expiresDate = expiresDate;
+    }
+
+    public void assignPersonalCategory(Long personalCategoryId) {
+        this.personalCategoryId = personalCategoryId;
     }
 
     private static void validateDateOrder(LocalDate acquiredDate, LocalDate expiresDate) {

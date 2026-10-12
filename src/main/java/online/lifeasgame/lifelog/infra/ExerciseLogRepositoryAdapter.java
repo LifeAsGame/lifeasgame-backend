@@ -46,13 +46,17 @@ public class ExerciseLogRepositoryAdapter implements ExerciseLogRepository {
             LocalDate from,
             LocalDate to,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         Page<ExerciseLog> pr = jpa.search(
                 playerId,
                 category,
                 from,
                 to,
+                personalCategoryId,
+                unclassified,
                 PageRequest.of(page, size, Sort.by("exercisedOn").descending().and(Sort.by("id").descending()))
         );
         return pr.getContent();

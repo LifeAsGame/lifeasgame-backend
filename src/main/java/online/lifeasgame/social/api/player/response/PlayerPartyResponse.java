@@ -55,6 +55,9 @@ public final class PlayerPartyResponse {
 
     public record WaitMember(
             Long id,
+            Long partyId,
+            String name,
+            String code,
             Long playerId,
             String type,
             String status,
@@ -62,6 +65,8 @@ public final class PlayerPartyResponse {
             String requestedAt,
             String expiresAt
     ) {}
+
+    public record Me(String myRole, boolean pendingJoin, boolean pendingInvitation, List<String> actions) {}
 
     public record Page<T>(
             List<T> contents,

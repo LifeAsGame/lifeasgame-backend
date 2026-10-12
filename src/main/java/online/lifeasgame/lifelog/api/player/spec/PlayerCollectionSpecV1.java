@@ -28,7 +28,9 @@ public interface PlayerCollectionSpecV1 {
             @RequestParam(required = false) String category,
             @RequestParam(required = false, name = "titleLike") String titleLike,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     );
 
     @Operation(summary = "컬렉션 등록")

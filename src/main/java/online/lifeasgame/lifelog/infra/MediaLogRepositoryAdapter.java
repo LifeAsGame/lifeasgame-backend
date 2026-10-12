@@ -47,13 +47,17 @@ public class MediaLogRepositoryAdapter implements MediaLogRepository {
             WatchStatus status,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         Page<MediaLog> p = jpa.search(
                 playerId,
                 category,
                 status,
                 titleLike,
+                personalCategoryId,
+                unclassified,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"))
         );
         return p.getContent();

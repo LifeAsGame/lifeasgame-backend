@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.social.application.ChatRealtimeGateway;
 import online.lifeasgame.social.application.ChatRealtimePayload;
+import online.lifeasgame.social.application.ChatReadRealtimePayload;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +19,18 @@ public class ChatRedisRealtimeGateway implements ChatRealtimeGateway {
 
     @Override
     public void publish(ChatRealtimePayload payload) {
+        publishPayload(payload.channelId(), payload);
+    }
+
+    @Override
+    public void publishRead(ChatReadRealtimePayload payload) {
+        publishPayload(payload.channelId(), payload);
+    }
+
+    private void publishPayload(Long channelId, Object payload) {
         try {
             redisTemplate.convertAndSend(
-                    topicResolver.topic(payload.channelId()),
+                    topicResolver.topic(channelId),
                     objectMapper.writeValueAsString(payload)
             );
         } catch (JsonProcessingException e) {

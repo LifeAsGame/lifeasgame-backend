@@ -85,7 +85,9 @@ class QuestServiceStateContractTest {
                 new QuestTransitionEventFactory(),
                 ignored -> PLAYER_ZONE,
                 Clock.fixed(ACCEPTED_AT, ZoneOffset.UTC),
-                mock(CurrentPlayerAccessor.class)
+                mock(CurrentPlayerAccessor.class),
+                mock(BackendJourneyAccess.class),
+                mock(online.lifeasgame.quest.domain.repository.JourneyEvidenceStore.class)
         );
         queryService = new QuestQueryService(
                 questBlueprintCatalog,

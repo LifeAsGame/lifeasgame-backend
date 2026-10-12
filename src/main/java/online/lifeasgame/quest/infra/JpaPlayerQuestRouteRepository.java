@@ -38,6 +38,7 @@ public interface JpaPlayerQuestRouteRepository
                 player_id,
                 route_id,
                 current_step_id,
+                role_id,
                 status,
                 selected_at,
                 completed_at,
@@ -48,6 +49,7 @@ public interface JpaPlayerQuestRouteRepository
                 :playerId,
                 :routeId,
                 :firstStepId,
+                :roleId,
                 'IN_PROGRESS',
                 :selectedAt,
                 NULL,
@@ -61,6 +63,7 @@ public interface JpaPlayerQuestRouteRepository
             @Param("playerId") Long playerId,
             @Param("routeId") Long routeId,
             @Param("firstStepId") Long firstStepId,
+            @Param("roleId") Long roleId,
             @Param("selectedAt") Instant selectedAt
     );
 }

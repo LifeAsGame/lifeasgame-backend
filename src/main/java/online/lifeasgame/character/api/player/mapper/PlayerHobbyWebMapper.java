@@ -25,7 +25,8 @@ public final class PlayerHobbyWebMapper {
                                                 result.proficiency(),
                                                 result.status(),
                                                 result.startedOn(),
-                                                result.xp()
+                                                result.xp(),
+                                                result.personalCategoryId()
                                         )
                         )
                         .toList()

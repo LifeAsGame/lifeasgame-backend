@@ -150,7 +150,8 @@ public final class QuickRecordCommand {
                 value.conditionNote(),
                 value.acquiredFrom(),
                 copyTags(value.tags()),
-                value.lifeLogMetadata()
+                value.lifeLogMetadata(),
+                value.personalCategoryId()
         );
     }
 
@@ -167,7 +168,8 @@ public final class QuickRecordCommand {
                 value.calories(),
                 value.exercisedOn(),
                 value.memo(),
-                value.lifeLogMetadata()
+                value.lifeLogMetadata(),
+                value.personalCategoryId()
         );
     }
 
@@ -185,7 +187,8 @@ public final class QuickRecordCommand {
                 value.totalEpisode(),
                 value.status(),
                 copyTags(value.tags()),
-                value.lifeLogMetadata()
+                value.lifeLogMetadata(),
+                value.personalCategoryId()
         );
     }
 

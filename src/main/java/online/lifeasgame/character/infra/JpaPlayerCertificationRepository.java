@@ -18,7 +18,8 @@ public interface JpaPlayerCertificationRepository extends JpaRepository<PlayerCe
                    c.category  AS category,
                    pc.acquiredDate AS acquiredDate,
                    pc.expiresDate AS expiresDate,
-                   pc.grantedAt AS grantedAt
+                   pc.grantedAt AS grantedAt,
+                   pc.personalCategoryId AS personalCategoryId
             FROM PlayerCertification pc
             JOIN Certification c ON c.id = pc.certificationId
             WHERE pc.playerId = :playerId

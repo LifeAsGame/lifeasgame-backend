@@ -84,24 +84,13 @@ class UserTest {
     class ChangePassword {
 
         @Test
-        @DisplayName("현재 비밀번호 일치 → 변경 성공")
+        @DisplayName("검증된 새 비밀번호 해시를 저장한다")
         void success() {
             HashedPassword current = HashedPassword.of("hashedpassword1234567");
             HashedPassword next    = HashedPassword.of("newhashedpassword1234");
             User u = User.register(Email.of("a@a.com"), current, Nickname.of("Hero"));
-            u.changePassword(current, next);
+            u.changePassword(next);
             assertThat(u.getPasswordHash()).isEqualTo(next);
-        }
-
-        @Test
-        @DisplayName("비밀번호 불일치 → INCORRECT_PASSWORD 예외")
-        void wrongPassword_throws() {
-            HashedPassword correct = HashedPassword.of("hashedpassword1234567");
-            HashedPassword wrong   = HashedPassword.of("wronghashedpassword12");
-            HashedPassword next    = HashedPassword.of("newhashedpassword1234");
-            User u = User.register(Email.of("a@a.com"), correct, Nickname.of("Hero"));
-            assertThatThrownBy(() -> u.changePassword(wrong, next))
-                    .isInstanceOf(DomainException.class);
         }
     }
 

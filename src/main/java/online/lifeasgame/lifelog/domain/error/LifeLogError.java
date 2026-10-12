@@ -15,7 +15,12 @@ public enum LifeLogError implements ErrorCode {
     INVALID_COLLECTION_CATEGORY("LIF-400-INVALID-COLLECTION-CATEGORY", "Invalid Collection Category", 400),
     INVALID_WATCH_STATUS("LIF-400-INVALID-WATCH-STATUS", "Invalid Watch Status", 400),
     INVALID_EXERCISE_CATEGORY("LIF-400-INVALID-EXERCISE-CATEGORY", "Invalid Exercise Category", 400),
-    ROLE_EVENT_CONTEXT_MISMATCH("LIF-400-ROLE-EVENT-CONTEXT-MISMATCH", "Role event does not belong to the requested Role", 400);
+    ROLE_EVENT_CONTEXT_MISMATCH("LIF-400-ROLE-EVENT-CONTEXT-MISMATCH", "Role event does not belong to the requested Role", 400),
+    INVALID_CATEGORY_KIND("LIF-400-CATEGORY-KIND", "Invalid LifeLog category kind", 400),
+    INVALID_SYSTEM_CATEGORY("LIF-400-SYSTEM-CATEGORY", "Invalid system category", 400),
+    INVALID_PERSONAL_CATEGORY("LIF-400-PERSONAL-CATEGORY", "Invalid personal category", 400),
+    CATEGORY_NOT_FOUND("LIF-404-CATEGORY", "LifeLog category not found", 404),
+    CATEGORY_DUPLICATE("LIF-409-CATEGORY-DUPLICATE", "LifeLog category already exists", 409);
 
     private final String code;
     private final String message;

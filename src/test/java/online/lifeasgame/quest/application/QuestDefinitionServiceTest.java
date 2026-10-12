@@ -71,7 +71,9 @@ class QuestDefinitionServiceTest {
                 new QuestTransitionEventFactory(),
                 ignored -> ZoneId.of("Asia/Seoul"),
                 Clock.systemUTC(),
-                mock(CurrentPlayerAccessor.class)
+                mock(CurrentPlayerAccessor.class),
+                mock(BackendJourneyAccess.class),
+                mock(online.lifeasgame.quest.domain.repository.JourneyEvidenceStore.class)
         );
     }
 

@@ -29,6 +29,7 @@ public class MediaLogService {
     private final LifeLogRecordRegistrar lifeLogRecordRegistrar;
     private final DomainEventPublisher domainEventPublisher;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService lifeLogCategoryService;
 
     @Transactional
     public MediaLogResult.Created create(MediaLogCommand.Create command) {
@@ -71,6 +72,8 @@ public class MediaLogService {
                 )
         );
 
+        saved.assignPersonalCategory(lifeLogCategoryService.requirePersonal(
+                command.personalCategoryId(), playerId, LifeLogCategoryKind.MEDIA));
         LifeLogRecord record = lifeLogRecordRegistrar.register(
                 playerId,
                 LifeLogSourceType.MEDIA,

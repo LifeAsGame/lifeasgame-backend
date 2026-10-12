@@ -1,5 +1,6 @@
 package online.lifeasgame.character.api.admin.request;
 
+import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 import java.time.LocalDate;
 
 public final class AdminPlayerHobbyRequest {
@@ -11,7 +12,7 @@ public final class AdminPlayerHobbyRequest {
             String detail,
             Integer proficiency,
             String status,
-            LocalDate startedOn
+            @DatabaseCalendarDate LocalDate startedOn
     ) {
     }
 }

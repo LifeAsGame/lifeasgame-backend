@@ -45,11 +45,11 @@ class ChatWebSocketOriginContractTest {
         }
 
         @Test
-        @DisplayName("설정된 Origin이어도 인증되지 않은 info 요청은 거부한다")
-        void rejectsAnonymousRequest() throws Exception {
+        @DisplayName("설정된 Origin의 비인증 info 요청은 CONNECT 인증 전에 허용한다")
+        void allowsAnonymousInfoBeforeConnect() throws Exception {
             mockMvc.perform(get("/ws/info")
                             .header(HttpHeaders.ORIGIN, LOCAL_ORIGIN))
-                    .andExpect(status().isUnauthorized())
+                    .andExpect(status().isOk())
                     .andExpect(header().string(
                             HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
                             LOCAL_ORIGIN

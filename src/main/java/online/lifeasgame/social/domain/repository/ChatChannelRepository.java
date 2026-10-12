@@ -11,6 +11,8 @@ public interface ChatChannelRepository {
 
     Optional<ChatChannel> findById(Long id);
 
+    Optional<ChatChannel> findByIdForUpdate(Long id);
+
     Optional<ChatChannel> findByContext(ChatChannelType type, Long contextId);
 
     Optional<ChatChannel> findByTypeAndName(ChatChannelType type, String name);

@@ -34,6 +34,9 @@ public class PlayerQuestRoute extends AbstractTime {
     @Column(name = "route_id", nullable = false)
     private Long routeId;
 
+    @Column(name = "role_id")
+    private Long roleId;
+
     @Column(name = "current_step_id", nullable = false)
     private Long currentStepId;
 

@@ -98,6 +98,11 @@ class CollectionLogTransactionContractTest {
         }
 
         @Bean
+        LifeLogCategoryService lifeLogCategoryService() {
+            return mock(LifeLogCategoryService.class);
+        }
+
+        @Bean
         EmbeddedDatabase dataSource() {
             return new EmbeddedDatabaseBuilder()
                     .generateUniqueName(true)

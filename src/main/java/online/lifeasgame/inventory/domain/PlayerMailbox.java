@@ -157,6 +157,7 @@ public class PlayerMailbox extends AbstractTime {
 
     public record ClaimPlan(
             SlotIndex slotIndex,
+            Long mailboxEntryId,
             Long itemId,
             int quantity,
             InstanceAttrs attrs,
@@ -182,6 +183,7 @@ public class PlayerMailbox extends AbstractTime {
         }
         return new ClaimPlan(
                 slot,
+                entry.getId(),
                 entry.getItemId(),
                 quantity,
                 entry.getInstAttrs(),

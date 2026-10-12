@@ -1,17 +1,17 @@
 package online.lifeasgame.social.api.player;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.response.ApiResponse;
+import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.platform.web.response.ApiResponses;
 import online.lifeasgame.social.api.player.mapper.PlayerGuildWebMapper;
 import online.lifeasgame.social.api.player.request.PlayerGuildRequest;
 import online.lifeasgame.social.api.player.response.PlayerGuildResponse;
 import online.lifeasgame.social.api.player.spec.PlayerGuildApiSpecV1;
-import online.lifeasgame.social.application.GuildFacade;
+import online.lifeasgame.social.application.GuildService;
 import online.lifeasgame.social.application.result.GuildResult;
+import online.lifeasgame.social.domain.GuildWaitType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,14 +23,15 @@ import java.util.List;
 @RequestMapping("/api/v1/guilds")
 public class PlayerGuildController implements PlayerGuildApiSpecV1 {
 
-    private final GuildFacade guildFacade;
+    private final GuildService guildService;
+    private final CurrentPlayerAccessor currentPlayerAccessor;
 
     @Override
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<PlayerGuildResponse.Summary>>> recent(
             @RequestParam(defaultValue = "20") Integer limit
     ) {
-        List<GuildResult.Summary> results = guildFacade.recent(Math.min(Math.max(limit, 1), 100));
+        List<GuildResult.Summary> results = guildService.recent(Math.min(Math.max(limit, 1), 100));
         return ApiResponses.ok(PlayerGuildWebMapper.toSummaries(results));
     }
 
@@ -39,7 +40,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> getGuildInfo(
             @PathVariable Long guildId
     ) {
-        GuildResult.Info result = guildFacade.getGuild(guildId);
+        GuildResult.Info result = guildService.getGuild(player(), guildId);
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -48,11 +49,51 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Summary>>> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String visibility,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        GuildResult.Page<GuildResult.Summary> result = guildFacade.search(keyword, visibility, page, size);
+        GuildResult.Page<GuildResult.Summary> result = guildService.search(keyword, visibility, page, size);
         return ApiResponses.ok(PlayerGuildWebMapper.toSummaryPage(result));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.MyGuild>>> mine(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildService.mine(player(), page, size), PlayerGuildWebMapper::toMy));
+    }
+
+    @GetMapping("/requests")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> requests(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildService.myPending(player(), GuildWaitType.JOIN_REQUEST, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> invitations(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildService.myPending(player(), GuildWaitType.INVITATION, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/{guildId}/preview")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Summary>> preview(@PathVariable Long guildId) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toSummary(guildService.preview(guildId)));
+    }
+
+    @GetMapping("/{guildId}/members")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.Member>>> members(
+            @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildService.members(player(), guildId, page, size), PlayerGuildWebMapper::toMember));
+    }
+
+    @GetMapping("/{guildId}/pending-requests")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Page<PlayerGuildResponse.WaitMember>>> pendingRequests(
+            @PathVariable Long guildId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toPage(guildService.pendingRequests(player(), guildId, page, size), PlayerGuildWebMapper::toPending));
+    }
+
+    @GetMapping("/{guildId}/me")
+    public ResponseEntity<ApiResponse<PlayerGuildResponse.Me>> me(@PathVariable Long guildId) {
+        return ApiResponses.ok(PlayerGuildWebMapper.toMe(guildService.me(player(), guildId)));
     }
 
     @Override
@@ -60,7 +101,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
     public ResponseEntity<ApiResponse<PlayerGuildResponse.Info>> create(
             @Valid @RequestBody PlayerGuildRequest.Create request
     ) {
-        GuildResult.Info result = guildFacade.create(PlayerGuildWebMapper.toCreateCommand(request));
+        GuildResult.Info result = guildService.create(player(), PlayerGuildWebMapper.toCreateCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -70,7 +111,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid  @RequestBody PlayerGuildRequest.Rename request
     ) {
-        GuildResult.Info result = guildFacade.rename(guildId, PlayerGuildWebMapper.toRenameCommand(request));
+        GuildResult.Info result = guildService.rename(player(), guildId, PlayerGuildWebMapper.toRenameCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -80,7 +121,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.ChangePolicy request
     ) {
-        GuildResult.Info result = guildFacade.changePolicy(guildId, PlayerGuildWebMapper.toChangePolicyCommand(request));
+        GuildResult.Info result = guildService.changePolicy(player(), guildId, PlayerGuildWebMapper.toChangePolicyCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -90,7 +131,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.ChangeDescription request
     ) {
-        GuildResult.Info result = guildFacade.changeDescription(guildId, PlayerGuildWebMapper.toChangeDescriptionCommand(request));
+        GuildResult.Info result = guildService.changeDescription(player(), guildId, PlayerGuildWebMapper.toChangeDescriptionCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -100,7 +141,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.ChangeEmblem request
     ) {
-        GuildResult.Info result = guildFacade.changeEmblem(guildId, PlayerGuildWebMapper.toChangeEmblemCommand(request));
+        GuildResult.Info result = guildService.changeEmblem(player(), guildId, PlayerGuildWebMapper.toChangeEmblemCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -110,7 +151,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.TagOp request
     ) {
-        GuildResult.Info result = guildFacade.addTag(guildId, PlayerGuildWebMapper.toTagOpCommand(request));
+        GuildResult.Info result = guildService.addTag(player(), guildId, PlayerGuildWebMapper.toTagOpCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -120,7 +161,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.TagOp request
     ) {
-        GuildResult.Info result = guildFacade.removeTag(guildId, PlayerGuildWebMapper.toTagOpCommand(request));
+        GuildResult.Info result = guildService.removeTag(player(), guildId, PlayerGuildWebMapper.toTagOpCommand(request));
         return ApiResponses.ok(PlayerGuildWebMapper.toInfo(result));
     }
 
@@ -130,14 +171,14 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.RequestJoin request
     ) {
-        guildFacade.requestJoin(guildId, PlayerGuildWebMapper.toRequestJoinCommand(request));
+        guildService.requestJoin(player(), guildId, PlayerGuildWebMapper.toRequestJoinCommand(request));
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/{guildId}/cancel-join")
     public ResponseEntity<ApiResponse<Void>> cancelJoin(@PathVariable Long guildId) {
-        guildFacade.cancelJoin(guildId);
+        guildService.cancelJoin(player(), guildId);
         return ApiResponses.ok(null);
     }
 
@@ -147,7 +188,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.Approve request
     ) {
-        guildFacade.approveJoin(guildId, PlayerGuildWebMapper.toApproveCommand(request));
+        guildService.approveJoin(player(), guildId, PlayerGuildWebMapper.toApproveCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -157,7 +198,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.Reject request
     ) {
-        guildFacade.rejectJoin(guildId, PlayerGuildWebMapper.toRejectCommand(request));
+        guildService.rejectJoin(player(), guildId, PlayerGuildWebMapper.toRejectCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -167,21 +208,21 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.Invite request
     ) {
-        guildFacade.invite(guildId, PlayerGuildWebMapper.toInviteCommand(request));
+        guildService.invite(player(), guildId, PlayerGuildWebMapper.toInviteCommand(request));
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/{guildId}/accept-invitation")
     public ResponseEntity<ApiResponse<Void>> acceptInvitation(@PathVariable Long guildId) {
-        guildFacade.acceptInvitation(guildId);
+        guildService.acceptInvitation(player(), guildId);
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/{guildId}/decline-invitation")
     public ResponseEntity<ApiResponse<Void>> declineInvitation(@PathVariable Long guildId) {
-        guildFacade.declineInvitation(guildId);
+        guildService.declineInvitation(player(), guildId);
         return ApiResponses.ok(null);
     }
 
@@ -191,7 +232,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.TransferLeader request
     ) {
-        guildFacade.transferLeader(guildId, PlayerGuildWebMapper.toTransferLeaderCommand(request));
+        guildService.transferLeader(player(), guildId, PlayerGuildWebMapper.toTransferLeaderCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -201,7 +242,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.Kick request
     ) {
-        guildFacade.kick(guildId, PlayerGuildWebMapper.toKickCommand(request));
+        guildService.kick(player(), guildId, PlayerGuildWebMapper.toKickCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -211,7 +252,7 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.MemberOp request
     ) {
-        guildFacade.promote(guildId, PlayerGuildWebMapper.toPromoteCommand(request));
+        guildService.promote(player(), guildId, PlayerGuildWebMapper.toPromoteCommand(request));
         return ApiResponses.ok(null);
     }
 
@@ -221,21 +262,24 @@ public class PlayerGuildController implements PlayerGuildApiSpecV1 {
             @PathVariable Long guildId,
             @Valid @RequestBody PlayerGuildRequest.MemberOp request
     ) {
-        guildFacade.demote(guildId, PlayerGuildWebMapper.toDemoteCommand(request));
+        guildService.demote(player(), guildId, PlayerGuildWebMapper.toDemoteCommand(request));
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/{guildId}/leave")
     public ResponseEntity<ApiResponse<Void>> leave(@PathVariable Long guildId) {
-        guildFacade.leave(guildId);
+        guildService.leave(player(), guildId);
         return ApiResponses.ok(null);
     }
 
     @Override
     @PostMapping("/{guildId}/disband")
     public ResponseEntity<ApiResponse<Void>> disband(@PathVariable Long guildId) {
-        guildFacade.disband(guildId);
+        guildService.disbandByLeader(player(), guildId);
         return ApiResponses.ok(null);
+    }
+    private Long player() {
+        return currentPlayerAccessor.currentPlayerIdOrThrow();
     }
 }

@@ -29,7 +29,9 @@ public interface PlayerExerciseSpecV1 {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     );
 
     @Operation(summary = "운동 등록")

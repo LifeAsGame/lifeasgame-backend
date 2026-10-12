@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,13 +56,15 @@ class RoleApplicationOwnershipTest {
         Role role = role();
         given(writer.save(any())).willAnswer(invocation -> invocation.getArgument(0));
         given(reader.getOwned(10L, PLAYER_ID)).willReturn(role);
+        given(reader.getOwnedForUpdate(10L, PLAYER_ID)).willReturn(role);
 
         var created = service.create(new RoleCommand.Create("WORK", "Developer", null));
         service.update(10L, new RoleCommand.Update("FAMILY", "Parent", null));
         service.archive(10L);
 
         assertThat(created.playerId()).isEqualTo(PLAYER_ID);
-        verify(reader, times(2)).getOwned(10L, PLAYER_ID);
+        verify(reader).getOwned(10L, PLAYER_ID);
+        verify(reader).getOwnedForUpdate(10L, PLAYER_ID);
     }
 
     @Test

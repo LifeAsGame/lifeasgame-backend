@@ -41,7 +41,10 @@ public final class PlayerChatResponse {
     public record FriendChannel(
             Long channelId,
             Peer peer,
-            boolean readOnly
+            boolean readOnly,
+            Long lastReadMessageId,
+            Long peerLastReadMessageId,
+            long unreadCount
     ) {
     }
 
@@ -51,7 +54,8 @@ public final class PlayerChatResponse {
             Long senderId,
             String content,
             boolean edited,
-            Instant createdAt
+            Instant createdAt,
+            String clientMessageId
     ) {
     }
 
@@ -60,5 +64,8 @@ public final class PlayerChatResponse {
             boolean hasMore,
             Long nextCursor
     ) {
+    }
+
+    public record Read(Long channelId, Long playerId, Long lastReadMessageId, long unreadCount) {
     }
 }

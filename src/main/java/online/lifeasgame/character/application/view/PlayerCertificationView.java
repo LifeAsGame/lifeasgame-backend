@@ -20,4 +20,6 @@ public interface PlayerCertificationView {
     LocalDate getExpiresDate();
 
     Instant getGrantedAt();
+
+    Long getPersonalCategoryId();
 }

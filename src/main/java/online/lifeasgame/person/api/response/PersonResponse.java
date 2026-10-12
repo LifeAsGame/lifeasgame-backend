@@ -1,5 +1,6 @@
 package online.lifeasgame.person.api.response;
 
+import online.lifeasgame.person.domain.PersonProfile;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -18,7 +19,8 @@ public final class PersonResponse {
             String status,
             Instant createdAt,
             Instant updatedAt,
-            Long version
+            Long version,
+            PersonProfile profile
     ) {
     }
 }

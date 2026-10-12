@@ -42,7 +42,8 @@ public final class PlayerMediaLogWebMapper {
                         request.reflectionScope(),
                         request.primaryRoleId(),
                         request.roleEventId()
-                )
+                ),
+                request.personalCategoryId()
         );
     }
 
@@ -78,7 +79,8 @@ public final class PlayerMediaLogWebMapper {
                 result.startedOn(),
                 result.finishedOn(),
                 result.createdAt(),
-                result.updatedAt()
+                result.updatedAt(),
+                result.personalCategoryId()
         );
     }
 

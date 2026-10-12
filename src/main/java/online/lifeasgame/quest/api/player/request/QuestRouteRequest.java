@@ -8,6 +8,9 @@ public final class QuestRouteRequest {
     private QuestRouteRequest() {
     }
 
+    public record Select(@Positive Long roleId) {
+    }
+
     public record Advance(
             @NotNull @Positive Long expectedStepId
     ) {

@@ -23,6 +23,8 @@ public interface MediaLogJpaRepository extends JpaRepository<MediaLog, Long> {
                       AND (:category IS NULL OR m.category = :category)
                       AND (:status IS NULL OR m.status = :status)
                       AND (:titleLike IS NULL OR LOWER(m.title.value) LIKE LOWER(CONCAT('%', :titleLike, '%')))
+                      AND (:personalCategoryId IS NULL OR m.personalCategoryId = :personalCategoryId)
+                      AND (:unclassified = false OR m.personalCategoryId IS NULL)
             """
     )
     Page<MediaLog> search(
@@ -30,6 +32,8 @@ public interface MediaLogJpaRepository extends JpaRepository<MediaLog, Long> {
             @Param("category") MediaCategory category,
             @Param("status") WatchStatus status,
             @Param("titleLike") String titleLike,
+            @Param("personalCategoryId") Long personalCategoryId,
+            @Param("unclassified") boolean unclassified,
             Pageable pageable
     );
 

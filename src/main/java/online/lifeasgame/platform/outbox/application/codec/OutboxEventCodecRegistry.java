@@ -6,12 +6,14 @@ import online.lifeasgame.character.domain.event.PlayerRegistered;
 import online.lifeasgame.core.error.DomainException;
 import online.lifeasgame.core.event.DomainEvent;
 import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
+import online.lifeasgame.inventory.domain.event.ItemRewardClaimed;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;
+import online.lifeasgame.quest.domain.event.QuestRouteCompleted;
 import online.lifeasgame.social.domain.event.ChatChannelDeactivated;
 import online.lifeasgame.user.domain.event.UserRegistered;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,7 @@ public class OutboxEventCodecRegistry {
                         InventoryItemAdded.class,
                         objectMapper
                 ),
+                codec("inventory.item-reward-claimed.v1", ItemRewardClaimed.class, objectMapper),
                 codec(
                         "lifelog.collection-logged.v1",
                         CollectionLogged.class,
@@ -81,6 +84,7 @@ public class OutboxEventCodecRegistry {
                         objectMapper
                 ),
                 new QuestEventOutboxCodec(objectMapper),
+                codec("quest.route-completed.v1", QuestRouteCompleted.class, objectMapper),
                 codec(
                         "quest.reward-ready.v1",
                         QuestRewardReadyFact.class,

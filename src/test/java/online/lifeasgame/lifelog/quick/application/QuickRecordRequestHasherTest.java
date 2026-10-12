@@ -155,6 +155,50 @@ class QuickRecordRequestHasherTest {
     }
 
     @Test
+    @DisplayName("Quick Record 선택 과정은 각 subtype의 개인 카테고리를 유지한다")
+    void retainsPersonalCategoryForEverySubtype() {
+        var collection = new CollectionCommand.Create(
+                "BOOK", "title", null, 1, null, null, Set.of(),
+                LifeLogRecordMetadataCommand.none(), 7L);
+        var exercise = new ExerciseCommand.Create(
+                "RUNNING", 30, 5.0, 250, LocalDate.of(2026, 7, 24), null,
+                LifeLogRecordMetadataCommand.none(), 8L);
+        var media = new MediaLogCommand.Create(
+                "MOVIE", "title", null, 0, 1, "PLANNED", Set.of(),
+                LifeLogRecordMetadataCommand.none(), 9L);
+
+        assertThat(new QuickRecordCommand.Create("COLLECTION", collection, null, null)
+                .selected().collection().personalCategoryId()).isEqualTo(7L);
+        assertThat(new QuickRecordCommand.Create("EXERCISE", null, exercise, null)
+                .selected().exercise().personalCategoryId()).isEqualTo(8L);
+        assertThat(new QuickRecordCommand.Create("MEDIA", null, null, media)
+                .selected().media().personalCategoryId()).isEqualTo(9L);
+        assertThat(hash(new QuickRecordCommand.Create("EXERCISE", null, exercise, null)))
+                .isNotEqualTo(hash(new QuickRecordCommand.Create("EXERCISE", null, exercise(), null)));
+        assertThat(hash(new QuickRecordCommand.Create("MEDIA", null, null, media)))
+                .isNotEqualTo(hash(new QuickRecordCommand.Create("MEDIA", null, null, media())));
+    }
+
+    @Test
+    @DisplayName("같은 본문이라도 개인 카테고리가 다르면 request hash가 다르다")
+    void distinguishesPersonalCategories() {
+        var plain = collection("title", Set.of());
+        var first = new CollectionCommand.Create(
+                "BOOK", "title", null, 1, null, null, Set.of(),
+                LifeLogRecordMetadataCommand.none(), 7L);
+        var second = new CollectionCommand.Create(
+                "BOOK", "title", null, 1, null, null, Set.of(),
+                LifeLogRecordMetadataCommand.none(), 8L);
+
+        String plainHash = hash(new QuickRecordCommand.Create("COLLECTION", plain, null, null));
+        String firstHash = hash(new QuickRecordCommand.Create("COLLECTION", first, null, null));
+        String secondHash = hash(new QuickRecordCommand.Create("COLLECTION", second, null, null));
+
+        assertThat(firstHash).isNotEqualTo(plainHash);
+        assertThat(secondHash).isNotEqualTo(firstHash);
+    }
+
+    @Test
     @DisplayName("Content metadata는 hash에 포함되고 legacy null metadata hash는 유지한다")
     void hashesContentMetadataWithoutChangingLegacyShape() {
         QuickRecordCommand.Create legacy = new QuickRecordCommand.Create(

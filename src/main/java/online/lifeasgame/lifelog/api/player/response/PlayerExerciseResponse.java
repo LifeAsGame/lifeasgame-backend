@@ -24,7 +24,8 @@ public final class PlayerExerciseResponse {
             LocalDate exercisedOn,
             String memo,
             Instant createdAt,
-            Instant updatedAt
+            Instant updatedAt,
+            Long personalCategoryId
     ) {
     }
 

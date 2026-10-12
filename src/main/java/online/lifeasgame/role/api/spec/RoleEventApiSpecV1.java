@@ -27,14 +27,14 @@ public interface RoleEventApiSpecV1 {
     );
 
     @Operation(summary = "Role Event 생성",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> create(
             @PathVariable Long roleId,
             @Valid @RequestBody RoleEventRequest.Create request
     );
 
     @Operation(summary = "Role Event 수정",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> update(
             @PathVariable Long roleId,
             @PathVariable Long eventId,
@@ -42,21 +42,21 @@ public interface RoleEventApiSpecV1 {
     );
 
     @Operation(summary = "Role Event 완료",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> complete(
             @PathVariable Long roleId,
             @PathVariable Long eventId
     );
 
     @Operation(summary = "Role Event 취소",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Detail>> cancel(
             @PathVariable Long roleId,
             @PathVariable Long eventId
     );
 
     @Operation(summary = "Role Event 참여자 추가",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<RoleEventResponse.Participant>> addParticipant(
             @PathVariable Long roleId,
             @PathVariable Long eventId,
@@ -64,7 +64,7 @@ public interface RoleEventApiSpecV1 {
     );
 
     @Operation(summary = "Role Event 참여자 제거",
-            description = "GATED: owned commands return 403 ROL-403-EVENT-COMMAND-GATED; historical reads remain available.")
+            description = "Current Player-owned ACTIVE Role only; terminal events reject further changes with 409. Historical reads remain available.")
     ResponseEntity<ApiResponse<Void>> removeParticipant(
             @PathVariable Long roleId,
             @PathVariable Long eventId,

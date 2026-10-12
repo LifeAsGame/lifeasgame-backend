@@ -20,7 +20,8 @@ public interface JpaPlayerHobbyRepository extends JpaRepository<PlayerHobby, Lon
                    ph.proficiency AS proficiency,
                    ph.status AS status,
                    ph.startedOn AS startedOn,
-                   ph.xp AS xp
+                   ph.xp AS xp,
+                   ph.personalCategoryId AS personalCategoryId
             FROM PlayerHobby ph
             JOIN Hobby h ON h.id = ph.hobbyId
             WHERE ph.playerId = :playerId
@@ -34,4 +35,13 @@ public interface JpaPlayerHobbyRepository extends JpaRepository<PlayerHobby, Lon
     void deleteByPlayerIdAndHobbyId(Long playerId, Long HobbyId);
 
     boolean existsByPlayerIdAndHobbyId(Long playerId, Long HobbyId);
+
+    Optional<PlayerHobby> findByIdAndPlayerIdAndSource(Long id, Long playerId, String source);
+
+    boolean existsByPlayerIdAndPrivateNameKey(Long playerId, String privateNameKey);
+
+    List<PlayerHobby> findByPlayerIdAndSourceOrderByIdDesc(Long playerId, String source);
+
+    @Query("select distinct h.category from PlayerHobby ph join Hobby h on h.id = ph.hobbyId where ph.playerId = :playerId")
+    List<online.lifeasgame.character.domain.HobbyCategory> ownedCategories(@Param("playerId") Long playerId);
 }

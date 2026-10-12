@@ -22,6 +22,7 @@ public class LifeLogJournalQueryService implements LifeLogActivityReadApi {
 
     private final LifeLogJournalQuery journalQuery;
     private final CurrentPlayerAccessor currentPlayerAccessor;
+    private final LifeLogCategoryService categoryService;
 
     public LifeLogJournalResult.Page list(
             Long primaryRoleId,
@@ -29,14 +30,31 @@ public class LifeLogJournalQueryService implements LifeLogActivityReadApi {
             int page,
             int size
     ) {
+        return list(primaryRoleId, subtype, page, size, null, false);
+    }
+
+    public LifeLogJournalResult.Page list(
+            Long primaryRoleId, String subtype, int page, int size,
+            Long personalCategoryId, boolean unclassified
+    ) {
         Long playerId = currentPlayerAccessor.currentPlayerIdOrThrow();
+        if (personalCategoryId != null && unclassified) {
+            throw new DomainException(LifeLogError.INVALID_PERSONAL_CATEGORY);
+        }
+        online.lifeasgame.lifelog.domain.record.LifeLogSourceType categoryKind =
+                personalCategoryId == null ? null
+                        : online.lifeasgame.lifelog.domain.record.LifeLogSourceType.valueOf(
+                                categoryService.filterKind(playerId, personalCategoryId).name());
         LifeLogJournalQuery.CanonicalPage canonicalPage =
                 journalQuery.findPage(
                         playerId,
                         primaryRoleId,
                         subtype == null ? null : LifeLogSubtype.parse(subtype),
                         page,
-                        size
+                        size,
+                        categoryKind,
+                        personalCategoryId,
+                        unclassified
                 );
         return new LifeLogJournalResult.Page(
                 enrich(playerId, canonicalPage.content()),

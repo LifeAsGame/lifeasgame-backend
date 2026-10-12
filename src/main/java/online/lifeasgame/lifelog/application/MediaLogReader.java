@@ -35,10 +35,17 @@ class MediaLogReader {
             String status,
             String titleLike,
             int page,
-            int size
+            int size,
+            Long personalCategoryId,
+            boolean unclassified
     ) {
         MediaCategory mediaCategory = MediaCategory.parseNullable(category);
         WatchStatus watchStatus = WatchStatus.parseNullable(status);
-        return repository.search(playerId, mediaCategory, watchStatus, titleLike, page, size);
+        return repository.search(playerId, mediaCategory, watchStatus, titleLike, page, size,
+                personalCategoryId, unclassified);
+    }
+
+    public List<MediaLog> search(Long playerId, String category, String status, String titleLike, int page, int size) {
+        return search(playerId, category, status, titleLike, page, size, null, false);
     }
 }

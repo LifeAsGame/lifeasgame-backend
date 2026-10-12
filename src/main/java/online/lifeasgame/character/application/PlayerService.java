@@ -32,6 +32,14 @@ public class PlayerService {
     }
 
     @Transactional
+    public PlayerResult.UpdatedTitle clearRepresentativeTitle() {
+        Player player = playerReader.getByIdForUpdateOrThrow(
+                currentPlayerAccessor.currentPlayerIdOrThrow());
+        player.changeRepresentativeTitle(null);
+        return new PlayerResult.UpdatedTitle(null);
+    }
+
+    @Transactional
     public PlayerResult.ExpGranted grantExp(Long playerId, long exp) {
         return PlayerResult.ExpGranted.from(playerId, playerExpGrantService.grantExp(playerId, exp));
     }

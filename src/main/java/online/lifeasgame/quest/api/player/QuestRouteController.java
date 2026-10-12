@@ -45,9 +45,10 @@ public class QuestRouteController implements QuestRouteSpecV1 {
     @Override
     @PostMapping("/{routeId}/select")
     public ResponseEntity<ApiResponse<QuestRouteResponse.Route>> select(
-            @PathVariable Long routeId
+            @PathVariable Long routeId,
+            @Valid @RequestBody(required = false) QuestRouteRequest.Select request
     ) {
-        QuestRouteResult.Route result = selectService.select(routeId);
+        QuestRouteResult.Route result = selectService.select(routeId, request == null ? null : request.roleId());
         return ApiResponses.ok(QuestRouteWebMapper.toRoute(result));
     }
 

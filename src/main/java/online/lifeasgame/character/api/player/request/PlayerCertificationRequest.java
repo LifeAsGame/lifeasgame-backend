@@ -1,5 +1,6 @@
 package online.lifeasgame.character.api.player.request;
 
+import online.lifeasgame.platform.web.validation.DatabaseCalendarDate;
 import java.time.LocalDate;
 
 public final class PlayerCertificationRequest {
@@ -8,14 +9,14 @@ public final class PlayerCertificationRequest {
     }
 
     public record Update(
-            LocalDate acquiredDate,
-            LocalDate expiresDate
+            @DatabaseCalendarDate LocalDate acquiredDate,
+            @DatabaseCalendarDate LocalDate expiresDate
     ) {
     }
 
     public record Create(
-            LocalDate acquiredDate,
-            LocalDate expiresDate
+            @DatabaseCalendarDate LocalDate acquiredDate,
+            @DatabaseCalendarDate LocalDate expiresDate
     ) {
     }
 }

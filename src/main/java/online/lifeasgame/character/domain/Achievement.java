@@ -29,6 +29,9 @@ public class Achievement extends AbstractTime {
     @Column(length = 60, nullable = false, unique = true)
     private String code;
 
+    @Column(name = "definition_version", nullable = false)
+    private int definitionVersion = 1;
+
     @Column(length = 60, nullable = false)
     private String name;
 
@@ -47,6 +50,7 @@ public class Achievement extends AbstractTime {
             String descMd
     ) {
         this.code = code;
+        this.definitionVersion = 1;
         this.name = name;
         this.category = category;
         this.descMd = descMd;

@@ -19,7 +19,9 @@ public interface PlayerLifeLogJournalSpecV1 {
             @RequestParam(required = false) @Positive Long primaryRoleId,
             @RequestParam(required = false) String subtype,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required = false) Long personalCategoryId,
+            @RequestParam(defaultValue = "false") boolean unclassified
     );
 
     @Operation(summary = "canonical Journal 상세 조회")

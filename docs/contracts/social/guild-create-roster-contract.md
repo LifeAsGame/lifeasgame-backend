@@ -1,0 +1,59 @@
+# Guild internal creation and offline roster (Feedback 4B)
+
+Status: **API/runtime READY**. Baseline is BE #402 `f589bf881c75f5801ad88cc5e1ae11916e57622d` (4A runtime product `83a380b0e508770c4898d371a5939631bab924fa`, V48). This contract was shared as DRAFT before implementation. A and B each passed their implementation and dedicated 19081 runtime gates.
+
+All routes require the authenticated Current Player; the server derives the actor Player ID. Responses use the existing `ApiResponse.result` envelope, paged responses use `{contents,page,size,totalElements,totalPages}`, and failures use the existing `application/problem+json` format. IDs called `rosterEntryId`, `playerId`, `userId`, `personId`, and legacy invitation ID belong to different namespaces and are never interchangeable.
+
+## A. Create a group inside a Guild
+
+`implementationReady=true`; `runtimeReady=true`.
+
+`POST /api/v1/guilds/{guildId}/groups` creates an independent group and proposes its GuildGroupLink in one transaction. The request is `{clientRequestId,groupType,displayName,party?,roleParty?}`. `clientRequestId` is a required UUID. `groupType` is `PARTY` or `ROLE_PARTY`. Exactly the matching detail object is required:
+
+- `party`: `{name,code,descriptionMd?,bannerImageUrl?,bannerBgColor?,visibility,joinPolicy,maxMembers}` using the current Party creation constraints.
+- `roleParty`: `{roleId,name,description?,maxMembers}` using the current RoleParty creation constraints; `roleId` is an owned active Role ID. A RoleParty is invitation-only.
+- `displayName` is the separately confirmed Guild label, trimmed to 1–120 characters. It is never inferred from a private group name.
+
+The actor must be a current member of an ACTIVE Guild. The actor becomes the new group leader. The existing GuildGroupLink approval contract remains: if the actor is the current Guild leader, the link is `ACTIVE`; for another Guild member it is `PENDING`, with group-side approval only. A pending group does not appear in the active Guild list. A `201` result is `{groupType,groupId,linkId,linkStatus,capabilities:{canOpenGroup,canManageGroup}}`; retry of the same `(guildId,actorPlayerId,clientRequestId)` and identical payload returns the original result with 200, even if the link was later approved or removed. Reusing the key with different payload returns 409. Concurrent retries converge by a database unique key. A failed link proposal rolls back the group and leader membership. Existing group-link approve/reject/cancel/unlink routes, exact approved label, and current leader rechecks remain authoritative. Reject, unlink, Guild departure, and Guild disband do not delete the source group, its members, or activities. GuildGroupLink never grants child membership, private detail, activity, or personal Role schedule access. Linking the new group to a personal Role remains a separate existing API request.
+
+Missing/hidden Guild or nonmember: 404. Invalid body/type/Role ownership: 400 or 404 under existing Social/Role codes. Stale state or reused key with changed payload: 409. No actor or leader ID is accepted from the client.
+
+The existing `GET /api/v1/guilds/{guildId}/group-links` keeps its ACTIVE rows and page totals and now adds `capabilities:{canStartCreateGroup:true,rolePartyRequiresOwnedActiveRole:true}` even when `contents` is empty. The second flag describes the required Role selection, not a claim that this Player currently owns one.
+
+## B. Offline roster
+
+`implementationReady=true`; `runtimeReady=true`.
+
+Roster exists only for `GUILD` and ordinary `PARTY`. It is shared group data, distinct from service membership and from private Person/notes. An active group member may read; only its **current leader** may create, edit, soft-delete, invite, or cancel. Guild OFFICER and Party OFFICER do not manage it. Disbanded groups expose neither roster nor pending invitations. No roster data is projected into public preview, search, STOMP, group-link summaries, or logs.
+
+The same routes exist under `/api/v1/guilds/{groupId}/roster` and `/api/v1/parties/{groupId}/roster`:
+
+| Method / suffix | Request | Result |
+| --- | --- | --- |
+| `GET /` | `page=0&size=20&status=ALL|UNLINKED|LINKED&keyword=` | SQL-paged roster rows and `capabilities:{canManageRoster,canInvite}` even for an empty page |
+| `POST /` | `{displayName,groupRoleLabel?}` | 201 roster row |
+| `PATCH /{rosterEntryId}` | `{displayName,groupRoleLabel?,version}` | 200 roster row; stale version 409 |
+| `DELETE /{rosterEntryId}` | `{version}` | 204 soft delete; actual membership is untouched |
+| `POST /{rosterEntryId}/invitations` | `{targetPlayerId}` | 201 invitation; leader chooses an exact Player through existing permitted account selection |
+| `GET /invitations/pending` | `page=0&size=20` | Leader-only SQL page of unexpired pending invitations |
+| `POST /invitations/{invitationId}/cancel` | — | 200 terminal invitation |
+
+`GET /api/v1/roster-invitations/mine?page=0&size=20` lists the current Player's unexpired pending invitations across Guild and Party. `POST /api/v1/roster-invitations/{invitationId}/accept` returns the bound roster row with current membership state; `POST /api/v1/roster-invitations/{invitationId}/decline` returns the terminal invitation. Only the exact target can see or act on it. An invitation summary includes `{invitationId,groupType,groupId,groupName,rosterEntryId,rosterDisplayName,expiresAt,membershipWillBeCreated,status}`. The target sees the roster identity and whether joining will occur before accepting. Invitation lifetime is **seven days** from creation; expiry is checked against server time. A leader change invalidates pending roster invitations as `CANCELED`, without changing ordinary join invitations.
+
+Roster row: `{rosterEntryId,groupType,groupId,displayName,groupRoleLabel,version,status,linkedPlayerId,memberStatus}`. `displayName` is trimmed, 1–80 characters; `groupRoleLabel` is nullable, trimmed, at most 120. Duplicate names are allowed. `status` is `UNLINKED` or `LINKED`; soft-deleted entries are omitted from the live list. `memberStatus` is `ACTIVE` or `LEFT` for linked rows, null for unlinked rows. A linked Player appears once in the roster page. Existing `/members` pages and `memberCount` continue to count **actual active service members only**; roster `totalElements` counts live roster rows matching the filter, pending invitation `totalElements` counts currently unexpired pending invitations, and `/members.totalElements` retains its existing actual-membership meaning. Existing members without roster rows remain in `/members`, never copied automatically. SQL handles count, keyword filtering, stable ID-descending order, offset, and limit. Page is 0–1000 and size 1–100. A group has at most 500 live unlinked roster entries, independent of `maxMembers`.
+
+Creating a roster row creates no Player, User, Person, membership, RSVP, editor grant, Quest, EXP, reward, or event. Editing a linked row changes only shared name/role text, never account profile or target. A linked account cannot be reassigned or merged in 4B. A wrong link requires a later separately approved correction flow. Deletion retains history and does not leave or kick the actual member.
+
+The invitation records its exact roster row, group, target Player, issuing leader, expiry, and state (`PENDING`, `ACCEPTED`, `DECLINED`, `CANCELED`, `EXPIRED`). One live pending invitation per row is enforced under the locked group/row; to switch targets, cancel first. A completed row cannot be invited again. Same pending target retry returns the same invitation. An expired pending row becomes `EXPIRED` on the next invite command; read queries do not mutate it. Expired, declined, canceled, deleted-row, disbanded-group, or wrong-target acceptance fails with controlled 4xx. A different target or a Player already linked to another live roster row yields 409. The database enforces at most one live linked roster row per `(groupType,groupId,playerId)`.
+
+Accept locks the group, row, and invitation in one transaction. For a nonmember it creates a normal `MEMBER` membership only when capacity permits, then links the roster; both changes commit or roll back together. An existing active member consumes no new capacity and only links the roster. Repeating acceptance of the same completed invitation returns the same result only while that membership is still active; it never rejoins a departed Player or restores editor/RSVP rights. Ordinary group `accept-invitation` never consumes a roster invitation; the roster acceptance endpoint is the only binding route. Concurrent membership mutations use the same group-row lock. Guild/Party departure or kick keeps the linked history but changes `memberStatus` to `LEFT`; rejoining follows existing join policy and grants no old activity rights.
+
+Current members may use existing member-to-Person links only **after** the account is connected. Each user explicitly selects or creates their own Person; this flow never creates, merges, or edits another owner's Person, role notes, or private Guild notes. Existing private notes remain author-only.
+
+## Verification gate
+
+The implementation gate requires focused MySQL tests for creation, rollback and retry, access, roster persistence and paging, invitation state, atomic acceptance and lock races, plus representative existing membership/activity regressions. The runtime gate requires full required CI, a backup of the dedicated DB/JAR, additive post-V48 migration, deployment to 19081 only, real HTTP with disposable accounts for A and Guild/Party B, 13005 CORS, and representative 4A/3B1 reads. Record the deployed product SHA/tree/JAR checksum and migration checksum separately from documentation-only commits. Do not mark READY before these gates pass.
+
+Local implementation verification: `GuildCreateRosterIntegrationTest` passed leader/member creation for both group types, replay/payload conflict, Role ownership, rollback, Guild/Party roster acceptance, existing-member link, version conflict, expired/canceled/deleted invitation denial, leader-change cancellation, departed-member replay, duplicate Player binding, and last-seat race with ordinary join. The focused Guild group/event, private Guild note, Role schedule, fresh/explicit-baseline/history/JPA migration regressions passed. A full local `clean test build` was stopped during repeated local Testcontainers MySQL startup; this is not counted as a passing local full run. The focused H2 leader-transfer regression and MySQL roster test passed after the H2 fixture correction. `./gradlew build -x test` passed. Required [full PR CI build-and-test](https://github.com/LifeAsGame/lifeasgame-backend/actions/runs/37398382264) passed on product HEAD `ce18a4c631f2bdb88559ee4c3da55161cb84d770`.
+
+Dedicated runtime verification (2026-10-06): product HEAD `ce18a4c631f2bdb88559ee4c3da55161cb84d770`, tree `c12bed8cb7bfb85e09bf44befc5bb89c5c2adfd7`, JAR SHA-256 `a3712bfe778fd40279e2ead711d7b1104ec7846f646c517379bec827fc1683ee`. V49 checksum `-946678138` applied after V48; Hibernate validation and health passed. The 19081 app, MySQL, and Redis container identities were preserved, as were 19080 and FE 13005. Four disposable Players (existing 51 → 55) passed 32 real HTTP checks across A and Guild/Party B, ownership/privacy, idempotency, stale versions, consent and membership, representative 4A/3B1 reads, no LifeLog/Quest/reward/outbox/EXP/Person side effects, and exact 13005 CORS. Evidence: `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/feedback04b-http-verification.json`; credentials (0600): `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/namespaces/be-feedback04b-20261006/credentials.json`. The dedicated DB/JAR/runtime pre-V49 backups are under the same runtime directory. This READY document commit is separate from the deployed product source.

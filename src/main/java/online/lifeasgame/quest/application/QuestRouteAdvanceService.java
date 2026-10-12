@@ -2,12 +2,14 @@ package online.lifeasgame.quest.application;
 
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.core.error.DomainException;
+import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.quest.application.result.QuestRouteResult;
 import online.lifeasgame.quest.domain.PlayerQuestRoute;
 import online.lifeasgame.quest.domain.QuestRoute;
 import online.lifeasgame.quest.domain.QuestRouteStep;
 import online.lifeasgame.quest.domain.error.QuestError;
+import online.lifeasgame.quest.domain.event.QuestRouteCompleted;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class QuestRouteAdvanceService {
     private final QuestRouteReadModelFactory readModelFactory;
     private final CurrentPlayerAccessor currentPlayerAccessor;
     private final Clock clock;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
     public QuestRouteResult.Route advance(
@@ -54,6 +57,10 @@ public class QuestRouteAdvanceService {
         QuestRouteStep nextStep = route.nextStep(currentStep.getId());
         if (nextStep == null) {
             playerRoute.complete(expectedStepId, clock.instant());
+            domainEventPublisher.publish(new QuestRouteCompleted(
+                    playerId, playerRoute.getId(), route.getCode(),
+                    playerRoute.getCompletedAt()
+            ));
         } else {
             playerRoute.advanceTo(expectedStepId, nextStep.getId());
         }

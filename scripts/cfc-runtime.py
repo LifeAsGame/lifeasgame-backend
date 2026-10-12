@@ -86,9 +86,10 @@ def http(state, path, method='GET', body=None, token=None, expected=200, headers
         response = error
     with response:
         raw = response.read()
-        check(response.status == expected, f'{method} {path}: HTTP {response.status}, expected {expected}')
+        allowed = (expected,) if isinstance(expected, int) else expected
+        check(response.status in allowed, f'{method} {path}: HTTP {response.status}, expected {expected}')
         data = json.loads(raw) if raw and 'json' in response.headers.get('Content-Type', '') else {}
-        if isinstance(data, dict) and 'isSuccess' in data and expected < 400:
+        if isinstance(data, dict) and 'isSuccess' in data and response.status < 400:
             check(data['isSuccess'] is True, f'{method} {path}: failed envelope')
         return data, response.headers
 
