@@ -75,9 +75,4 @@ class QuestReader {
         return questAcceptanceRepository.findLatestByQuestAndPlayer(questId, playerId).orElse(null);
     }
 
-    public void assertAcceptanceIsExists(Long playerId, Long questId) {
-        if (questAcceptanceRepository.existsByPlayerIdAndId(playerId, questId)) {
-            throw new DomainException(QuestError.QUEST_ACCEPTANCE_ALREADY_EXISTS);
-        }
-    }
 }
