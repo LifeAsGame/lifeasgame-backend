@@ -136,13 +136,12 @@ class RoleRelationApiContractTest {
     }
 
     @Test
-    @DisplayName("Person이 보관되어도 목록·상세·수정 응답의 관계 상태와 이름은 유지한다")
+    @DisplayName("Person이 보관되어도 목록·상세 응답의 관계 상태와 이름은 유지한다")
     void exposesArchivedPersonIndependently() throws Exception {
         var detail = new RoleRelationResult.Detail(9L, 1L, 2L, 3L, "Alice", 4L,
                 "FAMILY", "note", "ACTIVE", "ARCHIVED", null, null, 0L);
         given(relationQueryService.list(2L)).willReturn(List.of(detail));
         given(relationQueryService.detail(2L, 9L)).willReturn(detail);
-        given(relationService.update(eq(2L), eq(9L), any())).willReturn(detail);
 
         mockMvc.perform(get("/api/v1/roles/2/relations"))
                 .andExpect(status().isOk())
@@ -151,12 +150,6 @@ class RoleRelationApiContractTest {
                 .andExpect(jsonPath("$.result[0].personDisplayName").value("Alice"))
                 .andExpect(jsonPath("$.result[0].roleNotes").value("note"));
         mockMvc.perform(get("/api/v1/roles/2/relations/9"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.result.personStatus").value("ARCHIVED"));
-        mockMvc.perform(put("/api/v1/roles/2/relations/9")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new RoleRelationRequest.Update("FAMILY", "note"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.result.personStatus").value("ARCHIVED"));

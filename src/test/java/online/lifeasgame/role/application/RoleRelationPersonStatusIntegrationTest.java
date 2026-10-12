@@ -115,9 +115,9 @@ class RoleRelationPersonStatusIntegrationTest {
 
         mvc.perform(auth(put(collection(role) + "/" + relation).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"relationType\":\"FAMILY\",\"roleNotes\":\"updated\"}"), OWNER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.result.personStatus").value("ARCHIVED"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PER-409-ARCHIVED"));
+        assertThat(snapshot()).isEqualTo(beforeReads);
         mvc.perform(auth(delete(collection(role) + "/" + relation), OWNER)).andExpect(status().isNoContent());
         mvc.perform(auth(get(collection(role) + "/" + relation), OWNER))
                 .andExpect(status().isOk())
