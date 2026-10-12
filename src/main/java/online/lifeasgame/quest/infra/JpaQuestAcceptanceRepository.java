@@ -29,8 +29,6 @@ public interface JpaQuestAcceptanceRepository extends JpaRepository<QuestAccepta
 
     Optional<QuestAcceptance> findTopByQuestIdAndPlayerIdOrderByIdDesc(Long questId, Long playerId);
 
-    boolean existsByPlayerIdAndId(Long playerId, Long id);
-
     @Query("""
             SELECT DISTINCT acceptance.questId
             FROM QuestAcceptance acceptance
