@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import online.lifeasgame.economy.api.player.response.EconomyResponse;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
-import online.lifeasgame.economy.application.EconomyFacade;
 import online.lifeasgame.economy.application.ListingOpenService;
 import online.lifeasgame.economy.application.ListingReader;
 import online.lifeasgame.economy.application.ListingReservationReader;
@@ -71,7 +70,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @ActiveProfiles("test")
 @Import({SecurityConfig.class, WebMvcTestConfig.class, EconomyListingReadApiContractTest.PlayerConfig.class,
-        EconomyFacade.class, MarketplaceService.class})
+        MarketplaceService.class})
 @DisplayName("매물 snapshot 수량 조회 HTTP 계약")
 class EconomyListingReadApiContractTest {
 
