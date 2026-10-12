@@ -100,15 +100,8 @@ public class User extends AbstractTime {
         this.nickname = nickname;
     }
 
-    public void changePassword(
-            HashedPassword currentPassword,
-            HashedPassword newPassword
-    ) {
-        if (this.passwordHash.equals(currentPassword)) {
-            this.passwordHash = newPassword;
-        } else {
-            throw new DomainException(UserError.INCORRECT_PASSWORD);
-        }
+    public void changePassword(HashedPassword newPassword) {
+        this.passwordHash = newPassword;
     }
 
     public void changeStatus(UserStatus newStatus) {
@@ -143,9 +136,7 @@ public class User extends AbstractTime {
         this.status = UserStatus.DELETED;
     }
 
-    public void delete(HashedPassword password) {
-        if (this.passwordHash.equals(password)) {
-            this.status = UserStatus.DELETED;
-        }
+    public void deleteByOwner() {
+        this.status = UserStatus.DELETED;
     }
 }

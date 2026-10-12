@@ -102,6 +102,9 @@ public class QuickRecordRequestHasher {
                 value.acquiredFrom()
         );
         appendTags(target, value.tags());
+        if (value.personalCategoryId() != null) {
+            appendNumber(target, "personalCategoryId", value.personalCategoryId());
+        }
     }
 
     private void appendExercise(
@@ -122,6 +125,9 @@ public class QuickRecordRequestHasher {
         appendNumber(target, "calories", value.calories());
         appendDate(target, "exercisedOn", value.exercisedOn());
         appendOptionalText(target, "memo", value.memo());
+        if (value.personalCategoryId() != null) {
+            appendNumber(target, "personalCategoryId", value.personalCategoryId());
+        }
     }
 
     private void appendMedia(
@@ -151,6 +157,9 @@ public class QuickRecordRequestHasher {
                 WatchStatus.parse(value.status()).name()
         );
         appendTags(target, value.tags());
+        if (value.personalCategoryId() != null) {
+            appendNumber(target, "personalCategoryId", value.personalCategoryId());
+        }
     }
 
     private void appendTags(StringBuilder target, Set<String> values) {
