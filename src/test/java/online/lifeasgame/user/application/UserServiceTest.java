@@ -9,13 +9,10 @@ import online.lifeasgame.user.application.model.RawPassword;
 import online.lifeasgame.user.application.result.UserResult;
 import online.lifeasgame.user.domain.*;
 import online.lifeasgame.user.domain.error.UserError;
-import online.lifeasgame.user.infra.PasswordHasherAdapter;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 
@@ -39,12 +36,14 @@ class UserServiceTest {
     @InjectMocks UserQueryService userQueryService;
 
     private final PasswordHasher realHasher =
-            new PasswordHasherAdapter(PasswordEncoderFactories.createDelegatingPasswordEncoder());
+            new online.lifeasgame.user.infra.PasswordHasherAdapter(
+                    org.springframework.security.crypto.factory.PasswordEncoderFactories
+                            .createDelegatingPasswordEncoder());
 
     private User storedUser() {
         User user = User.register(Email.of("e@e.com"), realHasher.hash(RawPassword.of("password1")),
                 Nickname.of("Hero"));
-        ReflectionTestUtils.setField(user, "id", 1L);
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "id", 1L);
         when(currentUserAccessor.currentUserIdOrThrow()).thenReturn(1L);
         when(userReader.findByIdOrElseThrow(1L)).thenReturn(user);
         return user;
