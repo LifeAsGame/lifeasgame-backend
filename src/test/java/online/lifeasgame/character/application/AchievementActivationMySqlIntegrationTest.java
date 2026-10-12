@@ -8,6 +8,7 @@ import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.home.application.HomeQueryService;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
 import online.lifeasgame.lifelog.domain.record.LifeLogSubtype;
@@ -64,6 +65,7 @@ class AchievementActivationMySqlIntegrationTest {
     @Autowired private PlayerAchievementService achievements;
     @Autowired private PlayerTitleService titles;
     @Autowired private ActivatedContentQuery contentQuery;
+    @Autowired private HomeQueryService homeQueryService;
     @MockitoBean private CurrentPlayerAccessor currentPlayerAccessor;
 
     @Test
@@ -82,6 +84,54 @@ class AchievementActivationMySqlIntegrationTest {
         assertThat(page.entries()).allSatisfy(entry ->
                 assertThat(entry.status()).isEqualTo("UNACQUIRED"));
         assertThat(contentQuery.list(1, 7).entries()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 지급 시각을 활성 목록·보유 업적·보유 칭호·Home에서 동일하게 읽는다")
+    void acquiredTimeMatchesAcrossReads() {
+        Long playerId = player();
+        transaction(() -> publisher.publish(fact(playerId, "time-contract", 501L)));
+        configureRelay();
+        relay.relayBatch();
+        given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(playerId);
+
+        var entries = contentQuery.list(0, 7).entries();
+        var achievement = entries.stream()
+                .filter(entry -> entry.code().equals("ACH_FIRST_LIFELOG"))
+                .findFirst().orElseThrow();
+        var title = entries.stream()
+                .filter(entry -> entry.code().equals("TITLE_CANDIDATE_RECORD_BEGINNER"))
+                .findFirst().orElseThrow();
+
+        assertThat(achievement.sourceOccurredAt()).isEqualTo(OCCURRED);
+        assertThat(achievements.getPlayerAchievementInfos()).singleElement()
+                .extracting(info -> info.acquiredAt()).isEqualTo(achievement.acquiredAt());
+        assertThat(titles.getPlayerTitleInfos()).singleElement()
+                .extracting(info -> info.acquiredAt()).isEqualTo(title.acquiredAt());
+        assertThat(homeQueryService.home().recentAchievements()).singleElement()
+                .extracting(recent -> recent.acquiredAt()).isEqualTo(achievement.acquiredAt());
+
+        Long legacyPlayer = player();
+        var manualAchievement = achievements.grantAchievement(legacyPlayer,
+                definitionId("achievements", "ACH_FIRST_LIFELOG"));
+        var manualTitle = titles.createTitle(legacyPlayer,
+                definitionId("titles", "TITLE_CANDIDATE_RECORD_BEGINNER"));
+        given(currentPlayerAccessor.currentPlayerIdOrThrow()).willReturn(legacyPlayer);
+        var manualEntries = contentQuery.list(0, 7).entries();
+        assertThat(manualEntries).filteredOn(entry -> entry.code().equals("ACH_FIRST_LIFELOG"))
+                .singleElement().satisfies(entry -> {
+                    assertThat(entry.evidenceStatus()).isEqualTo("ADMIN_OR_LEGACY");
+                    assertThat(entry.acquiredAt()).isEqualTo(manualAchievement.acquiredAt());
+                });
+        assertThat(manualEntries).filteredOn(entry -> entry.code().equals("TITLE_CANDIDATE_RECORD_BEGINNER"))
+                .singleElement().satisfies(entry -> {
+                    assertThat(entry.evidenceStatus()).isEqualTo("ADMIN_OR_LEGACY");
+                    assertThat(entry.acquiredAt()).isEqualTo(manualTitle.acquiredAt());
+                });
+        assertThat(achievements.getPlayerAchievementInfos()).singleElement()
+                .extracting(info -> info.acquiredAt()).isEqualTo(manualAchievement.acquiredAt());
+        assertThat(titles.getPlayerTitleInfos()).singleElement()
+                .extracting(info -> info.acquiredAt()).isEqualTo(manualTitle.acquiredAt());
     }
 
     @Test

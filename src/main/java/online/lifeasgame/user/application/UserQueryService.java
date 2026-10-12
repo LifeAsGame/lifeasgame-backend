@@ -34,13 +34,15 @@ public class UserQueryService {
     }
 
     public UserResult.Availability checkEmailAvailability(String email) {
-        boolean available = !userReader.existsByEmail(Email.of(email));
-        return new UserResult.Availability(available, UserError.EMAIL_DUPLICATE.message());
+        return userReader.existsByEmail(Email.of(email))
+                ? UserResult.Availability.unavailable(UserError.EMAIL_DUPLICATE)
+                : UserResult.Availability.available();
     }
 
     public UserResult.Availability checkNicknameAvailability(String nickname) {
-        boolean available = !userReader.existsByNickname(Nickname.of(nickname));
-        return new UserResult.Availability(available, UserError.NICKNAME_DUPLICATE.message());
+        return userReader.existsByNickname(Nickname.of(nickname))
+                ? UserResult.Availability.unavailable(UserError.NICKNAME_DUPLICATE)
+                : UserResult.Availability.available();
     }
 
     public UserResult.UserList search(UserQuery.Search query) {

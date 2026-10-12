@@ -3,7 +3,6 @@ package online.lifeasgame.economy.api.player;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
-import online.lifeasgame.economy.application.EconomyFacade;
 import online.lifeasgame.economy.application.ListingOpenService;
 import online.lifeasgame.economy.application.MarketplaceService;
 import online.lifeasgame.economy.application.ShopService;
@@ -64,7 +63,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @ActiveProfiles("test")
 @Import({SecurityConfig.class, WebMvcTestConfig.class, EconomyTopUpControllerTest.JwtTestConfig.class,
-        EconomyFacade.class, TopUpService.class, TossPaymentGateway.class, WalletReader.class, WalletWriter.class})
+        TopUpService.class, TossPaymentGateway.class, WalletReader.class, WalletWriter.class})
 @DisplayName("현재 플레이어 지갑·충전 HTTP 계약")
 class EconomyTopUpControllerTest {
 

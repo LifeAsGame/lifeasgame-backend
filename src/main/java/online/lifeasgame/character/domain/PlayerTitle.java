@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,7 +41,7 @@ public class PlayerTitle extends AbstractTime {
     public PlayerTitle(Long playerId, Long titleId) {
         this.playerId = playerId;
         this.titleId = titleId;
-        this.acquiredAt = Instant.now();
+        this.acquiredAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public static PlayerTitle create(Long playerId, Long titleId) {

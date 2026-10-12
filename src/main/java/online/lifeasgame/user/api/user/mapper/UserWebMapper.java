@@ -36,7 +36,10 @@ public final class UserWebMapper {
     }
 
     public static UserResponse.Availability toAvailability(UserResult.Availability result) {
-        return new UserResponse.Availability(result.isAvailable(), result.reason());
+        return new UserResponse.Availability(
+                result.isAvailable(),
+                result.reason() == null ? null : result.reason().message()
+        );
     }
 
     public static UserResponse.NicknameChanged toNicknameChanged(UserResult.NicknameChanged result) {
