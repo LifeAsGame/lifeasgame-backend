@@ -41,11 +41,12 @@ public class UserService {
     @Transactional
     public UserResult.NicknameChanged changeNickname(Long userId, String nickname) {
         User user = userReader.findByIdOrElseThrow(userId);
+        String oldNickname = user.getNickname().getValue();
         user.changeNickname(Nickname.of(nickname));
 
         return new UserResult.NicknameChanged(
                 user.getId(),
-                nickname,
+                oldNickname,
                 user.getNickname().getValue(),
                 user.getUpdatedAt()
         );
