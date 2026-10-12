@@ -114,6 +114,20 @@ class UserAuthServiceTest {
         );
     }
 
+    @Test
+    void rejectsOAuthAccountPasswordLoginAsBadCredentials() {
+        User user = User.registerByOAuth(Email.of("oauth@example.com"), Nickname.of("OAuthUser"));
+        given(userReader.findByEmailOrElseThrow("oauth@example.com")).willReturn(user);
+        PasswordHasher productionHasher = new online.lifeasgame.user.infra.PasswordHasherAdapter(
+                org.springframework.security.crypto.factory.PasswordEncoderFactories
+                        .createDelegatingPasswordEncoder());
+        UserAuthService service = new UserAuthService(userService, userWriter, userReader, productionHasher);
+
+        assertThatThrownBy(() -> service.authenticate("oauth@example.com", "password1"))
+                .isInstanceOfSatisfying(AuthException.class, error ->
+                        assertThat(error.getErrorCode()).isEqualTo(AuthError.BAD_CREDENTIALS));
+    }
+
     private User user() {
         User user = User.register(
                 Email.of("user@example.com"),
