@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 빌드된 jar 복사
-COPY build/libs/*.jar app.jar
+COPY build/libs/app.jar app.jar
 
 # 타임존
 ENV TZ=Asia/Seoul
