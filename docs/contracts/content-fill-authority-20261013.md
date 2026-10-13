@@ -1,5 +1,13 @@
 # Content source alignment (2026-10-13)
 
+## Later approved local activation (2026-10-14 closeout)
+
+The V51 counts and ungranted-equipment statements below preserve the earlier source audit. The later approved `LifeAsGame_Release_Content_Activation_Plan_2026_10_v2_Result.zip` scope, implemented by V52 in PR #425, supersedes them for exactly `IT_RECORD_KEEPER_HAT` and `IT_DEVELOPER_HOODIE`: two cosmetic Item definitions, HEAD/BODY command mappings, and one durable grant per Player/entitlement through bound Mailbox delivery. No other recovered Equipment definition, Shop price, stat effect or avatar overlay is activated. The live local database has V52; PR/CI/merge readiness is a separate gate from runtime readiness.
+
+The same later delivery supplies the dedicated verifier-account social examples. These are ordinary-account fixtures, never automatic signup or common catalog data. The complete Hobby source remains unavailable. Current runtime hashes, fresh QA results, account-file paths and recovery instructions are maintained in the BE-owned local release contract and `portfolio-core-qa-backend.md`; the dated verification below is historical evidence.
+
+## V51 source audit
+
 This records the source boundary for filling the ordinary-login catalogs. The backend owns ingestion and serves the frontend through its APIs. Player-owned records, memberships and activity are separate from common definitions.
 
 ## Sources and precedence
