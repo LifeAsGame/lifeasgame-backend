@@ -57,22 +57,30 @@ def page(value):
     return value.get('contents', value) if isinstance(value, dict) else value
 
 
-def marker(ref):
-    return f'fixture:{state["scenario"]}:{state["cohort"]}:{ref}'
-
-
 def id_for(ref):
     return state['records'][ref]['id']
 
 
-def ensure(ref, listing, identity, create, detail=None):
+def same_instant(actual, expected):
+    if not actual or not expected:
+        return False
+    return datetime.fromisoformat(actual.replace('Z', '+00:00')) == datetime.fromisoformat(expected)
+
+
+def same_activity(value, title, times):
+    return (value.get('title') == title
+            and same_instant(value.get('startsAt'), times['startsAt'])
+            and same_instant(value.get('endsAt'), times['endsAt']))
+
+
+def ensure(ref, listing, identity, create, detail=None, pending_data=None):
     record = state['records'].get(ref)
     if record and record.get('id'):
         if detail:
             detail(record['id'])
         return record['id']
     # A pending journal is written before any non-idempotent POST. Recovery reads
-    # the source by its namespace marker; an ambiguous result stops for inspection.
+    # the owner-scoped source by stable fields without exposing the fixture ref.
     matches = [v for v in page(listing()) if identity(v)]
     if len(matches) > 1:
         raise RuntimeError(f'ambiguous fixture recovery: {ref}')
@@ -81,13 +89,14 @@ def ensure(ref, listing, identity, create, detail=None):
     elif record:
         raise RuntimeError(f'uncertain POST result for {ref}; inspect source before retry')
     else:
-        state['records'][ref] = {'pending': True}
+        state['records'][ref] = {'pending': True, **(pending_data or {})}
         save(STATE, state)
         result = create()
     ident = result.get('id', result.get('linkId'))
     if ident is None:
         raise RuntimeError(f'created {ref} without source ID: {result}')
-    state['records'][ref] = {'id': ident}
+    state['records'][ref] = {k: v for k, v in state['records'].get(ref, {}).items()
+                             if k != 'pending'} | {'id': ident}
     save(STATE, state)
     return ident
 
@@ -135,9 +144,9 @@ def token(alias='content-verifier-owner'):
 def relation(role, person, ref, kind):
     base = f'/api/v1/roles/{role}/relations'
     return ensure(ref, lambda: call(base, token=token()),
-        lambda v: v.get('roleNotes') == marker(ref),
+        lambda v: v.get('personId') == person and v.get('relationType') == kind,
         lambda: call(base, 'POST', {'personId': person, 'relationType': kind,
-                                   'roleNotes': marker(ref)}, token()))
+                                   'roleNotes': None}, token()))
 
 
 def member(group_kind, group_id, alias):
@@ -181,29 +190,29 @@ def main():
         ref, kind = row['refCode'], row['entityType']
         if kind == 'ROLE':
             ensure(ref, lambda: call('/api/v1/roles', token=owner),
-                   lambda v: v.get('description') == marker(ref),
+                   lambda v: v.get('roleType') == row['typeOrPurpose']
+                       and v.get('name') == row['displayName'],
                    lambda: call('/api/v1/roles', 'POST', {'roleType': row['typeOrPurpose'],
-                      'name': row['displayName'], 'description': marker(ref)}, owner))
+                      'name': row['displayName']}, owner))
         elif kind == 'PERSON':
             ensure(ref, lambda: call('/api/v1/persons', token=owner),
-                   lambda v: v.get('notes') == marker(ref),
-                   lambda: call('/api/v1/persons', 'POST', {'displayName': row['displayName'],
-                       'notes': marker(ref)}, owner))
+                   lambda v: v.get('displayName') == row['displayName'],
+                   lambda: call('/api/v1/persons', 'POST', {'displayName': row['displayName']}, owner))
         elif kind in ('GUILD', 'PARTY'):
             endpoint = '/api/v1/' + ('guilds' if kind == 'GUILD' else 'parties')
             code = 'CV' + uuid.uuid5(uuid.UUID(state['cohort']), ref).hex[:12].upper()
             ensure(ref, lambda: call(endpoint + '/mine', token=owner),
-                   lambda v: v.get('code') == code or v.get('descriptionMd') == marker(ref),
+                   lambda v: v.get('code') == code,
                    lambda: call(endpoint, 'POST', {'name': row['displayName'], 'code': code,
-                       'descriptionMd': marker(ref), 'visibility': 'PRIVATE',
+                       'visibility': 'PRIVATE',
                        'joinPolicy': 'INVITE_ONLY', 'maxMembers': 10}, owner))
         elif kind == 'ROLE_PARTY':
             role_id = id_for(row['contextRefCode'])
             endpoint = f'/api/v1/roles/{role_id}/role-parties'
             ensure(ref, lambda: call(endpoint, token=owner),
-                   lambda v: v.get('description') == marker(ref),
+                   lambda v: v.get('name') == row['displayName'],
                    lambda: call(endpoint, 'POST', {'name': row['displayName'],
-                       'description': marker(ref), 'maxMembers': 10}, owner))
+                       'maxMembers': 10}, owner))
 
     links = rows('07_Verification_Scenario_Memberships_Relations_v2.csv')
     for row in links:
@@ -250,6 +259,14 @@ def main():
                     for v in page(call(path, token=owner))),
                 lambda: call(path, 'POST', {'groupType': group_kind, 'groupId': group}, owner))
 
+    descriptions = {
+        'SCN_ROLE_EVT_BACKEND_PLAN': '개인 개발 목표와 이번 주 작업 순서를 정리합니다.',
+        'SCN_ROLE_EVT_MORNING_RUN': '아침에 가볍게 달리고 컨디션을 확인합니다.',
+        'SCN_GUILD_EVT_API_STUDY': 'API 설계 주제를 함께 살펴보고 의견을 나눕니다.',
+        'SCN_GUILD_EVT_BAND_PREP': '주말 공연 준비 사항과 각자의 역할을 확인합니다.',
+        'SCN_PARTY_ACT_RELEASE_REVIEW': '릴리스 준비 상태를 함께 점검합니다.',
+        'SCN_ROLEPARTY_ACT_REHEARSAL': '합주 순서와 연습할 곡을 함께 맞춰 봅니다.',
+    }
     anchor = datetime.fromisoformat(state['anchorKstDate']).replace(tzinfo=ZoneInfo('Asia/Seoul'))
     for row in rows('08_Verification_Scenario_Activities_v2.csv'):
         ref, kind = row['refCode'], row['activitySourceKind']
@@ -257,13 +274,15 @@ def main():
         hour, minute = map(int, row['startLocalTime'].split(':'))
         start = start.replace(hour=hour, minute=minute)
         end = start + timedelta(minutes=int(row['durationMinutes']))
-        times = {'startsAt': start.isoformat(), 'endsAt': end.isoformat()}
+        times = state['records'].get(ref, {}).get('materialized') or {
+            'startsAt': start.isoformat(), 'endsAt': end.isoformat()}
         if kind == 'ROLE_EVENT':
             path = f'/api/v1/roles/{id_for(row["projectionRoleRefCode"])}/events'
-            payload = {'title': row['displayName'], 'description': marker(ref), **times}
+            payload = {'title': row['displayName'], 'description': descriptions[ref], **times}
             ident = ensure(ref, lambda: call(path, token=owner),
-                           lambda v: v.get('description') == marker(ref),
-                           lambda: call(path, 'POST', payload, owner))
+                           lambda v: same_activity(v, row['displayName'], times),
+                           lambda: call(path, 'POST', payload, owner),
+                           pending_data={'materialized': times})
             state['records'][ref].setdefault('materialized', times)
             save(STATE, state)
             detail = call(f'{path}/{ident}', token=owner)
@@ -282,13 +301,14 @@ def main():
             group = id_for(row['groupRefCode'])
             path = (f'/api/v1/guilds/{group}/events' if kind == 'GUILD_EVENT' else
                     f'/api/v1/{"parties" if kind == "PARTY_ACTIVITY" else "role-parties"}/{group}/activities')
-            payload = {'title': row['displayName'], 'sharedDescription': marker(ref), **times}
+            payload = {'title': row['displayName'], 'sharedDescription': descriptions[ref], **times}
             if kind != 'GUILD_EVENT':
                 payload['clientRequestId'] = str(uuid.uuid5(uuid.UUID(state['cohort']),
                                               state['scenario'] + ':' + ref))
             ident = ensure(ref, lambda: call(path, token=owner),
-                           lambda v: v.get('sharedDescription') == marker(ref),
-                           lambda: call(path, 'POST', payload, owner))
+                           lambda v: same_activity(v, row['displayName'], times),
+                           lambda: call(path, 'POST', payload, owner),
+                           pending_data={'materialized': times})
             state['records'][ref].setdefault('materialized', times)
             save(STATE, state)
             for part in row['participantOrRsvpRefs'].split(';'):
