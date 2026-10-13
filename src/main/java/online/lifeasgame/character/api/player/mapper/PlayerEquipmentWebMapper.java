@@ -37,7 +37,4 @@ public final class PlayerEquipmentWebMapper {
         );
     }
 
-    public static PlayerEquipmentResponse.UnEquipped toUnEquipped(Long slotId) {
-        return new PlayerEquipmentResponse.UnEquipped(slotId);
-    }
 }

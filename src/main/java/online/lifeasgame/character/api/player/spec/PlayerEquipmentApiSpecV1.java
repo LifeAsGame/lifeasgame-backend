@@ -20,8 +20,8 @@ public interface PlayerEquipmentApiSpecV1 {
             @Valid @RequestBody PlayerEquipmentRequest.Equip request
     );
 
-    @Operation(summary = "해제", description = "slotId의 장착을 해제합니다.")
-    ResponseEntity<ApiResponse<PlayerEquipmentResponse.UnEquipped>> unEquip(
+    @Operation(summary = "해제", description = "slotId의 장착을 해제하고 본문 없는 204를 반환합니다.")
+    ResponseEntity<ApiResponse<Void>> unEquip(
             @PathVariable Long slotId
     );
 }

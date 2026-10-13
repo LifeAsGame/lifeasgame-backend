@@ -23,7 +23,4 @@ public final class PlayerEquipmentResponse {
     public record Equipped(Long slotId, Long itemInstanceId) {
     }
 
-    public record UnEquipped(Long slotId) {
-    }
-
 }

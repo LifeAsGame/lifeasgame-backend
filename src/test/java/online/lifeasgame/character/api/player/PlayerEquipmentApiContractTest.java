@@ -113,7 +113,8 @@ class PlayerEquipmentApiContractTest {
 
             mockMvc.perform(delete("/api/v1/players/equipment/1")
                             .with(authentication(playerAuthentication())))
-                    .andExpect(status().isNoContent());
+                    .andExpect(status().isNoContent())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
 
             assertThat(Arrays.stream(PlayerEquipmentCommand.Equip.class
                             .getRecordComponents())
