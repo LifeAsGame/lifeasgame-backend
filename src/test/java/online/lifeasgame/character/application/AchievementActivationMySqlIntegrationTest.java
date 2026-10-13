@@ -3,13 +3,16 @@ package online.lifeasgame.character.application;
 import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import online.lifeasgame.adminaudit.application.internal.AdminAuditInternalApi;
 import online.lifeasgame.character.domain.GenderType;
 import online.lifeasgame.character.domain.Name;
 import online.lifeasgame.character.domain.Player;
 import online.lifeasgame.character.domain.repository.PlayerRepository;
 import online.lifeasgame.core.event.DomainEventPublisher;
 import online.lifeasgame.core.security.CurrentPlayerAccessor;
+import online.lifeasgame.core.security.CurrentUserAccessor;
 import online.lifeasgame.home.application.HomeQueryService;
 import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.record.LifeLogEntryMode;
@@ -22,9 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
@@ -34,6 +39,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.reset;
+import static org.mockito.ArgumentMatchers.any;
 
 @Testcontainers
 @SpringBootTest
@@ -71,6 +79,8 @@ class AchievementActivationMySqlIntegrationTest {
     @Autowired private ActivatedContentQuery contentQuery;
     @Autowired private HomeQueryService homeQueryService;
     @MockitoBean private CurrentPlayerAccessor currentPlayerAccessor;
+    @MockitoBean private CurrentUserAccessor currentUserAccessor;
+    @MockitoSpyBean private AdminAuditInternalApi audit;
 
     @Test
     @DisplayName("활성 목록은 현재 Player의 획득 상태만 안정된 페이지로 보여준다")
@@ -175,13 +185,13 @@ class AchievementActivationMySqlIntegrationTest {
             var attempts = java.util.stream.IntStream.range(0, 2).mapToObj(ignored ->
                     executor.submit(() -> {
                         ready.countDown();
-                        go.await();
+                        assertThat(go.await(10, TimeUnit.SECONDS)).isTrue();
                         transaction(() -> equipmentGrant.grantIfEligible(playerId, "ACH_FIRST_LIFELOG"));
                         return true;
                     })).toList();
-            ready.await();
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
             go.countDown();
-            for (var attempt : attempts) assertThat(attempt.get()).isTrue();
+            for (var attempt : attempts) assertThat(attempt.get(30, TimeUnit.SECONDS)).isTrue();
         }
         assertThat(count("player_equipment_grant_receipts", playerId)).isEqualTo(1);
         assertThat(count("mailbox_entries", playerId)).isEqualTo(1);
@@ -199,9 +209,80 @@ class AchievementActivationMySqlIntegrationTest {
         var dryRun = equipmentReconciliation.run(oldHolder - 1, 1, false);
         assertThat(dryRun.eligibleGrants()).isEqualTo(1);
         assertThat(count("mailbox_entries", oldHolder)).isZero();
+        authenticateAdmin();
         assertThat(equipmentReconciliation.run(oldHolder - 1, 1, true).issuedGrants()).isEqualTo(1);
         assertThat(equipmentReconciliation.run(oldHolder - 1, 1, true).issuedGrants()).isZero();
         assertThat(count("mailbox_entries", oldHolder)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("감사 실패는 해당 Player 지급을 롤백하고 이전 커밋과 재시도 cursor를 보존한다")
+    void reconciliationKeepsCommittedProgress() {
+        authenticateAdmin();
+        Long first = equipmentHolder();
+        Long second = equipmentHolder();
+        var dryRun = equipmentReconciliation.run(first - 1, 2, false);
+        assertThat(dryRun.eligibleGrants()).isEqualTo(2);
+        assertThat(auditCount(first)).isZero();
+        assertThat(auditCount(second)).isZero();
+        AdminAuditInternalApi auditTarget = AopTestUtils.getUltimateTargetObject(audit);
+        doAnswer(invocation -> {
+            Object result = invocation.callRealMethod();
+            AdminAuditInternalApi.AppendCommand command = invocation.getArgument(0);
+            if (command.targetId().startsWith(second + ":")) {
+                throw new IllegalStateException("forced audit failure");
+            }
+            return result;
+        }).when(auditTarget).append(any());
+
+        var partial = equipmentReconciliation.run(first - 1, 2, true);
+        assertThat(partial.issuedGrants()).isEqualTo(1);
+        assertThat(partial.failedPlayerIds()).containsExactly(second);
+        assertThat(partial.nextAfterPlayerId()).isEqualTo(first);
+        assertThat(partial.hasMore()).isTrue();
+        assertThat(count("player_equipment_grant_receipts", first)).isEqualTo(1);
+        assertThat(count("mailbox_entries", first)).isEqualTo(1);
+        assertThat(auditCount(first)).isEqualTo(1);
+        assertThat(count("player_equipment_grant_receipts", second)).isZero();
+        assertThat(count("mailbox_entries", second)).isZero();
+        assertThat(auditCount(second)).isZero();
+
+        reset(auditTarget);
+        var retry = equipmentReconciliation.run(partial.nextAfterPlayerId(), 2, true);
+        assertThat(retry.issuedGrants()).isEqualTo(1);
+        assertThat(retry.failedPlayerIds()).isEmpty();
+        assertThat(count("mailbox_entries", second)).isEqualTo(1);
+        assertThat(auditCount(second)).isEqualTo(1);
+        assertThat(equipmentReconciliation.run(first - 1, 2, true).issuedGrants()).isZero();
+        assertThat(auditCount(first)).isEqualTo(1);
+        assertThat(auditCount(second)).isEqualTo(1);
+    }
+
+    private void authenticateAdmin() {
+        long userId = USER_SEQUENCE.incrementAndGet();
+        jdbc.update("""
+                INSERT INTO users (id, email, password_hash, nickname, status,
+                    account_authority, created_at, updated_at)
+                VALUES (?, ?, 'test-hash', 'qa-admin', 'ACTIVE', 'ADMIN', NOW(6), NOW(6))
+                """, userId, "qa-admin-" + userId + "@example.test");
+        given(currentUserAccessor.currentUserIdOrThrow()).willReturn(userId);
+    }
+
+    private Long equipmentHolder() {
+        Long playerId = player();
+        jdbc.update("""
+                INSERT INTO player_achievements
+                    (player_id, achievement_id, acquired_at, created_at, updated_at)
+                VALUES (?, ?, NOW(6), NOW(6), NOW(6))
+                """, playerId, definitionId("achievements", "ACH_FIRST_LIFELOG"));
+        return playerId;
+    }
+
+    private int auditCount(Long playerId) {
+        return jdbc.queryForObject("""
+                SELECT COUNT(*) FROM admin_audit_events
+                WHERE action = 'EQUIPMENT_GRANT_RECONCILE' AND target_id = ?
+                """, Integer.class, playerId + ":ACH_FIRST_LIFELOG");
     }
 
     @Test
