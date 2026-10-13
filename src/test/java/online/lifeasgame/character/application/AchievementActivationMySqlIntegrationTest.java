@@ -1,6 +1,8 @@
 package online.lifeasgame.character.application;
 
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import online.lifeasgame.character.domain.GenderType;
 import online.lifeasgame.character.domain.Name;
@@ -62,6 +64,8 @@ class AchievementActivationMySqlIntegrationTest {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private AchievementReconciliation reconciliation;
+    @Autowired private EquipmentAchievementGrant equipmentGrant;
+    @Autowired private EquipmentGrantReconciliation equipmentReconciliation;
     @Autowired private PlayerAchievementService achievements;
     @Autowired private PlayerTitleService titles;
     @Autowired private ActivatedContentQuery contentQuery;
@@ -153,6 +157,51 @@ class AchievementActivationMySqlIntegrationTest {
                 WHERE player_id = ? AND achievement_code = 'ACH_FIRST_LIFELOG'
                 AND status = 'GRANTED' AND provenance = 'DURABLE_EVENT'
                 """, Integer.class, playerId)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("기존 보유자의 동시 지급은 하나로 수렴하고 우편 삭제 뒤에도 재지급하지 않는다")
+    void equipmentGrantIsLifetimeOnce() throws Exception {
+        Long playerId = player();
+        Long achievementId = definitionId("achievements", "ACH_FIRST_LIFELOG");
+        jdbc.update("""
+                INSERT INTO player_achievements
+                    (player_id, achievement_id, acquired_at, created_at, updated_at)
+                VALUES (?, ?, NOW(6), NOW(6), NOW(6))
+                """, playerId, achievementId);
+        var ready = new CountDownLatch(2);
+        var go = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var attempts = java.util.stream.IntStream.range(0, 2).mapToObj(ignored ->
+                    executor.submit(() -> {
+                        ready.countDown();
+                        go.await();
+                        transaction(() -> equipmentGrant.grantIfEligible(playerId, "ACH_FIRST_LIFELOG"));
+                        return true;
+                    })).toList();
+            ready.await();
+            go.countDown();
+            for (var attempt : attempts) assertThat(attempt.get()).isTrue();
+        }
+        assertThat(count("player_equipment_grant_receipts", playerId)).isEqualTo(1);
+        assertThat(count("mailbox_entries", playerId)).isEqualTo(1);
+        jdbc.update("DELETE FROM mailbox_entries WHERE player_id = ?", playerId);
+        reconciliation.run(playerId - 1, 1, true);
+        assertThat(count("player_equipment_grant_receipts", playerId)).isEqualTo(1);
+        assertThat(count("mailbox_entries", playerId)).isZero();
+
+        Long oldHolder = player();
+        jdbc.update("""
+                INSERT INTO player_achievements
+                    (player_id, achievement_id, acquired_at, created_at, updated_at)
+                VALUES (?, ?, NOW(6), NOW(6), NOW(6))
+                """, oldHolder, achievementId);
+        var dryRun = equipmentReconciliation.run(oldHolder - 1, 1, false);
+        assertThat(dryRun.eligibleGrants()).isEqualTo(1);
+        assertThat(count("mailbox_entries", oldHolder)).isZero();
+        assertThat(equipmentReconciliation.run(oldHolder - 1, 1, true).issuedGrants()).isEqualTo(1);
+        assertThat(equipmentReconciliation.run(oldHolder - 1, 1, true).issuedGrants()).isZero();
+        assertThat(count("mailbox_entries", oldHolder)).isEqualTo(1);
     }
 
     @Test

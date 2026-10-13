@@ -66,6 +66,8 @@ class CharacterApplicationBoundaryTest {
 
     @Mock
     private AchievementFactProcessor factProcessor;
+    @Mock
+    private EquipmentAchievementGrant equipmentGrant;
 
     private PlayerTitleOwnershipVerifier playerTitleOwnershipVerifier;
     private PlayerTitleRevoker playerTitleRevoker;
@@ -188,7 +190,8 @@ class CharacterApplicationBoundaryTest {
                 achievementReader,
                 playerReader,
                 currentPlayerAccessor,
-                factProcessor
+                factProcessor,
+                equipmentGrant
         );
 
         given(achievementReader.getByIdOrThrow(232L)).willReturn(

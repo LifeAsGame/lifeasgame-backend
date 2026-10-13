@@ -19,6 +19,7 @@ public class AchievementFactProcessor {
     private final PlayerReader playerReader;
     private final JdbcTemplate jdbc;
     private final Clock clock;
+    private final EquipmentAchievementGrant equipmentGrant;
 
     @EventListener
     @Transactional(propagation = Propagation.MANDATORY)
@@ -42,7 +43,10 @@ public class AchievementFactProcessor {
                 SELECT COUNT(*) FROM achievement_award_receipts
                 WHERE player_id = ? AND achievement_code = ?
                 """, Integer.class, fact.playerId(), fact.achievementCode());
-        if (receipts != null && receipts > 0) return;
+        if (receipts != null && receipts > 0) {
+            equipmentGrant.grantIfEligible(fact.playerId(), fact.achievementCode());
+            return;
+        }
 
         Long achievementId = requiredDefinition("achievements", fact.achievementCode());
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), DATABASE_ZONE);
@@ -79,6 +83,7 @@ public class AchievementFactProcessor {
                 LocalDateTime.ofInstant(fact.occurredAt(), DATABASE_ZONE),
                 provenance, now, alreadyOwned ? "EXISTING" : "GRANTED",
                 fact.linkedTitleCode(), titleBlocked(fact.playerId(), fact.linkedTitleCode()));
+        equipmentGrant.grantIfEligible(fact.playerId(), fact.achievementCode());
     }
 
     @Transactional(propagation = Propagation.MANDATORY)

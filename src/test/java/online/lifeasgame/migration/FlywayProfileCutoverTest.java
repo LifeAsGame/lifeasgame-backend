@@ -151,7 +151,7 @@ class FlywayProfileCutoverTest {
     class StartLocalWithCleanDatabase {
 
         @Test
-        @DisplayName("V1부터 V51까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
+        @DisplayName("V1부터 V52까지 적용한 뒤 Hibernate validate로 Context가 기동한다")
         void migratesThenValidates() {
             ConfigurableEnvironment environment =
                     (ConfigurableEnvironment) applicationContext.getEnvironment();
@@ -163,8 +163,8 @@ class FlywayProfileCutoverTest {
             assertThat(environment.getProperty(
                     "spring.flyway.baseline-on-migrate", Boolean.class
             )).isFalse();
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("51");
-            assertThat(appliedMigrationCount()).isEqualTo(51);
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("52");
+            assertThat(appliedMigrationCount()).isEqualTo(52);
             assertThat(applicationContext.getBeansOfType(RedisMessageListenerContainer.class)).isEmpty();
         }
     }
