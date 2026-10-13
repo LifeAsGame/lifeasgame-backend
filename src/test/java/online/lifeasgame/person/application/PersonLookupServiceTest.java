@@ -36,6 +36,7 @@ class PersonLookupServiceTest {
 
         assertThat(reference.displayName()).isEqualTo("Alice");
         assertThat(reference.linkedUserId()).isNull();
+        assertThat(reference.status()).isEqualTo("ACTIVE");
     }
 
     @Test
@@ -77,6 +78,8 @@ class PersonLookupServiceTest {
         assertThat(references.values())
                 .extracting(reference -> reference.displayName())
                 .containsExactlyInAnyOrder("Alice", "Bob");
+        assertThat(references.get(2L).status()).isEqualTo("ACTIVE");
+        assertThat(references.get(3L).status()).isEqualTo("ARCHIVED");
     }
 
     private void assertError(Runnable action, PersonError error) {

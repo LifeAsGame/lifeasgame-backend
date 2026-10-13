@@ -15,7 +15,8 @@ import java.util.List;
 @Tag(name = "Role Relation API V1 (Player)")
 public interface RoleRelationApiSpecV1 {
 
-    @Operation(summary = "Role에 Person 관계 생성")
+    @Operation(summary = "Role에 Person 관계 생성", responses =
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "관계 생성"))
     ResponseEntity<ApiResponse<RoleRelationResponse.Detail>> create(
             @PathVariable Long roleId,
             @Valid @RequestBody RoleRelationRequest.Create request

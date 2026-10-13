@@ -40,6 +40,7 @@ public final class RoleRelationWebMapper {
                 result.relationType(),
                 result.roleNotes(),
                 result.status(),
+                result.personStatus(),
                 result.createdAt(),
                 result.updatedAt(),
                 result.version()

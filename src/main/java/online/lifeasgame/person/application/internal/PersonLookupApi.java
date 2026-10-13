@@ -19,7 +19,8 @@ public interface PersonLookupApi {
     record PersonReference(
             Long id,
             Long linkedUserId,
-            String displayName
+            String displayName,
+            String status
     ) {
     }
 }
