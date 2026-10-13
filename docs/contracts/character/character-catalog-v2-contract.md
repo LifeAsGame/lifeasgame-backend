@@ -1,4 +1,10 @@
-# Character catalog v2 — READY (API/runtime; official data gated)
+# Character catalog v2 — READY (API/runtime; historical data gate below)
+
+## 2026-10-13 local release update
+
+The two official HRDK APIs now authenticate with a service key held only in a local 0600 file. Their observed unpaged list response contained 613 distinct qualifications: 513 technical and 100 professional. For technical entries the catalog categories use the API's occupation codes/names; professional entries omit those fields, so they use the API's qualification type and series codes/names. The importer does not infer missing detail, issuer, or occupation classification. The `pages` record in this unpaged manifest describes the one observed response count, not provider-supplied pagination or a claim that all national qualifications were returned.
+
+The one-shot `OfficialCertificationImportCommand` now runs in a non-web Spring context and exits after its report so unrelated application runners do not continue. Verify a normalized manifest with a dry run before applying it, against an isolated DB with the outbox and Quest bootstrap explicitly disabled; keep unrelated scheduled work isolated from live data. The final local audit recorded 609 successful detail responses: 547 with content, 62 provider-empty, and four missing after timeout retries. The latter 66 remain BASIC. The 19081 local DB received the observed 613 official rows and two idempotent refreshes without replacing its LEGACY row or existing ownership links. The raw responses, audit and manifest stay in the private local release directory, not Git. This local import is not evidence of production schema parity or authorization for an operating DB change. The historical 2026-10-05 status below remains as a dated snapshot.
 
 Status (2026-10-05): `implementationReady=true`, `dataReady=false`, `runtimeReady=true`. The additive API was verified on dedicated `http://127.0.0.1:19081` at source commit `2d27d64def491c091daf125c04171014e7100678`, JAR SHA-256 `b40b37f1cc37de611f394c6e242c8630b0e5188b478a7e029a86dc59af048d60`, Flyway V44. The FE handoff is `/Users/ryu/.local/share/lifeasgame-integration/character-catalog-v2-contract.md`; both copies must match. READY denotes tested API/runtime behavior, **not** imported official qualification data.
 
