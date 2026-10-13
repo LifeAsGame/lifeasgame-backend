@@ -9,6 +9,7 @@ import online.lifeasgame.demo.api.DemoActorHttpGate;
 import online.lifeasgame.demo.application.DemoActorScopeApi;
 import online.lifeasgame.demo.application.DemoProperties;
 import online.lifeasgame.demo.application.DemoRunStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RequiredArgsConstructor
 public class SecurityConfig {
 

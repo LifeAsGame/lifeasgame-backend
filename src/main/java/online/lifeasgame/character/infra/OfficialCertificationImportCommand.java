@@ -9,15 +9,23 @@ import online.lifeasgame.character.application.OfficialCertificationImporter.Man
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnNotWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty("catalog.hrdk.import-file")
+@ConditionalOnNotWebApplication
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class OfficialCertificationImportCommand implements ApplicationRunner {
     private final ObjectMapper mapper;
     private final OfficialCertificationImporter importer;
+    private final ConfigurableApplicationContext context;
 
     @Value("${catalog.hrdk.import-file}")
     private String path;
@@ -35,5 +43,7 @@ public class OfficialCertificationImportCommand implements ApplicationRunner {
         OfficialCertificationImporter.Report report = importer.importManifest(manifest, apply);
         System.out.printf("HRDK catalog: validated=%d created=%d updated=%d applied=%b%n",
                 report.validated(), report.created(), report.updated(), report.applied());
+        // This dedicated command must exit before unrelated startup runners mutate data.
+        System.exit(SpringApplication.exit(context));
     }
 }
