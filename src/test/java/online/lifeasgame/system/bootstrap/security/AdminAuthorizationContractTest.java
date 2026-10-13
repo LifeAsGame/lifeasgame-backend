@@ -1,5 +1,7 @@
 package online.lifeasgame.system.bootstrap.security;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
 import online.lifeasgame.platform.security.jwt.JwtProperties;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;
@@ -159,6 +161,25 @@ class AdminAuthorizationContractTest {
                             .header("Authorization", bearer(token)))
                     .andExpect(status().isUnauthorized());
         }
+    }
+
+    @Test
+    @DisplayName("컨테이너의 403 오류 dispatch는 인증 실패 401로 바뀌지 않는다")
+    void preservesForbiddenErrorDispatch() throws Exception {
+        mockMvc.perform(get("/error")
+                        .with(request -> {
+                            request.setDispatcherType(DispatcherType.ERROR);
+                            return request;
+                        })
+                        .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 403))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("외부에서 직접 요청한 error 경로는 인증을 요구한다")
+    void protectsDirectErrorRequest() throws Exception {
+        mockMvc.perform(get("/error"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
