@@ -1,0 +1,10 @@
+spring:
+  flyway:
+    enabled: false
+
+app:
+  outbox:
+    enabled: false
+  quest:
+    definition-bootstrap:
+      enabled: false

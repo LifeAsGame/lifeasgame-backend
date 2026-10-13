@@ -13,12 +13,15 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnNotWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty("catalog.hrdk.import-file")
 @ConditionalOnNotWebApplication
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class OfficialCertificationImportCommand implements ApplicationRunner {
     private final ObjectMapper mapper;
     private final OfficialCertificationImporter importer;
