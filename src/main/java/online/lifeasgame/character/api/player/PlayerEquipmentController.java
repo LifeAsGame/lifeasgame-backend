@@ -43,8 +43,8 @@ public class PlayerEquipmentController implements PlayerEquipmentApiSpecV1 {
 
     @Override
     @DeleteMapping("/equipment/{slotId}")
-    public ResponseEntity<ApiResponse<Void>> unEquip(@PathVariable Long slotId) {
+    public ResponseEntity<Void> unEquip(@PathVariable Long slotId) {
         playerEquipmentService.unEquip(slotId);
-        return ApiResponses.noContent();
+        return ResponseEntity.noContent().build();
     }
 }

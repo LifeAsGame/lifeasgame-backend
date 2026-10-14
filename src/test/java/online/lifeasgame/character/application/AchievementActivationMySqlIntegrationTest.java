@@ -226,29 +226,33 @@ class AchievementActivationMySqlIntegrationTest {
         assertThat(auditCount(first)).isZero();
         assertThat(auditCount(second)).isZero();
         AdminAuditInternalApi auditTarget = AopTestUtils.getUltimateTargetObject(audit);
-        doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
-            AdminAuditInternalApi.AppendCommand command = invocation.getArgument(0);
-            if (command.targetId().startsWith(second + ":")) {
-                throw new IllegalStateException("forced audit failure");
-            }
-            return result;
-        }).when(auditTarget).append(any());
+        long retryAfterPlayerId;
+        try {
+            doAnswer(invocation -> {
+                Object result = invocation.callRealMethod();
+                AdminAuditInternalApi.AppendCommand command = invocation.getArgument(0);
+                if (command.targetId().startsWith(second + ":")) {
+                    throw new IllegalStateException("forced audit failure");
+                }
+                return result;
+            }).when(auditTarget).append(any());
 
-        var partial = equipmentReconciliation.run(first - 1, 2, true);
-        assertThat(partial.issuedGrants()).isEqualTo(1);
-        assertThat(partial.failedPlayerIds()).containsExactly(second);
-        assertThat(partial.nextAfterPlayerId()).isEqualTo(first);
-        assertThat(partial.hasMore()).isTrue();
-        assertThat(count("player_equipment_grant_receipts", first)).isEqualTo(1);
-        assertThat(count("mailbox_entries", first)).isEqualTo(1);
-        assertThat(auditCount(first)).isEqualTo(1);
-        assertThat(count("player_equipment_grant_receipts", second)).isZero();
-        assertThat(count("mailbox_entries", second)).isZero();
-        assertThat(auditCount(second)).isZero();
-
-        reset(auditTarget);
-        var retry = equipmentReconciliation.run(partial.nextAfterPlayerId(), 2, true);
+            var partial = equipmentReconciliation.run(first - 1, 2, true);
+            assertThat(partial.issuedGrants()).isEqualTo(1);
+            assertThat(partial.failedPlayerIds()).containsExactly(second);
+            assertThat(partial.nextAfterPlayerId()).isEqualTo(first);
+            assertThat(partial.hasMore()).isTrue();
+            assertThat(count("player_equipment_grant_receipts", first)).isEqualTo(1);
+            assertThat(count("mailbox_entries", first)).isEqualTo(1);
+            assertThat(auditCount(first)).isEqualTo(1);
+            assertThat(count("player_equipment_grant_receipts", second)).isZero();
+            assertThat(count("mailbox_entries", second)).isZero();
+            assertThat(auditCount(second)).isZero();
+            retryAfterPlayerId = partial.nextAfterPlayerId();
+        } finally {
+            reset(auditTarget);
+        }
+        var retry = equipmentReconciliation.run(retryAfterPlayerId, 2, true);
         assertThat(retry.issuedGrants()).isEqualTo(1);
         assertThat(retry.failedPlayerIds()).isEmpty();
         assertThat(count("mailbox_entries", second)).isEqualTo(1);
