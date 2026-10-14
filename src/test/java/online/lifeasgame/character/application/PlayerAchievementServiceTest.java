@@ -41,6 +41,8 @@ class PlayerAchievementServiceTest {
 
     @Mock
     private AchievementFactProcessor factProcessor;
+    @Mock
+    private EquipmentAchievementGrant equipmentGrant;
 
     private PlayerAchievementService service;
 
@@ -52,7 +54,8 @@ class PlayerAchievementServiceTest {
                 achievementReader,
                 playerReader,
                 currentPlayerAccessor,
-                factProcessor
+                factProcessor,
+                equipmentGrant
         );
     }
 

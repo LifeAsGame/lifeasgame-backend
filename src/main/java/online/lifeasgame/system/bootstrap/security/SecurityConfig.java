@@ -1,5 +1,6 @@
 package online.lifeasgame.system.bootstrap.security;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.platform.security.jwt.JwtAuthenticationFilter;
@@ -49,6 +50,7 @@ public class SecurityConfig {
                                 )
                         ))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",

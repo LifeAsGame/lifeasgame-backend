@@ -159,8 +159,8 @@ class PlayerOnboardingIntegrationTest {
             assertThat(count("""
                     SELECT COUNT(*) FROM equipment_slots
                     WHERE definition_version = '1.0.0'
-                      AND (category IS NOT NULL OR role IS NOT NULL)
-                    """)).isZero();
+                      AND category IS NOT NULL AND role IS NOT NULL
+                    """)).isEqualTo(2);
             assertThat(jdbc.queryForMap("""
                     SELECT logical_category, enabled, lifecycle_status,
                            eager_on_link_start

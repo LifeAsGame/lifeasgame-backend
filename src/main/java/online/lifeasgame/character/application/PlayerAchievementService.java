@@ -23,6 +23,7 @@ public class PlayerAchievementService {
     private final PlayerReader playerReader;
     private final CurrentPlayerAccessor currentPlayerAccessor;
     private final AchievementFactProcessor factProcessor;
+    private final EquipmentAchievementGrant equipmentGrant;
 
     @Transactional(readOnly = true)
     public List<PlayerAchievementResult.Info> getPlayerAchievementInfos() {
@@ -53,6 +54,7 @@ public class PlayerAchievementService {
         PlayerAchievement playerAchievement = playerAchievementWriter.create(
                 PlayerAchievement.create(playerId, achievementId)
         );
+        equipmentGrant.grantIfEligible(playerId, achievement.getCode());
 
         return new PlayerAchievementResult.Granted(
                 playerAchievement.getPlayerId(),

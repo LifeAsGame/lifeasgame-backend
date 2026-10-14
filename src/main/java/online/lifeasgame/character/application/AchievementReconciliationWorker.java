@@ -17,6 +17,7 @@ public class AchievementReconciliationWorker {
     private final OutboxPlayerFactReadApi outboxFacts;
     private final QuestAchievementEvidenceApi questEvidence;
     private final AchievementFactProcessor processor;
+    private final EquipmentAchievementGrant equipmentGrant;
     private final JdbcTemplate jdbc;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -56,6 +57,10 @@ public class AchievementReconciliationWorker {
                 granted++;
             }
             if (apply) processor.award(candidate.fact, candidate.eventId, candidate.provenance);
+        }
+        if (apply) {
+            equipmentGrant.grantIfEligible(playerId, "ACH_FIRST_LIFELOG");
+            equipmentGrant.grantIfEligible(playerId, "ACH_ROUTE_BACKEND_START");
         }
         return new PlayerResult(playerId, granted, existing, revoked, unknown);
     }
