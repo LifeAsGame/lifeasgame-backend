@@ -1,0 +1,19 @@
+log_format safe '$time_iso8601 $request_method $status $body_bytes_sent $request_time $upstream_status $upstream_response_time';
+# Nginx raw error lines can contain credentials in URLs; use the status/timing log.
+error_log /dev/null;
+server_tokens off;
+server {
+    access_log /dev/stdout safe;
+    error_log /dev/null;
+    listen 80 default_server;
+    server_name _;
+    return 444;
+}
+server {
+    access_log /dev/stdout safe;
+    error_log /dev/null;
+    listen 80;
+    server_name ${BE_DOMAIN};
+    location ^~ /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 503; }
+}

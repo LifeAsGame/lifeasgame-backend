@@ -1,0 +1,12 @@
+[Unit]
+Description=Renew LifeAsGame TLS certificate and reload proxy
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+UMask=0077
+WorkingDirectory=/opt/lifeasgame/current
+ExecStart=/usr/bin/flock -w 300 /opt/lifeasgame/deploy.lock /bin/bash -ec '\
+  docker compose --env-file release.env -f ops/production/compose.yml run --rm --no-deps certbot renew --webroot -w /var/www/certbot --quiet; \
+  docker compose --env-file release.env -f ops/production/compose.yml exec -T nginx nginx -t; \
+  docker compose --env-file release.env -f ops/production/compose.yml exec -T nginx nginx -s reload'

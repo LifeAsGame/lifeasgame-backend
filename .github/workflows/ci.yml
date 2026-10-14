@@ -51,6 +51,9 @@ jobs:
       - name: CI scope safety checks
         run: python3 -B -m unittest discover -s scripts -p 'test_ci_change_scope.py'
 
+      - name: Production preparation safety checks
+        run: python3 -B -m unittest discover -s ops/production -p test_preparation.py
+
       - name: Build & Test
         if: steps.classify.outputs.heavy != 'false'
         run: ./gradlew clean test build

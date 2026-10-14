@@ -1,0 +1,85 @@
+# Explicitly selected after host inspection; never overlay the unknown legacy compose.
+name: ${PRODUCTION_PROJECT_NAME:?Use the inspected project name}
+services:
+  app:
+    image: ${APP_IMAGE:?Set repository@sha256 digest}
+    restart: unless-stopped
+    env_file:
+      - path: ${APP_ENV_FILE:?Absolute path to private app env}
+        format: raw
+    volumes:
+      - ${RDS_TRUSTSTORE_FILE:?Absolute public RDS CA truststore}:/run/rds-truststore.p12:ro
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_FLYWAY_ENABLED: "false"
+      FLYWAY_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      LIFEASGAME_PORTFOLIO_DEMO_ENABLED: "false"
+      LIFEASGAME_WEB_ALLOWED_ORIGINS: ${FE_ORIGINS:?Exact HTTPS origins}
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: never
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_COMPONENTS: never
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+      APP_QUEST_DEFINITION_BOOTSTRAP_ENABLED: "false"
+      OUTBOX_ENABLED: "true"
+      APP_REDIS_PUBSUB_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+    expose: ["8080"]
+    networks: [edge, data]
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --output, /dev/null, http://localhost:8080/actuator/health]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+    logging: &logging
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  redis:
+    image: ${REDIS_IMAGE:?Set verified Redis digest}
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [data]
+    logging: *logging
+  nginx:
+    image: ${NGINX_IMAGE:?Set verified Nginx digest}
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      BE_DOMAIN: ${BE_DOMAIN:?Owned lowercase DNS hostname}
+      NGINX_ENVSUBST_FILTER: ^BE_DOMAIN$
+    volumes:
+      - ./nginx/https.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/proxy.inc:ro
+      - ${TLS_STATE_DIR:?Persistent TLS directory}/letsencrypt:/etc/letsencrypt:ro
+      - ${TLS_STATE_DIR}/webroot:/var/www/certbot:ro
+    networks: [edge]
+    logging: *logging
+  certbot:
+    image: ${CERTBOT_IMAGE:?Set verified Certbot digest}
+    profiles: [certificate]
+    volumes:
+      - ${TLS_STATE_DIR}/letsencrypt:/etc/letsencrypt
+      - ${TLS_STATE_DIR}/webroot:/var/www/certbot
+    networks: [edge]
+    logging: *logging
+networks:
+  edge: {}
+  data:
+    internal: true
+volumes:
+  redis-data:
+    external: true
+    name: ${REDIS_VOLUME:?Use inspected existing volume or separately initialized volume}

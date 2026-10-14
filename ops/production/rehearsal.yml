@@ -1,0 +1,54 @@
+# Separate from production and from 19081; no host ports, no outbound route.
+name: ${REHEARSAL_PROJECT:?New unique local project; never use the production project}
+services:
+  mysql:
+    image: ${MYSQL_IMAGE:?Match actual production engine and pin digest}
+    restart: "no"
+    command: [--event-scheduler=OFF, --local-infile=OFF]
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql-password
+      MYSQL_DATABASE: lifeasgame
+    volumes:
+      - ${REHEARSAL_DIR:?New private absolute directory}/mysql-password:/run/secrets/mysql-password:ro
+      - ${REHEARSAL_DIR}/client.cnf:/run/secrets/client.cnf:ro
+      - mysql-data:/var/lib/mysql
+    networks: [isolated]
+    healthcheck:
+      test: [CMD, mysqladmin, --defaults-extra-file=/run/secrets/client.cnf, ping, --silent]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: ${REDIS_IMAGE:?Pin digest}
+    restart: "no"
+    networks: [isolated]
+  flyway:
+    image: ${FLYWAY_IMAGE:?Pin Flyway 11.7.2 digest}
+    profiles: [tools]
+    volumes:
+      - ${REHEARSAL_DIR}/flyway.conf:/flyway/conf/flyway.conf:ro
+      - ${CANDIDATE_DIR:?Exact ddfac6c4 source}/src/main/resources/db/migration:/flyway/sql:ro
+    networks: [isolated]
+    command: [info]
+  jpa:
+    image: ${APP_IMAGE:?Exact local candidate image ID or verified registry digest}
+    profiles: [tools]
+    restart: "no"
+    env_file: ${REHEARSAL_DIR}/app.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,catalog-import
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      APP_QUEST_DEFINITION_BOOTSTRAP_ENABLED: "false"
+      OUTBOX_ENABLED: "false"
+      APP_REDIS_PUBSUB_ENABLED: "false"
+      LIFEASGAME_PORTFOLIO_DEMO_ENABLED: "false"
+      LIFEASGAME_WEB_ALLOWED_ORIGINS: https://lifeasgame-app.vercel.app
+      REDIS_HOST: redis
+    networks: [isolated]
+networks:
+  isolated:
+    internal: true
+volumes:
+  mysql-data: {}
