@@ -5,7 +5,6 @@ import online.lifeasgame.core.security.CurrentPlayerAccessor;
 import online.lifeasgame.lifelog.application.command.CollectionCommand;
 import online.lifeasgame.lifelog.application.query.CollectionQuery;
 import online.lifeasgame.lifelog.application.record.LifeLogRecordMetadataCommand;
-import online.lifeasgame.lifelog.domain.LifeLogCategoryKind;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -6,8 +6,6 @@ import online.lifeasgame.social.application.result.FollowResult;
 import online.lifeasgame.social.domain.Follow;
 import online.lifeasgame.social.domain.FollowState;
 import online.lifeasgame.demo.application.DemoActorScopeApi;
-import online.lifeasgame.core.error.DomainException;
-import online.lifeasgame.demo.domain.DemoError;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

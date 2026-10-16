@@ -37,14 +37,6 @@ public class TraceIdFilter extends OncePerRequestFilter {
         MDC.put(MDCKeys.PATH, req.getRequestURI());
         MDC.put(MDCKeys.USER_ID, ANONYMOUS);
         MDC.put(MDCKeys.USER_ENTRY_POINT, ANONYMOUS);
-/*
-        if (internalAuth != null) {
-            Long userId = internalAuth.findUserId();
-            if (userId != null) MDC.put(MDCKeys.USER_ID, String.valueOf(userId));
-            String ep = internalAuth.findUserEntryPoint();
-            if (ep != null) MDC.put(MDCKeys.USER_ENTRY_POINT, ep);
-        }
-*/
         res.setHeader(MDCKeys.TRACE_ID_HEADER, traceId);
 
         long startNs = System.nanoTime();

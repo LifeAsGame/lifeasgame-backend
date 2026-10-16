@@ -1,6 +1,4 @@
-# Date input contract (READY)
-
-Verified on dedicated 19081 backend `76862785784a079bae82d8003afcfbe70d10ec52` on 2026-10-05. FE 13005 CORS passed against this server.
+# Date input contract
 
 | API | Input fields | Accepted values |
 | --- | --- | --- |

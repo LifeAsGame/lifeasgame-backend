@@ -58,7 +58,6 @@ public class CollectionLogRepositoryAdapter implements CollectionLogRepository {
         );
         if (idPage.isEmpty()) return List.of();
 
-        // 2) fetch join by ids
         List<Long> ids = idPage.getContent();
         return jpa.findAllWithTagsByIdIn(ids);
     }

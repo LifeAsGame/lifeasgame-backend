@@ -11,7 +11,6 @@ import online.lifeasgame.quest.domain.QuestCategory;
 import online.lifeasgame.quest.domain.QuestCompletionPolicy;
 import online.lifeasgame.quest.domain.QuestRepeatRule;
 import online.lifeasgame.quest.domain.QuestReward;
-import online.lifeasgame.quest.domain.QuestStatus;
 import online.lifeasgame.quest.domain.QuestTarget;
 import online.lifeasgame.quest.domain.QuestTargetType;
 import online.lifeasgame.quest.domain.QuestTitle;

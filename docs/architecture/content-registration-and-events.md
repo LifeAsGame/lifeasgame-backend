@@ -1,8 +1,10 @@
-# Content registration and event delivery
+# Content registration and event delivery: V36 source review
 
-Source review for [#364](https://github.com/LifeAsGame/lifeasgame-backend/issues/364), after [#363](https://github.com/LifeAsGame/lifeasgame-backend/pull/363). Baseline: `origin/develop` at `32651b3903283f0b92e4c156379425ecc3f2f95e` (refreshed at the start of this review).
+Source review for [#364](https://github.com/LifeAsGame/lifeasgame-backend/issues/364), after [#363](https://github.com/LifeAsGame/lifeasgame-backend/pull/363). Baseline: `origin/develop` at `32651b3903283f0b92e4c156379425ecc3f2f95e` (historical baseline).
 
 This document describes checked-in definitions and executable paths. **No running database, deployment configuration, HTTP environment or production registration state was inspected.** “Installed” below means the result intended by migrations/bootstrap, conditional on successful execution. Tests are cited as existing coverage inspected in source, not as tests executed for this review. This change adds no content, activation policy, schema or product code.
+
+This is a historical V36 snapshot, including the findings and proposed follow-ups below. It is not a current defect list or catalog inventory. Later contracts describe [reward delivery identity](../contracts/reward/adventure-preparation.md), [backend journey content](../contracts/quest/backend-developer-journey-contract.md), [achievement activation](../contracts/character/achievement-title-activation-contract.md) and [content source alignment](../contracts/content-fill-authority-20261013.md). Preserve the failure interleavings below as regression context.
 
 ## Existing authority and resolved findings
 

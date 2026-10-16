@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.domain.Certification;
-import online.lifeasgame.character.domain.CertificationCategory;
 import online.lifeasgame.character.domain.repository.CertificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

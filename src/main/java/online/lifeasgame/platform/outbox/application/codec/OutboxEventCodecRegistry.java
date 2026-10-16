@@ -9,7 +9,6 @@ import online.lifeasgame.inventory.domain.event.InventoryItemAdded;
 import online.lifeasgame.inventory.domain.event.ItemRewardClaimed;
 import online.lifeasgame.lifelog.domain.event.CollectionLogged;
 import online.lifeasgame.lifelog.domain.event.ExerciseLogged;
-import online.lifeasgame.lifelog.domain.event.LifeLogRecorded;
 import online.lifeasgame.lifelog.domain.event.MediaLogAdvanced;
 import online.lifeasgame.platform.outbox.domain.error.OutboxError;
 import online.lifeasgame.quest.application.internal.event.QuestRewardReadyFact;

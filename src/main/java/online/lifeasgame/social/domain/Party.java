@@ -26,7 +26,7 @@ public class Party extends AbstractTime {
     @Column(name = "party_id")
     private Long id;
 
-    // 소유자(간접참조): 파티 리더 == 생성자
+    // 소유자는 현재 리더이며 리더 위임 시 함께 변경된다.
     @Column(name = "player_id", nullable = false)
     private Long playerId;
 

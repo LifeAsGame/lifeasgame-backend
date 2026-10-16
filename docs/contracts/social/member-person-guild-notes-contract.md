@@ -1,6 +1,4 @@
-# Member → Person and private Guild notes (Feedback03B1)
-
-Status: **READY — API/runtime**. Preserved baseline: #398 `a8f01d1dece56a73e32e9d0436b4e9f1cf3e0db5`. [Draft #400](https://github.com/LifeAsGame/lifeasgame-backend/pull/400) remains unmerged and depends on #396 → #397 → #398. 19081 product `f10157e0a7263d4dff9a96d21d11090c7231d8fb` / V47 (checksum `-699207067`) passed [required build-and-test](https://github.com/LifeAsGame/lifeasgame-backend/actions/runs/37318923842) before app-only deployment and real HTTP verification. The subsequent READY document commit differs from this deployed product SHA only in this contract; no app restart is required for that documentation change.
+# Member to Person and private Guild notes
 
 ## Identity and workflow
 
@@ -24,15 +22,3 @@ The record key is `(authorPlayerId,guildId,targetMemberPlayerId)` with a fixed `
 - `GET /api/v1/persons/{personId}/guild-notes?page=0&size=20&includeHistory=true`: author-owned notes for that owned Person, ID descending, `{contents,page,size,totalElements,totalPages}` in `ApiResponse.result`. `includeHistory=false` filters to Guilds where the author and target are both current members; default includes history. Optional `guildId` filters the stored Guild ID; `keyword` is a trimmed, case-insensitive literal substring of the private note text (max 2000), with `%` and `_` treated literally. Page is zero-based; size is 1–100. An inaccessible/disbanded Guild item has `availability:"HISTORY"`, `guildName:null`, and only stored `guildId`/target ID as context; it never reloads PRIVATE Guild details or member lists. `CURRENT` means both author and target still belong to the active Guild. Target departure yields `HISTORY`; the Guild name may still be shown if the author retains access. This field describes membership availability, not permission to edit an archived/unlinked Person. Foreign note or Person is hidden with 404.
 
 New write and edit lock the Guild and both membership rows, then lock the owned ACTIVE Person through its provider port, so departure, archive, and unlink serialize with the write. Link commands use READ COMMITTED plus the owner Player lock to observe the winner even when concurrent requests come through different groups. Note rows have an optimistic version; stale edits return 409. Person unlink does not alter stored note ownership or target. Queries are paged in SQL, including filters and stable order; Guild names are loaded only for currently authorized page items. The Person detail and role-context endpoints stay independent.
-
-## Readiness
-
-READY requires feature HEAD `build-and-test` success, a backed-up 19081 JAR/database, additive migration after V46, app-only replacement, and real HTTP checks using disposable accounts for the new flow, 3A, representative LifeLog/category/catalog reads, and 13005 CORS. Record the deployed product SHA separately from this document SHA. Feedback03B2 shared schedule references and phase 4 participant rosters remain separate.
-
-## Verified runtime handoff
-
-- Backed up the dedicated database, JAR, and runtime metadata before V47. V1–V46 checksums, existing Players, and MySQL/Redis containers and volumes were preserved. 19080 and FE 13005 remain healthy.
-- Real HTTP verified all three group types, distinct User/Player IDs, concurrent create convergence, explicit selection and conflict/foreign denial, two independent Role notes and two Guild notes, author-only privacy including Guild leader denial, optimistic conflicts, clearing, pagination/literal search, unlink/relink target retention, departure privacy, archived history/delete, prior 3A/category/catalog reads, no LifeLog/quest/reward/EXP side effects, and exact 13005 CORS.
-- Disposable verification credentials are stored only in the 0600 file `/Users/ryu/.local/share/lifeasgame-demo/lag-demo-129fd1f60637/namespaces/be-feedback03b1-20261005/credentials.json`. These are consumed BE test accounts; existing showcase accounts were preserved.
-- Final PR/document HEAD and its required CI are tracked separately in `backend-next.json` and PR checks. FE browser/persistence verification of its own #154 remains FE-owned.
-- Safe CI optimization is isolated in Draft #399; its full required checks passed. It is unmerged and does not change #400 checks. Official HRDK zero-row/source-key gates are unchanged.

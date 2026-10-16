@@ -39,7 +39,7 @@ Mapping existence and frontend capability are separate. `SUPPORTED_COMMAND + ALL
 
 ## Command risk decision
 
-All 50 mapped command rows in the supported/gated command classifications were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. The Wallet adjustment command, two Quest Acceptance override commands, Inventory/Mailbox entitlement commands, and Achievement/Title holder grants are also `ALLOW` after their Unit E hardening. Their exact contracts are [admin-wallet-adjustment-contract.md](admin-wallet-adjustment-contract.md), [admin-quest-acceptance-contract.md](admin-quest-acceptance-contract.md), [admin-inventory-entitlement-contract.md](admin-inventory-entitlement-contract.md), and [admin-player-holder-grant-contract.md](admin-player-holder-grant-contract.md).
+All 50 mapped command rows in the supported/gated command classifications were reviewed. Twelve non-destructive definition/catalog authoring commands remain `ALLOW`: create/update for Achievement, Certification, Hobby, Title, and Item, plus Quest definition ensure/update. The Wallet adjustment command, two Quest Acceptance override commands, Inventory/Mailbox entitlement commands, and Achievement/Title holder grants are also `ALLOW` after their audit and idempotency hardening. Their exact contracts are [admin-wallet-adjustment-contract.md](admin-wallet-adjustment-contract.md), [admin-quest-acceptance-contract.md](admin-quest-acceptance-contract.md), [admin-inventory-entitlement-contract.md](admin-inventory-entitlement-contract.md), and [admin-player-holder-grant-contract.md](admin-player-holder-grant-contract.md).
 
 The other 31 mapped high-risk commands remain `GATE`: destructive catalog deletion, direct player-state correction, other entitlement grant/revoke operations, live Shop/economy mutation, and social relationship mutation. Their routes remain mapped but are not frontend capabilities before durable Admin Audit and reason/idempotency/stale/conflict hardening.
 
@@ -77,7 +77,7 @@ Their revoke routes and all Certification/Hobby holder mutations remain gated.
 - Except for the hardened Wallet adjustment, Quest Acceptance override,
   Inventory/Mailbox entitlement, and Achievement/Title holder grant commands,
   existing high-risk commands remain
-  `GATED_HIGH_RISK + GATE` until their own Unit E integration.
+  `GATED_HIGH_RISK + GATE` until their own audit and idempotency integration.
 
 ## Frontend migration rules
 

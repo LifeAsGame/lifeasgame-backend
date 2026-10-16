@@ -2,7 +2,7 @@
 
 > 보이지 않던 삶의 성장과 관계의 흔적을 기록하고, 목표와 성취를 게임처럼 체감할 수 있게 만드는 Life RPG 플랫폼의 백엔드입니다.
 
-[한국어](#korean) · [English](#english)
+[한국어](#korean) | [English](#english)
 
 <a id="korean"></a>
 
@@ -151,11 +151,11 @@ RewardSettlement (EXP / ITEM line)
 
 | Bounded context | 상태 | 현재 구현 |
 |---|---|---|
-| User / Auth | 구현됨 | 회원 등록, 인증, JWT 발급·재발급, 사용자·설정 command/query, provider-owned `UserAuthApi` |
-| Character | 구현됨 | Player onboarding, 캐릭터 조회·변경, EXP/레벨, 능력치, 장비, 칭호, 취미, 자격, 업적 foundation |
-| Role / Person | persistence foundation 구현됨 | 플레이어 소유 Role과 Person CRUD, RoleRelation 생성·수정·보관·재활성화 |
+| User / Auth | 구현됨 | 회원 등록, 인증, JWT 발급, 재발급, 사용자, 설정 command/query, provider-owned `UserAuthApi` |
+| Character | 구현됨 | Player onboarding, 캐릭터 조회, 변경, EXP/레벨, 능력치, 장비, 칭호, 취미, 자격, 업적 foundation |
+| Role / Person | 구현됨 | 플레이어 소유 Role과 Person CRUD, RoleRelation, 개인 RoleEvent, LifeLog 연결과 개인 일정 조회 |
 | LifeLog | 구현됨 | Collection/Exercise/Media source, command/query 분리, canonical record, Quick Record |
-| Quest | 핵심 루프 구현됨 | 정의·수락·진행·완료, LifeLog trigger, signal receipt와 replay 방어, 반복/기간 계약 |
+| Quest | 핵심 루프 구현됨 | 정의, 수락, 진행, 완료, LifeLog trigger, signal receipt와 replay 방어, 반복/기간 계약 |
 | Reward | 핵심 루프 구현됨 | reward profile/definition, settlement와 line, EXP/ITEM 처리, 실패 기록과 재시도 준비 |
 | Inventory | foundation 구현됨 | item catalog, inventory/mailbox, stack/carry policy, ITEM reward delivery receipt |
 | Social | 발전 중 | party, guild, follow, chat 및 realtime 코드가 존재하지만 최종 아키텍처로 간주하지 않음 |
@@ -169,9 +169,9 @@ LifeLog는 하나의 범용 aggregate로 모든 기록을 합치지 않습니다
 - **Physical Source** — `CollectionLog`, `ExerciseLog`, `MediaLog`가 각 기록의 상세 데이터와 개인 텍스트를 소유합니다.
 - **Canonical Header** — `LifeLogRecord`가 source identity, subtype, entry mode, reflection metadata, period key, occurred time을 표준화합니다.
 - **Durable Fact** — `LifeLogRecorded`는 Quest가 소비할 최소한의 버전된 사실입니다. 새 Fact에는 물리 source의 private text나 source type을 노출하지 않습니다.
-- **Quick Record** — `QuickRecordService`가 DB receipt를 예약·잠근 뒤 source, header, Fact, receipt completion을 하나의 transaction 흐름으로 조정합니다. 같은 idempotency key와 같은 payload는 저장된 결과를 replay하고, 충돌 payload는 거부합니다.
+- **Quick Record** — `QuickRecordService`가 DB receipt를 예약하고 잠근 뒤 source, header, Fact, receipt completion을 하나의 transaction 흐름으로 조정합니다. 같은 idempotency key와 같은 payload는 저장된 결과를 replay하고, 충돌 payload는 거부합니다.
 
-Source 저장, canonical header 등록, `LifeLogRecorded` publication은 의도된 동일 transaction 안에 있습니다. `LifeLogRecord`의 `primaryRoleId`는 현재 `null`만 허용하며 Role 연계는 아직 활성화하지 않았습니다.
+Source 저장, canonical header 등록, `LifeLogRecorded` publication은 의도된 동일 transaction 안에 있습니다. 기록에는 소유권을 검증한 Role 또는 RoleEvent를 선택적으로 연결할 수 있습니다. RoleEvent 생성이나 완료가 LifeLog를 자동 생성하지는 않습니다.
 
 ### Role, Person, RoleRelation
 
@@ -179,7 +179,7 @@ Source 저장, canonical header 등록, `LifeLogRecorded` publication은 의도�
 - **Person**은 플레이어가 관리하는 개인 인물 기록입니다. display name과 선택적 notes, birthday, contact를 가지며 다른 context의 User entity를 직접 참조하지 않습니다.
 - **RoleRelation**은 같은 플레이어가 소유한 Role과 Person을 ID로 연결하고 relation type과 role-specific notes를 보관합니다. active/archive/reactivation lifecycle을 가집니다.
 
-Role/Person persistence와 API는 구현되어 있습니다. **RoleEvent, QuestRoute, LifeLog-to-Role linkage는 아직 구현 완료 상태가 아니며 planned/evolving 영역입니다.**
+Role/Person API, [개인 RoleEvent](docs/contracts/role/role-event-active-contract.md), LifeLog 연결과 [QuestRoute](docs/contracts/quest/backend-developer-journey-contract.md)가 구현되어 있습니다. Route 선택은 선택 사항이며 Quest 완료 후에도 플레이어가 현재 Step을 지정해 명시적으로 진행합니다.
 
 ### 아키텍처
 
@@ -203,7 +203,7 @@ Reduced hexagonal은 모든 내부 호출에 Port/Adapter를 기계적으로 추
 
 클래스 이름은 패턴이 아니라 실제 책임에서 결정합니다.
 
-- 단순 aggregate 조회·영속화에는 `Reader` / `Writer`가 적합할 수 있습니다.
+- 단순 aggregate 조회, 영속화에는 `Reader` / `Writer`가 적합할 수 있습니다.
 - read use case에는 `QueryService`를 사용할 수 있습니다.
 - cross-context reference에는 `LookupApi` / `LookupService`가 적합합니다.
 - 실제 책임에 따라 `Provider`, `Resolver`, `Registrar`, `Processor`, `Factory`, `Policy`, `Issuer`, `Hasher`, `Supporter` 등의 이름을 우선합니다.
@@ -282,7 +282,7 @@ Local profile은 기본값이며 Flyway migration을 실행합니다.
 
 Java 21, Docker Compose v2 이상, Python 3 표준 라이브러리를 사용합니다.
 기존 local Compose 대신 다음 도구가 전용 MySQL 8 / Redis 7 / Spring 컨테이너를 만듭니다.
-이미지 digest를 고정하며, start 출력에 빌드 시 HEAD·dirty 여부·jar SHA256을 표시합니다.
+이미지 digest를 고정하며, start 출력에 빌드 시 HEAD, dirty 여부, jar SHA256을 표시합니다.
 macOS에서 필요하면 먼저 `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`을 실행합니다.
 
 ```bash
@@ -303,10 +303,10 @@ python3 scripts/cfc-runtime.py cleanup  # 이 도구 소유의 컨테이너/네�
   같은 checkout에서는 한 runtime만 사용하고, 여러 checkout은 서로 다른 HTTP 포트를 선택합니다.
 - 최초 start는 `bootJar`를 빌드해 OS 임시 디렉터리의 전용 폴더에 복사합니다.
   랜덤 DB/JWT 비밀값과 소유 기록도 해당 폴더에만 저장합니다. `stop`은 보존하고 `cleanup`은 제거합니다.
-  실행 중 임시 폴더를 수동 삭제하지 마세요. 소유 기록/라벨이 다르면 자동 채택·삭제하지 않습니다.
+  실행 중 임시 폴더를 수동 삭제하지 마세요. 소유 기록/라벨이 다르면 자동 채택하거나 삭제하지 않습니다.
   공용 Docker 이미지 캐시는 삭제하지 않습니다. 시작 실패 시에도 `cleanup`으로 정리할 수 있습니다.
 - 진단: `python3 scripts/cfc-runtime.py logs`. 로그/계정/토큰은 커밋하지 않습니다.
-  smoke는 매번 정상 가입·로그인·Player 등록으로 새 합성 actor를 생성합니다. 토큰/비밀번호를 출력하거나
+  smoke는 매번 정상 가입, 로그인, Player 등록으로 새 합성 actor를 생성합니다. 토큰/비밀번호를 출력하거나
   저장하지 않습니다. DB/outbox 불변 비교 중에는 다른 클라이언트의 쓰기를 중지합니다.
   FE actor도 `/api/v1/auth/register` → `/api/v1/players/register` →
   `/api/v1/auth/login`을 사용하며, 반환된 accessToken을 `Authorization: Bearer ...`로 전달합니다.
@@ -329,7 +329,7 @@ python3 scripts/cfc-runtime.py cleanup  # 이 도구 소유의 컨테이너/네�
   관리자 Wallet/Inventory 조정은 일반 사용자 취득 경로가 아닙니다.
 
 이는 대표 흐름 smoke이며 전체 인수 시나리오나 운영 배포 검증이 아닙니다.
-미검증·차단된 시나리오의 완료 여부와 기존 기능 정책은 변경하지 않습니다.
+미검증, 차단된 시나리오의 완료 여부와 기존 기능 정책은 변경하지 않습니다.
 RoleChat/realtime 및 새 source를 활성화하지 않습니다.
 
 ### 프로덕션 웹 연동
@@ -380,7 +380,6 @@ wildcard는 application startup에서 거부합니다. 로컬 기본 origin은 `
 
 다음 항목은 현재 최종 아키텍처나 완료된 제품 기능으로 주장하지 않습니다.
 
-- LifeLog와 Role의 연결, RoleEvent, QuestRoute
 - Social/Economy context의 추가 architecture alignment와 운영 검증
 - Skill/Logs context의 application/API 완성
 - 범용 timeline/journal 경험과 후속 제품 기능
@@ -543,7 +542,7 @@ Correctness is not based only on process memory or Redis. Database unique constr
 |---|---|---|
 | User / Auth | Implemented | Registration, authentication, JWT issue/refresh, user/settings commands and queries, provider-owned `UserAuthApi` |
 | Character | Implemented | Player onboarding, character reads and mutations, EXP/levels, stats, equipment, titles, hobbies, certifications, and achievement foundations |
-| Role / Person | Persistence foundation implemented | Player-owned Role and Person CRUD, plus RoleRelation create/update/archive/reactivation |
+| Role / Person | Implemented | Player-owned Role and Person CRUD, RoleRelation, personal RoleEvents, LifeLog links, and personal schedule reads |
 | LifeLog | Implemented | Collection/Exercise/Media sources, command/query separation, canonical records, and Quick Record |
 | Quest | Core loop implemented | Definitions, acceptances, progress, completion, LifeLog triggers, signal receipts and replay protection, repeat/period contracts |
 | Reward | Core loop implemented | Reward profiles/definitions, settlements and lines, EXP/ITEM processing, failure recording, and retry preparation |
@@ -561,7 +560,7 @@ LifeLog does not collapse every record into one generic aggregate.
 - **Durable Fact** — `LifeLogRecorded` is the minimal versioned fact consumed by Quest. New facts do not expose private source text or the physical source type.
 - **Quick Record** — `QuickRecordService` reserves and locks a DB receipt, then coordinates source creation, the header, the Fact, and receipt completion in one transaction flow. The same idempotency key and payload replay the stored result; a conflicting payload is rejected.
 
-Source persistence, canonical-header registration, and `LifeLogRecorded` publication remain in the intended transaction. `LifeLogRecord.primaryRoleId` currently accepts only `null`; Role linkage is not active yet.
+Source persistence, canonical-header registration, and `LifeLogRecorded` publication remain in the intended transaction. Records may optionally link an owned Role or RoleEvent through the provider-owned lookup boundary. Creating or completing a RoleEvent does not automatically create a LifeLog.
 
 ### Role, Person, and RoleRelation
 
@@ -569,7 +568,7 @@ Source persistence, canonical-header registration, and `LifeLogRecorded` publica
 - **Person** is a private person record managed by a player, with a display name and optional notes, birthday, and contact. It does not directly reference another context's User entity.
 - **RoleRelation** links a Role and Person owned by the same player by ID. It stores a relation type and role-specific notes, with active/archive/reactivation lifecycle.
 
-Role/Person persistence and APIs are implemented. **RoleEvent, QuestRoute, and LifeLog-to-Role linkage are planned/evolving, not completed capabilities.**
+Role/Person APIs, [personal RoleEvents](docs/contracts/role/role-event-active-contract.md), LifeLog links, and [QuestRoutes](docs/contracts/quest/backend-developer-journey-contract.md) are implemented. Route selection is optional; completing a Quest leaves route advancement to an explicit player command with the expected current step.
 
 ### Architecture
 
@@ -717,7 +716,6 @@ Run tests with:
 
 The following are not presented as final architecture or completed product capabilities:
 
-- LifeLog-to-Role linkage, RoleEvent, and QuestRoute
 - Further architecture alignment and operational validation for Social/Economy
 - Complete application/API layers for Skill/Logs
 - A generic timeline/journal experience and later product features

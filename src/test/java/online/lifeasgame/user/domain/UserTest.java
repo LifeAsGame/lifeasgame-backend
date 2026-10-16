@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * User 도메인 단위 테스트.
- * 외부 의존성 없음 — 순수 도메인 로직만 검증.
- */
 class UserTest {
 
     private static User activeUser() {
@@ -52,19 +48,6 @@ class UserTest {
             assertThat(activeUser().isOAuthAccount()).isFalse();
         }
     }
-
-/*    @Nested
-    @DisplayName("registerByOAuth() — Google OAuth 가입")
-    class RegisterByOAuth {
-
-        @Test
-        @DisplayName("OAuth 가입 → ACTIVE, isOAuthAccount=true")
-        void shouldBeActiveAndOAuth() {
-            User u = User.registerByOAuth(Email.of("oauth@google.com"), Nickname.of("Asuna"));
-            assertThat(u.getStatus()).isEqualTo(UserStatus.ACTIVE);
-            assertThat(u.isOAuthAccount()).isTrue();
-        }
-    }*/
 
     @Nested
     @DisplayName("changeNickname()")
@@ -127,8 +110,6 @@ class UserTest {
         @DisplayName("ACTIVE에서 PENDING_EMAIL_VERIFICATION → 예외 (switch default)")
         void pendingVerification_notSupportedViaChangeStatus() {
             User u = activeUser();
-            // changeStatus()는 PENDING_EMAIL_VERIFICATION을 지원하지 않음
-            // 메일 인증 활성화 시 register() 팩토리에서 직접 생성
             assertThatThrownBy(() -> u.changeStatus(UserStatus.PENDING_EMAIL_VERIFICATION))
                     .isInstanceOf(DomainException.class);
         }
@@ -141,9 +122,6 @@ class UserTest {
         @Test
         @DisplayName("ACTIVE 상태에서 verifyEmail() → 예외 (이미 인증 완료)")
         void alreadyActive_throws() {
-            // register()는 현재 ACTIVE로 생성됨
-            // 메일 인증 활성화 시 PENDING_EMAIL_VERIFICATION으로 생성되는 경로가 별도 존재
-            // 여기서는 잘못된 상태에서의 호출 방어를 검증
             User u = activeUser();
             assertThatThrownBy(u::verifyEmail)
                     .isInstanceOf(DomainException.class);

@@ -17,8 +17,6 @@ public interface QuestSpecV1 {
     @Operation(summary = "내 퀘스트 목록", description = "플레이어의 Quest Acceptance 목록을 조회합니다. (상태/카테고리 필터 가능)")
     ResponseEntity<QuestResponse.Acceptances> list(
             @RequestParam(required = false) String status
-//                        @RequestParam(name = "status", required = false) List<String> statuses,
-//            @RequestParam(name = "category", required = false) List<String> categories
 
     );
 
