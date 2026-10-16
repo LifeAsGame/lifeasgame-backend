@@ -1,12 +1,6 @@
-# Achievement and title activation — READY on 19081
+# Achievement and title activation contract
 
-This contract records the 2026-10-06 activation decision. Earlier catalog rows were GATED, DEFERRED or candidates; they did not authorize automatic grants. Implementation, definition data and 19081 runtime readiness are tracked separately below.
-
-| Readiness | State |
-| --- | --- |
-| Implementation | `49e0bb7aa459afc921bbd01462bd8cc7755ddd21` locally tested and deployed; required PR CI pending |
-| Definition data | V50 applied on 19081; five achievements and two titles confirmed |
-| Dedicated 19081 runtime | READY; real HTTP acquisition, representative title, and bounded reconciliation verified |
+V50 defines the five achievements and two titles below. Activation requires server-confirmed evidence; catalog presence alone does not authorize a grant.
 
 ## Activated definitions and conditions
 
@@ -32,10 +26,6 @@ Authentication determines the Player. No caller supplied player ID is accepted i
 
 LifeLog and Quest completion use their existing durable facts. Route completion and successful Mailbox Claim require dedicated typed facts written in the same transaction as their source mutation. These facts carry only stable source identity, Player, relevant classification and occurrence time; they do not copy LifeLog content, URL content or entities. Outbox retry and duplicate delivery converge through DB-backed event receipts and Player/definition uniqueness. Achievement and linked title are committed atomically, or recoverable through a durable child receipt. Admin grants are distinct from automatic acquisition evidence. Existing ownership is preserved without changing `acquiredAt`; admin revocation is respected and historical replay cannot silently regrant it.
 
-A separate server-side reconciliation command supports dry-run, bounded apply and resume. It accepts existing durable facts or provider-confirmed historical completion/Claim state. Unknown evidence is skipped, never inferred from current Inventory or user-entered dates. Reconciliation records whether provenance was a durable event or confirmed historical state and does not invent an old event ID or backdate `acquiredAt`. It must not replay original reward or notification consumers. Removal, revocation and definition conflicts are excluded. Dedicated 19081 verification precedes any limited historical apply; 19080 and production are out of scope.
+A separate server-side reconciliation command supports dry-run, bounded apply and resume. It accepts existing durable facts or provider-confirmed historical completion/Claim state. Unknown evidence is skipped, never inferred from current Inventory or user-entered dates. Reconciliation records whether provenance was a durable event or confirmed historical state and does not invent an old event ID or backdate `acquiredAt`. It must not replay original reward or notification consumers. Removal, revocation and definition conflicts are excluded. Validate a dry run in an isolated environment before applying historical grants.
 
 The ADMIN-only command is `POST /admin/v1/achievement-activation/reconcile` with `{ "afterPlayerId": 0, "batchSize": 100, "apply": false }`. A dry run is read only. The response includes `mode`, `nextAfterPlayerId`, `hasMore`, and per-Player `grantable`, `existing`, `revoked`, `unknown` counts. Apply uses the same request with `apply=true`, recomputes each Player under transaction, and can resume from the returned cursor. Batch size is 1–100. The only historical state fallback is QuestAcceptance `DONE` with `completed_at` and PlayerQuestRoute `COMPLETED` with `completed_at`. Earlier Mailbox claims without a retained durable fact remain unknown.
-
-Before V50, a read-only 19081 catalog check found none of these seven stable codes, so no existing Korean name or definition row conflicts with the proposed V50 insert. This does not assert that the original full Achievement/Title catalog source files were obtained.
-
-On 2026-10-06, the dedicated 19081 runtime applied V50 (Flyway checksum `-1719862403`) and served JAR SHA-256 `692d7c574d88b124ac66f645e331934f9a35fd41600c04d856d6ce55ccf1d41e`. A disposable Player acquired all five achievements and both titles through ordinary HTTP actions: three record Quests auto-completed from content-ready LifeLogs, both Routes required explicit final advances, and a successful Mailbox Claim triggered the item achievement. The linked titles remained unselected; selecting and clearing a representative title worked. A separate untouched showcase Player remained at seven `UNACQUIRED` entries after reconciliation. The ADMIN-only reconciliation ran in three batches of 20 over 58 Players: dry-run found 29 evidence-backed missing awards, apply granted those 29, and the following dry-run found zero grantable awards. It left 256 achievement decisions unknown for lack of qualifying evidence. The disposable verifier's temporary ADMIN authority was restored to USER. The required PR CI was triggered and was still running at handoff; this READY status refers to the verified dedicated runtime and local tests, not a CI conclusion.

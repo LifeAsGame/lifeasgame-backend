@@ -32,8 +32,6 @@ public class AuthFacade {
         Long playerId = playerLookupApi.findPlayerIdByUserId(userId);
         return AuthResult.RegisterResult.verified(
                 authService.issueToken(userId, playerId));
-        // 메일 인증 활성화 시 교체:
-        // return AuthResult.RegisterResult.pendingVerification();
     }
 
     public AuthResult.TokenPair refresh(String refreshToken) {

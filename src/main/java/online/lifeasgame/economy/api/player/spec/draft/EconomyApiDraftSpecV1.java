@@ -35,10 +35,7 @@ public interface EconomyApiDraftSpecV1 {
     );
 
     @Operation(summary = "내 상점 구매/예약 목록")
-    ResponseEntity<ApiResponse<EconomyResponse.ShopPurchaseSummary>> myShopPurchase(
-//            @RequestParam(defaultValue = "0") @Min(0) int page,
-//            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
+    ResponseEntity<ApiResponse<EconomyResponse.ShopPurchaseSummary>> myShopPurchase();
 
     @Operation(summary = "상점 예약 취소", description = "예약을 취소하고 hold/redis reservation을 해제합니다. (추가 권장)")
     ResponseEntity<ApiResponse<Void>> cancelShopReservation(

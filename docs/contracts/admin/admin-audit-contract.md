@@ -35,7 +35,7 @@ Rolled-back attempts
 do not retain a misleading same-transaction audit row; separate failed-attempt
 auditing is outside this foundation.
 
-Reason is nullable at foundation level only. Unit E must make it mandatory
+Reason is nullable at foundation level only. Each high-risk command must make it mandatory
 where each high-risk command contract requires it and must supply its existing
 correlation/idempotency values without inventing global duplicate prevention.
 

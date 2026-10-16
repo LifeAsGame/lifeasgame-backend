@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import online.lifeasgame.character.application.query.CharacterCatalogQuery;
-import online.lifeasgame.character.application.query.CharacterCatalogQuery.Group;
 import online.lifeasgame.character.domain.Certification;
 import online.lifeasgame.character.domain.Hobby;
 import online.lifeasgame.character.domain.HobbyCategory;

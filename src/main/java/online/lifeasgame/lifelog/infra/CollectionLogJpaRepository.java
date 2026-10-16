@@ -13,7 +13,6 @@ import java.util.Optional;
 
 public interface CollectionLogJpaRepository extends JpaRepository<CollectionLog, Long> {
 
-    //tag n+1해결
     @Query("""
         select distinct c
         from CollectionLog c
@@ -25,7 +24,7 @@ public interface CollectionLogJpaRepository extends JpaRepository<CollectionLog,
 
     Optional<CollectionLog> findByIdAndPlayerId(Long id, Long playerId);
 
-    // n+1 문제 & lower concat 해결 필요할듯
+    // Page IDs before fetching tags so collection joins cannot distort the page boundary.
     @Query("""
         select c.id
         from CollectionLog c

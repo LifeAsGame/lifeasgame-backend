@@ -546,7 +546,7 @@ def verify(state, namespace):
     saved, tokens, _ = prepare(state, namespace)
     progress.update(status='running', namespace=namespace)
     atomic_json(verification_path, progress)
-    # ponytail: checkpoint between phases; an interruption inside a trade may need a fresh namespace.
+    # A checkpoint resumes between phases; an interrupted trade may need a fresh namespace.
     for name, phase in [('quest', verify_quest), ('trade', verify_trade), ('person', verify_person), ('social', verify_social)]:
         if name not in progress['phases']:
             progress['phases'][name] = phase(state, namespace, saved, tokens)

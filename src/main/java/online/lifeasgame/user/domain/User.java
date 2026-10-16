@@ -55,8 +55,6 @@ public class User extends AbstractTime {
 
     public static User register(Email email, HashedPassword passwordHash, Nickname nickname) {
         return new User(email, passwordHash, nickname, UserStatus.ACTIVE);
-        // 메일 인증 활성화 시 아래로 교체
-        // return new User(email, passwordHash, nickname, UserStatus.PENDING_EMAIL_VERIFICATION);
     }
 
     public static User registerByOAuth(Email email, Nickname nickname) {

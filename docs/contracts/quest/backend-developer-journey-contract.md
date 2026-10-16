@@ -1,6 +1,6 @@
-# Backend developer journey contract — READY
+# Backend developer journey contract
 
-This document records the **2026-10-04 activation decision**. The historical source revision `CONTENT_2B_FINAL_CORRECTED_2026-07-23` carried `defaultActive=false` and gate `BACKEND_JOURNEY_CONTENT`. Its seven Quest rows say `GATED`, its seven Step rows say `GATED_WITH_ROUTE`, and its Route row says `DEFINITION_ACTIVE_CANDIDATES_NOT_GRANTED`; that Route row status did not authorize runtime activation. This READY contract records a new decision, not a retroactive approval. Source file SHA-256: `aadbccf655586dc328592b5eecca15f79dbb8448a74b5041ec21a7d7a669fa26`. Canonical row fingerprints below use UTF-8 JSON with sorted keys and compact separators; the source file is retained outside product Git.
+This document records the **2026-10-04 activation decision**. The historical source revision `CONTENT_2B_FINAL_CORRECTED_2026-07-23` carried `defaultActive=false` and gate `BACKEND_JOURNEY_CONTENT`. Its seven Quest rows say `GATED`, its seven Step rows say `GATED_WITH_ROUTE`, and its Route row says `DEFINITION_ACTIVE_CANDIDATES_NOT_GRANTED`; that Route row status did not authorize runtime activation. The activation decision does not retroactively change the historical source status. Source file SHA-256: `aadbccf655586dc328592b5eecca15f79dbb8448a74b5041ec21a7d7a669fa26`. Canonical row fingerprints below use UTF-8 JSON with sorted keys and compact separators; the source file is retained outside product Git.
 
 ## Product scope
 
@@ -31,10 +31,6 @@ Authentication supplies the Player on every operation. Existing `ApiResponse` wr
 Linking is limited to the selected Quest acceptance. A PROJECT Collection LifeLog may be linked to multiple Quests only through separate commands. Memo and deployment description are 1–1000 non-whitespace characters. Deployment URL is at most 2048 characters, absolute `http`/`https`, with no user-info. A repeated identical link is idempotent; a different link requires explicit unlink first. Unlink after completion conflicts. The minimum retained snapshot is the evidence kind, linked time, and either the LifeLog ID or the submitted memo/URL/description. The owned evidence GET returns these stored fields even after the LifeLog is deleted; it does not retain or return the LifeLog title/body or prove that the source still exists. Clients must not display a deleted source as available. Source edits/deletion after completion neither revoke nor repay rewards.
 
 Expected errors follow existing `QUE-*` conventions: 400 for invalid evidence/URL, 404 for missing or foreign Player records, 409 for wrong Role, missing selection, conflicting evidence, invalid state, and stale step. A failed ownership check never returns source details.
-
-## Runtime verification
-
-On 2026-10-04, dedicated 19081 applied V43 and JPA validation passed. A separate verification Player completed all seven ordered stages through real HTTP, with explicit evidence links, step 1 unlink/relink, duplicate completion replay, and stale-step 409 checks. The Route remained unadvanced after Quest completion until the expected-step command. Existing definitions remain: six earlier Quests, `ROUTE_RECORD_START` with three Steps, and two fixed-code Items; the new totals are 13 Quests, two Routes, and ten Steps. The existing reward profiles produced EXP 70 and one `IT_FIRST_STEP_FRAGMENT` item line, with no GOLD line. The verification Player received one Mailbox entry, claimed it, and saw one Inventory entry. The example deployment URL was stored as a user statement; no remote request or actual deployment assertion was made. The separate showcase Player has one compatible Role, no selected backend Route, and no accepted first Quest.
 
 ## Source row provenance
 

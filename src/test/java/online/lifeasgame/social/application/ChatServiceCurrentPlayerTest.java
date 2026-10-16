@@ -5,7 +5,6 @@ import online.lifeasgame.social.application.command.ChatCommand;
 import online.lifeasgame.social.application.result.ChatResult;
 import online.lifeasgame.social.domain.ChannelParticipant;
 import online.lifeasgame.social.domain.ChatChannel;
-import online.lifeasgame.social.domain.ChatMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -7,7 +7,6 @@ import online.lifeasgame.role.application.internal.RoleLookupApi;
 import online.lifeasgame.social.domain.RoleParty;
 import online.lifeasgame.social.domain.ActivityGroupType;
 import online.lifeasgame.social.infra.GroupActivityStore;
-import online.lifeasgame.social.domain.RolePartyInvitation;
 import online.lifeasgame.social.domain.error.SocialError;
 import online.lifeasgame.social.domain.repository.RolePartyRepository;
 import org.springframework.stereotype.Service;

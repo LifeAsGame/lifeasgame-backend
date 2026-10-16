@@ -5,7 +5,6 @@ import java.util.List;
 import online.lifeasgame.notification.application.NotificationQueryService;
 import online.lifeasgame.notification.application.NotificationReadMarker;
 import online.lifeasgame.notification.application.result.NotificationResult;
-import online.lifeasgame.notification.domain.NotificationType;
 import online.lifeasgame.platform.security.jwt.JwtPrincipal;
 import online.lifeasgame.platform.security.jwt.JwtProvider;
 import online.lifeasgame.platform.web.error.docs.ErrorDocLinker;

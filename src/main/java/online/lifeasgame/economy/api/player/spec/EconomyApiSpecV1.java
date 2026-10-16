@@ -16,31 +16,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface EconomyApiSpecV1 {
 
     @Operation(summary = "거래소 오픈 리스팅 조회", description = "열린 매물을 조회합니다. ACTIVE 예약이 있으면 status는 RESERVED이며, 만료 시각이 지나도 예약 정리 전까지 유지됩니다.")
-    ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings(
-//            @RequestParam(required = false) Long itemId,
-//            @RequestParam(required = false) Long sellerId,
-//            @RequestParam(defaultValue = "NEWEST") String sort,
-//            @RequestParam(defaultValue = "0") @Min(0) int page,
-//            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
+    ResponseEntity<ApiResponse<EconomyResponse.Listings>> listOpenListings();
 
     @Operation(summary = "내 리스팅 목록", description = "내가 올린 리스팅 목록을 조회합니다. OPEN 매물의 ACTIVE 예약은 effective status RESERVED로 표시됩니다.")
-    ResponseEntity<ApiResponse<EconomyResponse.PlayerListings>> myListings(
-//            @RequestParam(defaultValue = "0") @Min(0) int page,
-//            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
+    ResponseEntity<ApiResponse<EconomyResponse.PlayerListings>> myListings();
 
     @Operation(summary = "내 예약 목록", description = "내가 예약한 리스팅 목록을 조회합니다.")
-    ResponseEntity<ApiResponse<EconomyResponse.PlayerReservations>> myReservations(
-//            @RequestParam(defaultValue = "0") @Min(0) int page,
-//            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
+    ResponseEntity<ApiResponse<EconomyResponse.PlayerReservations>> myReservations();
 
     @Operation(summary = "내 거래 내역", description = "내가 참여한 거래(구매/판매) 내역을 조회합니다.")
-    ResponseEntity<ApiResponse<EconomyResponse.Trades>> myTrades(
-//            @RequestParam(defaultValue = "0") @Min(0) int page,
-//            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
-    );
+    ResponseEntity<ApiResponse<EconomyResponse.Trades>> myTrades();
 
     @Operation(summary = "리스팅 등록(판매글 오픈)")
     ResponseEntity<ApiResponse<EconomyResponse.ListingId>> openListing(

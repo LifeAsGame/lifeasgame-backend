@@ -13,8 +13,8 @@ import java.time.Instant;
  * transaction as the successful business mutation and let every append
  * exception propagate. The implementation resolves the actor from the current
  * authenticated ACTIVE ADMIN account; callers cannot supply an actor ID.
- * Reason is nullable only for this foundation; Unit E must require it for each
- * approved high-risk command. Callers must pass only a bounded operational
+ * Reason is nullable at this boundary; each approved high-risk command must
+ * require it at its own boundary. Callers must pass only a bounded operational
  * rationale and never source private content, credentials, or raw payloads.</p>
  */
 public interface AdminAuditInternalApi {

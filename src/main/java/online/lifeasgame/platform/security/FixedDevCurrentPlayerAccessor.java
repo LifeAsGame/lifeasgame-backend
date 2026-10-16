@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-//@Profile({"local", "dev", "test"})
 @Profile("test")
 public class FixedDevCurrentPlayerAccessor implements CurrentPlayerAccessor {
     @Override

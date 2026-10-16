@@ -42,6 +42,6 @@ Deleting a personal category disconnects its owned items in the same database tr
 
 Open the category list when the user opens Certifications or Hobbies. Opening the parent creation action uses POST. Selecting a system or personal row loads its owned item list; opening that list's creation action uses the existing shared catalog and owned registration route, then the assignment PATCH for personal rows. Personal rows allow rename/delete; system rows are read only. The delete confirmation should state that owned items remain and only their personal category link is removed.
 
-## Integration
+## Storage
 
-Deploy only after migration ordering is settled: this branch uses V39 because open Person PR #384 uses V38. If V39 is applied before V38, the later V38 must be renumbered or Flyway migration ordering reconciled before deployment. No existing 19080 server, database, Redis, or demo namespace was changed for this contract. For an isolated new integration run, use a separate MySQL database and Redis namespace, apply Flyway migrations with this branch, start a separate Spring profile/port, then point FE to that port. This document describes code behavior; it is not a claim of live-server readiness.
+V39 adds personal categories after the V38 Person profile migration. Apply the checked-in Flyway sequence before using these endpoints. Existing owned records remain separate from category definitions.

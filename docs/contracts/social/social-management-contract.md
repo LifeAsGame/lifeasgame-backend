@@ -1,12 +1,10 @@
-# Social management contract (SOCIAL-01)
+# Social management contract
 
-Status: SOCIAL-01 implementation contract, 2026-10-01. All routes below require the signed-in service user's current Player. The server derives `playerId`; FE never supplies it except target IDs on existing management commands. `Guild`, ordinary `Party`, and `RoleParty` are distinct.
-
-2026-10-02 follow-up: the independent, invitation-only RoleParty core described in [role-party-contract.md](role-party-contract.md) is implemented in this follow-up under SOCIAL-02. The proposal below remains the record for later Guild/Party links and shared events; those links are outside this follow-up.
+All routes below require the signed-in service user's current Player. The server derives `playerId`; FE never supplies it except target IDs on existing management commands. `Guild`, ordinary `Party`, and `RoleParty` are distinct.
 
 ## Creation and discovery
 
-Both `/api/v1/guilds` and `/api/v1/parties` share these read paths and request semantics. Responses use the standard `ApiResponse.data` envelope.
+Both `/api/v1/guilds` and `/api/v1/parties` share these read paths and request semantics. Responses use the standard `ApiResponse.result` envelope.
 
 | Method/path under each base | Data / access |
 | --- | --- |
@@ -49,21 +47,11 @@ Unauthorized private group reads and missing IDs use the existing `SOC-404-GUILD
 | Invalid page, size, visibility or creation input | 400 / existing validation or Social error code |
 | No authentication | 401 / platform authentication response |
 
-## Next implementation: SOCIAL-02 proposal (not implemented here)
+## Related contracts
 
-| Existing model | Identity and link | Proposed role |
-| --- | --- | --- |
-| Role | Personal Player-owned Role ID | Private organizing context; does not itself confer membership. |
-| RoleEvent | Personal Role-owned event ID | Optional event link; cancelling an event does not create or remove a LifeLog. |
-| Person | Player-owned record of another person | May annotate participation; never substitutes for an authenticated service user. |
-| Guild | Service Player membership and leader | Persistent shared organization. |
-| Party | Service Player membership and leader | Ordinary group; can exist without Role or Guild. |
-| RoleParty | New shared group ID with creator Player, Role ID association and service Player memberships | Small group in a Role, independent of legacy Party to preserve existing Party permissions and lifecycle. |
+- [RoleParty membership and invitations](role-party-contract.md)
+- [Guild group links and shared events](guild-groups-events-contract.md)
+- [Group activities](group-activities-contract.md)
+- [Guild group creation and offline roster](guild-create-roster-contract.md)
 
-Choose an independent `RoleParty` aggregate, with `role_party_id`, creator/current leader player ID, owning Role ID, optional `guild_id`, optional `role_event_id`, status, visibility, join policy, capacity, and explicit service Player membership/invitation rows. This retains existing ordinary Party permissions and lifecycle without reinterpretation. Role owner must explicitly create or link it; Role ownership does not automatically grant shared rights, and linked guild membership does not automatically join the RoleParty. Linking a guild requires a current Guild leader's approval and provider-owned Guild application API. Keep only IDs across contexts; do not import foreign Entity/Repository. A Role's personal notes and Person records remain private unless an explicit publication contract is later approved.
-
-For Guild internal navigation, add an explicit `guild_party_links(guild_id, party_id, linked_by_player_id, status, linked_at)` association for ordinary Parties, with unique active `(guild_id, party_id)` and leader approval at both boundaries. The Party remains usable after unlinking and still needs no Role. Shared Guild events need their own Guild-owned event contract or an explicitly published event snapshot; do not point Guild members at a private `RoleEvent` by ID alone. Proposed `guild_event_links` should record the published event ID, Guild ID, publisher, publication state, and visibility after that event contract is approved. These links are SOCIAL-02 schema proposals only.
-
-Proposed routes: `GET /api/v1/roles/{roleId}/role-parties`, `POST /api/v1/roles/{roleId}/role-parties`, `GET /api/v1/role-parties/{id}`, and scoped participant/invitation management; `GET /api/v1/guilds/{guildId}/role-parties`, `/parties`, and `/events` for a Guild member; and optional `POST /api/v1/role-parties/{id}/event-link`. Role list access follows Role ownership; shared details follow RoleParty membership; Guild navigation follows Guild membership; invitees get a minimal invitation only. Group creation must work before any event exists. An authenticated user is a participant only after joining; a Person mentioned in a Role/Event is merely a personal record.
-
-On Guild leave, revoke Guild-derived navigation and membership where explicitly bound, preserving historical participation records. On RoleParty closure, stop joining/commands, retain an auditable closed summary for former members. On Role archive, prevent new RoleParty creation while existing shared groups retain their own lifecycle and a safe historical link. On event cancellation, clear future event navigation but retain RoleParty and event history. Acceptance: Role → RoleParty list → create within Role → participant/detail flow; Guild → members/groups/events navigation; ordinary Party still works without Role; no personal note/Person disclosure; cross-context permissions and lifecycle covered by focused tests. Confirm these choices in the SOCIAL-02 request before adding schema or API.
+These contracts define the implemented boundaries. Group membership never grants access to personal Role notes or Person records.

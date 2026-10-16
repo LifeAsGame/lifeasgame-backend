@@ -29,7 +29,7 @@ public class ChatMessageRegistrar {
         if (channel.getType() == ChatChannelType.FRIEND) {
             directChatBlockGuard.requireUnblocked(playerId, chatReader.getFriendPeerId(channelId, playerId));
         }
-        // ponytail: per-channel lock keeps message ID and commit order aligned; revisit if hot channels need more throughput.
+        // Per-channel locking aligns message ID and commit order; hot channels serialize writes.
         chatChannelRepository.findByIdForUpdate(channelId)
                 .orElseThrow(() -> new DomainException(SocialError.CHAT_CHANNEL_NOT_FOUND));
         if (command.clientMessageId() != null) {

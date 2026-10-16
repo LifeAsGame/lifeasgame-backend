@@ -7,10 +7,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * PasswordHasherAdapter 단위 테스트.
- * 실제 BCryptPasswordEncoder 사용 — Mock 아님.
- */
 class PasswordHasherAdapterTest {
 
     private final PasswordHasherAdapter adapter =

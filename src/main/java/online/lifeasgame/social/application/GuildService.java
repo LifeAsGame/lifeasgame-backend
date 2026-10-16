@@ -19,7 +19,6 @@ import org.springframework.data.domain.PageRequest;
 import java.util.ArrayList;
 import online.lifeasgame.social.domain.error.SocialError;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
